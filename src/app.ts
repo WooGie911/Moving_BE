@@ -18,7 +18,7 @@ app.use(express.urlencoded({ extended: true })); // URL 인코딩 파싱
 app.get("/health", (req, res) => {
   res.status(200).json({
     success: true,
-    message: "Server is healthy",
+    message: "",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
   });
