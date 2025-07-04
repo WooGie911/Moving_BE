@@ -7,9 +7,10 @@ import * as crypto from "crypto";
  */
 export function encryptPhoneNumber(phoneNumber: string): string {
   const algorithm = "aes-256-cbc";
-  const secretKey =
-    process.env.PHONE_ENCRYPTION_KEY ||
-    "default-secret-key-for-dev-only-change-in-prod";
+  const secretKey = process.env.PHONE_ENCRYPTION_KEY || null;
+  if (!secretKey) {
+    throw new Error("PHONE_ENCRYPTION_KEY is not set");
+  }
   const key = crypto.scryptSync(secretKey, "salt", 32);
   const iv = crypto.randomBytes(16);
 
@@ -27,9 +28,10 @@ export function encryptPhoneNumber(phoneNumber: string): string {
  */
 export function decryptPhoneNumber(encryptedData: string): string {
   const algorithm = "aes-256-cbc";
-  const secretKey =
-    process.env.PHONE_ENCRYPTION_KEY ||
-    "default-secret-key-for-dev-only-change-in-prod";
+  const secretKey = process.env.PHONE_ENCRYPTION_KEY || null;
+  if (!secretKey) {
+    throw new Error("PHONE_ENCRYPTION_KEY is not set");
+  }
   const key = crypto.scryptSync(secretKey, "salt", 32);
 
   const [ivHex, encrypted] = encryptedData.split(":");

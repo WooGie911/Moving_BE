@@ -176,8 +176,7 @@ async function main() {
         profileImage: "/images/profile1.jpg",
         experience: 5,
         introduction: "5년 경력의 꼼꼼한 이사 전문가입니다",
-        description:
-          "안전하고 신속한 이사를 약속드립니다. 고객 만족도 98%를 자랑하는 전문 기사입니다.",
+        description: "안전하고 신속한 이사를 약속드립니다. 고객 만족도 98%를 자랑하는 전문 기사입니다.",
       },
     }),
     prisma.profile.create({
@@ -187,8 +186,7 @@ async function main() {
         profileImage: "/images/profile2.jpg",
         experience: 8,
         introduction: "8년 경력의 신속한 이사 서비스",
-        description:
-          "빠르고 정확한 이사로 고객님의 시간을 절약해드립니다. 대형 이사도 전문적으로 처리합니다.",
+        description: "빠르고 정확한 이사로 고객님의 시간을 절약해드립니다. 대형 이사도 전문적으로 처리합니다.",
       },
     }),
     prisma.profile.create({
@@ -198,8 +196,7 @@ async function main() {
         profileImage: "/images/profile3.jpg",
         experience: 3,
         introduction: "고객 서비스 최우선 3년차 기사",
-        description:
-          "고객님의 소중한 물건을 내 것처럼 소중히 다뤄드립니다. 친절한 서비스가 저의 장점입니다.",
+        description: "고객님의 소중한 물건을 내 것처럼 소중히 다뤄드립니다. 친절한 서비스가 저의 장점입니다.",
       },
     }),
     prisma.profile.create({
@@ -209,8 +206,7 @@ async function main() {
         profileImage: "/images/profile4.jpg",
         experience: 12,
         introduction: "12년 경력의 이사 전문가",
-        description:
-          "어떤 이사든 완벽하게 처리해드립니다. 장거리 이사와 특수 물품 운반도 전문적으로 해드립니다.",
+        description: "어떤 이사든 완벽하게 처리해드립니다. 장거리 이사와 특수 물품 운반도 전문적으로 해드립니다.",
       },
     }),
   ]);
@@ -333,8 +329,7 @@ async function main() {
         requestId: movingRequests[0].id,
         moverId: movers[0].id,
         price: 150000,
-        description:
-          "소형이사 전문 서비스입니다. 냉장고, 세탁기 안전 운반 보장",
+        description: "소형이사 전문 서비스입니다. 냉장고, 세탁기 안전 운반 보장",
         status: QuoteStatus.SENT,
         validUntil: new Date("2024-02-10"),
       },
@@ -456,20 +451,10 @@ async function main() {
       const request = await prisma.movingRequest.create({
         data: {
           userId: customers[j % customers.length].id,
-          movingType: [MovingType.SMALL, MovingType.HOME, MovingType.OFFICE][
-            j % 3
-          ],
-          movingDate: new Date(
-            2023,
-            Math.floor(Math.random() * 12),
-            Math.floor(Math.random() * 28) + 1
-          ),
-          departureAddr: `서울시 ${
-            ["강남구", "서초구", "송파구", "마포구"][j % 4]
-          } ${j + 1}번지`,
-          arrivalAddr: `경기도 ${
-            ["성남시", "수원시", "안양시", "용인시"][j % 4]
-          } ${j + 10}번지`,
+          movingType: [MovingType.SMALL, MovingType.HOME, MovingType.OFFICE][j % 3],
+          movingDate: new Date(2023, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1),
+          departureAddr: `서울시 ${["강남구", "서초구", "송파구", "마포구"][j % 4]} ${j + 1}번지`,
+          arrivalAddr: `경기도 ${["성남시", "수원시", "안양시", "용인시"][j % 4]} ${j + 10}번지`,
           departureRegionId: createdRegions[0].id,
           arrivalRegionId: createdRegions[8].id,
           description: `완료된 이사 - ${mover.email}의 ${j + 1}번째 케이스`,
@@ -487,11 +472,7 @@ async function main() {
           price: Math.floor(Math.random() * 500000) + 100000,
           description: `완료된 이사 견적 - ${mover.email}`,
           status: QuoteStatus.ACCEPTED,
-          validUntil: new Date(
-            2023,
-            Math.floor(Math.random() * 12),
-            Math.floor(Math.random() * 28) + 1
-          ),
+          validUntil: new Date(2023, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1),
         },
       });
 
@@ -532,9 +513,7 @@ async function main() {
     if (Math.random() < 0.7) {
       return Math.round(avgRating);
     } else {
-      return (
-        Math.floor(Math.random() * (maxRating - minRating + 1)) + minRating
-      );
+      return Math.floor(Math.random() * (maxRating - minRating + 1)) + minRating;
     }
   }
 
