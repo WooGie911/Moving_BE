@@ -4,12 +4,7 @@ import { CustomError } from "../types/error.types";
 /**
  * 전역 에러 핸들링 미들웨어
  */
-export const errorHandler = (
-  err: CustomError,
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
+export const errorHandler = (err: CustomError, req: Request, res: Response, next: NextFunction): void => {
   console.error("Error:", {
     message: err.message,
     stack: err.stack,
@@ -39,11 +34,7 @@ export const errorHandler = (
 /**
  * 404 에러 핸들링 미들웨어
  */
-export const notFoundHandler = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
+export const notFoundHandler = (req: Request, res: Response, next: NextFunction): void => {
   res.status(404).json({
     success: false,
     error: {

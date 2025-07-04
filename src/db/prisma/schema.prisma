@@ -1,15 +1,346 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id                         Int                      @id @default(autoincrement())
+  email                      String                   @unique
+  encryptedPassword          String?
+  encryptedPhoneNumber       String?
+  userType                   UserType
+  isActive                   Boolean                  @default(false)
+  lastLoginAt                DateTime?
+  accessToken                String?
+  refreshToken               String?
+  tokenExpiresAt             DateTime?
+  createdAt                  DateTime                 @default(now())
+  updatedAt                  DateTime                 @updatedAt
+  actions                    Action[]
+  designatedQuoteRequests    DesignatedQuoteRequest[] @relation("CustomerDesignatedRequests")
+  receivedDesignatedRequests DesignatedQuoteRequest[] @relation("MoverDesignatedRequests")
+  favoriteMover              Favorite[]               @relation("MoverFavorites")
+  favorites                  Favorite[]               @relation("UserFavorites")
+  movingRequests             MovingRequest[]
+  notifications              Notification[]
+  profile                    Profile?
+  quotes                     Quote[]
+  receivedReviews            Review[]                 @relation("MoverReviews")
+  reviews                    Review[]
+  socialAccounts             SocialAccount[]
+
+  @@index([email])
+  @@index([userType])
+  @@index([isActive])
+  @@map("users")
+}
+
+model SocialAccount {
+  id         Int            @id @default(autoincrement())
+  provider   SocialProvider
+  providerId String
+  userId     Int
+  createdAt  DateTime       @default(now())
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
+  @@index([userId])
+  @@map("social_accounts")
+}
+
+model Profile {
+  id             Int              @id @default(autoincrement())
+  userId         Int              @unique
+  nickname       String           @unique
+  profileImage   String?
+  experience     Int
+  introduction   String
+  description    String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  serviceRegions ProfileRegion[]
+  serviceTypes   ProfileService[]
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([nickname])
+  @@map("profiles")
+}
+
+model Region {
+  id                Int             @id @default(autoincrement())
+  name              String          @unique
+  isActive          Boolean         @default(true)
+  arrivalRequests   MovingRequest[] @relation("ArrivalRegion")
+  departureRequests MovingRequest[] @relation("DepartureRegion")
+  profiles          ProfileRegion[]
+
+  @@index([isActive])
+  @@map("regions")
+}
+
+model Service {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  description String?
+  isActive    Boolean          @default(true)
+  iconUrl     String?
+  profiles    ProfileService[]
+
+  @@index([isActive])
+  @@map("services")
+}
+
+model ProfileRegion {
+  id        Int     @id @default(autoincrement())
+  profileId Int
+  regionId  Int
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  region    Region  @relation(fields: [regionId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, regionId])
+  @@index([profileId])
+  @@index([regionId])
+  @@map("profile_regions")
+}
+
+model ProfileService {
+  id        Int     @id @default(autoincrement())
+  profileId Int
+  serviceId Int
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, serviceId])
+  @@index([profileId])
+  @@index([serviceId])
+  @@map("profile_services")
+}
+
+model MovingRequest {
+  id                      Int                      @id @default(autoincrement())
+  userId                  Int
+  movingType              MovingType
+  movingDate              DateTime
+  departureAddr           String
+  arrivalAddr             String
+  departureDetail         String?
+  arrivalDetail           String?
+  departureRegionId       Int?
+  arrivalRegionId         Int?
+  description             String?
+  status                  RequestStatus            @default(ACTIVE)
+  confirmedQuoteId        Int?                     @unique
+  estimatedDistance       Float?
+  floor                   Int?
+  hasElevator             Boolean?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  designatedQuoteRequests DesignatedQuoteRequest[]
+  arrivalRegion           Region?                  @relation("ArrivalRegion", fields: [arrivalRegionId], references: [id])
+  confirmedQuote          Quote?                   @relation("ConfirmedQuote", fields: [confirmedQuoteId], references: [id])
+  departureRegion         Region?                  @relation("DepartureRegion", fields: [departureRegionId], references: [id])
+  user                    User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quotes                  Quote[]
+  reviews                 Review[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([movingDate])
+  @@index([departureRegionId])
+  @@index([arrivalRegionId])
+  @@map("moving_requests")
+}
+
+model DesignatedQuoteRequest {
+  id         Int                          @id @default(autoincrement())
+  requestId  Int
+  customerId Int
+  moverId    Int
+  message    String?
+  status     DesignatedQuoteRequestStatus @default(PENDING)
+  expiresAt  DateTime
+  createdAt  DateTime                     @default(now())
+  updatedAt  DateTime                     @updatedAt
+  customer   User                         @relation("CustomerDesignatedRequests", fields: [customerId], references: [id], onDelete: Cascade)
+  mover      User                         @relation("MoverDesignatedRequests", fields: [moverId], references: [id], onDelete: Cascade)
+  request    MovingRequest                @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  quote      Quote?
+
+  @@unique([requestId, moverId])
+  @@index([customerId])
+  @@index([moverId])
+  @@index([status])
+  @@map("designated_quote_requests")
+}
+
+model Quote {
+  id                       Int                     @id @default(autoincrement())
+  requestId                Int
+  moverId                  Int
+  price                    Int
+  description              String
+  status                   QuoteStatus             @default(PENDING)
+  isDesignated             Boolean                 @default(false)
+  designatedQuoteRequestId Int?                    @unique
+  validUntil               DateTime?
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  confirmedRequest         MovingRequest?          @relation("ConfirmedQuote")
+  designatedQuoteRequest   DesignatedQuoteRequest? @relation(fields: [designatedQuoteRequestId], references: [id])
+  mover                    User                    @relation(fields: [moverId], references: [id], onDelete: Cascade)
+  request                  MovingRequest           @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  reviews                  Review[]
+
+  @@unique([requestId, moverId])
+  @@index([moverId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("quotes")
+}
+
+model Action {
+  id            Int            @id @default(autoincrement())
+  userId        Int
+  type          ActionType
+  entityId      Int
+  entityType    String
+  description   String?
+  metadata      Json?
+  createdAt     DateTime       @default(now())
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notifications Notification[]
+
+  @@index([userId])
+  @@index([type])
+  @@index([entityId, entityType])
+  @@index([createdAt])
+  @@map("actions")
+}
+
+model Notification {
+  id        Int              @id @default(autoincrement())
+  userId    Int
+  actionId  Int
+  type      NotificationType
+  title     String
+  content   String
+  isRead    Boolean          @default(false)
+  actionUrl String?
+  createdAt DateTime         @default(now())
+  action    Action           @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([actionId])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model Review {
+  id        Int           @id @default(autoincrement())
+  requestId Int
+  quoteId   Int
+  userId    Int
+  moverId   Int
+  rating    Int
+  content   String
+  status    ReviewStatus  @default(PENDING)
+  isPublic  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  mover     User          @relation("MoverReviews", fields: [moverId], references: [id], onDelete: Cascade)
+  quote     Quote         @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  request   MovingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([requestId, userId])
+  @@index([moverId])
+  @@index([rating])
+  @@index([status])
+  @@map("reviews")
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  moverId   Int
+  createdAt DateTime @default(now())
+  mover     User     @relation("MoverFavorites", fields: [moverId], references: [id], onDelete: Cascade)
+  user      User     @relation("UserFavorites", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, moverId])
+  @@index([userId])
+  @@index([moverId])
+  @@map("favorites")
+}
+
+enum UserType {
+  CUSTOMER
+  MOVER
+}
+
+enum SocialProvider {
+  GOOGLE
+  NAVER
+  KAKAO
+}
+
+enum MovingType {
+  SMALL
+  HOME
+  OFFICE
+}
+
+enum QuoteStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  SENT
+}
+
+enum RequestStatus {
+  ACTIVE
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  DISABLED
+}
+
+enum DesignatedQuoteRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum ActionType {
+  QUOTE_SUBMITTED
+  QUOTE_ACCEPTED
+  QUOTE_REJECTED
+  DESIGNATED_QUOTE_REQUESTED
+  DESIGNATED_QUOTE_SUBMITTED
+  MOVING_COMPLETED
+  REVIEW_SUBMITTED
+}
+
+enum NotificationType {
+  NEW_QUOTE
+  QUOTE_CONFIRMED
+  MOVING_DAY
+  NEW_REQUEST
+  REVIEW_REQUEST
+  QUOTE_REJECTED
+  DESIGNATED_QUOTE_REQUEST
+  PAYMENT_CONFIRMED
+}
+
+enum ReviewStatus {
+  PENDING
+  COMPLETED
+  EXPIRED
 }
