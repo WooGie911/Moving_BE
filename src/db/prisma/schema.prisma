@@ -12,8 +12,8 @@ model User {
   email                      String                   @unique
   encryptedPassword          String?
   encryptedPhoneNumber       String?
-  userType                   UserType
-  isActive                   Boolean                  @default(false)
+  currentRole                UserType                 @default(CUSTOMER)
+  hasProfile                 Boolean                  @default(false)
   lastLoginAt                DateTime?
   accessToken                String?
   refreshToken               String?
@@ -33,10 +33,11 @@ model User {
   receivedReviews            Review[]                 @relation("MoverReviews")
   reviews                    Review[]
   socialAccounts             SocialAccount[]
+  userRoles                  UserRole[]
 
   @@index([email])
-  @@index([userType])
-  @@index([isActive])
+  @@index([currentRole])
+  @@index([hasProfile])
   @@map("users")
 }
 
@@ -284,6 +285,20 @@ model Favorite {
   @@index([userId])
   @@index([moverId])
   @@map("favorites")
+}
+
+model UserRole {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  role      UserType
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+  @@index([userId])
+  @@index([role])
+  @@map("user_roles")
 }
 
 enum UserType {
