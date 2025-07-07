@@ -2,7 +2,7 @@ import {
   PrismaClient,
   UserType,
   MovingType,
-  QuoteStatus,
+  EstimateStatus,
   RequestStatus,
   ReviewStatus,
   SocialProvider,
@@ -285,10 +285,10 @@ async function main() {
     ],
   });
 
-  // 7. 이사 요청 데이터 생성 (enum 직접 사용)
-  console.log("📦 이사 요청 데이터 생성 중...");
-  const movingRequests = await Promise.all([
-    prisma.movingRequest.create({
+  // 7. 견적 요청 데이터 생성 (Quote - 회원님이 기사님께 보내는 견적 요청)
+  console.log("📦 견적 요청 데이터 생성 중...");
+  const quotes = await Promise.all([
+    prisma.quote.create({
       data: {
         userId: customers[0].id,
         movingType: MovingType.SMALL,
@@ -304,12 +304,12 @@ async function main() {
         estimatedDistance: 5.2,
         floor: 3,
         hasElevator: false,
-        quoteCount: 2,
+        estimateCount: 2,
         isUrgent: false,
         maxBudget: 200000,
       },
     }),
-    prisma.movingRequest.create({
+    prisma.quote.create({
       data: {
         userId: customers[1].id,
         movingType: MovingType.HOME,
@@ -325,12 +325,12 @@ async function main() {
         estimatedDistance: 25.8,
         floor: 15,
         hasElevator: true,
-        quoteCount: 3,
+        estimateCount: 3,
         isUrgent: true,
         maxBudget: 500000,
       },
     }),
-    prisma.movingRequest.create({
+    prisma.quote.create({
       data: {
         userId: customers[2].id,
         movingType: MovingType.OFFICE,
@@ -346,24 +346,24 @@ async function main() {
         estimatedDistance: 8.3,
         floor: 12,
         hasElevator: true,
-        quoteCount: 1,
+        estimateCount: 1,
         isUrgent: false,
         maxBudget: 1000000,
       },
     }),
   ]);
 
-  // 8. 견적 데이터 생성 (편의 필드 포함)
-  console.log("💰 견적 데이터 생성 중...");
-  const quotes = await Promise.all([
+  // 8. 견적 가격 데이터 생성 (Estimate - 기사님이 회원님에게 보내는 견적 가격)
+  console.log("💰 견적 가격 데이터 생성 중...");
+  const estimates = await Promise.all([
     // 첫 번째 요청에 대한 견적들
-    prisma.quote.create({
+    prisma.estimate.create({
       data: {
-        requestId: movingRequests[0].id,
+        quoteId: quotes[0].id,
         moverId: movers[0].id,
         price: 150000,
         description: "소형이사 전문 서비스입니다. 냉장고, 세탁기 안전 운반 보장",
-        status: QuoteStatus.SENT,
+        status: EstimateStatus.SENT,
         validUntil: new Date("2024-02-10"),
         responseTime: 30, // 30분 후 응답
         workingHours: "3-4시간",
@@ -371,13 +371,13 @@ async function main() {
         insuranceAmount: 1000000,
       },
     }),
-    prisma.quote.create({
+    prisma.estimate.create({
       data: {
-        requestId: movingRequests[0].id,
+        quoteId: quotes[0].id,
         moverId: movers[1].id,
         price: 180000,
         description: "신속하고 안전한 이사 서비스. 포장재 무료 제공",
-        status: QuoteStatus.SENT,
+        status: EstimateStatus.SENT,
         validUntil: new Date("2024-02-10"),
         responseTime: 15, // 15분 후 응답
         workingHours: "2-3시간",
@@ -387,13 +387,13 @@ async function main() {
     }),
 
     // 두 번째 요청에 대한 견적들
-    prisma.quote.create({
+    prisma.estimate.create({
       data: {
-        requestId: movingRequests[1].id,
+        quoteId: quotes[1].id,
         moverId: movers[1].id,
         price: 450000,
         description: "피아노 전문 운반 서비스 포함. 보험 적용",
-        status: QuoteStatus.ACCEPTED,
+        status: EstimateStatus.ACCEPTED,
         validUntil: new Date("2024-02-15"),
         responseTime: 45, // 45분 후 응답
         workingHours: "5-6시간",
@@ -401,13 +401,13 @@ async function main() {
         insuranceAmount: 5000000,
       },
     }),
-    prisma.quote.create({
+    prisma.estimate.create({
       data: {
-        requestId: movingRequests[1].id,
+        quoteId: quotes[1].id,
         moverId: movers[3].id,
         price: 500000,
         description: "12년 경력 전문가의 완벽한 가정이사 서비스",
-        status: QuoteStatus.SENT,
+        status: EstimateStatus.SENT,
         validUntil: new Date("2024-02-15"),
         responseTime: 120, // 2시간 후 응답
         workingHours: "4-5시간",
@@ -417,13 +417,13 @@ async function main() {
     }),
 
     // 세 번째 요청에 대한 견적
-    prisma.quote.create({
+    prisma.estimate.create({
       data: {
-        requestId: movingRequests[2].id,
+        quoteId: quotes[2].id,
         moverId: movers[3].id,
         price: 800000,
         description: "사무실 이사 전문. IT 장비 안전 운반 및 설치 지원",
-        status: QuoteStatus.SENT,
+        status: EstimateStatus.SENT,
         validUntil: new Date("2024-02-20"),
         responseTime: 60, // 1시간 후 응답
         workingHours: "6-8시간",
@@ -435,10 +435,10 @@ async function main() {
 
   // 9. 확정된 견적 업데이트
   console.log("✅ 확정된 견적 업데이트 중...");
-  await prisma.movingRequest.update({
-    where: { id: movingRequests[1].id },
+  await prisma.quote.update({
+    where: { id: quotes[1].id },
     data: {
-      confirmedQuoteId: quotes[2].id,
+      confirmedEstimateId: estimates[2].id,
       status: RequestStatus.CONFIRMED,
     },
   });
@@ -448,8 +448,8 @@ async function main() {
   await Promise.all([
     prisma.review.create({
       data: {
-        requestId: movingRequests[1].id,
-        quoteId: quotes[2].id,
+        quoteId: quotes[1].id,
+        estimateId: estimates[2].id,
         userId: customers[1].id,
         moverId: movers[1].id,
         rating: 5,
@@ -511,12 +511,16 @@ async function main() {
   - 고객: 3명
   - 기사님: 4명 (통계 데이터 포함)
   - 프로필: 4개
-  - 이사 요청: 3개 (다양한 상태)
-  - 견적: 5개 (편의 필드 포함)
+  - 견적 요청 (Quote): 3개 (다양한 상태)
+  - 견적 가격 (Estimate): 5개 (편의 필드 포함)
   - 리뷰: 1개
   - 찜하기: 4개
   - 소셜 계정: 3개
   - 일반 유저 서비스: 3개
+  
+  🎯 챌린지 기능 (별도 구현):
+  - 채팅 시스템 (ChatRoom, ChatMessage)
+  - 실시간 알림 (SSE)
   `);
 }
 
