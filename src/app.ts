@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware";
+import { setupAutoSwagger } from "./utils/swagger-auto";
 
 // 환경변수 로드
 dotenv.config();
@@ -15,6 +16,12 @@ app.use(express.json()); // JSON 파싱
 app.use(express.urlencoded({ extended: true })); // URL 인코딩 파싱
 
 // Health Check 엔드포인트
+/**
+ * GET /health
+ * @summary 서버 상태 확인
+ * @tags Health
+ * @return {object} 200 - 서버 정상 작동
+ */
 app.get("/health", (req, res) => {
   res.status(200).json({
     success: true,
@@ -24,9 +31,11 @@ app.get("/health", (req, res) => {
   });
 });
 
-// API 라우트 연결 (향후 추가)
+// Swagger 자동 설정 (API 라우트들을 자동으로 스캔)
+setupAutoSwagger(app);
+
+// API 라우트 연결
 // app.use('/api/users', userRoutes);
-// app.use('/api/auth', authRoutes);
 
 // 404 에러 핸들링
 app.use(notFoundHandler);
