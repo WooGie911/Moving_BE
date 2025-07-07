@@ -8,12 +8,25 @@ datasource db {
 }
 
 model User {
-  id                         Int                      @id @default(autoincrement())
-  email                      String                   @unique
-  encryptedPassword          String?
-  encryptedPhoneNumber       String?
-  currentRole                UserType                 @default(CUSTOMER)
-  hasProfile                 Boolean                  @default(false)
+  id                   Int      @id @default(autoincrement())
+  email                String   @unique
+  name                 String? // 일반 유저 실명 (기사님은 Profile의 nickname 사용)
+  encryptedPassword    String?
+  encryptedPhoneNumber String?
+  currentRole          UserType @default(CUSTOMER)
+  hasProfile           Boolean  @default(false)
+  currentRegion        Region? // 일반 유저의 현재 거주 지역 (견적 요청 시 출발지로 사용)
+
+  // 🚀 견적 제한 관리 필드들
+  hasActiveRequest Boolean   @default(false) // 활성 요청 여부 (한 번에 하나만)
+  lastMovingDate   DateTime? // 마지막 이사 날짜 (이사일 지나야 새 요청 가능)
+  canCreateRequest Boolean   @default(true) // 새 요청 생성 가능 여부
+
+  // 🚀 실시간 알림 관련 필드들 (웹소켓)
+  isOnline       Boolean   @default(false) // 온라인 상태
+  lastOnlineAt   DateTime? // 마지막 온라인 시간
+  webSocketToken String? // 웹소켓 연결 토큰
+
   lastLoginAt                DateTime?
   accessToken                String?
   refreshToken               String?
@@ -29,15 +42,31 @@ model User {
   movingRequests             MovingRequest[]
   notifications              Notification[]
   profile                    Profile?
-  quotes                     Quote[]
+  quotes                     Quote[]                  @relation("MoverQuotes") // 기사님이 작성한 견적들
+  rejectedQuotes             Quote[]                  @relation("QuoteRejections") // 사용자가 반려한 견적들
   receivedReviews            Review[]                 @relation("MoverReviews")
   reviews                    Review[]
   socialAccounts             SocialAccount[]
   userRoles                  UserRole[]
+  userServices               UserService[] // 일반 유저가 선택한 이용 서비스
+  moverActivities            MoverActivity[]          @relation("MoverActivities") // 기사님의 활동 내역
+  Quote                      Quote[]
+
+  // 🚀 채팅 시스템 관계
+  customerChatRooms ChatRoom[]    @relation("CustomerChatRooms")
+  moverChatRooms    ChatRoom[]    @relation("MoverChatRooms")
+  chatMessages      ChatMessage[]
+
+  // 🚀 소셜 공유 관계
+  socialShares SocialShare[]
 
   @@index([email])
   @@index([currentRole])
   @@index([hasProfile])
+  @@index([currentRegion])
+  @@index([hasActiveRequest]) // 활성 요청 여부 인덱스
+  @@index([lastMovingDate]) // 마지막 이사 날짜 인덱스
+  @@index([isOnline]) // 온라인 상태 인덱스
   @@map("users")
 }
 
@@ -55,13 +84,21 @@ model SocialAccount {
 }
 
 model Profile {
-  id             Int              @id @default(autoincrement())
-  userId         Int              @unique
-  nickname       String           @unique
-  profileImage   String?
-  experience     Int
-  introduction   String
-  description    String
+  id           Int     @id @default(autoincrement())
+  userId       Int     @unique
+  nickname     String  @unique
+  profileImage String?
+  experience   Int
+  introduction String
+  description  String
+
+  // 🚀 캐싱된 통계 데이터 (성능 최적화)
+  completedCount Int       @default(0) // 완료된 이사 건수
+  avgRating      Float     @default(0.0) // 평균 평점
+  reviewCount    Int       @default(0) // 리뷰 총 개수
+  favoriteCount  Int       @default(0) // 찜한 사용자 수
+  lastActivityAt DateTime? // 마지막 활동 시간 (정렬용)
+
   deletedAt      DateTime?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
@@ -70,28 +107,39 @@ model Profile {
   user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([nickname])
+  @@index([avgRating]) // 평점 높은순 정렬
+  @@index([reviewCount]) // 리뷰 많은순 정렬
+  @@index([completedCount]) // 확정 많은순 정렬
+  @@index([experience]) // 경력 높은순 정렬
+  @@index([lastActivityAt]) // 최근 활동순 정렬
+  // 🚀 기사님 찾기 검색 최적화를 위한 복합 인덱스
+  @@index([avgRating, completedCount]) // 평점+확정건수 조합 정렬
+  @@index([experience, avgRating]) // 경력+평점 조합 정렬
+  @@index([deletedAt, avgRating]) // 소프트 삭제 + 평점 조합
   @@map("profiles")
 }
 
-model Region {
-  id                Int             @id @default(autoincrement())
-  name              String          @unique
-  isActive          Boolean         @default(true)
-  arrivalRequests   MovingRequest[] @relation("ArrivalRegion")
-  departureRequests MovingRequest[] @relation("DepartureRegion")
-  profiles          ProfileRegion[]
+model RegionInfo {
+  region      Region   @id // enum을 직접 PK로 사용
+  displayName String   @unique // 화면 표시용 이름
+  isActive    Boolean  @default(true) // 서비스 지역 여부
+  extraFee    Int? // 추가 배송비
+  description String? // 지역 설명
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([isActive])
-  @@map("regions")
+  @@map("region_infos")
 }
 
 model Service {
-  id          Int              @id @default(autoincrement())
-  name        String           @unique
-  description String?
-  isActive    Boolean          @default(true)
-  iconUrl     String?
-  profiles    ProfileService[]
+  id           Int              @id @default(autoincrement())
+  name         String           @unique
+  description  String?
+  isActive     Boolean          @default(true)
+  iconUrl      String?
+  profiles     ProfileService[]
+  userServices UserService[] // 일반 유저가 선택한 서비스
 
   @@index([isActive])
   @@map("services")
@@ -100,13 +148,12 @@ model Service {
 model ProfileRegion {
   id        Int     @id @default(autoincrement())
   profileId Int
-  regionId  Int
+  region    Region // enum 직접 사용 (관계 없이)
   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  region    Region  @relation(fields: [regionId], references: [id], onDelete: Cascade)
 
-  @@unique([profileId, regionId])
+  @@unique([profileId, region])
   @@index([profileId])
-  @@index([regionId])
+  @@index([region])
   @@map("profile_regions")
 }
 
@@ -124,38 +171,64 @@ model ProfileService {
 }
 
 model MovingRequest {
-  id                      Int                      @id @default(autoincrement())
-  userId                  Int
-  movingType              MovingType
-  movingDate              DateTime
-  departureAddr           String
-  arrivalAddr             String
-  departureDetail         String?
-  arrivalDetail           String?
-  departureRegionId       Int?
-  arrivalRegionId         Int?
-  description             String?
-  status                  RequestStatus            @default(ACTIVE)
-  confirmedQuoteId        Int?                     @unique
-  estimatedDistance       Float?
-  floor                   Int?
-  hasElevator             Boolean?
+  id                Int           @id @default(autoincrement())
+  userId            Int
+  movingType        MovingType
+  movingDate        DateTime
+  departureAddr     String
+  arrivalAddr       String
+  departureDetail   String?
+  arrivalDetail     String?
+  departureRegion   Region? // enum 직접 사용
+  arrivalRegion     Region? // enum 직접 사용
+  description       String?
+  status            RequestStatus @default(ACTIVE)
+  confirmedQuoteId  Int?          @unique
+  estimatedDistance Float?
+  floor             Int?
+  hasElevator       Boolean?
+
+  // 🚀 구현 편의를 위한 필드들
+  quoteCount Int     @default(0) // 현재 받은 견적 수
+  isUrgent   Boolean @default(false) // 급한 이사 여부
+  maxBudget  Int? // 최대 예산 (필터링용)
+
+  // 🚀 견적 제한 관리 필드들
+  maxQuoteCount        Int @default(8) // 최대 견적 수 (일반5+지정3)
+  designatedQuoteCount Int @default(0) // 현재 지정 견적 수
+  maxDesignatedQuotes  Int @default(3) // 최대 지정 견적 수
+
+  // 🚀 정확한 주소 처리 (카카오 API 지원)
+  departureZipCode   String? // 출발지 우편번호
+  arrivalZipCode     String? // 도착지 우편번호
+  departureLatitude  Float? // 출발지 위도 (선택사항)
+  departureLongitude Float? // 출발지 경도 (선택사항)
+  arrivalLatitude    Float? // 도착지 위도 (선택사항)
+  arrivalLongitude   Float? // 도착지 경도 (선택사항)
+
   deletedAt               DateTime?
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   designatedQuoteRequests DesignatedQuoteRequest[]
-  arrivalRegion           Region?                  @relation("ArrivalRegion", fields: [arrivalRegionId], references: [id])
   confirmedQuote          Quote?                   @relation("ConfirmedQuote", fields: [confirmedQuoteId], references: [id])
-  departureRegion         Region?                  @relation("DepartureRegion", fields: [departureRegionId], references: [id])
   user                    User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   quotes                  Quote[]
   reviews                 Review[]
+  moverActivities         MoverActivity[] // 기사님들의 활동 내역
+
+  // 🚀 채팅 시스템 관계
+  chatRoom ChatRoom?
 
   @@index([userId])
   @@index([status])
   @@index([movingDate])
-  @@index([departureRegionId])
-  @@index([arrivalRegionId])
+  @@index([departureRegion])
+  @@index([arrivalRegion])
+  @@index([movingType]) // 이사 유형별 조회
+  @@index([isUrgent]) // 급한 이사 필터링
+  @@index([maxBudget]) // 예산별 필터링
+  @@index([quoteCount]) // 견적 수 인덱스
+  @@index([designatedQuoteCount]) // 지정 견적 수 인덱스
   @@map("moving_requests")
 }
 
@@ -183,28 +256,50 @@ model DesignatedQuoteRequest {
 }
 
 model Quote {
-  id                       Int                     @id @default(autoincrement())
+  id                       Int         @id @default(autoincrement())
   requestId                Int
   moverId                  Int
   price                    Int
   description              String
-  status                   QuoteStatus             @default(PENDING)
-  isDesignated             Boolean                 @default(false)
-  designatedQuoteRequestId Int?                    @unique
+  status                   QuoteStatus @default(PENDING)
+  isDesignated             Boolean     @default(false)
+  designatedQuoteRequestId Int?        @unique
   validUntil               DateTime?
-  deletedAt                DateTime?
-  createdAt                DateTime                @default(now())
-  updatedAt                DateTime                @updatedAt
-  confirmedRequest         MovingRequest?          @relation("ConfirmedQuote")
-  designatedQuoteRequest   DesignatedQuoteRequest? @relation(fields: [designatedQuoteRequestId], references: [id])
-  mover                    User                    @relation(fields: [moverId], references: [id], onDelete: Cascade)
-  request                  MovingRequest           @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  reviews                  Review[]
+
+  // 🚀 구현 편의를 위한 필드들
+  responseTime      Int? // 응답 시간 (분 단위)
+  isReadByCustomer  Boolean @default(false) // 고객이 읽었는지 여부
+  workingHours      String? // 작업 소요 시간 (예: "4-6시간")
+  includesPackaging Boolean @default(false) // 포장 서비스 포함 여부
+  insuranceAmount   Int? // 보험 금액
+
+  // 🔴 반려 관련 필드들 (반려된 견적 페이지 지원)
+  rejectedBy      Int? // 반려한 사용자 ID (고객 또는 기사님)
+  rejectedAt      DateTime? // 반려 날짜
+  rejectionReason String? // 반려 사유
+  rejectionNote   String? // 반려 시 추가 메모
+
+  deletedAt              DateTime?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  confirmedRequest       MovingRequest?          @relation("ConfirmedQuote")
+  designatedQuoteRequest DesignatedQuoteRequest? @relation(fields: [designatedQuoteRequestId], references: [id])
+  mover                  User                    @relation("MoverQuotes", fields: [moverId], references: [id], onDelete: Cascade)
+  request                MovingRequest           @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  reviews                Review[]
+  rejectedByUser         User?                   @relation("QuoteRejections", fields: [rejectedBy], references: [id]) // 반려한 사용자
+  User                   User?                   @relation(fields: [userId], references: [id])
+  userId                 Int?
 
   @@unique([requestId, moverId])
   @@index([moverId])
   @@index([status])
   @@index([createdAt])
+  @@index([price]) // 가격별 정렬
+  @@index([isDesignated]) // 지정견적 필터링
+  @@index([validUntil]) // 만료일 관리
+  @@index([rejectedBy]) // 반려한 사용자별 조회
+  @@index([rejectedAt]) // 반려 날짜별 정렬
   @@map("quotes")
 }
 
@@ -237,14 +332,22 @@ model Notification {
   content   String
   isRead    Boolean          @default(false)
   actionUrl String?
+
+  // 🚀 실시간 알림 관련 필드들
+  isRealTime Boolean @default(true) // 실시간 알림 여부
+  socketSent Boolean @default(false) // 웹소켓 전송 여부
+  retryCount Int     @default(0) // 재시도 횟수
+
   deletedAt DateTime?
-  createdAt DateTime         @default(now())
-  action    Action           @relation(fields: [actionId], references: [id], onDelete: Cascade)
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  action    Action    @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isRead])
   @@index([actionId])
   @@index([createdAt])
+  @@index([isRealTime]) // 실시간 알림 인덱스
+  @@index([socketSent]) // 웹소켓 전송 상태 인덱스
   @@map("notifications")
 }
 
@@ -299,6 +402,110 @@ model UserRole {
   @@index([userId])
   @@index([role])
   @@map("user_roles")
+}
+
+model UserService {
+  id        Int     @id @default(autoincrement())
+  userId    Int
+  serviceId Int
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, serviceId])
+  @@index([userId])
+  @@index([serviceId])
+  @@map("user_services")
+}
+
+// 🚀 기사님의 견적 요청 활동 추적 테이블
+model MoverActivity {
+  id         Int                 @id @default(autoincrement())
+  moverId    Int // 기사님 ID
+  requestId  Int // 견적 요청 ID
+  actionType MoverActionType // 활동 타입 (조회, 견적 작성, 반려 등)
+  status     MoverActivityStatus @default(VIEWED) // 활동 상태
+  viewedAt   DateTime? // 조회한 시간
+  quotedAt   DateTime? // 견적 작성한 시간
+  rejectedAt DateTime? // 반려한 시간 (기사님이 요청을 반려)
+  reason     String? // 반려 사유
+  note       String? // 메모
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  mover   User          @relation("MoverActivities", fields: [moverId], references: [id], onDelete: Cascade)
+  request MovingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@unique([moverId, requestId]) // 기사님당 요청당 하나의 활동만
+  @@index([moverId])
+  @@index([requestId])
+  @@index([actionType])
+  @@index([status])
+  @@index([viewedAt])
+  @@index([quotedAt])
+  @@index([rejectedAt])
+  @@map("mover_activities")
+}
+
+// 🚀 채팅 시스템 - 견적 요청별 채팅방
+model ChatRoom {
+  id         Int      @id @default(autoincrement())
+  requestId  Int      @unique // 견적 요청별 하나의 채팅방
+  customerId Int // 고객 ID
+  moverId    Int? // 기사님 ID (지정 견적의 경우만)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  request  MovingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  customer User          @relation("CustomerChatRooms", fields: [customerId], references: [id], onDelete: Cascade)
+  mover    User?         @relation("MoverChatRooms", fields: [moverId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@index([customerId])
+  @@index([moverId])
+  @@index([isActive])
+  @@map("chat_rooms")
+}
+
+// 🚀 채팅 메시지
+model ChatMessage {
+  id          Int      @id @default(autoincrement())
+  chatRoomId  Int // 채팅방 ID
+  senderId    Int // 발신자 ID
+  messageType String // "TEXT", "SYSTEM", "STEP_COMPLETE", "IMAGE"
+  content     String // 메시지 내용
+  step        Int? // 견적 요청 단계 (채팅형 입력용)
+  metadata    Json? // 추가 데이터 (이미지 URL, 시스템 메시지 정보 등)
+  createdAt   DateTime @default(now())
+
+  chatRoom ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  sender   User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([chatRoomId])
+  @@index([senderId])
+  @@index([messageType])
+  @@index([createdAt])
+  @@map("chat_messages")
+}
+
+// 🚀 소셜 미디어 공유 추적
+model SocialShare {
+  id         Int      @id @default(autoincrement())
+  entityType String // "MOVER_PROFILE", "QUOTE", "REVIEW"
+  entityId   Int // 공유 대상 ID (기사님 ID, 견적 ID 등)
+  platform   String // "FACEBOOK", "TWITTER", "KAKAO", "LINK_COPY"
+  sharedBy   Int? // 공유한 사용자 ID (로그인 시)
+  ipAddress  String? // 비로그인 사용자 추적용 IP
+  userAgent  String? // 사용자 브라우저 정보
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [sharedBy], references: [id], onDelete: Cascade)
+
+  @@index([entityType, entityId])
+  @@index([platform])
+  @@index([sharedBy])
+  @@index([createdAt])
+  @@map("social_shares")
 }
 
 enum UserType {
@@ -366,4 +573,40 @@ enum ReviewStatus {
   PENDING
   COMPLETED
   EXPIRED
+}
+
+enum MoverActionType {
+  VIEWED // 견적 요청 조회
+  QUOTED // 견적 작성
+  REJECTED // 요청 반려 (기사님이 요청을 거절)
+  BOOKMARKED // 북마크 (나중에 견적 작성 예정)
+}
+
+enum MoverActivityStatus {
+  VIEWED // 조회만 함
+  INTERESTED // 관심 표시
+  QUOTED // 견적 작성 완료
+  REJECTED // 요청 반려
+  BOOKMARKED // 북마크 상태
+}
+
+// 🚀 지역 Enum (한국 17개 시도)
+enum Region {
+  SEOUL // 서울특별시
+  BUSAN // 부산광역시
+  DAEGU // 대구광역시
+  INCHEON // 인천광역시
+  GWANGJU // 광주광역시
+  DAEJEON // 대전광역시
+  ULSAN // 울산광역시
+  SEJONG // 세종특별자치시
+  GYEONGGI // 경기도
+  CHUNGBUK // 충청북도
+  CHUNGNAM // 충청남도
+  JEONBUK // 전라북도
+  JEONNAM // 전라남도
+  GYEONGBUK // 경상북도
+  GYEONGNAM // 경상남도
+  GANGWON // 강원도
+  JEJU // 제주특별자치도
 }
