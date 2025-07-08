@@ -109,6 +109,7 @@ async function main() {
     prisma.user.create({
       data: {
         email: "mover1@example.com",
+        name: "김민수", // 기사님 실명
         encryptedPassword: await bcrypt.hash("password123", 10),
         encryptedPhoneNumber: encryptPhoneNumber("010-4567-8901"),
         currentRole: UserType.MOVER,
@@ -125,6 +126,7 @@ async function main() {
     prisma.user.create({
       data: {
         email: "mover2@example.com",
+        name: "박성호", // 기사님 실명
         encryptedPassword: await bcrypt.hash("password123", 10),
         encryptedPhoneNumber: encryptPhoneNumber("010-5678-9012"),
         currentRole: UserType.MOVER,
@@ -141,6 +143,7 @@ async function main() {
     prisma.user.create({
       data: {
         email: "mover3@example.com",
+        name: "이준혁", // 기사님 실명
         encryptedPassword: await bcrypt.hash("password123", 10),
         encryptedPhoneNumber: encryptPhoneNumber("010-6789-0123"),
         currentRole: UserType.MOVER,
@@ -157,6 +160,7 @@ async function main() {
     prisma.user.create({
       data: {
         email: "mover4@example.com",
+        name: "최동철", // 기사님 실명
         encryptedPassword: await bcrypt.hash("password123", 10),
         encryptedPhoneNumber: encryptPhoneNumber("010-7890-1234"),
         currentRole: UserType.MOVER,
