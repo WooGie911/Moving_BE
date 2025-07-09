@@ -1,9 +1,9 @@
 import { PrismaClient } from "@prisma/client";
-import { TUser } from "../types/user";
+import { TUserSignup } from "../types/user";
 
 const prisma = new PrismaClient();
 
-const saveUser = async (user: TUser) => {
+const saveUser = async (user: TUserSignup) => {
   return await prisma.user.create({
     data: {
       email: user.email,
@@ -12,6 +12,11 @@ const saveUser = async (user: TUser) => {
       encryptedPhoneNumber: user.encryptedPhoneNumber,
       currentRole: user.currentRole,
       hasProfile: false,
+    },
+    select: {
+      id: true,
+      name: true,
+      currentRole: true,
     },
   });
 };
@@ -30,4 +35,11 @@ const findUserByEmailAndPassword = async (email: string) => {
   });
 };
 
-export default { saveUser, findUserByEmailAndPassword };
+// 이메일 중복 체크
+const findUserByEmail = async (email: string) => {
+  return await prisma.user.findUnique({
+    where: { email },
+  });
+};
+
+export default { saveUser, findUserByEmailAndPassword, findUserByEmail };
