@@ -1,0 +1,22 @@
+name: 🚀 Auto Deploy to EC2
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔐 SSH 접속 설정
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: 🚀 EC2에 배포 실행
+        run: ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_HOST }} 'bash ~/deploy.sh'
