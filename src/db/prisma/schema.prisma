@@ -10,7 +10,7 @@ datasource db {
 model User {
   id                   Int      @id @default(autoincrement())
   email                String   @unique
-  name                 String? // 일반 유저 실명 (기사님은 Profile의 nickname 사용)
+  name                 String // 유저의 실명 (모든 사용자 필수)
   encryptedPassword    String?
   encryptedPhoneNumber String?
   currentRole          UserType @default(CUSTOMER)
@@ -81,7 +81,7 @@ model SocialAccount {
 model Profile {
   id           Int     @id @default(autoincrement())
   userId       Int     @unique
-  nickname     String  @unique
+  nickname     String  @unique // 기사님 닉네임 (필수, 자동 생성)
   profileImage String?
   experience   Int
   introduction String
