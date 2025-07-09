@@ -7,6 +7,7 @@ import {
   ServerError,
   ValidationError,
 } from "../types/commonError";
+import { handleError } from "../utils/handleError";
 
 const signin = async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -28,19 +29,7 @@ const signin = async (req: Request, res: Response) => {
 
     res.status(200).json({ status: 200, message: "로그인 성공" });
   } catch (error: any) {
-    if (error instanceof AuthenticationError) {
-      res.status(401).json({ status: 401, message: error.message });
-    } else if (error instanceof ValidationError) {
-      res.status(422).json({ status: 422, message: error.message });
-    } else if (error instanceof DatabaseError) {
-      res.status(500).json({ status: 500, message: error.message });
-    } else if (error instanceof ServerError) {
-      res.status(500).json({ status: 500, message: error.message });
-    } else {
-      res
-        .status(500)
-        .json({ status: 500, message: "예상치 못한 오류로 인한 로그인 실패" });
-    }
+    handleError(res, error, "예상치 못한 오류로 인한 로그인 실패");
   }
 };
 
@@ -73,31 +62,7 @@ const signup = async (req: Request, res: Response) => {
       message: "회원가입 성공",
     });
   } catch (error: any) {
-    if (error instanceof ValidationError) {
-      res.status(422).json({
-        status: 422,
-        message: error.message,
-        error: error.data,
-      });
-    } else if (error instanceof DatabaseError) {
-      res.status(500).json({
-        status: 500,
-        message: error.message,
-        error: error.data,
-      });
-    } else if (error instanceof ServerError) {
-      res.status(500).json({
-        status: 500,
-        message: error.message,
-        error: error.data,
-      });
-    } else {
-      res.status(500).json({
-        status: 500,
-        message: "예상치 못한 오류로 인한 회원가입 실패",
-        error: error.message,
-      });
-    }
+    handleError(res, error, "예상치 못한 오류로 인한 회원가입 실패");
   }
 };
 
