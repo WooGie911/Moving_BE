@@ -7,8 +7,14 @@ export type TUser = {
   currentRole: "CUSTOMER" | "MOVER";
 };
 
-export type TUserTokenCreate = {
-  id: number;
+export type TUserTokenCreate = Pick<TUser, "id" | "name" | "currentRole">;
+
+export type TUserSignupInput = {
   name: string;
+  email: string;
+  phoneNumber: string;
+  password: string;
   currentRole: "CUSTOMER" | "MOVER";
 };
+
+export type TUserSignup = Omit<TUser, "id">;
