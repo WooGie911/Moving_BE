@@ -30,6 +30,8 @@ const signin = async (req: Request, res: Response) => {
   } catch (error: any) {
     if (error instanceof AuthenticationError) {
       res.status(401).json({ status: 401, message: error.message });
+    } else if (error instanceof ValidationError) {
+      res.status(422).json({ status: 422, message: error.message });
     } else if (error instanceof DatabaseError) {
       res.status(500).json({ status: 500, message: error.message });
     } else if (error instanceof ServerError) {

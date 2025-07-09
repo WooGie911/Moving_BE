@@ -16,6 +16,9 @@ import {
 
 // 로그인 검증
 const signin = async (email: string, password: string) => {
+  // 0. 유효성 검사
+  validateUserSignupInput({ email, password });
+
   // 1. 유저 존재 여부 확인
   const existingUser = await authRepository.findUserByEmailAndPassword(email);
 

@@ -89,19 +89,28 @@ type TUserSignupInput = {
   password: string;
 };
 
-export const validateUserSignupInput = (input: TUserSignupInput): void => {
-  if (!isValidEmail(input.email)) {
+/**
+ * 유연한 회원가입 유효성 검사
+ * - 필요한 필드만 넘기면 해당 필드만 검증
+ */
+export const validateUserSignupInput = (
+  input: Partial<TUserSignupInput>
+): void => {
+  if (input.email !== undefined && !isValidEmail(input.email)) {
     throw new ValidationError(
       "올바른 이메일 형식이 아니거나 허용되지 않는 도메인입니다."
     );
   }
-  if (!isValidName(input.name)) {
+  if (input.name !== undefined && !isValidName(input.name)) {
     throw new ValidationError("올바른 이름 형식이 아닙니다.");
   }
-  if (!isValidPhoneNumber(input.phoneNumber)) {
+  if (
+    input.phoneNumber !== undefined &&
+    !isValidPhoneNumber(input.phoneNumber)
+  ) {
     throw new ValidationError("올바른 전화번호 형식이 아닙니다.");
   }
-  if (!isValidPassword(input.password)) {
+  if (input.password !== undefined && !isValidPassword(input.password)) {
     throw new ValidationError(
       "비밀번호는 최소 8자 이상이며 영문, 숫자, 특수문자를 각각 포함해야 합니다."
     );
