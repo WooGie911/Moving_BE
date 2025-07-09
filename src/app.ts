@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware";
 import { setupAutoSwagger } from "./utils/swagger-auto";
+import authRouter from "./routes/auth.route";
 
 // 환경변수 로드
 dotenv.config();
@@ -36,6 +37,7 @@ setupAutoSwagger(app);
 
 // API 라우트 연결
 // app.use('/api/users', userRoutes);
+app.use("/auth", authRouter);
 
 // 404 에러 핸들링
 app.use(notFoundHandler);

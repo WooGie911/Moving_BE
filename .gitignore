@@ -142,3 +142,6 @@ vite.config.ts.timestamp-*
 
 # Prettier
 .prettierrc
+
+# HTTP files
+http/ 
