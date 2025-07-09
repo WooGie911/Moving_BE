@@ -12,13 +12,12 @@ model User {
   email                      String                   @unique
   encryptedPassword          String?
   encryptedPhoneNumber       String?
-  currentRole                UserType                 @default(CUSTOMER)
-  hasProfile                 Boolean                  @default(false)
+  userType                   UserType
+  isActive                   Boolean                  @default(false)
   lastLoginAt                DateTime?
   accessToken                String?
   refreshToken               String?
   tokenExpiresAt             DateTime?
-  deletedAt                  DateTime?
   createdAt                  DateTime                 @default(now())
   updatedAt                  DateTime                 @updatedAt
   actions                    Action[]
@@ -33,11 +32,10 @@ model User {
   receivedReviews            Review[]                 @relation("MoverReviews")
   reviews                    Review[]
   socialAccounts             SocialAccount[]
-  userRoles                  UserRole[]
 
   @@index([email])
-  @@index([currentRole])
-  @@index([hasProfile])
+  @@index([userType])
+  @@index([isActive])
   @@map("users")
 }
 
@@ -62,7 +60,6 @@ model Profile {
   experience     Int
   introduction   String
   description    String
-  deletedAt      DateTime?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   serviceRegions ProfileRegion[]
@@ -140,7 +137,6 @@ model MovingRequest {
   estimatedDistance       Float?
   floor                   Int?
   hasElevator             Boolean?
-  deletedAt               DateTime?
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   designatedQuoteRequests DesignatedQuoteRequest[]
@@ -167,7 +163,6 @@ model DesignatedQuoteRequest {
   message    String?
   status     DesignatedQuoteRequestStatus @default(PENDING)
   expiresAt  DateTime
-  deletedAt  DateTime?
   createdAt  DateTime                     @default(now())
   updatedAt  DateTime                     @updatedAt
   customer   User                         @relation("CustomerDesignatedRequests", fields: [customerId], references: [id], onDelete: Cascade)
@@ -192,7 +187,6 @@ model Quote {
   isDesignated             Boolean                 @default(false)
   designatedQuoteRequestId Int?                    @unique
   validUntil               DateTime?
-  deletedAt                DateTime?
   createdAt                DateTime                @default(now())
   updatedAt                DateTime                @updatedAt
   confirmedRequest         MovingRequest?          @relation("ConfirmedQuote")
@@ -216,7 +210,6 @@ model Action {
   entityType    String
   description   String?
   metadata      Json?
-  deletedAt     DateTime?
   createdAt     DateTime       @default(now())
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   notifications Notification[]
@@ -237,7 +230,6 @@ model Notification {
   content   String
   isRead    Boolean          @default(false)
   actionUrl String?
-  deletedAt DateTime?
   createdAt DateTime         @default(now())
   action    Action           @relation(fields: [actionId], references: [id], onDelete: Cascade)
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -258,7 +250,6 @@ model Review {
   content   String
   status    ReviewStatus  @default(PENDING)
   isPublic  Boolean       @default(true)
-  deletedAt DateTime?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
   mover     User          @relation("MoverReviews", fields: [moverId], references: [id], onDelete: Cascade)
@@ -285,20 +276,6 @@ model Favorite {
   @@index([userId])
   @@index([moverId])
   @@map("favorites")
-}
-
-model UserRole {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  role      UserType
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, role])
-  @@index([userId])
-  @@index([role])
-  @@map("user_roles")
 }
 
 enum UserType {
