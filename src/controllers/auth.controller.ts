@@ -1,12 +1,7 @@
 import { Request, Response } from "express";
 import authService from "../services/auth.service";
 import { TOKEN_EXPIRES } from "../constants/token.constants";
-import {
-  AuthenticationError,
-  DatabaseError,
-  ServerError,
-  ValidationError,
-} from "../types/commonError";
+
 import { handleError } from "../utils/handleError";
 
 const signin = async (req: Request, res: Response) => {
@@ -29,7 +24,7 @@ const signin = async (req: Request, res: Response) => {
 
     res.status(200).json({ status: 200, message: "로그인 성공" });
   } catch (error: any) {
-    handleError(res, error, "예상치 못한 오류로 인한 로그인 실패");
+    handleError(res, error);
   }
 };
 
@@ -62,7 +57,7 @@ const signup = async (req: Request, res: Response) => {
       message: "회원가입 성공",
     });
   } catch (error: any) {
-    handleError(res, error, "예상치 못한 오류로 인한 회원가입 실패");
+    handleError(res, error);
   }
 };
 
