@@ -25,7 +25,6 @@ const signin = async (email: string, password: string) => {
   if (!existingUser) {
     throw new AuthenticationError("존재하지 않는 유저입니다");
   }
-
   // 2. 비밀번호 검증
   if (
     !existingUser.encryptedPassword ||
@@ -72,7 +71,7 @@ const signup = async ({
   const existingUser = await authRepository.findUserByEmail(email);
 
   if (existingUser) {
-    throw new ValidationError("이미 존재하는 이메일입니다");
+    throw new ValidationError("이미 사용 중인 이메일입니다.");
   }
 
   // name, email, phoneNumber, password 유효성 검사
