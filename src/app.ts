@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware";
 import { setupAutoSwagger } from "./utils/swagger-auto";
 import authRouter from "./routes/auth.route";
+import moverRouter from "./routes/mover.routes";
+
 
 // 환경변수 로드
 dotenv.config();
@@ -37,6 +39,7 @@ setupAutoSwagger(app);
 
 // API 라우트 연결
 // app.use('/api/users', userRoutes);
+app.use("/movers", moverRouter); // TODO: 추후 authMiddleware 추가
 app.use("/auth", authRouter);
 
 // 404 에러 핸들링
