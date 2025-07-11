@@ -3,6 +3,15 @@ import authService from "../services/auth.service";
 import { TOKEN_EXPIRES } from "../constants/token.constants";
 
 import { handleError } from "../utils/handleError";
+import { TCookieOptions } from "../types/cookie";
+
+const authCookieOptions = (maxAgeSeconds: number): TCookieOptions => ({
+  httpOnly: true,
+  sameSite: "none", // 현재는 fe,be의 도메인이 다르기 때문에 none으로 설정
+  secure: true,
+  path: "/",
+  maxAge: maxAgeSeconds * 1000,
+});
 
 const signin = async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -10,17 +19,17 @@ const signin = async (req: Request, res: Response) => {
   try {
     const user = await authService.signin(email, password);
 
-    res.cookie("accessToken", user.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE * 1000, // ✅ 초 → ms 변환
-    });
+    res.cookie(
+      "accessToken",
+      user.accessToken,
+      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE)
+    );
 
-    res.cookie("refreshToken", user.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE * 1000, // ✅ 초 → ms 변환
-    });
+    res.cookie(
+      "refreshToken",
+      user.refreshToken,
+      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
+    );
 
     res.status(200).json({ status: 200, message: "로그인 성공" });
   } catch (error: any) {
@@ -40,17 +49,17 @@ const signup = async (req: Request, res: Response) => {
       currentRole,
     });
 
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE * 1000, // ✅ 초 → ms 변환
-    });
+    res.cookie(
+      "accessToken",
+      accessToken,
+      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE)
+    );
 
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE * 1000, // ✅ 초 → ms 변환
-    });
+    res.cookie(
+      "refreshToken",
+      refreshToken,
+      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
+    );
 
     res.status(200).json({
       status: 200,
