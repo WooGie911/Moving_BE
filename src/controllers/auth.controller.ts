@@ -17,21 +17,30 @@ const signin = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   try {
-    const user = await authService.signin(email, password);
+    const { id, userName, userRole, accessToken, refreshToken } =
+      await authService.signin(email, password);
 
     res.cookie(
       "accessToken",
-      user.accessToken,
+      accessToken,
       authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE)
     );
 
     res.cookie(
       "refreshToken",
-      user.refreshToken,
+      refreshToken,
       authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
     );
 
-    res.status(200).json({ status: 200, message: "로그인 성공" });
+    res.status(200).json({
+      status: 200,
+      message: "로그인 성공",
+      user: {
+        id,
+        userName,
+        userRole,
+      },
+    });
   } catch (error: any) {
     handleError(res, error);
   }
@@ -41,13 +50,14 @@ const signup = async (req: Request, res: Response) => {
   const { name, email, phoneNumber, password, currentRole } = req.body;
 
   try {
-    const { accessToken, refreshToken } = await authService.signup({
-      name,
-      email,
-      phoneNumber,
-      password,
-      currentRole,
-    });
+    const { id, userName, userRole, accessToken, refreshToken } =
+      await authService.signup({
+        name,
+        email,
+        phoneNumber,
+        password,
+        currentRole,
+      });
 
     res.cookie(
       "accessToken",
@@ -64,6 +74,11 @@ const signup = async (req: Request, res: Response) => {
     res.status(200).json({
       status: 200,
       message: "회원가입 성공",
+      user: {
+        id,
+        userName,
+        userRole,
+      },
     });
   } catch (error: any) {
     handleError(res, error);
