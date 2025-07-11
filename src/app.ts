@@ -12,7 +12,25 @@ const app = express();
 const PORT = process.env.PORT || 5050;
 
 // 기본 미들웨어 설정
-app.use(cors()); // CORS 허용
+const allowedOrigins = [
+  "http://localhost:3000", // 로컬 개발
+  "https://your-deployed-domain.com", // 배포시 교체
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // Postman, 서버 내부 요청 허용
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS 정책에 의해 차단된 Origin: ${origin}`));
+      }
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json()); // JSON 파싱
 app.use(express.urlencoded({ extended: true })); // URL 인코딩 파싱
 
