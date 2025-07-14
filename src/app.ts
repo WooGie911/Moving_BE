@@ -12,10 +12,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5050;
 
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://gomoving.site", // 실제 도메인
-];
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
 
 app.use(
   cors({
@@ -29,20 +26,6 @@ app.use(
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-  })
-);
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // Postman, 서버 내부 요청 허용
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error(`CORS 정책에 의해 차단된 Origin: ${origin}`));
       }
     },
     credentials: true,
