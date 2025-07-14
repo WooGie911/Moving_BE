@@ -5,6 +5,8 @@ import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware";
 import { setupAutoSwagger } from "./utils/swagger-auto";
 import authRouter from "./routes/auth.route";
 import moverRouter from "./routes/mover.routes";
+import userRouter from "./routes/user.route";
+import cookieParser from "cookie-parser";
 
 // 환경변수 로드
 dotenv.config();
@@ -12,7 +14,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5050;
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
+  "http://localhost:3000",
+  "https://gomoving.site", // 기본값
+];
 
 app.use(
   cors({
@@ -32,6 +37,7 @@ app.use(
   })
 );
 
+app.use(cookieParser());
 app.use(express.json()); // JSON 파싱
 app.use(express.urlencoded({ extended: true })); // URL 인코딩 파싱
 
@@ -58,6 +64,7 @@ setupAutoSwagger(app);
 // app.use('/api/users', userRoutes);
 app.use("/movers", moverRouter); // TODO: 추후 authMiddleware 추가
 app.use("/auth", authRouter);
+app.use("/users", userRouter);
 
 // 404 에러 핸들링
 app.use(notFoundHandler);

@@ -42,4 +42,29 @@ const findUserByEmail = async (email: string) => {
   });
 };
 
-export default { saveUser, findUserByEmailAndPassword, findUserByEmail };
+// 로그인에 따른 유저 토큰 업데이트
+const updateUserToken = async (
+  userId: number,
+  accessToken: string | null,
+  refreshToken: string | null
+) => {
+  return await prisma.user.update({
+    where: { id: userId },
+    data: { accessToken, refreshToken },
+  });
+};
+
+// 유저 조회
+const findUserById = async (userId: number) => {
+  return await prisma.user.findUnique({
+    where: { id: userId },
+  });
+};
+
+export default {
+  saveUser,
+  findUserByEmailAndPassword,
+  findUserByEmail,
+  updateUserToken,
+  findUserById,
+};
