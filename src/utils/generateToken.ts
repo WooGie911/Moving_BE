@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import { TOKEN_EXPIRES } from "../constants/token.constants";
-import { TUserTokenCreate } from "../types/user";
+import { TUserTokenCreate } from "../types/user.types";
 
 export function generateAccessToken(user: TUserTokenCreate): string {
   const payload = {

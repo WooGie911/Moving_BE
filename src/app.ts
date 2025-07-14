@@ -6,18 +6,34 @@ import { setupAutoSwagger } from "./utils/swagger-auto";
 import authRouter from "./routes/auth.route";
 import moverRouter from "./routes/mover.routes";
 
-
 // 환경변수 로드
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5050;
 
-// 기본 미들웨어 설정
 const allowedOrigins = [
-  "http://localhost:3000", // 로컬 개발
-  "https://your-deployed-domain.com", // 배포시 교체
+  "http://localhost:3000",
+  "https://gomoving.site", // 실제 도메인
 ];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // ngrok 테스트용 cors 설정
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".ngrok-free.app")
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
 
 app.use(
   cors({

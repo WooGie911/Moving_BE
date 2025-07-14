@@ -4,7 +4,7 @@ import {
   DatabaseError,
   ServerError,
   ValidationError,
-} from "../types/commonError";
+} from "../types/commonError.types";
 
 /**
  * 공통 에러 핸들러
