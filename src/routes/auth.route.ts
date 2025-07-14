@@ -1,10 +1,11 @@
 import { Router } from "express";
 import {
-  signin,
-  signup,
-  logout,
-  refresh,
+  postSignin,
+  postSignup,
+  postLogout,
+  postRefresh,
 } from "../controllers/auth.controller";
+import { verifyAccessToken } from "../middlewares/verifyToken";
 
 const authRouter = Router();
 
@@ -99,7 +100,7 @@ const authRouter = Router();
  *   "error": "DatabaseError"
  * }
  */
-authRouter.post("/sign-in", signin);
+authRouter.post("/sign-in", postSignin);
 
 // 회원가입 엔드포인트
 /**
@@ -156,7 +157,7 @@ authRouter.post("/sign-in", signin);
  *   "error": "ServerError"
  * }
  */
-authRouter.post("/sign-up", signup);
+authRouter.post("/sign-up", postSignup);
 
 // 로그아웃 엔드포인트
 /**
@@ -178,8 +179,7 @@ authRouter.post("/sign-up", signup);
  *   "message": "로그아웃 성공"
  * }
  */
-// TODO: 토큰 검사 필요
-authRouter.post("/logout", logout);
+authRouter.post("/logout", verifyAccessToken, postLogout);
 
 // refresh token 갱신 엔드포인트
 /**
@@ -203,6 +203,6 @@ authRouter.post("/logout", logout);
  * }
  */
 // TODO: 토큰 검사 필요
-authRouter.post("/refresh-token", refresh);
+authRouter.post("/refresh-token", postRefresh);
 
 export default authRouter;

@@ -4,7 +4,7 @@ import {
   fetchBookmarkedMovers,
 } from "../services/mover.service";
 import { IMoverListFilter } from "../types/mover.types";
-import { NotFoundError, AuthenticationError } from "../types/commonError";
+import { NotFoundError, AuthenticationError } from "../types/commonError.types";
 import { handleError } from "../utils/handleError";
 
 /**

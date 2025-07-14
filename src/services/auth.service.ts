@@ -4,15 +4,16 @@ import {
   generateAccessToken,
   generateRefreshToken,
 } from "../utils/generateToken";
-import { TUserSignupInput } from "../types/user";
+import { TUserSignupInput } from "../types/user.types";
 import { encryptPhoneNumber } from "../utils/phoneEncryption";
 import { validateUserSignupInput } from "../utils/validators/userValidator";
 import {
   AuthenticationError,
   DatabaseError,
+  NotFoundError,
   ServerError,
   ValidationError,
-} from "../types/commonError";
+} from "../types/commonError.types";
 
 // 로그인 검증
 const signin = async (email: string, password: string) => {
@@ -49,6 +50,12 @@ const signin = async (email: string, password: string) => {
   if (!accessToken || !refreshToken) {
     throw new ServerError("토큰 생성 실패로 인한 로그인 실패");
   }
+
+  await authRepository.updateUserToken(
+    existingUser.id,
+    accessToken,
+    refreshToken
+  );
 
   return {
     id: existingUser.id,
@@ -122,4 +129,23 @@ const signup = async ({
   };
 };
 
-export default { signin, signup };
+// 로그아웃
+const logout = async (userId: number) => {
+  if (!userId) {
+    throw new AuthenticationError("토큰 인증 실패");
+  }
+
+  const user = await authRepository.findUserById(userId);
+
+  if (!user) {
+    throw new NotFoundError("존재하지 않는 유저입니다");
+  }
+
+  if (!user.refreshToken) {
+    throw new AuthenticationError("이미 로그아웃된 상태입니다");
+  }
+
+  await authRepository.updateUserToken(userId, null, null);
+};
+
+export default { signin, signup, logout };
