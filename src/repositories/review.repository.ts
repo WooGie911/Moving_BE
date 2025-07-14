@@ -9,6 +9,25 @@ const reviewRepository = {
       data: { rating, content, status: ReviewStatus.COMPLETED },
     });
   },
+
+  // 2. 리뷰 작성 가능한 Quote 리스트 조회
+  getWritableQuotes: async (userId: number) => {
+    return prisma.quote.findMany({
+      where: {
+        userId,
+        confirmedEstimateId: { not: null },
+        reviews: {
+          some: { status: ReviewStatus.PENDING },
+        },
+      },
+      include: {
+        confirmedEstimate: true,
+        reviews: {
+          where: { status: ReviewStatus.PENDING },
+        },
+      },
+    });
+  },
 };
 
 export default reviewRepository;
