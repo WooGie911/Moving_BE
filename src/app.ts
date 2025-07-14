@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware";
 import { setupAutoSwagger } from "./utils/swagger-auto";
 import authRouter from "./routes/auth.route";
+import moverRouter from "./routes/mover.routes";
+
 
 // 환경변수 로드
 dotenv.config();
@@ -12,7 +14,25 @@ const app = express();
 const PORT = process.env.PORT || 5050;
 
 // 기본 미들웨어 설정
-app.use(cors()); // CORS 허용
+const allowedOrigins = [
+  "http://localhost:3000", // 로컬 개발
+  "https://your-deployed-domain.com", // 배포시 교체
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // Postman, 서버 내부 요청 허용
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS 정책에 의해 차단된 Origin: ${origin}`));
+      }
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json()); // JSON 파싱
 app.use(express.urlencoded({ extended: true })); // URL 인코딩 파싱
 
@@ -37,6 +57,7 @@ setupAutoSwagger(app);
 
 // API 라우트 연결
 // app.use('/api/users', userRoutes);
+app.use("/movers", moverRouter); // TODO: 추후 authMiddleware 추가
 app.use("/auth", authRouter);
 
 // 404 에러 핸들링

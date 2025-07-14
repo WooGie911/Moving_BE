@@ -52,8 +52,8 @@ const signin = async (email: string, password: string) => {
 
   return {
     id: existingUser.id,
-    name: existingUser.name,
-    currentRole: existingUser.currentRole,
+    userName: existingUser.name,
+    userRole: existingUser.currentRole,
     accessToken,
     refreshToken,
   };
@@ -113,7 +113,13 @@ const signup = async ({
     throw new ServerError("토큰 생성 실패로 인한 회원가입 실패");
   }
 
-  return { accessToken, refreshToken };
+  return {
+    id: user.id,
+    userName: user.name,
+    userRole: user.currentRole,
+    accessToken,
+    refreshToken,
+  };
 };
 
 export default { signin, signup };
