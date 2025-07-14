@@ -40,6 +40,7 @@ const signin = async (req: Request, res: Response) => {
         userName,
         userRole,
       },
+      accessToken,
     });
   } catch (error: any) {
     handleError(res, error);
@@ -79,6 +80,7 @@ const signup = async (req: Request, res: Response) => {
         userName,
         userRole,
       },
+      accessToken,
     });
   } catch (error: any) {
     handleError(res, error);
