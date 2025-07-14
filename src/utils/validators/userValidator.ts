@@ -1,6 +1,6 @@
 // src/utils/validators/userValidator.ts
 
-import { ValidationError } from "../../types/commonError";
+import { ValidationError } from "../../types/commonError.types";
 
 /**
  * 허용 TLD 리스트

@@ -4,7 +4,7 @@ import {
   generateAccessToken,
   generateRefreshToken,
 } from "../utils/generateToken";
-import { TUserSignupInput } from "../types/user";
+import { TUserSignupInput } from "../types/user.types";
 import { encryptPhoneNumber } from "../utils/phoneEncryption";
 import { validateUserSignupInput } from "../utils/validators/userValidator";
 import {
@@ -12,7 +12,7 @@ import {
   DatabaseError,
   ServerError,
   ValidationError,
-} from "../types/commonError";
+} from "../types/commonError.types";
 
 // 로그인 검증
 const signin = async (email: string, password: string) => {

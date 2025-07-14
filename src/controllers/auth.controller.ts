@@ -3,7 +3,7 @@ import authService from "../services/auth.service";
 import { TOKEN_EXPIRES } from "../constants/token.constants";
 
 import { handleError } from "../utils/handleError";
-import { TCookieOptions } from "../types/cookie";
+import { TCookieOptions } from "../types/cookie.types";
 
 const authCookieOptions = (maxAgeSeconds: number): TCookieOptions => ({
   httpOnly: true,
