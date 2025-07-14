@@ -6,4 +6,7 @@ const reviewRouter = Router();
 // 리뷰 작성 (완료 처리)
 reviewRouter.patch("/:id", reviewController.postReview);
 
+// 리뷰 작성 가능한 Quote 리스트
+reviewRouter.get("/writable-quotes", reviewController.getWritableQuotes);
+
 export default reviewRouter;

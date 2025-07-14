@@ -20,6 +20,25 @@ const reviewController = {
       next(error);
     }
   },
+
+  // 2. 리뷰 작성 가능한 Quote 리스트 조회
+  getWritableQuotes: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const userId = Number(req.user?.userId || req.query.userId);
+      if (!userId) {
+        res.status(400).json({ message: "유저를 찾을수 없습니다." });
+        return;
+      }
+      const quotes = await reviewService.getWritableQuotes(userId);
+      res.json(quotes);
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 
 export default reviewController;
