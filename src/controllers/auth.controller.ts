@@ -21,12 +21,6 @@ const signin = async (req: Request, res: Response) => {
       await authService.signin(email, password);
 
     res.cookie(
-      "accessToken",
-      accessToken,
-      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE)
-    );
-
-    res.cookie(
       "refreshToken",
       refreshToken,
       authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
@@ -59,12 +53,6 @@ const signup = async (req: Request, res: Response) => {
         password,
         currentRole,
       });
-
-    res.cookie(
-      "accessToken",
-      accessToken,
-      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE)
-    );
 
     res.cookie(
       "refreshToken",
