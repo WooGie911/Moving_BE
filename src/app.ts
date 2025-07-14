@@ -12,10 +12,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5050;
 
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://gomoving.site", // 실제 도메인
-];
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
 
 app.use(
   cors({
