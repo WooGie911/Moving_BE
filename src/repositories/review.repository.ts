@@ -28,6 +28,17 @@ const reviewRepository = {
       },
     });
   },
+
+  // 3. 내가 쓴 리뷰 목록 조회
+  getWrittenReviews: async (userId: number) => {
+    return prisma.review.findMany({
+      where: { userId },
+      include: {
+        quote: true,
+        estimate: true,
+      },
+    });
+  },
 };
 
 export default reviewRepository;
