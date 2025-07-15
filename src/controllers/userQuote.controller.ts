@@ -3,7 +3,11 @@ import userQuoteService from "../services/userQuote.service";
 
 const userQuoteController = {
   // 1. 진행중인 견적 조회
-  getPendingQuote: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getPendingQuote: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const userId = req.user?.userId;
       if (!userId || typeof userId !== "number" || userId <= 0) {
@@ -25,7 +29,11 @@ const userQuoteController = {
   },
 
   // 2. 완료된 견적 목록 조회
-  getReceivedQuotes: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getReceivedQuotes: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const userId = req.user?.userId;
       if (!userId || typeof userId !== "number" || userId <= 0) {
@@ -47,7 +55,11 @@ const userQuoteController = {
   },
 
   // 3. 진행중인 견적 상세 조회
-  getPendingQuoteDetail: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getPendingQuoteDetail: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const userId = req.user?.userId;
       const estimateId = Number(req.params.estimateId);
@@ -68,7 +80,10 @@ const userQuoteController = {
         return;
       }
 
-      const result = await userQuoteService.getPendingQuoteDetail(userId, estimateId);
+      const result = await userQuoteService.getPendingQuoteDetail(
+        userId,
+        estimateId
+      );
       res.status(200).json({
         success: true,
         message: "진행중인 견적 상세 조회 성공",
@@ -80,7 +95,11 @@ const userQuoteController = {
   },
 
   // 4. 완료된 견적 상세 조회
-  getReceivedQuoteDetail: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getReceivedQuoteDetail: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const userId = req.user?.userId;
       const estimateId = Number(req.params.estimateId);
@@ -110,7 +129,11 @@ const userQuoteController = {
         return;
       }
 
-      const result = await userQuoteService.getReceivedQuoteDetail(userId, estimateId, quoteId);
+      const result = await userQuoteService.getReceivedQuoteDetail(
+        userId,
+        estimateId,
+        quoteId
+      );
       res.status(200).json({
         success: true,
         message: "완료된 견적 상세 조회 성공",
@@ -122,7 +145,11 @@ const userQuoteController = {
   },
 
   // 5. 견적 확정
-  confirmEstimate: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  confirmEstimate: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const userId = req.user?.userId;
       const estimateId = Number(req.params.estimateId);
@@ -155,7 +182,11 @@ const userQuoteController = {
   },
 
   // 6. 지정 견적 요청
-  designateQuote: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  designateQuote: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const userId = req.user?.userId;
       const quoteId = Number(req.params.quoteId);
@@ -185,7 +216,11 @@ const userQuoteController = {
         return;
       }
 
-      if (!message || typeof message !== "string" || message.trim().length === 0) {
+      if (
+        !message ||
+        typeof message !== "string" ||
+        message.trim().length === 0
+      ) {
         res.status(400).json({
           success: false,
           message: "메시지를 입력해주세요.",
@@ -202,7 +237,12 @@ const userQuoteController = {
         return;
       }
 
-      const result = await userQuoteService.designateQuote(quoteId, userId, message.trim(), moverId);
+      const result = await userQuoteService.designateQuote(
+        quoteId,
+        userId,
+        message.trim(),
+        moverId
+      );
       res.status(200).json({
         success: true,
         message: "지정 견적 요청 성공",
