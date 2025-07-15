@@ -1,19 +1,12 @@
 import { Request, Response, NextFunction } from "express";
-import {
-  fetchMoverList,
-  fetchFavoriteMovers,
-} from "../services/mover.service";
+import { fetchMoverList, fetchFavoriteMovers } from "../services/mover.service";
 import { IMoverListFilter } from "../types/mover.types";
 import { handleError } from "../utils/handleError";
 
 /**
  * 기사님 리스트 조회 (필터, 정렬, 키워드)
  */
-export const getMoverListController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const getMoverListController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { region, serviceTypeId, search, sort, cursor, take } = req.query;
 
@@ -40,11 +33,7 @@ export const getMoverListController = async (
 /**
  * 찜한 기사님 조회
  */
-export const getFavoriteMoversController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const getFavoriteMoversController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { userId } = req.user as { userId: number };
     const favoriteMovers = await fetchFavoriteMovers(userId);

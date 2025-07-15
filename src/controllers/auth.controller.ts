@@ -18,14 +18,9 @@ const postSignin = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   try {
-    const { id, userName, userRole, accessToken, refreshToken } =
-      await authService.signin(email, password);
+    const { id, userName, userRole, accessToken, refreshToken } = await authService.signin(email, password);
 
-    res.cookie(
-      "refreshToken",
-      refreshToken,
-      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
-    );
+    res.cookie("refreshToken", refreshToken, authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE));
 
     res.status(200).json({
       status: 200,
@@ -46,20 +41,15 @@ const postSignup = async (req: Request, res: Response) => {
   const { name, email, phoneNumber, password, currentRole } = req.body;
 
   try {
-    const { id, userName, userRole, accessToken, refreshToken } =
-      await authService.signup({
-        name,
-        email,
-        phoneNumber,
-        password,
-        currentRole,
-      });
+    const { id, userName, userRole, accessToken, refreshToken } = await authService.signup({
+      name,
+      email,
+      phoneNumber,
+      password,
+      currentRole,
+    });
 
-    res.cookie(
-      "refreshToken",
-      refreshToken,
-      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
-    );
+    res.cookie("refreshToken", refreshToken, authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE));
 
     res.status(200).json({
       status: 200,

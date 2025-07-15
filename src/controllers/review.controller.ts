@@ -3,11 +3,7 @@ import reviewService from "../services/review.service";
 
 const reviewController = {
   // 1. 리뷰 작성 (PATCH)
-  postReview: async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  postReview: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const reviewId = Number(req.params.id);
       const { rating, content } = req.body;
@@ -22,11 +18,7 @@ const reviewController = {
   },
 
   // 2. 리뷰 작성 가능한 Quote 리스트 조회
-  getWritableQuotes: async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  getWritableQuotes: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = Number(req.user?.userId || req.query.userId);
       if (!userId) {
@@ -41,11 +33,7 @@ const reviewController = {
   },
 
   // 3. 내가 쓴 리뷰 목록 조회
-  getWrittenReviews: async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  getWrittenReviews: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = Number(req.user?.userId || req.query.userId);
       if (!userId) {

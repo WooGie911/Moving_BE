@@ -91,26 +91,15 @@ const userQuoteService = {
       throw new NotFoundError("진행중인 견적이 없습니다.");
     }
 
-    const result = await userQuoteRepository.getPendingQuoteDetail(
-      activeQuoteId,
-      estimateId
-    );
+    const result = await userQuoteRepository.getPendingQuoteDetail(activeQuoteId, estimateId);
     if (!result) {
       throw new NotFoundError("견적 상세 정보를 찾을 수 없습니다.");
     }
     return result;
   },
 
-  getReceivedQuoteDetail: async (
-    userId: number,
-    estimateId: number,
-    quoteId: number
-  ) => {
-    const result = await userQuoteRepository.getReceivedQuoteDetail(
-      userId,
-      estimateId,
-      quoteId
-    );
+  getReceivedQuoteDetail: async (userId: number, estimateId: number, quoteId: number) => {
+    const result = await userQuoteRepository.getReceivedQuoteDetail(userId, estimateId, quoteId);
     if (!result) {
       throw new NotFoundError("견적 상세 정보를 찾을 수 없습니다.");
     }
@@ -127,12 +116,7 @@ const userQuoteService = {
     return await userQuoteRepository.confirmEstimate(userId, estimateId);
   },
 
-  designateQuote: async (
-    quoteId: number,
-    userId: number,
-    message: string,
-    moverId: number
-  ) => {
+  designateQuote: async (quoteId: number, userId: number, message: string, moverId: number) => {
     const activeQuoteId = await userQuoteRepository.getActiveQuote(userId);
     if (!activeQuoteId) {
       throw new NotFoundError("진행중인 견적이 없습니다.");
@@ -144,12 +128,7 @@ const userQuoteService = {
       throw new NotFoundError("유효하지 않은 기사님입니다.");
     }
 
-    return await userQuoteRepository.designateQuote(
-      quoteId,
-      userId,
-      message,
-      moverId
-    );
+    return await userQuoteRepository.designateQuote(quoteId, userId, message, moverId);
   },
 };
 

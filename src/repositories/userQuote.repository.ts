@@ -1,10 +1,5 @@
 import { Estimate, PrismaClient } from "@prisma/client";
-import {
-  TConfirmEstimateResult,
-  TDesignatedEstimateRequest,
-  TEstimate,
-  TQuote,
-} from "../types/userQuote";
+import { TConfirmEstimateResult, TDesignatedEstimateRequest, TEstimate, TQuote } from "../types/userQuote";
 const prisma = new PrismaClient();
 
 const userQuoteRepository = {
@@ -163,10 +158,7 @@ const userQuoteRepository = {
   },
 
   //진행중인 이사 견적들 중 상세 견적 조회
-  getPendingQuoteDetail: async (
-    activeQuoteId: number,
-    estimateId: number
-  ): Promise<TEstimate | null> => {
+  getPendingQuoteDetail: async (activeQuoteId: number, estimateId: number): Promise<TEstimate | null> => {
     const pendingDetailEstimate = await prisma.quote.findUnique({
       where: {
         id: activeQuoteId,
@@ -213,11 +205,7 @@ const userQuoteRepository = {
   },
 
   //완료된 이사 견적들 중 상세 견적 조회
-  getReceivedQuoteDetail: async (
-    userId: number,
-    estimateId: number,
-    quoteId: number
-  ): Promise<TEstimate | null> => {
+  getReceivedQuoteDetail: async (userId: number, estimateId: number, quoteId: number): Promise<TEstimate | null> => {
     const receivedDetailEstimate = await prisma.quote.findUnique({
       where: {
         userId: userId,
@@ -265,10 +253,7 @@ const userQuoteRepository = {
   },
 
   //견적 컨펌
-  confirmEstimate: async (
-    userId: number,
-    estimateId: number
-  ): Promise<TConfirmEstimateResult | null> => {
+  confirmEstimate: async (userId: number, estimateId: number): Promise<TConfirmEstimateResult | null> => {
     const activeQuoteId = await userQuoteRepository.getActiveQuote(userId);
     if (!activeQuoteId) {
       throw new Error("진행중인 견적이 없습니다.");
@@ -318,7 +303,7 @@ const userQuoteRepository = {
     quoteId: number,
     userId: number,
     message: string,
-    moverId: number
+    moverId: number,
   ): Promise<TDesignatedEstimateRequest | null> => {
     // quote가 해당 사용자의 것인지 확인
     const quote = await prisma.quote.findFirst({
@@ -340,9 +325,7 @@ const userQuoteRepository = {
       throw new Error("진행중인 견적만 지정 견적을 요청할 수 있습니다.");
     }
 
-    const validUntil = new Date(
-      quote.movingDate.getTime() - 1000 * 60 * 60 * 24
-    );
+    const validUntil = new Date(quote.movingDate.getTime() - 1000 * 60 * 60 * 24);
 
     // 이미 해당 quote에 대한 지정 견적 요청이 있는지 확인
     const existingRequest = await prisma.designatedEstimateRequest.findFirst({

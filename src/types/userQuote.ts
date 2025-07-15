@@ -18,10 +18,7 @@ export type TQuote = Pick<
   estimates: TEstimate[] | null;
 };
 
-export type TEstimate = Pick<
-  Estimate,
-  "price" | "description" | "status" | "isDesignated"
-> & {
+export type TEstimate = Pick<Estimate, "price" | "description" | "status" | "isDesignated"> & {
   mover: {
     id: number;
     name: string;

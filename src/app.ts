@@ -26,18 +26,14 @@ app.use(
   cors({
     origin: (origin, callback) => {
       // ngrok 테스트용 cors 설정
-      if (
-        !origin ||
-        allowedOrigins.includes(origin) ||
-        origin.endsWith(".ngrok-free.app")
-      ) {
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".ngrok-free.app")) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
       }
     },
     credentials: true,
-  })
+  }),
 );
 
 app.use(cookieParser());

@@ -1,9 +1,6 @@
 import authRepository from "../repositories/auth.repository";
 import bcrypt from "bcrypt";
-import {
-  generateAccessToken,
-  generateRefreshToken,
-} from "../utils/generateToken";
+import { generateAccessToken, generateRefreshToken } from "../utils/generateToken";
 import { TUserSignupInput } from "../types/user.types";
 import { encryptPhoneNumber } from "../utils/phoneEncryption";
 import { validateUserSignupInput } from "../utils/validators/userValidator";
@@ -27,10 +24,7 @@ const signin = async (email: string, password: string) => {
     throw new AuthenticationError("존재하지 않는 유저입니다");
   }
   // 2. 비밀번호 검증
-  if (
-    !existingUser.encryptedPassword ||
-    !(await bcrypt.compare(password, existingUser.encryptedPassword))
-  ) {
+  if (!existingUser.encryptedPassword || !(await bcrypt.compare(password, existingUser.encryptedPassword))) {
     throw new AuthenticationError("비밀번호가 일치하지 않습니다");
   }
 
@@ -51,11 +45,7 @@ const signin = async (email: string, password: string) => {
     throw new ServerError("토큰 생성 실패로 인한 로그인 실패");
   }
 
-  await authRepository.updateUserToken(
-    existingUser.id,
-    accessToken,
-    refreshToken
-  );
+  await authRepository.updateUserToken(existingUser.id, accessToken, refreshToken);
 
   return {
     id: existingUser.id,
@@ -67,13 +57,7 @@ const signin = async (email: string, password: string) => {
 };
 
 // 회원가입 검증
-const signup = async ({
-  name,
-  email,
-  phoneNumber,
-  password,
-  currentRole,
-}: TUserSignupInput) => {
+const signup = async ({ name, email, phoneNumber, password, currentRole }: TUserSignupInput) => {
   // email 중복 체크
   const existingUser = await authRepository.findUserByEmail(email);
 

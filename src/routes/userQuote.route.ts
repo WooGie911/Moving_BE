@@ -66,11 +66,7 @@ const userQuoteRouter = Router();
  *   "message": "진행중인 견적이 없습니다."
  * }
  */
-userQuoteRouter.get(
-  "/pending",
-  verifyAccessToken,
-  userQuoteController.getPendingQuote
-);
+userQuoteRouter.get("/pending", verifyAccessToken, userQuoteController.getPendingQuote);
 
 /**
  * GET /user-quotes/received
@@ -103,11 +99,7 @@ userQuoteRouter.get(
  *   ]
  * }
  */
-userQuoteRouter.get(
-  "/received",
-  verifyAccessToken,
-  userQuoteController.getReceivedQuotes
-);
+userQuoteRouter.get("/received", verifyAccessToken, userQuoteController.getReceivedQuotes);
 
 /**
  * GET /user-quotes/pending/:estimateId
@@ -138,11 +130,7 @@ userQuoteRouter.get(
  *   }
  * }
  */
-userQuoteRouter.get(
-  "/pending/:estimateId",
-  verifyAccessToken,
-  userQuoteController.getPendingQuoteDetail
-);
+userQuoteRouter.get("/pending/:estimateId", verifyAccessToken, userQuoteController.getPendingQuoteDetail);
 
 /**
  * GET /user-quotes/received/:quoteId/:estimateId
@@ -174,11 +162,7 @@ userQuoteRouter.get(
  *   }
  * }
  */
-userQuoteRouter.get(
-  "/received/:quoteId/:estimateId",
-  verifyAccessToken,
-  userQuoteController.getReceivedQuoteDetail
-);
+userQuoteRouter.get("/received/:quoteId/:estimateId", verifyAccessToken, userQuoteController.getReceivedQuoteDetail);
 
 /**
  * PATCH /user-quotes/confirm/:estimateId
@@ -208,11 +192,7 @@ userQuoteRouter.get(
  *   }
  * }
  */
-userQuoteRouter.patch(
-  "/confirm/:estimateId",
-  verifyAccessToken,
-  userQuoteController.confirmEstimate
-);
+userQuoteRouter.patch("/confirm/:estimateId", verifyAccessToken, userQuoteController.confirmEstimate);
 
 /**
  * POST /user-quotes/designate/:quoteId
@@ -248,10 +228,6 @@ userQuoteRouter.patch(
  *   }
  * }
  */
-userQuoteRouter.post(
-  "/designate/:quoteId",
-  verifyAccessToken,
-  userQuoteController.designateQuote
-);
+userQuoteRouter.post("/designate/:quoteId", verifyAccessToken, userQuoteController.designateQuote);
 
 export default userQuoteRouter;
