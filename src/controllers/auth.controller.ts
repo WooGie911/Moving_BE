@@ -22,12 +22,6 @@ const postSignin = async (req: Request, res: Response) => {
       await authService.signin(email, password);
 
     res.cookie(
-      "accessToken",
-      accessToken,
-      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE)
-    );
-
-    res.cookie(
       "refreshToken",
       refreshToken,
       authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
@@ -41,6 +35,7 @@ const postSignin = async (req: Request, res: Response) => {
         userName,
         userRole,
       },
+      accessToken,
     });
   } catch (error: any) {
     handleError(res, error);
@@ -61,12 +56,6 @@ const postSignup = async (req: Request, res: Response) => {
       });
 
     res.cookie(
-      "accessToken",
-      accessToken,
-      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE)
-    );
-
-    res.cookie(
       "refreshToken",
       refreshToken,
       authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
@@ -80,6 +69,7 @@ const postSignup = async (req: Request, res: Response) => {
         userName,
         userRole,
       },
+      accessToken,
     });
   } catch (error: any) {
     handleError(res, error);
