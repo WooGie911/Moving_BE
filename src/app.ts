@@ -8,6 +8,7 @@ import moverRouter from "./routes/mover.routes";
 import userRouter from "./routes/user.route";
 import cookieParser from "cookie-parser";
 import reviewRouter from "./routes/review.route";
+import quoteRouter from "./routes/quote.routes";
 
 // 환경변수 로드
 dotenv.config();
@@ -24,18 +25,14 @@ app.use(
   cors({
     origin: (origin, callback) => {
       // ngrok 테스트용 cors 설정
-      if (
-        !origin ||
-        allowedOrigins.includes(origin) ||
-        origin.endsWith(".ngrok-free.app")
-      ) {
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".ngrok-free.app")) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
       }
     },
     credentials: true,
-  })
+  }),
 );
 
 app.use(cookieParser());
@@ -67,6 +64,7 @@ app.use("/movers", moverRouter); // TODO: 추후 authMiddleware 추가
 app.use("/auth", authRouter);
 app.use("/users", userRouter);
 app.use("reviews", reviewRouter);
+app.use("/quotes", quoteRouter);
 
 // 404 에러 핸들링
 app.use(notFoundHandler);
