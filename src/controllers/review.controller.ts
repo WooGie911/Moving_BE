@@ -12,6 +12,11 @@ const reviewController = {
       }
       const review = await reviewService.postReview(reviewId, rating, content);
       res.json(review);
+      res.json({
+        success: true,
+        message: "리뷰가 작성되었습니다.",
+        data: review,
+      });
     } catch (error) {
       next(error);
     }
@@ -26,9 +31,13 @@ const reviewController = {
         return;
       }
       const page = Number(req.query.page) || 1;
-      const pageSize = Number(req.query.pageSize) || 10;
+      const pageSize = Number(req.query.pageSize) || 4;
       const quotes = await reviewService.getWritableQuotes(customerId, { page, pageSize });
-      res.json(quotes);
+      res.json({
+        success: true,
+        message: "리뷰 작성 가능한 견적 리스트입니다.",
+        data: quotes,
+      });
     } catch (error) {
       next(error);
     }
@@ -43,9 +52,13 @@ const reviewController = {
         return;
       }
       const page = Number(req.query.page) || 1;
-      const pageSize = Number(req.query.pageSize) || 10;
+      const pageSize = Number(req.query.pageSize) || 4;
       const reviews = await reviewService.getWrittenReviews(customerId, { page, pageSize });
-      res.json(reviews);
+      res.json({
+        success: true,
+        message: "내가 쓴 리뷰 목록입니다.",
+        data: reviews,
+      });
     } catch (error) {
       next(error);
     }
@@ -63,9 +76,13 @@ const reviewController = {
         return;
       }
       const page = Number(req.query.page) || 1;
-      const pageSize = Number(req.query.pageSize) || 10;
+      const pageSize = Number(req.query.pageSize) || 5;
       const reviews = await reviewService.getReceivedReviews(moverId, { page, pageSize });
-      res.json(reviews);
+      res.json({
+        success: true,
+        message: "내가 받은 리뷰 목록입니다.",
+        data: reviews,
+      });
     } catch (error) {
       next(error);
     }
