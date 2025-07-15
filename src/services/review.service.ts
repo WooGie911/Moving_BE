@@ -8,6 +8,10 @@ const reviewService = {
   getWritableQuotes: async (userId: number) => {
     return reviewRepository.getWritableQuotes(userId);
   },
+
+  getWrittenReviews: async (userId: number) => {
+    return reviewRepository.getWrittenReviews(userId);
+  },
 };
 
 export default reviewService;

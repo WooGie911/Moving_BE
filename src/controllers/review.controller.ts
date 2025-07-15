@@ -39,6 +39,25 @@ const reviewController = {
       next(error);
     }
   },
+
+  // 3. 내가 쓴 리뷰 목록 조회
+  getWrittenReviews: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const userId = Number(req.user?.userId || req.query.userId);
+      if (!userId) {
+        res.status(400).json({ message: "유저를 찾을수 없습니다." });
+        return;
+      }
+      const reviews = await reviewService.getWrittenReviews(userId);
+      res.json(reviews);
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 
 export default reviewController;
