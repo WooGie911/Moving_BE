@@ -152,7 +152,7 @@ const userQuoteController = {
   ): Promise<void> => {
     try {
       const userId = req.user?.userId;
-      const estimateId = Number(req.params.estimateId);
+      const estimateId = Number(req.query.estimateId);
 
       if (!userId || typeof userId !== "number" || userId <= 0) {
         res.status(401).json({
@@ -189,13 +189,23 @@ const userQuoteController = {
   ): Promise<void> => {
     try {
       const userId = req.user?.userId;
-      const quoteId = Number(req.params.quoteId);
+      const userRole = req.user?.role;
+      const quoteId = Number(req.query.quoteId); // URL 파라미터에서 쿼리 파라미터로 변경
       const { message, moverId } = req.body;
 
       if (!userId || typeof userId !== "number" || userId <= 0) {
         res.status(401).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
+        });
+        return;
+      }
+
+      // CUSTOMER 권한 확인
+      if (userRole !== "CUSTOMER") {
+        res.status(403).json({
+          success: false,
+          message: "현재 유저타입이 고객이 아닙니다.",
         });
         return;
       }

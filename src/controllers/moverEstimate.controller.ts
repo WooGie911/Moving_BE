@@ -498,7 +498,7 @@ const moverEstimateController = {
     try {
       const userId = req.user?.userId;
       const userRole = req.user?.role;
-      const estimateId = Number(req.params.estimateId);
+      const estimateId = Number(req.query.estimateId);
       const { status } = req.body;
 
       if (!userId || typeof userId !== "number" || userId <= 0) {
@@ -562,7 +562,7 @@ const moverEstimateController = {
     try {
       const userId = req.user?.userId;
       const userRole = req.user?.role;
-      const estimateId = Number(req.params.estimateId);
+      const estimateId = Number(req.query.estimateId);
       const { price, description } = req.body;
 
       if (!userId || typeof userId !== "number" || userId <= 0) {

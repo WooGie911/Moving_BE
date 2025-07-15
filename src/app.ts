@@ -70,9 +70,9 @@ app.use("/movers", moverRouter); // TODO: 추후 authMiddleware 추가
 app.use("/auth", authRouter);
 app.use("/users", userRouter);
 app.use("/reviews", reviewRouter);
-app.use("/userQuotes", userQuoteRouter);
+app.use("/customer-quotes", userQuoteRouter);
 app.use("/quotes", quoteRouter);
-app.use("/moverEstimates", moverEstimateRouter);
+app.use("/mover-estimates", moverEstimateRouter);
 
 // 404 에러 핸들링
 app.use(notFoundHandler);
