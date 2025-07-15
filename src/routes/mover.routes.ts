@@ -1,8 +1,5 @@
 import { Router } from "express";
-import {
-  getMoverListController,
-  getFavoriteMoversController,
-} from "../controllers/mover.controller";
+import { getMoverListController, getFavoriteMoversController } from "../controllers/mover.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 
 const moverRouter = Router();
@@ -119,10 +116,6 @@ moverRouter.get("/", getMoverListController);
  *   "message": "인증이 필요합니다."
  * }
  */
-moverRouter.get(
-  "/favorite",
-  verifyAccessToken,
-  getFavoriteMoversController
-);
+moverRouter.get("/favorite", verifyAccessToken, getFavoriteMoversController);
 
 export default moverRouter;

@@ -295,7 +295,6 @@ model Action {
   entityType    String
   description   String?
   metadata      Json?
-  deletedAt     DateTime?
   createdAt     DateTime       @default(now())
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   notifications Notification[]

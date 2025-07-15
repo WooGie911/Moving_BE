@@ -8,6 +8,7 @@ import moverRouter from "./routes/mover.routes";
 import userRouter from "./routes/user.route";
 import cookieParser from "cookie-parser";
 import reviewRouter from "./routes/review.route";
+import userQuoteRouter from "./routes/userQuote.route";
 import quoteRouter from "./routes/quote.routes";
 
 // 환경변수 로드
@@ -63,7 +64,8 @@ setupAutoSwagger(app);
 app.use("/movers", moverRouter); // TODO: 추후 authMiddleware 추가
 app.use("/auth", authRouter);
 app.use("/users", userRouter);
-app.use("reviews", reviewRouter);
+app.use("/reviews", reviewRouter);
+app.use("/userQuotes", userQuoteRouter);
 app.use("/quotes", quoteRouter);
 
 // 404 에러 핸들링

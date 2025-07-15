@@ -1,7 +1,4 @@
-import {
-  getMoverList,
-  getFavoriteMovers,
-} from "../repositories/mover.repository";
+import { getMoverList, getFavoriteMovers } from "../repositories/mover.repository";
 import { IMoverListFilter } from "../types/mover.types";
 
 /**

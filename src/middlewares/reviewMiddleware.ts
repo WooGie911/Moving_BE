@@ -1,13 +1,9 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from "@prisma/client";
 import prisma from "../db/prisma/prisma";
 
 // Prisma 미들웨어: Quote.update에서 confirmedEstimateId가 새로 설정될 때 Review 자동 생성
 export const reviewPrismaMiddleware: Prisma.Middleware = async (params, next) => {
-  if (
-    params.model === "Quote" &&
-    params.action === "update" &&
-    params.args?.data?.confirmedEstimateId !== undefined
-  ) {
+  if (params.model === "Quote" && params.action === "update" && params.args?.data?.confirmedEstimateId !== undefined) {
     // 기존 Quote를 먼저 조회
     const quote = await prisma.quote.findUnique({
       where: params.args.where,
