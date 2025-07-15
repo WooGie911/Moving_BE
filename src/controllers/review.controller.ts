@@ -46,6 +46,24 @@ const reviewController = {
       next(error);
     }
   },
+  // 4. 내가 받은 리뷰 목록 조회
+  getReceivedReviews: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const moverId = Number(req.user?.userId || req.query.moverId);
+      if (!moverId) {
+        res.status(400).json({ message: "유저를 찾을수 없습니다." });
+        return;
+      }
+      const reviews = await reviewService.getReceivedReviews(moverId);
+      res.json(reviews);
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 
 export default reviewController;

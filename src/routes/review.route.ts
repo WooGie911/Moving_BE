@@ -12,4 +12,7 @@ reviewRouter.get("/writable-quotes", reviewController.getWritableQuotes);
 // 내가 쓴 리뷰 목록
 reviewRouter.get("/written", reviewController.getWrittenReviews);
 
+// 내가 받은 리뷰 목록
+reviewRouter.get("/received ", reviewController.getReceivedReviews);
+
 export default reviewRouter;

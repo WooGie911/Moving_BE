@@ -39,6 +39,16 @@ const reviewRepository = {
       },
     });
   },
+  // 4. 내가 받은 리뷰 목록 조회
+  getReceivedReviews: async (moverId: number) => {
+    return prisma.review.findMany({
+      where: { moverId },
+      include: {
+        quote: true,
+        estimate: true,
+      },
+    });
+  },
 };
 
 export default reviewRepository;
