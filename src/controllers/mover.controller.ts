@@ -1,10 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import {
   fetchMoverList,
-  fetchBookmarkedMovers,
+  fetchFavoriteMovers,
 } from "../services/mover.service";
 import { IMoverListFilter } from "../types/mover.types";
-import { NotFoundError, AuthenticationError } from "../types/commonError.types";
 import { handleError } from "../utils/handleError";
 
 /**
@@ -28,12 +27,11 @@ export const getMoverListController = async (
     };
 
     const movers = await fetchMoverList(filter);
-
-    if (!movers || movers.length === 0) {
-      throw new NotFoundError("조회된 기사님이 없습니다.");
-    }
-
-    res.json({ success: true, data: movers });
+    res.json({
+      success: true,
+      message: "기사님 목록을 성공적으로 조회했습니다.",
+      data: movers,
+    });
   } catch (err) {
     handleError(res, err);
   }
@@ -42,25 +40,19 @@ export const getMoverListController = async (
 /**
  * 찜한 기사님 조회
  */
-export const getBookmarkedMoversController = async (
+export const getFavoriteMoversController = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    // TODO: 실제 인증된 사용자 ID를 가져오는 로직으로 변경 필요
-    const userId = 1;
-
-    // 인증 실패 (추후 미들웨어 적용 시)
-    // if (!userId) throw new AuthenticationError("인증이 필요합니다.");
-
-    const bookmarkedMovers = await fetchBookmarkedMovers(userId);
-
-    if (!bookmarkedMovers || bookmarkedMovers.length === 0) {
-      throw new NotFoundError("찜한 기사님이 없습니다.");
-    }
-
-    res.json({ success: true, data: bookmarkedMovers });
+    const { userId } = req.user as { userId: number };
+    const favoriteMovers = await fetchFavoriteMovers(userId);
+    res.json({
+      success: true,
+      message: "찜한 기사님 목록을 성공적으로 조회했습니다.",
+      data: favoriteMovers,
+    });
   } catch (err) {
     handleError(res, err);
   }
