@@ -18,7 +18,7 @@ const userQuoteRepository = {
     return activeQuote.id;
   },
 
-  //
+  // 견적 조회
   getEstimate: async (estimateId: number): Promise<Estimate | null> => {
     const estimate = await prisma.estimate.findUnique({
       where: {
@@ -52,6 +52,7 @@ const userQuoteRepository = {
         id: activeQuoteId,
       },
       select: {
+        id: true,
         movingType: true,
         createdAt: true,
         departureAddr: true,
@@ -69,6 +70,7 @@ const userQuoteRepository = {
             },
           },
           select: {
+            id: true,
             price: true,
             description: true,
             status: true,
@@ -109,6 +111,7 @@ const userQuoteRepository = {
         status: "COMPLETED",
       },
       select: {
+        id: true,
         movingType: true,
         createdAt: true,
         departureAddr: true,
@@ -126,6 +129,7 @@ const userQuoteRepository = {
             },
           },
           select: {
+            id: true,
             price: true,
             description: true,
             status: true,
@@ -172,6 +176,7 @@ const userQuoteRepository = {
             },
           },
           select: {
+            id: true,
             price: true,
             description: true,
             status: true,
@@ -220,6 +225,7 @@ const userQuoteRepository = {
             },
           },
           select: {
+            id: true,
             price: true,
             description: true,
             status: true,
