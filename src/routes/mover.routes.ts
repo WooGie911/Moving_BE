@@ -1,8 +1,9 @@
 import { Router } from "express";
 import {
   getMoverListController,
-  getBookmarkedMoversController,
+  getFavoriteMoversController,
 } from "../controllers/mover.controller";
+import { verifyAccessToken } from "../middlewares/verifyToken";
 
 const moverRouter = Router();
 
@@ -60,17 +61,12 @@ const moverRouter = Router();
  *     }
  *   ]
  * }
- * @example response - 404 - 데이터 없음
- * {
- *   "status": 404,
- *   "message": "조회된 기사님이 없습니다."
- * }
  */
 moverRouter.get("/", getMoverListController);
 
 /**
  * GET /movers/bookmarked
- * @summary 찜한 기사님 조회
+ * @summary 찜한 기사님 조회 (인증 필요)
  * @description 사용자가 찜한 기사님을 최신순 3명까지 조회
  * @returns {object} 200 - 찜한 기사님 목록 조회 성공
  * @returns {object} 401 - 인증 실패
@@ -122,12 +118,11 @@ moverRouter.get("/", getMoverListController);
  *   "status": 401,
  *   "message": "인증이 필요합니다."
  * }
- * @example response - 404 - 데이터 없음
- * {
- *   "status": 404,
- *   "message": "찜한 기사님이 없습니다."
- * }
  */
-moverRouter.get("/bookmarked", getBookmarkedMoversController);
+moverRouter.get(
+  "/favorite",
+  verifyAccessToken,
+  getFavoriteMoversController
+);
 
 export default moverRouter;
