@@ -74,7 +74,7 @@ export const getMoverList = async (filter: IMoverListFilter) => {
 /**
  * 찜한 기사님 조회
  */
-export const getBookmarkedMovers = async (userId: number) => {
+export const getFavoriteMovers = async (userId: number) => {
   const favorites = await prisma.favorite.findMany({
     where: {
       userId: userId,
@@ -108,5 +108,7 @@ export const getBookmarkedMovers = async (userId: number) => {
     },
   });
 
-  return favorites.map((favorite) => favorite.mover.profile);
+  return favorites
+    .map((favorite) => favorite.mover.profile)
+    .filter((profile) => profile !== null);
 };

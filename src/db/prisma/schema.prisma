@@ -254,7 +254,7 @@ model Estimate {
   id                          Int            @id @default(autoincrement())
   quoteId                     Int
   moverId                     Int
-  price                       Int
+  price                       Int            @default(0) // 가격 (기본값 0 - 반려 시 0)
   description                 String
   status                      EstimateStatus @default(PENDING)
   isDesignated                Boolean        @default(false)
@@ -514,6 +514,7 @@ enum EstimateStatus {
   REJECTED
   EXPIRED
   SENT
+  MOVER_REJECTED // 기사가 견적 요청을 반려한 상태
 }
 
 enum RequestStatus {
@@ -539,6 +540,8 @@ enum ActionType {
   DESIGNATED_ESTIMATE_SUBMITTED
   MOVING_COMPLETED
   REVIEW_SUBMITTED
+  MOVING_DAY_TOMORROW // 이사일 하루 전 알림
+  MOVING_DAY_TODAY // 이사일 당일 알림
 }
 
 enum NotificationType {
