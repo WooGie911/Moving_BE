@@ -56,6 +56,48 @@ class QuoteService {
     }
   }
 
+
+
+  async updateActiveQuote(updateData: IUpdateQuoteRequest, userId: number) {
+    try {
+      // 활성 견적 요청 조회
+      const activeQuote = await quoteRepository.getActiveQuoteByUserId(userId);
+
+      if (!activeQuote) {
+        return {
+          success: false,
+          message: "수정할 활성 견적 요청이 없습니다.",
+        };
+      }
+
+      // 활성 상태가 아닌 경우 수정 불가
+      if (activeQuote.status !== "ACTIVE") {
+        return {
+          success: false,
+          message: "확정되거나 취소된 견적 요청은 수정할 수 없습니다.",
+        };
+      }
+
+      // 프론트엔드 데이터를 백엔드 형식으로 변환
+      const backendData = this.convertUpdateDataToBackendFormat(updateData);
+
+      // 견적 요청 수정
+      const updatedQuote = await quoteRepository.updateQuote(activeQuote.id, backendData);
+
+      return {
+        success: true,
+        message: "견적 요청이 성공적으로 수정되었습니다.",
+        data: updatedQuote,
+      };
+    } catch (error) {
+      console.error("활성 견적 요청 수정 서비스 오류:", error);
+      return {
+        success: false,
+        message: "견적 요청 수정 중 오류가 발생했습니다.",
+      };
+    }
+  }
+
   async updateQuote(quoteId: number, updateData: IUpdateQuoteRequest, userId: number) {
     try {
       // 견적 요청 존재 여부 및 소유권 확인
