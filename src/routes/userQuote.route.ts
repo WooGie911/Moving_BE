@@ -66,7 +66,11 @@ const userQuoteRouter = Router();
  *   "message": "진행중인 견적이 없습니다."
  * }
  */
-userQuoteRouter.get("/pending", verifyAccessToken, userQuoteController.getPendingQuote);
+userQuoteRouter.get(
+  "/pending",
+  verifyAccessToken,
+  userQuoteController.getPendingQuote
+);
 
 /**
  * GET /user-quotes/received
@@ -99,7 +103,11 @@ userQuoteRouter.get("/pending", verifyAccessToken, userQuoteController.getPendin
  *   ]
  * }
  */
-userQuoteRouter.get("/received", verifyAccessToken, userQuoteController.getReceivedQuotes);
+userQuoteRouter.get(
+  "/received",
+  verifyAccessToken,
+  userQuoteController.getReceivedQuotes
+);
 
 /**
  * GET /user-quotes/pending/:estimateId
@@ -130,7 +138,11 @@ userQuoteRouter.get("/received", verifyAccessToken, userQuoteController.getRecei
  *   }
  * }
  */
-userQuoteRouter.get("/pending/:estimateId", verifyAccessToken, userQuoteController.getPendingQuoteDetail);
+userQuoteRouter.get(
+  "/pending/:estimateId",
+  verifyAccessToken,
+  userQuoteController.getPendingQuoteDetail
+);
 
 /**
  * GET /user-quotes/received/:quoteId/:estimateId
@@ -162,15 +174,19 @@ userQuoteRouter.get("/pending/:estimateId", verifyAccessToken, userQuoteControll
  *   }
  * }
  */
-userQuoteRouter.get("/received/:quoteId/:estimateId", verifyAccessToken, userQuoteController.getReceivedQuoteDetail);
+userQuoteRouter.get(
+  "/received/:quoteId/:estimateId",
+  verifyAccessToken,
+  userQuoteController.getReceivedQuoteDetail
+);
 
 /**
- * PATCH /user-quotes/confirm/:estimateId
+ * PATCH /user-quotes/confirm
  * @summary 견적 확정
  * @description 특정 견적을 확정합니다.
  * @tags UserQuote
  * @security BearerAuth
- * @param {number} estimateId.path.required - 견적 ID
+ * @param {number} estimateId.query.required - 견적 ID
  * @returns {object} 200 - 견적 확정 성공
  * @returns {object} 400 - 유효하지 않은 견적 ID
  * @returns {object} 401 - 인증 실패
@@ -192,15 +208,19 @@ userQuoteRouter.get("/received/:quoteId/:estimateId", verifyAccessToken, userQuo
  *   }
  * }
  */
-userQuoteRouter.patch("/confirm/:estimateId", verifyAccessToken, userQuoteController.confirmEstimate);
+userQuoteRouter.patch(
+  "/confirm",
+  verifyAccessToken,
+  userQuoteController.confirmEstimate
+);
 
 /**
- * POST /user-quotes/designate/:quoteId
+ * POST /customer-quotes/designate
  * @summary 지정 견적 요청
  * @description 특정 기사님에게 지정 견적을 요청합니다.
  * @tags UserQuote
  * @security BearerAuth
- * @param {number} quoteId.path.required - 견적 ID
+ * @param {number} quoteId.query.required - 견적 ID
  * @param {object} request.body.required - 지정 견적 요청 정보
  * @param {string} request.body.message.required - 요청 메시지
  * @param {number} request.body.moverId.required - 기사님 ID
@@ -228,6 +248,58 @@ userQuoteRouter.patch("/confirm/:estimateId", verifyAccessToken, userQuoteContro
  *   }
  * }
  */
-userQuoteRouter.post("/designate/:quoteId", verifyAccessToken, userQuoteController.designateQuote);
+userQuoteRouter.post(
+  "/designate",
+  verifyAccessToken,
+  userQuoteController.designateQuote
+);
+
+/**
+ * GET /user-quotes/history
+ * @summary 이용 내역 조회
+ * @description 일반 유저의 마이페이지에서 확정된 견적 이력을 조회합니다.
+ * @tags UserQuote
+ * @security BearerAuth
+ * @returns {object} 200 - 이용 내역 조회 성공
+ * @returns {object} 401 - 인증 실패
+ * @returns {object} 404 - 이용 내역 없음
+ * @example response - 200 - 성공 예시
+ * {
+ *   "success": true,
+ *   "message": "이용 내역 조회 성공",
+ *   "data": [
+ *     {
+ *       "id": 1,
+ *       "movingType": "SMALL",
+ *       "movingDate": "2025-07-15",
+ *       "departureAddr": "서울시 강남구",
+ *       "arrivalAddr": "서울시 서초구",
+ *       "status": "COMPLETED",
+ *       "confirmedEstimate": {
+ *         "id": 1,
+ *         "price": 150000,
+ *         "description": "안전하고 신속한 이사 서비스",
+ *         "mover": {
+ *           "id": 1,
+ *           "name": "김기사",
+ *           "profile": {
+ *             "nickname": "믿을만한김기사",
+ *             "profileImage": "https://example.com/image.jpg",
+ *             "experience": 5,
+ *             "avgRating": 4.8,
+ *             "reviewCount": 50
+ *           }
+ *         }
+ *       },
+ *       "completedAt": "2025-07-15T10:00:00.000Z"
+ *     }
+ *   ]
+ * }
+ */
+userQuoteRouter.get(
+  "/history",
+  verifyAccessToken,
+  userQuoteController.getQuoteHistory
+);
 
 export default userQuoteRouter;
