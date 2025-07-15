@@ -12,6 +12,9 @@ const reviewService = {
   getWrittenReviews: async (userId: number) => {
     return reviewRepository.getWrittenReviews(userId);
   },
+  getReceivedReviews: async (moverId: number) => {
+    return reviewRepository.getReceivedReviews(moverId);
+  },
 };
 
 export default reviewService;
