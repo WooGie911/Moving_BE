@@ -1,5 +1,10 @@
-import { Estimate, PrismaClient } from "@prisma/client";
-import { TConfirmEstimateResult, TDesignatedEstimateRequest, TEstimate, TQuote } from "../types/userQuote";
+import {
+  Quote,
+  Estimate,
+  DesignatedEstimateRequest,
+  User,
+} from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const userQuoteRepository = {
@@ -30,7 +35,9 @@ const userQuoteRepository = {
   },
 
   // mover 유효성 검증용
-  getMoverById: async (moverId: number) => {
+  getMoverById: async (
+    moverId: number
+  ): Promise<Pick<User, "id" | "name" | "currentRole"> | null> => {
     const mover = await prisma.user.findUnique({
       where: {
         id: moverId,
@@ -46,7 +53,9 @@ const userQuoteRepository = {
   },
 
   // 진행중인 이사 견적들 조회
-  getPendingQuote: async (activeQuoteId: number): Promise<TQuote | null> => {
+  getPendingQuote: async (
+    activeQuoteId: number
+  ): Promise<Record<string, any> | null> => {
     const pendingQuotes = await prisma.quote.findUnique({
       where: {
         id: activeQuoteId,
@@ -62,7 +71,6 @@ const userQuoteRepository = {
         confirmedEstimateId: true,
         estimateCount: true,
         designatedEstimateCount: true,
-
         estimates: {
           where: {
             price: {
@@ -104,7 +112,9 @@ const userQuoteRepository = {
   },
 
   //완료된 이사 견적들 조회
-  getReceivedQuotes: async (userId: number): Promise<TQuote[] | null> => {
+  getReceivedQuotes: async (
+    userId: number
+  ): Promise<Record<string, any>[] | null> => {
     const receivedQuotes = await prisma.quote.findMany({
       where: {
         userId: userId,
@@ -121,7 +131,6 @@ const userQuoteRepository = {
         confirmedEstimateId: true,
         estimateCount: true,
         designatedEstimateCount: true,
-
         estimates: {
           where: {
             price: {
@@ -162,7 +171,10 @@ const userQuoteRepository = {
   },
 
   //진행중인 이사 견적들 중 상세 견적 조회
-  getPendingQuoteDetail: async (activeQuoteId: number, estimateId: number): Promise<TEstimate | null> => {
+  getPendingQuoteDetail: async (
+    activeQuoteId: number,
+    estimateId: number
+  ): Promise<Record<string, any> | null> => {
     const pendingDetailEstimate = await prisma.quote.findUnique({
       where: {
         id: activeQuoteId,
@@ -210,7 +222,11 @@ const userQuoteRepository = {
   },
 
   //완료된 이사 견적들 중 상세 견적 조회
-  getReceivedQuoteDetail: async (userId: number, estimateId: number, quoteId: number): Promise<TEstimate | null> => {
+  getReceivedQuoteDetail: async (
+    userId: number,
+    estimateId: number,
+    quoteId: number
+  ): Promise<Record<string, any> | null> => {
     const receivedDetailEstimate = await prisma.quote.findUnique({
       where: {
         userId: userId,
@@ -259,7 +275,10 @@ const userQuoteRepository = {
   },
 
   //견적 컨펌
-  confirmEstimate: async (userId: number, estimateId: number): Promise<TConfirmEstimateResult | null> => {
+  confirmEstimate: async (
+    userId: number,
+    estimateId: number
+  ): Promise<{ quote: Quote; estimate: Estimate } | null> => {
     const activeQuoteId = await userQuoteRepository.getActiveQuote(userId);
     if (!activeQuoteId) {
       throw new Error("진행중인 견적이 없습니다.");
@@ -309,8 +328,8 @@ const userQuoteRepository = {
     quoteId: number,
     userId: number,
     message: string,
-    moverId: number,
-  ): Promise<TDesignatedEstimateRequest | null> => {
+    moverId: number
+  ): Promise<DesignatedEstimateRequest | null> => {
     // quote가 해당 사용자의 것인지 확인
     const quote = await prisma.quote.findFirst({
       where: {
@@ -331,7 +350,9 @@ const userQuoteRepository = {
       throw new Error("진행중인 견적만 지정 견적을 요청할 수 있습니다.");
     }
 
-    const validUntil = new Date(quote.movingDate.getTime() - 1000 * 60 * 60 * 24);
+    const validUntil = new Date(
+      quote.movingDate.getTime() - 1000 * 60 * 60 * 24
+    );
 
     // 이미 해당 quote에 대한 지정 견적 요청이 있는지 확인
     const existingRequest = await prisma.designatedEstimateRequest.findFirst({

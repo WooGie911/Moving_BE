@@ -10,6 +10,7 @@ import cookieParser from "cookie-parser";
 import reviewRouter from "./routes/review.route";
 import userQuoteRouter from "./routes/userQuote.route";
 import quoteRouter from "./routes/quote.routes";
+import moverEstimateRouter from "./routes/moverEstimate.routes";
 
 // 환경변수 로드
 dotenv.config();
@@ -26,14 +27,18 @@ app.use(
   cors({
     origin: (origin, callback) => {
       // ngrok 테스트용 cors 설정
-      if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".ngrok-free.app")) {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".ngrok-free.app")
+      ) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
       }
     },
     credentials: true,
-  }),
+  })
 );
 
 app.use(cookieParser());
@@ -67,6 +72,7 @@ app.use("/users", userRouter);
 app.use("/reviews", reviewRouter);
 app.use("/userQuotes", userQuoteRouter);
 app.use("/quotes", quoteRouter);
+app.use("/moverEstimates", moverEstimateRouter);
 
 // 404 에러 핸들링
 app.use(notFoundHandler);
