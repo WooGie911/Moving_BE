@@ -262,6 +262,44 @@ const userQuoteController = {
       next(error);
     }
   },
+
+  // 7. 이용 내역 조회
+  getQuoteHistory: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const userId = req.user?.userId;
+      const userRole = req.user?.role;
+
+      if (!userId || typeof userId !== "number" || userId <= 0) {
+        res.status(401).json({
+          success: false,
+          message: "유효하지 않은 사용자 정보입니다.",
+        });
+        return;
+      }
+
+      // CUSTOMER 권한 확인
+      if (userRole !== "CUSTOMER") {
+        res.status(403).json({
+          success: false,
+          message: "현재 유저타입이 고객이 아닙니다.",
+        });
+        return;
+      }
+
+      const result = await userQuoteService.getQuoteHistory(userId);
+      res.status(200).json({
+        success: true,
+        message: "이용 내역 조회 성공",
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 
 export default userQuoteController;

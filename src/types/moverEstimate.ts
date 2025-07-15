@@ -1,5 +1,5 @@
 // 견적 생성 요청 타입
-export type CreateEstimateRequest = {
+export type TCreateEstimateRequest = {
   quoteId: number;
   userId: number;
   price: number;
@@ -7,14 +7,14 @@ export type CreateEstimateRequest = {
 };
 
 // 견적 반려 요청 타입
-export type RejectEstimateRequest = {
+export type TRejectEstimateRequest = {
   quoteId: number;
   userId: number;
   description: string;
 };
 
 // 견적 조회 필터링 타입
-export type QuoteFilterOptions = {
+export type TQuoteFilterOptions = {
   availableRegion: string;
   sortBy?: "movingDate" | "createdAt";
   customerName?: string;
@@ -22,7 +22,7 @@ export type QuoteFilterOptions = {
 };
 
 // 지정 견적 조회 필터링 타입
-export type DesignatedQuoteFilterOptions = {
+export type TDesignatedQuoteFilterOptions = {
   moverId: number;
   sortBy?: "movingDate" | "createdAt";
   customerName?: string;
@@ -30,14 +30,14 @@ export type DesignatedQuoteFilterOptions = {
 };
 
 // 견적 상태 업데이트 타입
-export type UpdateEstimateStatusRequest = {
+export type TUpdateEstimateStatusRequest = {
   estimateId: number;
   userId: number;
   status: "PENDING" | "ACCEPTED" | "REJECTED" | "EXPIRED";
 };
 
 // 견적서 업데이트 타입
-export type UpdateEstimateRequest = {
+export type TUpdateEstimateRequest = {
   estimateId: number;
   userId: number;
   price: number;
@@ -45,7 +45,7 @@ export type UpdateEstimateRequest = {
 };
 
 // 견적 응답 타입
-export type QuoteResponse = {
+export type TQuoteResponse = {
   id: number;
   userId: number;
   movingType: "SMALL" | "HOME" | "OFFICE";
@@ -73,7 +73,7 @@ export type QuoteResponse = {
 };
 
 // 견적서 응답 타입
-export type EstimateResponse = {
+export type TEstimateResponse = {
   id: number;
   quoteId: number;
   moverId: number;
@@ -89,11 +89,11 @@ export type EstimateResponse = {
   isDesignated: boolean;
   createdAt: Date;
   updatedAt: Date;
-  quote?: QuoteResponse;
+  quote?: TQuoteResponse;
 };
 
 // 내가 보낸 견적서 응답 타입
-export type MyEstimateResponse = {
+export type TMyEstimateResponse = {
   id: number;
   quoteId: number;
   moverId: number;
@@ -103,16 +103,16 @@ export type MyEstimateResponse = {
   isDesignated: boolean;
   createdAt: Date;
   updatedAt: Date;
-  quote: QuoteResponse;
+  quote: TQuoteResponse;
 };
 
 // 내가 반려한 견적 응답 타입
-export type MyRejectedQuoteResponse = {
+export type TMyRejectedQuoteResponse = {
   id: number;
   quoteId: number;
   price: number;
   description: string;
   status: string;
   createdAt: Date;
-  quote: QuoteResponse;
+  quote: TQuoteResponse;
 };

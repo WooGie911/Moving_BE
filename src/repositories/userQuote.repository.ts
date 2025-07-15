@@ -382,6 +382,59 @@ const userQuoteRepository = {
     if (!designatedrequest) return null;
     return designatedrequest;
   },
+
+  // 이용 내역 조회
+  getQuoteHistory: async (userId: number): Promise<any[]> => {
+    const quotes = await prisma.quote.findMany({
+      where: {
+        userId,
+        status: "COMPLETED",
+        confirmedEstimateId: {
+          not: null,
+        },
+      },
+      include: {
+        confirmedEstimate: {
+          include: {
+            mover: {
+              include: {
+                profile: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        updatedAt: "desc",
+      },
+    });
+
+    return quotes.map((quote) => ({
+      id: quote.id,
+      movingType: quote.movingType,
+      movingDate: quote.movingDate,
+      departureAddr: quote.departureAddr,
+      arrivalAddr: quote.arrivalAddr,
+      status: "COMPLETED",
+      confirmedEstimate: {
+        id: quote.confirmedEstimate!.id,
+        price: quote.confirmedEstimate!.price,
+        description: quote.confirmedEstimate!.description,
+        mover: {
+          id: quote.confirmedEstimate!.mover.id,
+          name: quote.confirmedEstimate!.mover.name,
+          profile: {
+            nickname: quote.confirmedEstimate!.mover.profile!.nickname,
+            profileImage: quote.confirmedEstimate!.mover.profile!.profileImage,
+            experience: quote.confirmedEstimate!.mover.profile!.experience,
+            avgRating: quote.confirmedEstimate!.mover.profile!.avgRating,
+            reviewCount: quote.confirmedEstimate!.mover.profile!.reviewCount,
+          },
+        },
+      },
+      completedAt: quote.updatedAt,
+    }));
+  },
 };
 
 export default userQuoteRepository;

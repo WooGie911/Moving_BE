@@ -6,13 +6,13 @@ import {
 } from "@prisma/client";
 
 // 견적 요청 타입
-export type ConfirmEstimateRequest = {
+export type TConfirmEstimateRequest = {
   userId: number;
   estimateId: number;
 };
 
 // 지정 견적 요청 타입
-export type DesignateQuoteRequest = {
+export type TDesignateQuoteRequest = {
   quoteId: number;
   userId: number;
   message: string;
@@ -20,7 +20,7 @@ export type DesignateQuoteRequest = {
 };
 
 // 견적 응답 타입 (진행중인 견적)
-export type PendingQuoteResponse = {
+export type TPendingQuoteResponse = {
   quote: {
     id: number;
     movingType: string;
@@ -33,11 +33,11 @@ export type PendingQuoteResponse = {
     estimateCount: number;
     designatedEstimateCount: number;
   };
-  estimates: EstimateResponse[];
+  estimates: TEstimateResponse[];
 };
 
 // 견적 응답 타입 (완료된 견적)
-export type ReceivedQuoteResponse = {
+export type TReceivedQuoteResponse = {
   quote: {
     id: number;
     movingType: string;
@@ -50,11 +50,11 @@ export type ReceivedQuoteResponse = {
     estimateCount: number;
     designatedEstimateCount: number;
   };
-  estimates: EstimateResponse[];
+  estimates: TEstimateResponse[];
 };
 
 // 견적서 응답 타입
-export type EstimateResponse = {
+export type TEstimateResponse = {
   id: number;
   price: number;
   description: string;
@@ -79,7 +79,7 @@ export type EstimateResponse = {
 };
 
 // 견적 상세 조회 응답 타입
-export type QuoteDetailResponse = {
+export type TQuoteDetailResponse = {
   id: number;
   price: number;
   description: string;
@@ -104,13 +104,13 @@ export type QuoteDetailResponse = {
 };
 
 // 견적 확정 응답 타입
-export type ConfirmEstimateResponse = {
+export type TConfirmEstimateResponse = {
   quote: Quote;
   estimate: Estimate;
 };
 
 // 지정 견적 요청 응답 타입
-export type DesignateQuoteResponse = DesignatedEstimateRequest;
+export type TDesignateQuoteResponse = DesignatedEstimateRequest;
 
 // 기존 타입들 (레거시 호환성용)
 export type TQuote = Pick<
@@ -156,7 +156,40 @@ export type TConfirmEstimateResult = {
   estimate: Estimate;
 };
 
-export type TDesignatedEstimateRequest = Pick<
-  DesignatedEstimateRequest,
-  "quoteId" | "customerId" | "moverId" | "message" | "status" | "expiresAt"
->;
+export type TDesignatedEstimateRequest = {
+  id: number;
+  quoteId: number;
+  customerId: number;
+  moverId: number;
+  message: string | null;
+  status: "PENDING" | "ACCEPTED" | "REJECTED" | "EXPIRED";
+  expiresAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type TQuoteHistoryResponse = {
+  id: number;
+  movingType: "SMALL" | "HOME" | "OFFICE";
+  movingDate: Date;
+  departureAddr: string;
+  arrivalAddr: string;
+  status: "COMPLETED";
+  confirmedEstimate: {
+    id: number;
+    price: number;
+    description: string;
+    mover: {
+      id: number;
+      name: string;
+      profile: {
+        nickname: string;
+        profileImage?: string;
+        experience: number;
+        avgRating: number;
+        reviewCount: number;
+      };
+    };
+  };
+  completedAt: Date;
+};

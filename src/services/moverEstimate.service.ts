@@ -1,21 +1,21 @@
 import moverEstimateRepository from "../repositories/moverEstimate.repository";
 import { NotFoundError } from "../types/commonError.types";
 import {
-  CreateEstimateRequest,
-  RejectEstimateRequest,
-  UpdateEstimateRequest,
-  UpdateEstimateStatusRequest,
-  QuoteResponse,
-  EstimateResponse,
-  MyEstimateResponse,
-  MyRejectedQuoteResponse,
+  TCreateEstimateRequest,
+  TRejectEstimateRequest,
+  TUpdateEstimateRequest,
+  TUpdateEstimateStatusRequest,
+  TQuoteResponse,
+  TEstimateResponse,
+  TMyEstimateResponse,
+  TMyRejectedQuoteResponse,
 } from "../types/moverEstimate";
 
 const moverEstimateService = {
   // 견적 생성
   createEstimate: async (
-    data: CreateEstimateRequest
-  ): Promise<EstimateResponse | null> => {
+    data: TCreateEstimateRequest
+  ): Promise<TEstimateResponse | null> => {
     try {
       const estimate = await moverEstimateRepository.createEstimate(
         data.quoteId,
@@ -45,8 +45,8 @@ const moverEstimateService = {
 
   // 견적 반려
   rejectEstimate: async (
-    data: RejectEstimateRequest
-  ): Promise<EstimateResponse | null> => {
+    data: TRejectEstimateRequest
+  ): Promise<TEstimateResponse | null> => {
     try {
       const estimate = await moverEstimateRepository.rejectEstimate(
         data.quoteId,
@@ -79,7 +79,7 @@ const moverEstimateService = {
     sortBy?: "movingDate" | "createdAt",
     customerName?: string,
     movingType?: "SMALL" | "HOME" | "OFFICE"
-  ): Promise<QuoteResponse[] | null> => {
+  ): Promise<TQuoteResponse[] | null> => {
     const quotes = await moverEstimateRepository.getRegionQuote(
       availableRegion,
       sortBy,
@@ -100,7 +100,7 @@ const moverEstimateService = {
     sortBy?: "movingDate" | "createdAt",
     customerName?: string,
     movingType?: "SMALL" | "HOME" | "OFFICE"
-  ): Promise<QuoteResponse[] | null> => {
+  ): Promise<TQuoteResponse[] | null> => {
     const quotes = await moverEstimateRepository.getDesignatedQuote(
       moverId,
       sortBy,
@@ -127,8 +127,8 @@ const moverEstimateService = {
       movingType?: "SMALL" | "HOME" | "OFFICE";
     }
   ): Promise<{
-    regionQuotes?: QuoteResponse[];
-    designatedQuotes?: QuoteResponse[];
+    regionQuotes?: TQuoteResponse[];
+    designatedQuotes?: TQuoteResponse[];
   }> => {
     const {
       region,
@@ -139,8 +139,8 @@ const moverEstimateService = {
       movingType,
     } = options;
 
-    let regionQuotes: QuoteResponse[] = [];
-    let designatedQuotes: QuoteResponse[] = [];
+    let regionQuotes: TQuoteResponse[] = [];
+    let designatedQuotes: TQuoteResponse[] = [];
 
     if (region && availableRegion) {
       regionQuotes =
@@ -167,7 +167,7 @@ const moverEstimateService = {
   },
 
   // 견적 상세 조회
-  getQuoteById: async (quoteId: number): Promise<QuoteResponse | null> => {
+  getQuoteById: async (quoteId: number): Promise<TQuoteResponse | null> => {
     const quote = await moverEstimateRepository.getQuoteById(quoteId);
     if (!quote) {
       throw new NotFoundError("견적을 찾을 수 없습니다.");
@@ -178,7 +178,7 @@ const moverEstimateService = {
   // 내가 보낸 견적서 조회
   getMyEstimate: async (
     userId: number
-  ): Promise<MyEstimateResponse[] | null> => {
+  ): Promise<TMyEstimateResponse[] | null> => {
     const estimates = await moverEstimateRepository.getMyEstimate(userId);
     if (!estimates || estimates.length === 0) {
       throw new NotFoundError("보낸 견적서가 없습니다.");
@@ -189,7 +189,7 @@ const moverEstimateService = {
   // 내가 반려한 견적 조회
   getMyRejectedQuotes: async (
     userId: number
-  ): Promise<MyRejectedQuoteResponse[] | null> => {
+  ): Promise<TMyRejectedQuoteResponse[] | null> => {
     const rejectedQuotes =
       await moverEstimateRepository.getMyRejectedQuotes(userId);
     if (!rejectedQuotes || rejectedQuotes.length === 0) {
@@ -200,8 +200,8 @@ const moverEstimateService = {
 
   // 견적 상태 업데이트
   updateEstimateStatus: async (
-    data: UpdateEstimateStatusRequest
-  ): Promise<EstimateResponse | null> => {
+    data: TUpdateEstimateStatusRequest
+  ): Promise<TEstimateResponse | null> => {
     try {
       const estimate = await moverEstimateRepository.updateEstimateStatus(
         data.estimateId,
@@ -224,8 +224,8 @@ const moverEstimateService = {
 
   // 견적서 업데이트
   updateEstimate: async (
-    data: UpdateEstimateRequest
-  ): Promise<EstimateResponse | null> => {
+    data: TUpdateEstimateRequest
+  ): Promise<TEstimateResponse | null> => {
     try {
       const estimate = await moverEstimateRepository.updateEstimatePrice(
         data.estimateId,

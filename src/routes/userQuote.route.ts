@@ -254,4 +254,52 @@ userQuoteRouter.post(
   userQuoteController.designateQuote
 );
 
+/**
+ * GET /user-quotes/history
+ * @summary 이용 내역 조회
+ * @description 일반 유저의 마이페이지에서 확정된 견적 이력을 조회합니다.
+ * @tags UserQuote
+ * @security BearerAuth
+ * @returns {object} 200 - 이용 내역 조회 성공
+ * @returns {object} 401 - 인증 실패
+ * @returns {object} 404 - 이용 내역 없음
+ * @example response - 200 - 성공 예시
+ * {
+ *   "success": true,
+ *   "message": "이용 내역 조회 성공",
+ *   "data": [
+ *     {
+ *       "id": 1,
+ *       "movingType": "SMALL",
+ *       "movingDate": "2025-07-15",
+ *       "departureAddr": "서울시 강남구",
+ *       "arrivalAddr": "서울시 서초구",
+ *       "status": "COMPLETED",
+ *       "confirmedEstimate": {
+ *         "id": 1,
+ *         "price": 150000,
+ *         "description": "안전하고 신속한 이사 서비스",
+ *         "mover": {
+ *           "id": 1,
+ *           "name": "김기사",
+ *           "profile": {
+ *             "nickname": "믿을만한김기사",
+ *             "profileImage": "https://example.com/image.jpg",
+ *             "experience": 5,
+ *             "avgRating": 4.8,
+ *             "reviewCount": 50
+ *           }
+ *         }
+ *       },
+ *       "completedAt": "2025-07-15T10:00:00.000Z"
+ *     }
+ *   ]
+ * }
+ */
+userQuoteRouter.get(
+  "/history",
+  verifyAccessToken,
+  userQuoteController.getQuoteHistory
+);
+
 export default userQuoteRouter;

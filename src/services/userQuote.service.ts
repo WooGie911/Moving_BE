@@ -1,16 +1,18 @@
 import userQuoteRepository from "../repositories/userQuote.repository";
 import { NotFoundError } from "../types/commonError.types";
 import {
-  PendingQuoteResponse,
-  ReceivedQuoteResponse,
-  QuoteDetailResponse,
-  ConfirmEstimateResponse,
-  DesignateQuoteResponse,
+  TPendingQuoteResponse,
+  TReceivedQuoteResponse,
+  TQuoteDetailResponse,
+  TConfirmEstimateResponse,
+  TDesignateQuoteResponse,
+  TDesignatedEstimateRequest,
+  TQuoteHistoryResponse,
 } from "../types/userQuote";
 
 const userQuoteService = {
   // 진행중인 견적 조회
-  getPendingQuote: async (userId: number): Promise<PendingQuoteResponse> => {
+  getPendingQuote: async (userId: number): Promise<TPendingQuoteResponse> => {
     const activeQuoteId = await userQuoteRepository.getActiveQuote(userId);
     if (!activeQuoteId) {
       throw new NotFoundError("진행중인 견적이 없습니다.");
@@ -57,7 +59,7 @@ const userQuoteService = {
   // 완료된 견적 조회
   getReceivedQuotes: async (
     userId: number
-  ): Promise<ReceivedQuoteResponse[]> => {
+  ): Promise<TReceivedQuoteResponse[]> => {
     const result = await userQuoteRepository.getReceivedQuotes(userId);
     if (!result || result.length === 0) {
       throw new NotFoundError("완료된 견적이 없습니다.");
@@ -104,7 +106,7 @@ const userQuoteService = {
   getPendingQuoteDetail: async (
     userId: number,
     estimateId: number
-  ): Promise<QuoteDetailResponse> => {
+  ): Promise<TQuoteDetailResponse> => {
     const activeQuoteId = await userQuoteRepository.getActiveQuote(userId);
     if (!activeQuoteId) {
       throw new NotFoundError("진행중인 견적이 없습니다.");
@@ -134,7 +136,7 @@ const userQuoteService = {
     userId: number,
     estimateId: number,
     quoteId: number
-  ): Promise<QuoteDetailResponse> => {
+  ): Promise<TQuoteDetailResponse> => {
     const result = await userQuoteRepository.getReceivedQuoteDetail(
       userId,
       estimateId,
@@ -159,7 +161,7 @@ const userQuoteService = {
   confirmEstimate: async (
     userId: number,
     estimateId: number
-  ): Promise<ConfirmEstimateResponse> => {
+  ): Promise<TConfirmEstimateResponse> => {
     const activeQuoteId = await userQuoteRepository.getActiveQuote(userId);
     if (!activeQuoteId) {
       throw new NotFoundError("진행중인 견적이 없습니다.");
@@ -176,24 +178,13 @@ const userQuoteService = {
     return result;
   },
 
-  // 지정 견적 요청
+  // 6. 지정 견적 요청
   designateQuote: async (
     quoteId: number,
     userId: number,
     message: string,
     moverId: number
-  ): Promise<DesignateQuoteResponse> => {
-    const activeQuoteId = await userQuoteRepository.getActiveQuote(userId);
-    if (!activeQuoteId) {
-      throw new NotFoundError("진행중인 견적이 없습니다.");
-    }
-
-    // moverId 유효성 검증 (mover가 존재하고 MOVER 역할인지 확인)
-    const mover = await userQuoteRepository.getMoverById(moverId);
-    if (!mover || mover.currentRole !== "MOVER") {
-      throw new NotFoundError("유효하지 않은 기사님입니다.");
-    }
-
+  ): Promise<TDesignatedEstimateRequest> => {
     const result = await userQuoteRepository.designateQuote(
       quoteId,
       userId,
@@ -203,7 +194,12 @@ const userQuoteService = {
     if (!result) {
       throw new NotFoundError("지정 견적 요청에 실패했습니다.");
     }
+    return result;
+  },
 
+  // 7. 이용 내역 조회
+  getQuoteHistory: async (userId: number): Promise<TQuoteHistoryResponse[]> => {
+    const result = await userQuoteRepository.getQuoteHistory(userId);
     return result;
   },
 };
