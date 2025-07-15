@@ -1,14 +1,46 @@
 import userQuoteRepository from "../repositories/userQuote.repositort";
-import { NotFoundError } from "../types/commonError";
+import { NotFoundError } from "../types/commonError.types";
 
 const getPendingQuote = async (userId: number) => {
-  const result = await userQuoteRepository.getPendingQuote(userId);
-  if (!result) {
-    // 비즈니스 에러 처리
+  const activeQuoteId = await userQuoteRepository.getActiveQuote(userId);
+  if (!activeQuoteId) {
     throw new NotFoundError("진행중인 견적이 없습니다.");
   }
-  const { estimates, ...quote } = result;
-  return result;
+
+  const data = await userQuoteRepository.getPendingQuote(activeQuoteId);
+  if (!data) {
+    throw new NotFoundError("진행중인 견적이 없습니다.");
+  }
+
+  const {
+    movingType,
+    createdAt,
+    departureAddr,
+    arrivalAddr,
+    departureDetail,
+    status,
+    confirmedEstimateId,
+    estimateCount,
+    designatedEstimateCount,
+    estimates,
+  } = data;
+
+  const quote = {
+    movingType,
+    createdAt,
+    departureAddr,
+    arrivalAddr,
+    departureDetail,
+    status,
+    confirmedEstimateId,
+    estimateCount,
+    designatedEstimateCount,
+  };
+
+  return {
+    quote,
+    estimates: estimates ?? [],
+  };
 };
 
 const getReceivedQuotes = async (userId: number) => {
@@ -17,17 +49,50 @@ const getReceivedQuotes = async (userId: number) => {
     throw new NotFoundError("완료된 견적이 없습니다.");
   }
 
-  // 각 quote에서 estimates 분리
-  const formatted = result.map(({ estimates, ...quote }) => ({
-    quote,
-    estimates,
-  }));
+  const quotes = result.map((data) => {
+    const {
+      movingType,
+      createdAt,
+      departureAddr,
+      arrivalAddr,
+      departureDetail,
+      status,
+      confirmedEstimateId,
+      estimateCount,
+      designatedEstimateCount,
+      estimates,
+    } = data;
 
-  return formatted;
+    const quote = {
+      movingType,
+      createdAt,
+      departureAddr,
+      arrivalAddr,
+      departureDetail,
+      status,
+      confirmedEstimateId,
+      estimateCount,
+      designatedEstimateCount,
+    };
+
+    return {
+      quote,
+      estimates: estimates ?? [],
+    };
+  });
+
+  return quotes;
 };
 
 const getPendingQuoteDetail = async (userId: number, estimateId: number) => {
-  return await userQuoteRepository.getPendingQuoteDetail(userId, estimateId);
+  const result = await userQuoteRepository.getPendingQuoteDetail(
+    userId,
+    estimateId
+  );
+  if (!result) {
+    throw new NotFoundError("견적 상세 정보를 찾을 수 없습니다.");
+  }
+  return result;
 };
 
 const getReceivedQuoteDetail = async (
@@ -35,14 +100,24 @@ const getReceivedQuoteDetail = async (
   estimateId: number,
   quoteId: number
 ) => {
-  return await userQuoteRepository.getReceivedQuoteDetail(
+  const result = await userQuoteRepository.getReceivedQuoteDetail(
     userId,
     estimateId,
     quoteId
   );
+  if (!result) {
+    throw new NotFoundError("견적 상세 정보를 찾을 수 없습니다.");
+  }
+
+  return result;
 };
 
 const confirmEstimate = async (userId: number, estimateId: number) => {
+  const result = await userQuoteRepository.confirmEstimate(userId, estimateId);
+  if (!result) {
+    throw new NotFoundError("견적 상세 정보를 찾을 수 없습니다.");
+  }
+
   return await userQuoteRepository.confirmEstimate(userId, estimateId);
 };
 

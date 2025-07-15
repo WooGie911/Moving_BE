@@ -1,7 +1,15 @@
 import { PrismaClient } from "@prisma/client";
+import { promises } from "dns";
+import {
+  TConfirmEstimateResult,
+  TDesignatedEstimateRequest,
+  TEstimate,
+  TQuote,
+} from "../types/userQuote";
 const prisma = new PrismaClient();
-//
-const getActiveQuote = async (userId: number) => {
+
+//활성상태인 견적 아이디 조회
+const getActiveQuote = async (userId: number): Promise<number | null> => {
   const activeQuote = await prisma.quote.findFirst({
     where: {
       userId: userId,
@@ -11,11 +19,14 @@ const getActiveQuote = async (userId: number) => {
       id: true,
     },
   });
-  return activeQuote?.id;
+  if (!activeQuote) return null;
+  return activeQuote.id;
 };
 
-//진행중인 이사 견적들 조회
-const getPendingQuote = async (activeQuoteId: number) => {
+// 진행중인 이사 견적들 조회
+const getPendingQuote = async (
+  activeQuoteId: number
+): Promise<TQuote | null> => {
   const pendingQuotes = await prisma.quote.findUnique({
     where: {
       id: activeQuoteId,
@@ -32,6 +43,11 @@ const getPendingQuote = async (activeQuoteId: number) => {
       designatedEstimateCount: true,
 
       estimates: {
+        where: {
+          price: {
+            not: 0,
+          },
+        },
         select: {
           price: true,
           description: true,
@@ -61,10 +77,12 @@ const getPendingQuote = async (activeQuoteId: number) => {
       },
     },
   });
+  if (!pendingQuotes) return null;
   return pendingQuotes;
 };
+
 //완료된 이사 견적들 조회
-const getReceivedQuotes = async (userId: number) => {
+const getReceivedQuotes = async (userId: number): Promise<TQuote[] | null> => {
   const receivedQuotes = await prisma.quote.findMany({
     where: {
       userId: userId,
@@ -82,6 +100,11 @@ const getReceivedQuotes = async (userId: number) => {
       designatedEstimateCount: true,
 
       estimates: {
+        where: {
+          price: {
+            not: 0,
+          },
+        },
         select: {
           price: true,
           description: true,
@@ -117,7 +140,7 @@ const getReceivedQuotes = async (userId: number) => {
 const getPendingQuoteDetail = async (
   activeQuoteId: number,
   estimateId: number
-) => {
+): Promise<TEstimate | null> => {
   const pendingDetailEstimate = await prisma.quote.findUnique({
     where: {
       id: activeQuoteId,
@@ -126,6 +149,9 @@ const getPendingQuoteDetail = async (
       estimates: {
         where: {
           id: estimateId,
+          price: {
+            not: 0,
+          },
         },
         select: {
           price: true,
@@ -156,14 +182,15 @@ const getPendingQuoteDetail = async (
       },
     },
   });
-  return pendingDetailEstimate?.estimates;
+  if (!pendingDetailEstimate) return null;
+  return pendingDetailEstimate.estimates[0];
 };
 //완료된 이사 견적들 중 상세 견적 조회
 const getReceivedQuoteDetail = async (
   userId: number,
   estimateId: number,
   quoteId: number
-) => {
+): Promise<TEstimate | null> => {
   const receivedDetailEstimate = await prisma.quote.findUnique({
     where: {
       userId: userId,
@@ -173,6 +200,9 @@ const getReceivedQuoteDetail = async (
       estimates: {
         where: {
           id: estimateId,
+          price: {
+            not: 0,
+          },
         },
         select: {
           price: true,
@@ -203,11 +233,15 @@ const getReceivedQuoteDetail = async (
       },
     },
   });
-  return receivedDetailEstimate?.estimates;
+  if (!receivedDetailEstimate) return null;
+  return receivedDetailEstimate.estimates[0];
 };
 
 //견적 컨펌
-const confirmEstimate = async (activeQuoteId: number, estimateId: number) => {
+const confirmEstimate = async (
+  activeQuoteId: number,
+  estimateId: number
+): Promise<TConfirmEstimateResult | null> => {
   const [confirmedQuote, confirmedEstimate] = await prisma.$transaction([
     prisma.quote.update({
       where: {
@@ -241,7 +275,7 @@ const designateQuote = async (
   userId: number,
   message: string,
   moverId: number
-) => {
+): Promise<TDesignatedEstimateRequest | null> => {
   const movingDate = await prisma.quote.findUnique({
     where: {
       id: quoteId,
@@ -250,6 +284,9 @@ const designateQuote = async (
       movingDate: true,
     },
   });
+  if (!movingDate) {
+    throw new Error("해당 견적을 찾을 수 없습니다.");
+  }
   const validUntil = new Date(
     movingDate.movingDate.getTime() - 1000 * 60 * 60 * 24
   );
@@ -260,10 +297,11 @@ const designateQuote = async (
       message: message,
       moverId: moverId,
       status: "PENDING",
-      validUntil: validUntil,
+      expiresAt: validUntil,
     },
   });
   //지정견적은 무버 API만들고 더 손봐야 할지도..?
+  if (!designatedrequest) return null;
   return designatedrequest;
 };
 
