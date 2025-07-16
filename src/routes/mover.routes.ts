@@ -6,7 +6,8 @@ const moverRouter = Router();
 
 /**
  * GET /movers
- * @summary 기사님 리스트 조회
+ * @summary 기사님 리스트 조회 
+ * @tags Mover
  * @description 기사님 목록을 조회
  * @param {string} region.query - 지역 필터
  * @param {number} serviceTypeId.query - 서비스 종류 ID
@@ -64,6 +65,7 @@ moverRouter.get("/", getMoverListController);
 /**
  * GET /movers/bookmarked
  * @summary 찜한 기사님 조회 (인증 필요)
+ * @tags Mover
  * @description 사용자가 찜한 기사님을 최신순 3명까지 조회
  * @returns {object} 200 - 찜한 기사님 목록 조회 성공
  * @returns {object} 401 - 인증 실패
@@ -119,8 +121,9 @@ moverRouter.get("/", getMoverListController);
 moverRouter.get("/favorite", verifyAccessToken, getFavoriteMoversController);
 
 /**
- * GET /movers/:id
+ * GET /movers/:moverId
  * @summary 기사님 상세 조회
+ * @tags Mover
  * @description 기사님의 상세 정보를 조회
  * @param {string} id.path - 기사님 ID
  * @returns {object} 200 - 기사님 상세 정보 조회 성공
