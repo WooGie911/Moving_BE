@@ -1,9 +1,11 @@
 import { PrismaClient } from "@prisma/client";
 import {
-  TUserProfile,
   TCreateMoverProfile,
   TUpdateCustomerUser,
+  TCreateCustomerProfile,
+  TServiceId,
 } from "../types/user.types";
+import { PROFILE_DEFAULTS } from "../constants/profile.constants";
 
 const prisma = new PrismaClient();
 
@@ -21,38 +23,46 @@ const getUserById = async (userId: number) => {
   return user;
 };
 
-// 일반 유저(CUSTOMER) 정보 업데이트 및 서비스 등록
-const updateCustomerUser = async (
-  userId: number,
+// 일반 유저(CUSTOMER) 프로필 생성 및 유저 정보 업데이트
+const createCustomerProfile = async (
+  profileData: TCreateCustomerProfile,
   userData: TUpdateCustomerUser,
-  serviceIds: number[]
+  serviceIds: TServiceId[]
 ) => {
   return await prisma.$transaction(async (tx) => {
+    // 프로필 생성
+    await tx.profile.create({
+      data: {
+        userId: profileData.userId,
+        nickname: profileData.nickname,
+        profileImage: profileData.profileImage,
+        experience:
+          profileData.experience || PROFILE_DEFAULTS.CUSTOMER_EXPERIENCE,
+        introduction:
+          profileData.introduction || PROFILE_DEFAULTS.EMPTY_INTRODUCTION,
+        description:
+          profileData.description || PROFILE_DEFAULTS.EMPTY_DESCRIPTION,
+      },
+    });
+
     // 유저 정보 업데이트
-    const updatedUser = await tx.user.update({
-      where: { id: userId },
+    await tx.user.update({
+      where: { id: profileData.userId },
       data: {
         currentRegion: userData.currentRegion as any, // Region enum
         hasProfile: userData.hasProfile,
       },
     });
 
-    // 기존 유저 서비스 삭제
-    await tx.userService.deleteMany({
-      where: { userId },
-    });
-
-    // 새로운 유저 서비스 등록
+    // 유저 서비스 등록
     if (serviceIds.length > 0) {
       await tx.userService.createMany({
         data: serviceIds.map((serviceId) => ({
-          userId,
+          userId: profileData.userId,
           serviceId,
         })),
       });
     }
-
-    return updatedUser;
   });
 };
 
@@ -60,7 +70,7 @@ const updateCustomerUser = async (
 const createMoverProfile = async (
   profileData: TCreateMoverProfile,
   regionIds: string[],
-  serviceIds: number[]
+  serviceIds: TServiceId[]
 ) => {
   return await prisma.$transaction(async (tx) => {
     // 프로필 생성
@@ -98,10 +108,8 @@ const createMoverProfile = async (
     // 유저의 hasProfile을 true로 업데이트
     await tx.user.update({
       where: { id: profileData.userId },
-      data: { hasProfile: true },
+      data: { hasProfile: PROFILE_DEFAULTS.HAS_PROFILE_TRUE },
     });
-
-    return profile;
   });
 };
 
@@ -123,8 +131,8 @@ const checkNicknameExists = async (nickname: string) => {
 
 export {
   getUserById,
-  updateCustomerUser,
-  createMoverProfile,
+  createCustomerProfile,
+  createMoverProfile as createMoverProfileRepository,
   checkProfileExists,
   checkNicknameExists,
 };

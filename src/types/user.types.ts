@@ -1,10 +1,12 @@
+export type TUserRole = "CUSTOMER" | "MOVER";
+
 export type TUser = {
   id: number; // 추후 uuid로 변경?
   email: string;
   name: string;
   encryptedPassword: string;
   encryptedPhoneNumber: string;
-  currentRole: "CUSTOMER" | "MOVER";
+  currentRole: TUserRole;
 };
 
 export type TUserTokenCreate = Pick<TUser, "id" | "name" | "currentRole">;
@@ -14,7 +16,7 @@ export type TUserSignupInput = {
   email: string;
   phoneNumber: string;
   password: string;
-  currentRole: "CUSTOMER" | "MOVER";
+  currentRole: TUserRole;
 };
 
 export type TUserSignup = Omit<TUser, "id">;
@@ -22,7 +24,7 @@ export type TUserSignup = Omit<TUser, "id">;
 export type TUserRequest = {
   userId: number;
   name: string;
-  role: "CUSTOMER" | "MOVER";
+  role: TUserRole;
 };
 
 export type TUserProfile = {
@@ -35,11 +37,14 @@ export type TUserProfile = {
   description: string;
 };
 
+// 서비스 ID 리터럴 타입 (DB의 고정된 서비스들)
+export type TServiceId = 1 | 2 | 3; // 1: 소형이사, 2: 가정이사, 3: 사무실이사
+
 // 일반 유저(CUSTOMER) 프로필 등록 입력 타입
 export type TCustomerProfileInput = {
   profileImage?: string;
   currentRegion: string; // Region enum 값
-  userServices: number[]; // Service ID 배열
+  userServices: TServiceId[]; // Service ID 배열 (1, 2, 3만 가능)
 };
 
 // 기사님(MOVER) 프로필 등록 입력 타입
@@ -50,7 +55,7 @@ export type TMoverProfileInput = {
   introduction?: string;
   description?: string;
   serviceRegions: string[]; // Region enum 값 배열
-  serviceTypes: number[]; // Service ID 배열
+  serviceTypes: TServiceId[]; // Service ID 배열 (1, 2, 3만 가능)
 };
 
 // 프로필 생성 데이터 타입 (MOVER용)
@@ -63,9 +68,18 @@ export type TCreateMoverProfile = {
   description: string;
 };
 
+// 일반 유저(CUSTOMER) 프로필 생성 데이터 타입
+export type TCreateCustomerProfile = {
+  userId: number;
+  nickname: string;
+  profileImage?: string;
+  experience?: number;
+  introduction?: string;
+  description?: string;
+};
+
 // 사용자 업데이트 데이터 타입 (CUSTOMER용)
 export type TUpdateCustomerUser = {
-  profileImage?: string;
   currentRegion: string;
   hasProfile: boolean;
 };

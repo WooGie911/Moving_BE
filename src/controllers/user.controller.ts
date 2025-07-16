@@ -5,7 +5,15 @@ import {
   createMoverProfile,
 } from "../services/user.service";
 import { handleError } from "../utils/handleError";
-import { TCustomerProfileInput, TMoverProfileInput } from "../types/user.types";
+import {
+  TCustomerProfileInput,
+  TMoverProfileInput,
+  TUserRole,
+} from "../types/user.types";
+import {
+  PROFILE_SUCCESS_MESSAGES,
+  PROFILE_ERROR_MESSAGES,
+} from "../constants/profile.constants";
 
 const getUser = async (req: Request, res: Response) => {
   const { userId } = req.user as { userId: number };
@@ -20,7 +28,7 @@ const postUserProfile = async (req: Request, res: Response) => {
   try {
     const { userId, role } = req.user as {
       userId: number;
-      role: string;
+      role: TUserRole;
     };
 
     if (role === "CUSTOMER") {
@@ -34,7 +42,7 @@ const postUserProfile = async (req: Request, res: Response) => {
       const result = await createCustomerProfile(userId, profileData);
       res.json({
         success: true,
-        message: "프로필이 성공적으로 등록되었습니다",
+        message: PROFILE_SUCCESS_MESSAGES.CUSTOMER_PROFILE_CREATED,
         data: result,
       });
     } else if (role === "MOVER") {
@@ -52,17 +60,17 @@ const postUserProfile = async (req: Request, res: Response) => {
       const result = await createMoverProfile(userId, profileData);
       res.json({
         success: true,
-        message: "프로필이 성공적으로 등록되었습니다",
+        message: PROFILE_SUCCESS_MESSAGES.MOVER_PROFILE_CREATED,
         data: result,
       });
     } else {
       res.status(400).json({
         success: false,
-        message: "유효하지 않은 사용자 역할입니다",
+        message: PROFILE_ERROR_MESSAGES.INVALID_USER_ROLE,
       });
     }
   } catch (error) {
-    handleError(res, error, "프로필 등록 중 오류가 발생했습니다");
+    handleError(res, error, PROFILE_ERROR_MESSAGES.PROFILE_CREATION_FALLBACK);
   }
 };
 
