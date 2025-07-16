@@ -66,7 +66,7 @@ setupAutoSwagger(app);
 
 // API 라우트 연결
 // app.use('/api/users', userRoutes);
-app.use("/movers", moverRouter); // TODO: 추후 authMiddleware 추가
+app.use("/movers", moverRouter);
 app.use("/auth", authRouter);
 app.use("/users", userRouter);
 app.use("/reviews", reviewRouter);

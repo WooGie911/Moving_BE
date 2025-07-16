@@ -103,3 +103,23 @@ export const getFavoriteMovers = async (userId: number) => {
 
   return favorites.map((favorite) => favorite.mover.profile).filter((profile) => profile !== null);
 };
+
+// 4. 기사님 상세 조회
+const getMoverDetail = async (id: number) => {
+  return prisma.profile.findUnique({
+    where: { id },
+    include: {
+      user: true,
+      serviceRegions: true,
+      serviceTypes: { include: { service: true } },
+    },
+  });
+};
+
+const moverRepository = {
+  getMoverList,
+  getFavoriteMovers,
+  getMoverDetail,
+};
+
+export default moverRepository;
