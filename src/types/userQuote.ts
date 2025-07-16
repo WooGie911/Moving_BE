@@ -26,8 +26,9 @@ export type TPendingQuoteResponse = {
     movingType: string;
     createdAt: Date;
     departureAddr: string;
-    arrivalAddr: string;
     departureDetail: string | null;
+    arrivalAddr: string;
+    arrivalDetail: string | null;
     status: string;
     confirmedEstimateId: number | null;
     estimateCount: number;
@@ -43,8 +44,9 @@ export type TReceivedQuoteResponse = {
     movingType: string;
     createdAt: Date;
     departureAddr: string;
-    arrivalAddr: string;
     departureDetail: string | null;
+    arrivalAddr: string;
+    arrivalDetail: string | null;
     status: string;
     confirmedEstimateId: number | null;
     estimateCount: number;
@@ -173,7 +175,9 @@ export type TQuoteHistoryResponse = {
   movingType: "SMALL" | "HOME" | "OFFICE";
   movingDate: Date;
   departureAddr: string;
+  departureDetail: string | null;
   arrivalAddr: string;
+  arrivalDetail: string | null;
   status: "COMPLETED";
   confirmedEstimate: {
     id: number;
