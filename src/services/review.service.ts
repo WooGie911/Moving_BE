@@ -5,15 +5,15 @@ const reviewService = {
     return reviewRepository.postReview(reviewId, rating, content);
   },
 
-  getWritableQuotes: async (userId: number) => {
-    return reviewRepository.getWritableQuotes(userId);
+  getWritableQuotes: async (customerId: number, pageQuery: { page: number; pageSize: number }) => {
+    return reviewRepository.getWritableQuotes(customerId, pageQuery);
   },
 
-  getWrittenReviews: async (userId: number) => {
-    return reviewRepository.getWrittenReviews(userId);
+  getWrittenReviews: async (customerId: number, pageQuery: { page: number; pageSize: number }) => {
+    return reviewRepository.getWrittenReviews(customerId, pageQuery);
   },
-  getReceivedReviews: async (moverId: number) => {
-    return reviewRepository.getReceivedReviews(moverId);
+  getReceivedReviews: async (moverId: number, pageQuery: { page: number; pageSize: number }) => {
+    return reviewRepository.getReceivedReviews(moverId, pageQuery);
   },
 };
 
