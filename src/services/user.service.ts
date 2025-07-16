@@ -1,13 +1,20 @@
 import { v4 as uuidv4 } from "uuid";
+import bcrypt from "bcrypt";
 import {
   getUserById,
+  getUserWithPassword,
   createCustomerProfile as createCustomerProfileRepository,
   createMoverProfileRepository,
+  updateUserProfile,
+  checkProfileExists,
 } from "../repositories/user.repository";
-import { NotFoundError } from "../types/commonError.types";
+import { encryptPhoneNumber } from "../utils/phoneEncryption";
+import { NotFoundError, ValidationError } from "../types/commonError.types";
 import {
   TCustomerProfileInput,
   TMoverProfileInput,
+  TUserProfileUpdateInput,
+  TUpdateUserProfile,
   TCreateMoverProfile,
   TCreateCustomerProfile,
   TUpdateCustomerUser,
@@ -15,6 +22,7 @@ import {
 import {
   validateCustomerProfileData,
   validateMoverProfileData,
+  validateUpdateCustomerProfile,
 } from "../utils/validators/profileValidator";
 import {
   PROFILE_DEFAULTS,
@@ -103,4 +111,95 @@ const createMoverProfile = async (
   return result;
 };
 
-export { userInfo, createCustomerProfile, createMoverProfile };
+// 사용자 프로필 수정
+const updateCustomerProfile = async (
+  userId: number,
+  updateData: TUserProfileUpdateInput
+): Promise<void> => {
+  // 1. 입력 데이터 유효성 검사
+  await validateUpdateCustomerProfile(updateData);
+
+  // 2. 사용자 존재 확인
+  const user = await getUserById(userId);
+  if (!user) {
+    throw new NotFoundError(PROFILE_ERROR_MESSAGES.USER_NOT_FOUND);
+  }
+
+  // 3. 프로필 존재 확인 (프로필 관련 업데이트가 있는 경우)
+  if (
+    updateData.profileImage !== undefined ||
+    updateData.userServices !== undefined
+  ) {
+    const profileExists = await checkProfileExists(userId);
+    if (!profileExists) {
+      throw new NotFoundError(PROFILE_ERROR_MESSAGES.PROFILE_NOT_FOUND);
+    }
+  }
+
+  // 4. 비밀번호 변경 요청 시 현재 비밀번호 검증
+  if (updateData.currentPassword && updateData.newPassword) {
+    // 사용자 정보 조회 (비밀번호 포함)
+    const userWithPassword = await getUserWithPassword(userId);
+    if (!userWithPassword || !userWithPassword.encryptedPassword) {
+      throw new ValidationError("현재 비밀번호를 확인할 수 없습니다");
+    }
+
+    // 현재 비밀번호 검증
+    const isCurrentPasswordValid = await bcrypt.compare(
+      updateData.currentPassword,
+      userWithPassword.encryptedPassword
+    );
+    if (!isCurrentPasswordValid) {
+      throw new ValidationError("현재 비밀번호가 일치하지 않습니다");
+    }
+  }
+
+  // 5. 업데이트 데이터 준비
+  const dbUpdateData: TUpdateUserProfile = {};
+
+  // 이름 준비
+  if (updateData.name !== undefined) {
+    dbUpdateData.name = updateData.name.trim();
+  }
+
+  // 전화번호 암호화 및 준비
+  if (updateData.phoneNumber !== undefined) {
+    dbUpdateData.encryptedPhoneNumber = encryptPhoneNumber(
+      updateData.phoneNumber
+    );
+  }
+
+  // 새 비밀번호 암호화 및 준비
+  if (updateData.newPassword !== undefined) {
+    const saltRounds = 10;
+    dbUpdateData.encryptedPassword = await bcrypt.hash(
+      updateData.newPassword,
+      saltRounds
+    );
+  }
+
+  // 현재 지역 준비
+  if (updateData.currentRegion !== undefined) {
+    dbUpdateData.currentRegion = updateData.currentRegion;
+  }
+
+  // 프로필 이미지 준비
+  if (updateData.profileImage !== undefined) {
+    dbUpdateData.profileImage = updateData.profileImage;
+  }
+
+  // 현재 지역 준비
+  if (updateData.currentRegion !== undefined) {
+    dbUpdateData.currentRegion = updateData.currentRegion;
+  }
+
+  // 6. 통합 업데이트 실행
+  await updateUserProfile(userId, dbUpdateData, updateData.userServices);
+};
+
+export {
+  userInfo,
+  createCustomerProfile,
+  createMoverProfile,
+  updateCustomerProfile,
+};

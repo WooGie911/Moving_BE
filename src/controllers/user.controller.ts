@@ -3,11 +3,13 @@ import {
   userInfo,
   createCustomerProfile,
   createMoverProfile,
+  updateCustomerProfile,
 } from "../services/user.service";
 import { handleError } from "../utils/handleError";
 import {
   TCustomerProfileInput,
   TMoverProfileInput,
+  TUserProfileUpdateInput,
   TUserRole,
 } from "../types/user.types";
 import {
@@ -74,11 +76,35 @@ const postUserProfile = async (req: Request, res: Response) => {
   }
 };
 
-// 유저 프로필 수정
-const patchUserProfile = async (req: Request, res: Response) => {
-  const { userId } = req.user as { userId: number };
+// 일반 유저 프로필 수정
+const patchCustomerProfile = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.user as { userId: number };
 
-  res.json({ success: true, data: userId });
+    // 통합 프로필 수정 데이터 준비
+    const updateData: TUserProfileUpdateInput = {
+      // 기본 정보
+      name: req.body.name,
+      phoneNumber: req.body.phoneNumber,
+      // 비밀번호 변경
+      currentPassword: req.body.currentPassword,
+      newPassword: req.body.newPassword,
+      // 프로필 정보
+      profileImage: req.body.profileImage,
+      currentRegion: req.body.currentRegion,
+      userServices: req.body.userServices,
+    };
+
+    await updateCustomerProfile(userId, updateData);
+
+    res.json({
+      success: true,
+      message: "사용자 프로필이 성공적으로 수정되었습니다",
+    });
+  } catch (error) {
+    console.log(error);
+    handleError(res, error, "사용자 프로필 수정 중 오류가 발생했습니다");
+  }
 };
 
-export { getUser, postUserProfile, patchUserProfile };
+export { getUser, postUserProfile, patchCustomerProfile };

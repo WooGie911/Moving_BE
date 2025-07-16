@@ -29,6 +29,7 @@ export const SERVICE_INFO = {
 export const PROFILE_ERROR_MESSAGES = {
   USER_NOT_FOUND: "존재하지 않는 유저입니다",
   PROFILE_ALREADY_EXISTS: "이미 프로필이 등록되어 있습니다",
+  PROFILE_NOT_FOUND: "프로필을 찾을 수 없습니다",
   NICKNAME_REQUIRED: "닉네임을 입력해주세요",
   NICKNAME_ALREADY_EXISTS: "이미 사용중인 닉네임입니다",
   EXPERIENCE_REQUIRED: "경력을 입력해주세요",
@@ -55,6 +56,7 @@ export const PROFILE_SUCCESS_MESSAGES = {
   CUSTOMER_PROFILE_CREATED:
     "프로필이 성공적으로 등록되었습니다 (UUID 닉네임 자동 생성)",
   MOVER_PROFILE_CREATED: "프로필이 성공적으로 등록되었습니다",
+  CUSTOMER_PROFILE_UPDATED: "프로필이 성공적으로 수정되었습니다",
 } as const;
 
 // 유효성 검사 설정

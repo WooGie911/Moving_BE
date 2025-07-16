@@ -1,3 +1,5 @@
+import { Region } from "@prisma/client";
+
 export type TUserRole = "CUSTOMER" | "MOVER";
 
 export type TUser = {
@@ -82,4 +84,29 @@ export type TCreateCustomerProfile = {
 export type TUpdateCustomerUser = {
   currentRegion: string;
   hasProfile: boolean;
+};
+
+// 통합된 사용자 프로필 수정 입력 타입 (기본 정보 + 프로필 정보)
+export type TUserProfileUpdateInput = {
+  // 기본 정보
+  name?: string;
+  phoneNumber?: string;
+  // 비밀번호 변경 (현재 비밀번호 검증 필요)
+  currentPassword?: string;
+  newPassword?: string;
+  // 프로필 정보
+  profileImage?: string;
+  currentRegion?: Region;
+  userServices?: TServiceId[];
+};
+
+// 통합된 사용자 프로필 업데이트 데이터 타입 (DB용)
+export type TUpdateUserProfile = {
+  // user 테이블 업데이트
+  name?: string;
+  encryptedPhoneNumber?: string;
+  encryptedPassword?: string;
+  currentRegion?: Region;
+  // profile 테이블 업데이트
+  profileImage?: string;
 };

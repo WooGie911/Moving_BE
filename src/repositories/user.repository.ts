@@ -3,6 +3,7 @@ import {
   TCreateMoverProfile,
   TUpdateCustomerUser,
   TCreateCustomerProfile,
+  TUpdateUserProfile,
   TServiceId,
 } from "../types/user.types";
 import { PROFILE_DEFAULTS } from "../constants/profile.constants";
@@ -18,6 +19,20 @@ const getUserById = async (userId: number) => {
       currentRole: true,
       accessToken: true,
       hasProfile: true,
+    },
+  });
+  return user;
+};
+
+// 사용자 정보 조회 (비밀번호 포함)
+const getUserWithPassword = async (userId: number) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      encryptedPassword: true,
+      currentRole: true,
     },
   });
   return user;
@@ -129,10 +144,64 @@ const checkNicknameExists = async (nickname: string) => {
   return !!profile;
 };
 
+// 사용자 프로필 업데이트 (user + profile + userService)
+const updateUserProfile = async (
+  userId: number,
+  updateData: TUpdateUserProfile,
+  serviceIds?: TServiceId[]
+) => {
+  return await prisma.$transaction(async (tx) => {
+    // 1. user 테이블 업데이트 (기본 정보 + currentRegion)
+    const userFields = {
+      name: updateData.name,
+      encryptedPhoneNumber: updateData.encryptedPhoneNumber,
+      encryptedPassword: updateData.encryptedPassword,
+      currentRegion: updateData.currentRegion,
+    };
+
+    // undefined 값 제거 후 업데이트
+    const userUpdateData = Object.fromEntries(
+      Object.entries(userFields).filter(([_, value]) => value !== undefined)
+    );
+
+    if (Object.keys(userUpdateData).length > 0) {
+      await tx.user.update({
+        where: { id: userId },
+        data: userUpdateData,
+      });
+    }
+
+    // 2. profile 테이블 업데이트 (profileImage)
+    if (updateData.profileImage !== undefined) {
+      await tx.profile.update({
+        where: { userId },
+        data: { profileImage: updateData.profileImage },
+      });
+    }
+
+    // 3. userService 테이블 업데이트 (서비스 목록 완전 교체)
+    if (serviceIds !== undefined) {
+      // 기존 서비스 모두 삭제
+      await tx.userService.deleteMany({
+        where: { userId },
+      });
+
+      // 새로운 서비스 추가 (빈 배열이면 서비스 없음으로 설정)
+      if (serviceIds.length > 0) {
+        await tx.userService.createMany({
+          data: serviceIds.map((serviceId) => ({ userId, serviceId })),
+        });
+      }
+    }
+  });
+};
+
 export {
   getUserById,
+  getUserWithPassword,
   createCustomerProfile,
   createMoverProfile as createMoverProfileRepository,
+  updateUserProfile,
   checkProfileExists,
   checkNicknameExists,
 };
