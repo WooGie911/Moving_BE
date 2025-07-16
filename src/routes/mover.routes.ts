@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getMoverListController, getFavoriteMoversController } from "../controllers/mover.controller";
+import { getMoverListController, getFavoriteMoversController, getMoverDetailController } from "../controllers/mover.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 
 const moverRouter = Router();
@@ -117,5 +117,60 @@ moverRouter.get("/", getMoverListController);
  * }
  */
 moverRouter.get("/favorite", verifyAccessToken, getFavoriteMoversController);
+
+/**
+ * GET /movers/:id
+ * @summary 기사님 상세 조회
+ * @description 기사님의 상세 정보를 조회
+ * @param {string} id.path - 기사님 ID
+ * @returns {object} 200 - 기사님 상세 정보 조회 성공
+ * @returns {object} 404 - 데이터 없음
+ * @example response - 200 - 성공 예시
+ * {
+ *   "success": true,
+ *   "data": {
+ *     "id": 1,
+ *     "userId": 4,
+ *     "nickname": "믿을만한김기사",
+ *     "profileImage": "https://s3.amazonaws.com/profiles/profile1.jpg",
+ *     "experience": 5,
+ *     "introduction": "5년 경력의 꼼꼼한 이사 전문가입니다",
+ *     "description": "안전하고 신속한 이사를 약속드립니다.",
+ *     "completedCount": 136,
+ *     "avgRating": 5.0,
+ *     "reviewCount": 128,
+ *     "favoriteCount": 45,
+ *     "lastActivityAt": "2025-07-10T00:33:16.456Z",
+ *     "user": {
+ *       "id": 4,
+ *       "name": "김민수",
+ *       "email": "mover1@example.com"
+ *     },
+ *     "serviceRegions": [
+ *       { "id": 1, "profileId": 1, "region": "SEOUL" }
+ *     ],
+ *     "serviceTypes": [
+ *       {
+ *         "id": 1,
+ *         "profileId": 1,
+ *         "serviceId": 1,
+ *         "service": {
+ *           "id": 1,
+ *           "name": "소형이사",
+ *           "description": "원룸, 투룸 등 소규모 이사",
+ *           "isActive": true,
+ *           "iconUrl": "https://s3.amazonaws.com/moving-icons/small-moving.svg"
+ *         }
+ *       }
+ *     ]
+ *   }
+ * }
+ * @example response - 404 - 데이터 없음
+ * {
+ *   "status": 404,
+ *   "message": "기사님을 찾을 수 없습니다."
+ * }
+ */
+moverRouter.get("/:moverId", getMoverDetailController);
 
 export default moverRouter;
