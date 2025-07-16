@@ -11,12 +11,12 @@ const saveUser = async (user: TUserSignup) => {
       encryptedPassword: user.encryptedPassword,
       encryptedPhoneNumber: user.encryptedPhoneNumber,
       currentRole: user.currentRole,
-      hasProfile: false,
     },
     select: {
       id: true,
       name: true,
       currentRole: true,
+      hasProfile: true,
     },
   });
 };
@@ -31,6 +31,7 @@ const findUserByEmailAndPassword = async (email: string) => {
       currentRole: true,
       email: true,
       encryptedPassword: true,
+      hasProfile: true,
     },
   });
 };

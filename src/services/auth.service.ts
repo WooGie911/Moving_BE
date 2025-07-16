@@ -51,6 +51,7 @@ const signin = async (email: string, password: string) => {
     id: existingUser.id,
     userName: existingUser.name,
     userRole: existingUser.currentRole,
+    hasProfile: existingUser.hasProfile,
     accessToken,
     refreshToken,
   };
@@ -108,6 +109,7 @@ const signup = async ({ name, email, phoneNumber, password, currentRole }: TUser
     id: user.id,
     userName: user.name,
     userRole: user.currentRole,
+    hasProfile: user.hasProfile,
     accessToken,
     refreshToken,
   };

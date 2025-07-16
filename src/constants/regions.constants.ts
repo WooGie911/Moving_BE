@@ -1,0 +1,20 @@
+// Region enum 값 검증
+export const VALID_REGIONS = [
+    "SEOUL",
+    "BUSAN",
+    "DAEGU",
+    "INCHEON",
+    "GWANGJU",
+    "DAEJEON",
+    "ULSAN",
+    "SEJONG",
+    "GYEONGGI",
+    "CHUNGBUK",
+    "CHUNGNAM",
+    "JEONBUK",
+    "JEONNAM",
+    "GYEONGBUK",
+    "GYEONGNAM",
+    "GANGWON",
+    "JEJU",
+  ];

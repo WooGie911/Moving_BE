@@ -4,7 +4,6 @@ import { TOKEN_EXPIRES } from "../constants/token.constants";
 
 import { handleError } from "../utils/handleError";
 import { TCookieOptions } from "../types/cookie.types";
-import { AuthenticationError } from "../types/commonError.types";
 
 const authCookieOptions = (maxAgeSeconds: number): TCookieOptions => ({
   httpOnly: true,
@@ -18,7 +17,8 @@ const postSignin = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   try {
-    const { id, userName, userRole, accessToken, refreshToken } = await authService.signin(email, password);
+    const { id, userName, userRole, hasProfile, accessToken, refreshToken } =
+      await authService.signin(email, password);
 
     res.cookie("refreshToken", refreshToken, authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE));
 
@@ -29,6 +29,7 @@ const postSignin = async (req: Request, res: Response) => {
         id,
         userName,
         userRole,
+        hasProfile,
       },
       accessToken,
     });
@@ -41,13 +42,14 @@ const postSignup = async (req: Request, res: Response) => {
   const { name, email, phoneNumber, password, currentRole } = req.body;
 
   try {
-    const { id, userName, userRole, accessToken, refreshToken } = await authService.signup({
+    const { id, userName, userRole, hasProfile, accessToken, refreshToken } = await authService.signup({
       name,
       email,
       phoneNumber,
       password,
       currentRole,
     });
+
 
     res.cookie("refreshToken", refreshToken, authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE));
 
@@ -58,6 +60,7 @@ const postSignup = async (req: Request, res: Response) => {
         id,
         userName,
         userRole,
+        hasProfile,
       },
       accessToken,
     });
