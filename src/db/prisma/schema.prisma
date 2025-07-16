@@ -83,9 +83,9 @@ model Profile {
   userId       Int     @unique
   nickname     String  @unique // 기사님 닉네임 (필수, 자동 생성)
   profileImage String?
-  experience   Int
-  introduction String
-  description  String
+  experience   Int?
+  introduction String?
+  description  String?
 
   // 🚀 캐싱된 통계 데이터 (성능 최적화)
   completedCount Int       @default(0) // 완료된 이사 건수

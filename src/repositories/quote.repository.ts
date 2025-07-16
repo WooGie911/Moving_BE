@@ -28,6 +28,7 @@ const getActiveQuoteByUserId = async (userId: number): Promise<Quote | null> => 
       status: {
         in: ["ACTIVE", "CONFIRMED"],
       },
+      deletedAt: null,
     },
     orderBy: {
       createdAt: "desc",
@@ -68,6 +69,7 @@ const cancelQuote = async (quoteId: number): Promise<Quote> => {
     where: { id: quoteId },
     data: {
       status: "CANCELLED",
+      deletedAt: new Date(),
     },
   });
 };
