@@ -1,6 +1,6 @@
+import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware";
 import { setupAutoSwagger } from "./utils/swagger-auto";
 import authRouter from "./routes/auth.route";
