@@ -11,6 +11,7 @@ import reviewRouter from "./routes/review.route";
 import userQuoteRouter from "./routes/userQuote.route";
 import quoteRouter from "./routes/quote.routes";
 import moverEstimateRouter from "./routes/moverEstimate.routes";
+import favoriteRouter from "./routes/favorite.routes";
 
 // 환경변수 로드
 dotenv.config();
@@ -73,6 +74,7 @@ app.use("/reviews", reviewRouter);
 app.use("/customer-quotes", userQuoteRouter);
 app.use("/quotes", quoteRouter);
 app.use("/mover-estimates", moverEstimateRouter);
+app.use("/favorites", favoriteRouter);
 
 // 404 에러 핸들링
 app.use(notFoundHandler);
