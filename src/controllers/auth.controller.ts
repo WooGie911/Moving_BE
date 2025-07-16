@@ -18,7 +18,7 @@ const postSignin = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   try {
-    const { id, userName, userRole, accessToken, refreshToken } =
+    const { id, userName, userRole, hasProfile, accessToken, refreshToken } =
       await authService.signin(email, password);
 
     res.cookie(
@@ -34,6 +34,7 @@ const postSignin = async (req: Request, res: Response) => {
         id,
         userName,
         userRole,
+        hasProfile,
       },
       accessToken,
     });
@@ -46,7 +47,7 @@ const postSignup = async (req: Request, res: Response) => {
   const { name, email, phoneNumber, password, currentRole } = req.body;
 
   try {
-    const { id, userName, userRole, accessToken, refreshToken } =
+    const { id, userName, userRole, hasProfile, accessToken, refreshToken } =
       await authService.signup({
         name,
         email,
@@ -68,6 +69,7 @@ const postSignup = async (req: Request, res: Response) => {
         id,
         userName,
         userRole,
+        hasProfile,
       },
       accessToken,
     });
