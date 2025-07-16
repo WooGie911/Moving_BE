@@ -22,14 +22,7 @@ const getOrderBy = (sort: string): TOrderByType => {
  * 기사님 리스트 조회 (필터, 정렬, 키워드)
  */
 export const getMoverList = async (filter: IMoverListFilter) => {
-  const {
-    region,
-    serviceTypeId,
-    search,
-    sort = "review",
-    cursor,
-    take = 20,
-  } = filter;
+  const { region, serviceTypeId, search, sort = "review", cursor, take = 20 } = filter;
 
   // 필터, 검색
   const where: any = {
@@ -74,7 +67,7 @@ export const getMoverList = async (filter: IMoverListFilter) => {
 /**
  * 찜한 기사님 조회
  */
-export const getBookmarkedMovers = async (userId: number) => {
+export const getFavoriteMovers = async (userId: number) => {
   const favorites = await prisma.favorite.findMany({
     where: {
       userId: userId,
@@ -108,5 +101,25 @@ export const getBookmarkedMovers = async (userId: number) => {
     },
   });
 
-  return favorites.map((favorite) => favorite.mover.profile);
+  return favorites.map((favorite) => favorite.mover.profile).filter((profile) => profile !== null);
 };
+
+// 4. 기사님 상세 조회
+const getMoverDetail = async (id: number) => {
+  return prisma.profile.findUnique({
+    where: { id },
+    include: {
+      user: true,
+      serviceRegions: true,
+      serviceTypes: { include: { service: true } },
+    },
+  });
+};
+
+const moverRepository = {
+  getMoverList,
+  getFavoriteMovers,
+  getMoverDetail,
+};
+
+export default moverRepository;

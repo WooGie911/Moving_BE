@@ -8,6 +8,9 @@ import moverRouter from "./routes/mover.routes";
 import userRouter from "./routes/user.route";
 import cookieParser from "cookie-parser";
 import reviewRouter from "./routes/review.route";
+import userQuoteRouter from "./routes/userQuote.route";
+import quoteRouter from "./routes/quote.routes";
+import moverEstimateRouter from "./routes/moverEstimate.routes";
 
 // 환경변수 로드
 dotenv.config();
@@ -63,10 +66,13 @@ setupAutoSwagger(app);
 
 // API 라우트 연결
 // app.use('/api/users', userRoutes);
-app.use("/movers", moverRouter); // TODO: 추후 authMiddleware 추가
+app.use("/movers", moverRouter);
 app.use("/auth", authRouter);
 app.use("/users", userRouter);
-app.use("reviews", reviewRouter);
+app.use("/reviews", reviewRouter);
+app.use("/customer-quotes", userQuoteRouter);
+app.use("/quotes", quoteRouter);
+app.use("/mover-estimates", moverEstimateRouter);
 
 // 404 에러 핸들링
 app.use(notFoundHandler);

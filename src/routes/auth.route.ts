@@ -1,10 +1,5 @@
 import { Router } from "express";
-import {
-  postSignin,
-  postSignup,
-  postLogout,
-  postRefresh,
-} from "../controllers/auth.controller";
+import { postSignin, postSignup, postLogout, postRefresh } from "../controllers/auth.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 
 const authRouter = Router();

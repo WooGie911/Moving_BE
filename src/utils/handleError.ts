@@ -1,10 +1,5 @@
 import { Response } from "express";
-import {
-  AuthenticationError,
-  DatabaseError,
-  ServerError,
-  ValidationError,
-} from "../types/commonError.types";
+import { AuthenticationError, DatabaseError, ServerError, ValidationError } from "../types/commonError.types";
 
 /**
  * 공통 에러 핸들러
@@ -16,7 +11,7 @@ import {
 export const handleError = (
   res: Response,
   error: any,
-  fallbackMessage: string = "예상치 못한 오류가 발생했습니다."
+  fallbackMessage: string = "예상치 못한 오류가 발생했습니다.",
 ) => {
   let status = 500;
   let message = fallbackMessage;
