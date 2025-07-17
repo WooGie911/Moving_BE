@@ -8,7 +8,7 @@ import {
   updateUserProfile,
   checkProfileExists,
 } from "../repositories/user.repository";
-import { encryptPhoneNumber } from "../utils/phoneEncryption";
+import { encryptPhoneNumber, decryptPhoneNumber } from "../utils/phoneEncryption";
 import { NotFoundError, ValidationError } from "../types/commonError.types";
 import {
   TCustomerProfileInput,
@@ -38,7 +38,16 @@ const userInfo = async (userId: number) => {
     throw new NotFoundError(PROFILE_ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
-  return user;
+  // email, phoneNumber(복호화)도 함께 반환
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    phoneNumber: user.encryptedPhoneNumber ? decryptPhoneNumber(user.encryptedPhoneNumber) : "",
+    currentRole: user.currentRole,
+    accessToken: user.accessToken,
+    hasProfile: user.hasProfile,
+  };
 };
 
 // UUID 기반 닉네임 생성 함수
@@ -197,9 +206,53 @@ const updateCustomerProfile = async (
   await updateUserProfile(userId, dbUpdateData, updateData.userServices);
 };
 
+// 기사님 기본정보 수정 (User 테이블만)
+const updateMoverBasicInfo = async (
+  userId: number,
+  updateData: { name?: string; phoneNumber?: string; currentPassword?: string; newPassword?: string }
+): Promise<void> => {
+  // 1. 사용자 존재 확인
+  const user = await getUserById(userId);
+  if (!user) {
+    throw new NotFoundError(PROFILE_ERROR_MESSAGES.USER_NOT_FOUND);
+  }
+
+  // 2. 비밀번호 변경 요청 시 현재 비밀번호 검증
+  if (updateData.currentPassword && updateData.newPassword) {
+    const userWithPassword = await getUserWithPassword(userId);
+    if (!userWithPassword || !userWithPassword.encryptedPassword) {
+      throw new ValidationError("현재 비밀번호를 확인할 수 없습니다");
+    }
+    const isCurrentPasswordValid = await bcrypt.compare(
+      updateData.currentPassword,
+      userWithPassword.encryptedPassword
+    );
+    if (!isCurrentPasswordValid) {
+      throw new ValidationError("현재 비밀번호가 일치하지 않습니다");
+    }
+  }
+
+  // 3. 업데이트 데이터 준비
+  const dbUpdateData: TUpdateUserProfile = {};
+  if (updateData.name !== undefined) {
+    dbUpdateData.name = updateData.name.trim();
+  }
+  if (updateData.phoneNumber !== undefined) {
+    dbUpdateData.encryptedPhoneNumber = encryptPhoneNumber(updateData.phoneNumber);
+  }
+  if (updateData.newPassword !== undefined) {
+    const saltRounds = 10;
+    dbUpdateData.encryptedPassword = await bcrypt.hash(updateData.newPassword, saltRounds);
+  }
+
+  // 4. 업데이트 실행 (User 테이블만)
+  await updateUserProfile(userId, dbUpdateData);
+};
+
 export {
   userInfo,
   createCustomerProfile,
   createMoverProfile,
   updateCustomerProfile,
+  updateMoverBasicInfo,
 };

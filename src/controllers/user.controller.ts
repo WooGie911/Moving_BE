@@ -4,6 +4,7 @@ import {
   createCustomerProfile,
   createMoverProfile,
   updateCustomerProfile,
+  updateMoverBasicInfo,
 } from "../services/user.service";
 import { handleError } from "../utils/handleError";
 import {
@@ -107,4 +108,21 @@ const patchCustomerProfile = async (req: Request, res: Response) => {
   }
 };
 
-export { getUser, postUserProfile, patchCustomerProfile };
+// 기사님 기본정보 수정
+const patchMoverBasicInfo = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.user as { userId: number };
+    const updateData = {
+      name: req.body.name,
+      phoneNumber: req.body.phoneNumber,
+      currentPassword: req.body.currentPassword,
+      newPassword: req.body.newPassword,
+    };
+    await updateMoverBasicInfo(userId, updateData);
+    res.json({ success: true, message: "기사님 기본정보가 성공적으로 수정되었습니다." });
+  } catch (error) {
+    handleError(res, error, "기사님 기본정보 수정 중 오류가 발생했습니다");
+  }
+};
+
+export { getUser, postUserProfile, patchCustomerProfile, patchMoverBasicInfo };
