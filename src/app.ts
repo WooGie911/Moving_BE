@@ -14,6 +14,7 @@ import moverEstimateRouter from "./routes/moverEstimate.routes";
 import favoriteRouter from "./routes/favorite.routes";
 import sseRouter from "./routes/sse.route";
 import notificationRouter from "./routes/notification.route";
+import actionTestRouter from "./routes/actionTest.route";
 
 // 환경변수 로드
 dotenv.config();
@@ -80,6 +81,7 @@ app.use("/quotes", quoteRouter);
 app.use("/mover-estimates", moverEstimateRouter);
 app.use("/favorites", favoriteRouter);
 app.use("/notifications", notificationRouter);
+app.use("/actions", actionTestRouter);
 
 // SSE 라우팅
 app.use("/sse/notification", sseRouter);
