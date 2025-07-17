@@ -11,6 +11,12 @@ const notificationService = {
       await notificationRepository.hasUnreadNotification(userId);
     return { ...notifications, hasUnread };
   },
+  readNotification: async (notificationId: number) => {
+    return notificationRepository.readNotification(notificationId);
+  },
+  readAllNotifications: async (userId: number) => {
+    return notificationRepository.readAllNotifications(userId);
+  },
 };
 
 export default notificationService;

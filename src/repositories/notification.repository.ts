@@ -21,6 +21,19 @@ const notificationRepository = {
     });
     return !!unread;
   },
+  readNotification: async (notificationId: number) => {
+    return prisma.notification.update({
+      where: { id: notificationId },
+      data: { isRead: true },
+    });
+  },
+  readAllNotifications: async (userId: number) => {
+    const { count } = await prisma.notification.updateMany({
+      where: { userId, isRead: false },
+      data: { isRead: true },
+    });
+    return count;
+  },
 };
 
 export default notificationRepository;
