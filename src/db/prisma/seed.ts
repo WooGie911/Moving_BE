@@ -7,6 +7,10 @@ import {
   ReviewStatus,
   SocialProvider,
   Region,
+  ActionType,
+  NotificationType,
+  MoverActionType,
+  MoverActivityStatus,
 } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 import { encryptPhoneNumber } from "../../utils/phoneEncryption";
@@ -508,6 +512,234 @@ async function main() {
     ],
   });
 
+  // 14. 액션 데이터 생성 (사용자 활동 추적)
+  console.log("📊 액션 데이터 생성 중...");
+  const actions = await Promise.all([
+    // 견적 생성 액션
+    prisma.action.create({
+      data: {
+        userId: customers[0].id,
+        type: ActionType.QUOTE_CREATE,
+        entityId: quotes[0].id,
+        entityType: "QUOTE",
+        description: "소형이사 견적 요청을 생성했습니다.",
+        metadata: { movingType: "SMALL", distance: 5.2 },
+      },
+    }),
+    prisma.action.create({
+      data: {
+        userId: customers[1].id,
+        type: ActionType.QUOTE_CREATE,
+        entityId: quotes[1].id,
+        entityType: "QUOTE",
+        description: "가정이사 견적 요청을 생성했습니다.",
+        metadata: { movingType: "HOME", distance: 25.8 },
+      },
+    }),
+    prisma.action.create({
+      data: {
+        userId: customers[2].id,
+        type: ActionType.QUOTE_CREATE,
+        entityId: quotes[2].id,
+        entityType: "QUOTE",
+        description: "사무실이사 견적 요청을 생성했습니다.",
+        metadata: { movingType: "OFFICE", distance: 8.3 },
+      },
+    }),
+
+    // 견적 제출 액션
+    prisma.action.create({
+      data: {
+        userId: movers[0].id,
+        type: ActionType.ESTIMATE_SUBMITTED,
+        entityId: estimates[0].id,
+        entityType: "ESTIMATE",
+        description: "소형이사 견적을 제출했습니다.",
+        metadata: { price: 150000, quoteId: quotes[0].id },
+      },
+    }),
+    prisma.action.create({
+      data: {
+        userId: movers[1].id,
+        type: ActionType.ESTIMATE_SUBMITTED,
+        entityId: estimates[1].id,
+        entityType: "ESTIMATE",
+        description: "소형이사 견적을 제출했습니다.",
+        metadata: { price: 180000, quoteId: quotes[0].id },
+      },
+    }),
+    prisma.action.create({
+      data: {
+        userId: movers[1].id,
+        type: ActionType.ESTIMATE_SUBMITTED,
+        entityId: estimates[2].id,
+        entityType: "ESTIMATE",
+        description: "가정이사 견적을 제출했습니다.",
+        metadata: { price: 450000, quoteId: quotes[1].id },
+      },
+    }),
+
+    // 견적 확정 액션
+    prisma.action.create({
+      data: {
+        userId: customers[1].id,
+        type: ActionType.ESTIMATE_ACCEPTED,
+        entityId: estimates[2].id,
+        entityType: "ESTIMATE",
+        description: "가정이사 견적을 확정했습니다.",
+        metadata: { price: 450000, quoteId: quotes[1].id },
+      },
+    }),
+
+    // 이사 완료 액션
+    prisma.action.create({
+      data: {
+        userId: customers[1].id,
+        type: ActionType.MOVING_COMPLETED,
+        entityId: quotes[1].id,
+        entityType: "QUOTE",
+        description: "가정이사가 완료되었습니다.",
+        metadata: { completedAt: new Date().toISOString() },
+      },
+    }),
+
+    // 리뷰 제출 액션
+    prisma.action.create({
+      data: {
+        userId: customers[1].id,
+        type: ActionType.REVIEW_SUBMITTED,
+        entityId: quotes[1].id,
+        entityType: "REVIEW",
+        description: "이사 서비스에 대한 리뷰를 제출했습니다.",
+        metadata: { rating: 5, moverId: movers[1].id },
+      },
+    }),
+  ]);
+
+  // 15. 알림 데이터 생성
+  console.log("🔔 알림 데이터 생성 중...");
+  await Promise.all([
+    // 새로운 견적 알림
+    prisma.notification.create({
+      data: {
+        userId: customers[0].id,
+        actionId: actions[3].id, // 견적 제출 액션
+        type: NotificationType.NEW_ESTIMATE,
+        title: "새로운 견적이 도착했습니다",
+        content: "소형이사 견적 요청에 대한 새로운 견적이 제출되었습니다.",
+        isRead: false,
+        actionUrl: `/quotes/${quotes[0].id}/estimates`,
+        isRealTime: true,
+        sseSent: false,
+      },
+    }),
+    prisma.notification.create({
+      data: {
+        userId: customers[0].id,
+        actionId: actions[4].id, // 견적 제출 액션
+        type: NotificationType.NEW_ESTIMATE,
+        title: "새로운 견적이 도착했습니다",
+        content: "소형이사 견적 요청에 대한 새로운 견적이 제출되었습니다.",
+        isRead: false,
+        actionUrl: `/quotes/${quotes[0].id}/estimates`,
+        isRealTime: true,
+        sseSent: false,
+      },
+    }),
+
+    // 견적 확정 알림
+    prisma.notification.create({
+      data: {
+        userId: movers[1].id,
+        actionId: actions[6].id, // 견적 확정 액션
+        type: NotificationType.ESTIMATE_CONFIRMED,
+        title: "견적이 확정되었습니다",
+        content: "제출하신 가정이사 견적이 고객님에 의해 확정되었습니다.",
+        isRead: false,
+        actionUrl: `/estimates/${estimates[2].id}`,
+        isRealTime: true,
+        sseSent: false,
+      },
+    }),
+
+    // 이사 완료 알림
+    prisma.notification.create({
+      data: {
+        userId: movers[1].id,
+        actionId: actions[7].id, // 이사 완료 액션
+        type: NotificationType.MOVING_DAY,
+        title: "이사가 완료되었습니다",
+        content: "가정이사 서비스가 성공적으로 완료되었습니다.",
+        isRead: false,
+        actionUrl: `/quotes/${quotes[1].id}`,
+        isRealTime: true,
+        sseSent: false,
+      },
+    }),
+
+    // 리뷰 요청 알림
+    prisma.notification.create({
+      data: {
+        userId: customers[1].id,
+        actionId: actions[7].id, // 이사 완료 액션
+        type: NotificationType.REVIEW_REQUEST,
+        title: "리뷰를 작성해주세요",
+        content: "완료된 이사 서비스에 대한 리뷰를 작성해주세요.",
+        isRead: false,
+        actionUrl: `/quotes/${quotes[1].id}/review`,
+        isRealTime: true,
+        sseSent: false,
+      },
+    }),
+  ]);
+
+  // 16. 기사님 활동 데이터 생성
+  console.log("🚛 기사님 활동 데이터 생성 중...");
+  await Promise.all([
+    prisma.moverActivity.create({
+      data: {
+        moverId: movers[0].id,
+        quoteId: quotes[0].id,
+        actionType: MoverActionType.VIEWED,
+        status: MoverActivityStatus.VIEWED,
+        viewedAt: new Date("2024-02-01T10:00:00Z"),
+        note: "소형이사 요청 조회",
+      },
+    }),
+    prisma.moverActivity.create({
+      data: {
+        moverId: movers[1].id,
+        quoteId: quotes[0].id,
+        actionType: MoverActionType.ESTIMATED,
+        status: MoverActivityStatus.ESTIMATED,
+        viewedAt: new Date("2024-02-01T11:00:00Z"),
+        estimatedAt: new Date("2024-02-01T11:30:00Z"),
+        note: "소형이사 견적 작성 완료",
+      },
+    }),
+    prisma.moverActivity.create({
+      data: {
+        moverId: movers[1].id,
+        quoteId: quotes[1].id,
+        actionType: MoverActionType.ESTIMATED,
+        status: MoverActivityStatus.ESTIMATED,
+        viewedAt: new Date("2024-02-02T09:00:00Z"),
+        estimatedAt: new Date("2024-02-02T09:45:00Z"),
+        note: "가정이사 견적 작성 완료",
+      },
+    }),
+    prisma.moverActivity.create({
+      data: {
+        moverId: movers[3].id,
+        quoteId: quotes[2].id,
+        actionType: MoverActionType.BOOKMARKED,
+        status: MoverActivityStatus.BOOKMARKED,
+        viewedAt: new Date("2024-02-03T14:00:00Z"),
+        note: "사무실이사 요청 북마크",
+      },
+    }),
+  ]);
+
   console.log("✨ 시드 데이터 생성이 완료되었습니다!");
   console.log(`
   📊 생성된 데이터 요약:
@@ -521,6 +753,9 @@ async function main() {
   - 찜하기: 4개
   - 소셜 계정: 3개
   - 일반 유저 서비스: 3개
+  - 액션: 9개 (사용자 활동 추적)
+  - 알림: 5개 (실시간 알림 포함)
+  - 기사님 활동: 4개 (견적 요청 활동 추적)
   
   🎯 챌린지 기능 (별도 구현):
   - 채팅 시스템 (ChatRoom, ChatMessage)
