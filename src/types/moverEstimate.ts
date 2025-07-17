@@ -44,6 +44,30 @@ export type TUpdateEstimateRequest = {
   description: string;
 };
 
+// 서비스 타입 정의
+export type TServiceType = {
+  id: number;
+  name: string;
+  description: string | null;
+  iconUrl: string | null;
+};
+
+// 프로필 타입 정의
+export type TProfile = {
+  nickname: string;
+  profileImage: string | null;
+  introduction: string;
+  description: string;
+  experience: number;
+  completedCount: number;
+  avgRating: number;
+  reviewCount: number;
+  favoriteCount: number;
+  serviceTypes: {
+    service: TServiceType;
+  }[];
+};
+
 // 견적 응답 타입
 export type TQuoteResponse = {
   id: number;
@@ -63,12 +87,7 @@ export type TQuoteResponse = {
     name: string;
     currentRole: string;
     currentRegion: string | null;
-    profile: {
-      nickname: string;
-      profileImage: string | null;
-      introduction: string;
-      description: string;
-    } | null;
+    profile: TProfile | null;
   };
 };
 
@@ -104,6 +123,12 @@ export type TMyEstimateResponse = {
   createdAt: Date;
   updatedAt: Date;
   quote: TQuoteResponse;
+  mover: {
+    id: number;
+    name: string;
+    currentRole: string;
+    profile: TProfile | null;
+  };
 };
 
 // 내가 반려한 견적 응답 타입
@@ -115,4 +140,10 @@ export type TMyRejectedQuoteResponse = {
   status: string;
   createdAt: Date;
   quote: TQuoteResponse;
+  mover: {
+    id: number;
+    name: string;
+    currentRole: string;
+    profile: TProfile | null;
+  };
 };

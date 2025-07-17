@@ -24,6 +24,7 @@ export type TPendingQuoteResponse = {
   quote: {
     id: number;
     movingType: string;
+    movingDate: Date;
     createdAt: Date;
     departureAddr: string;
     departureDetail: string | null;
@@ -42,6 +43,7 @@ export type TReceivedQuoteResponse = {
   quote: {
     id: number;
     movingType: string;
+    movingDate: Date;
     createdAt: Date;
     departureAddr: string;
     departureDetail: string | null;
@@ -53,6 +55,14 @@ export type TReceivedQuoteResponse = {
     designatedEstimateCount: number;
   };
   estimates: TEstimateResponse[];
+};
+
+// 서비스 타입 정의
+export type TServiceType = {
+  id: number;
+  name: string;
+  description: string | null;
+  iconUrl: string | null;
 };
 
 // 견적서 응답 타입
@@ -76,6 +86,9 @@ export type TEstimateResponse = {
       avgRating: number;
       reviewCount: number;
       favoriteCount: number;
+      serviceTypes: {
+        service: TServiceType;
+      }[];
     } | null;
   };
 };
@@ -101,6 +114,9 @@ export type TQuoteDetailResponse = {
       avgRating: number;
       reviewCount: number;
       favoriteCount: number;
+      serviceTypes: {
+        service: TServiceType;
+      }[];
     } | null;
   };
 };
@@ -118,6 +134,7 @@ export type TDesignateQuoteResponse = DesignatedEstimateRequest;
 export type TQuote = Pick<
   Quote,
   | "movingType"
+  | "movingDate"
   | "createdAt"
   | "departureAddr"
   | "arrivalAddr"
