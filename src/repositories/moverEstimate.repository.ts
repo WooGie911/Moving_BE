@@ -27,6 +27,23 @@ const quoteSelectOptions = {
           profileImage: true,
           introduction: true,
           description: true,
+          experience: true,
+          completedCount: true,
+          avgRating: true,
+          reviewCount: true,
+          favoriteCount: true,
+          serviceTypes: {
+            select: {
+              service: {
+                select: {
+                  id: true,
+                  name: true,
+                  description: true,
+                  iconUrl: true,
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -274,6 +291,38 @@ const moverEstimateRepository = {
         quote: {
           select: quoteSelectOptions,
         },
+        mover: {
+          select: {
+            id: true,
+            name: true,
+            currentRole: true,
+            profile: {
+              select: {
+                nickname: true,
+                profileImage: true,
+                introduction: true,
+                description: true,
+                experience: true,
+                completedCount: true,
+                avgRating: true,
+                reviewCount: true,
+                favoriteCount: true,
+                serviceTypes: {
+                  select: {
+                    service: {
+                      select: {
+                        id: true,
+                        name: true,
+                        description: true,
+                        iconUrl: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -299,6 +348,38 @@ const moverEstimateRepository = {
         createdAt: true,
         quote: {
           select: quoteSelectOptions,
+        },
+        mover: {
+          select: {
+            id: true,
+            name: true,
+            currentRole: true,
+            profile: {
+              select: {
+                nickname: true,
+                profileImage: true,
+                introduction: true,
+                description: true,
+                experience: true,
+                completedCount: true,
+                avgRating: true,
+                reviewCount: true,
+                favoriteCount: true,
+                serviceTypes: {
+                  select: {
+                    service: {
+                      select: {
+                        id: true,
+                        name: true,
+                        description: true,
+                        iconUrl: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
       orderBy: {
