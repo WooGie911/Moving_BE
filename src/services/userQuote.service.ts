@@ -26,6 +26,7 @@ const userQuoteService = {
     const {
       id,
       movingType,
+      movingDate,
       createdAt,
       departureAddr,
       departureDetail,
@@ -41,6 +42,7 @@ const userQuoteService = {
     const quote = {
       id,
       movingType,
+      movingDate,
       createdAt,
       departureAddr,
       departureDetail,
@@ -71,6 +73,7 @@ const userQuoteService = {
       const {
         id,
         movingType,
+        movingDate,
         createdAt,
         departureAddr,
         departureDetail,
@@ -86,6 +89,7 @@ const userQuoteService = {
       const quote = {
         id,
         movingType,
+        movingDate,
         createdAt,
         departureAddr,
         departureDetail,

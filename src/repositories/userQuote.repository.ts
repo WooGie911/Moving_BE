@@ -63,6 +63,7 @@ const userQuoteRepository = {
       select: {
         id: true,
         movingType: true,
+        movingDate: true,
         createdAt: true,
         departureAddr: true,
         departureDetail: true,
@@ -100,6 +101,18 @@ const userQuoteRepository = {
                     avgRating: true,
                     reviewCount: true,
                     favoriteCount: true,
+                    serviceTypes: {
+                      select: {
+                        service: {
+                          select: {
+                            id: true,
+                            name: true,
+                            description: true,
+                            iconUrl: true,
+                          },
+                        },
+                      },
+                    },
                   },
                 },
               },
@@ -124,6 +137,7 @@ const userQuoteRepository = {
       select: {
         id: true,
         movingType: true,
+        movingDate: true,
         createdAt: true,
         departureAddr: true,
         departureDetail: true,
@@ -161,6 +175,18 @@ const userQuoteRepository = {
                     avgRating: true,
                     reviewCount: true,
                     favoriteCount: true,
+                    serviceTypes: {
+                      select: {
+                        service: {
+                          select: {
+                            id: true,
+                            name: true,
+                            description: true,
+                            iconUrl: true,
+                          },
+                        },
+                      },
+                    },
                   },
                 },
               },
@@ -182,6 +208,7 @@ const userQuoteRepository = {
         id: activeQuoteId,
       },
       select: {
+        movingDate: true,
         estimates: {
           where: {
             id: estimateId,
@@ -211,6 +238,18 @@ const userQuoteRepository = {
                     avgRating: true,
                     reviewCount: true,
                     favoriteCount: true,
+                    serviceTypes: {
+                      select: {
+                        service: {
+                          select: {
+                            id: true,
+                            name: true,
+                            description: true,
+                            iconUrl: true,
+                          },
+                        },
+                      },
+                    },
                   },
                 },
               },
@@ -235,6 +274,7 @@ const userQuoteRepository = {
         id: quoteId,
       },
       select: {
+        movingDate: true,
         estimates: {
           where: {
             id: estimateId,
@@ -264,6 +304,18 @@ const userQuoteRepository = {
                     avgRating: true,
                     reviewCount: true,
                     favoriteCount: true,
+                    serviceTypes: {
+                      select: {
+                        service: {
+                          select: {
+                            id: true,
+                            name: true,
+                            description: true,
+                            iconUrl: true,
+                          },
+                        },
+                      },
+                    },
                   },
                 },
               },
