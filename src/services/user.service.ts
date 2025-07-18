@@ -206,7 +206,7 @@ const updateCustomerProfile = async (
   await updateUserProfile(userId, dbUpdateData, updateData.userServices);
 };
 
-// 기사님 기본정보 수정 (User 테이블만)
+// 기사님 기본정보 수정 
 const updateMoverBasicInfo = async (
   userId: number,
   updateData: { name?: string; phoneNumber?: string; currentPassword?: string; newPassword?: string }
