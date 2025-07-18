@@ -12,6 +12,9 @@ import userQuoteRouter from "./routes/userQuote.route";
 import quoteRouter from "./routes/quote.routes";
 import moverEstimateRouter from "./routes/moverEstimate.routes";
 import favoriteRouter from "./routes/favorite.routes";
+import sseRouter from "./routes/sse.route";
+import notificationRouter from "./routes/notification.route";
+import actionTestRouter from "./routes/actionTest.route";
 
 // 환경변수 로드
 dotenv.config();
@@ -39,6 +42,8 @@ app.use(
       }
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
@@ -75,6 +80,11 @@ app.use("/customer-quotes", userQuoteRouter);
 app.use("/quotes", quoteRouter);
 app.use("/mover-estimates", moverEstimateRouter);
 app.use("/favorites", favoriteRouter);
+app.use("/notifications", notificationRouter);
+app.use("/actions", actionTestRouter);
+
+// SSE 라우팅
+app.use("/sse/notification", sseRouter);
 
 // 404 에러 핸들링
 app.use(notFoundHandler);
