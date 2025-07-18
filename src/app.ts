@@ -25,6 +25,7 @@ const PORT = process.env.PORT || 5050;
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
   "http://localhost:3000",
   "https://gomoving.site", // 기본값
+  "https://www.gomoving.site", // 기본값
 ];
 
 app.use(
