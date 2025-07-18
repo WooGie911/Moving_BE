@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { getMoverListController, getFavoriteMoversController, getMoverDetailController } from "../controllers/mover.controller";
+import * as moverController from "../controllers/mover.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 
 const moverRouter = Router();
 
 /**
  * GET /movers
- * @summary 기사님 리스트 조회 
+ * @summary 기사님 리스트 조회
  * @tags Mover
  * @description 기사님 목록을 조회
  * @param {string} region.query - 지역 필터
@@ -60,7 +60,7 @@ const moverRouter = Router();
  *   ]
  * }
  */
-moverRouter.get("/", getMoverListController);
+moverRouter.get("/", moverController.getMoverListController);
 
 /**
  * GET /movers/bookmarked
@@ -118,7 +118,11 @@ moverRouter.get("/", getMoverListController);
  *   "message": "인증이 필요합니다."
  * }
  */
-moverRouter.get("/favorite", verifyAccessToken, getFavoriteMoversController);
+moverRouter.get(
+  "/favorite",
+  verifyAccessToken,
+  moverController.getFavoriteMoversController
+);
 
 /**
  * GET /movers/:moverId
@@ -174,6 +178,53 @@ moverRouter.get("/favorite", verifyAccessToken, getFavoriteMoversController);
  *   "message": "기사님을 찾을 수 없습니다."
  * }
  */
-moverRouter.get("/:moverId", getMoverDetailController);
+moverRouter.get("/:moverId", moverController.getMoverDetailController);
+
+/**
+ * POST /movers/:moverId/quote-request
+ * @summary 지정 견적 요청 (회원만 가능)
+ * @tags Mover
+ * @description 본인 견적(quoteId)에 대해 특정 기사님에게 지정 견적을 요청합니다.
+ * @security bearerAuth
+ * @param {number} moverId.path.required - 기사님 ID
+ * @param {object} request.body.required - 요청 바디
+ * @property {integer} quoteId.required - 본인 견적 ID
+ * @property {string} message - 기사님께 전달할 메시지(선택)
+ * @property {string} expiresAt.required - 지정 견적 유효기간(ISO 8601)
+ * @returns {object} 200 - 지정 견적 요청 성공
+ * @returns {object} 400 - 잘못된 요청
+ * @example request - 예시
+ * {
+ *   "quoteId": 4,
+ *   "message": "이사 일정 조율이 필요합니다.",
+ *   "expiresAt": "2025-07-31T23:59:59.000Z"
+ * }
+ * @example response - 200 - 성공 예시
+ * {
+ *   "success": true,
+ *   "message": "지정 견적 요청이 성공적으로 생성되었습니다.",
+ *   "data": {
+ *     "id": 1,
+ *     "quoteId": 4,
+ *     "moverId": 2,
+ *     "customerId": 9,
+ *     "message": "이사 일정 조율이 필요합니다.",
+ *     "expiresAt": "2025-07-31T23:59:59.000Z",
+ *     "status": "PENDING",
+ *     "createdAt": "2025-07-18T08:00:00.000Z",
+ *     "updatedAt": "2025-07-18T08:00:00.000Z"
+ *   }
+ * }
+ * @example response - 400 - 실패 예시
+ * {
+ *   "success": false,
+ *   "message": "필수값 누락"
+ * }
+ */
+moverRouter.post(
+  "/:moverId/quote-request",
+  verifyAccessToken,
+  moverController.postDesignatedQuoteRequestController
+);
 
 export default moverRouter;
