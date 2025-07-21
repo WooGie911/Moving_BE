@@ -3,18 +3,12 @@ import express from "express";
 import cors from "cors";
 import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware";
 import { setupAutoSwagger } from "./utils/swagger-auto";
-import authRouter from "./routes/auth.route";
-import moverRouter from "./routes/mover.routes";
-import userRouter from "./routes/user.route";
 import cookieParser from "cookie-parser";
-import reviewRouter from "./routes/review.route";
-import userQuoteRouter from "./routes/userQuote.route";
-import quoteRouter from "./routes/quote.routes";
-import moverEstimateRouter from "./routes/moverEstimate.routes";
-import favoriteRouter from "./routes/favorite.routes";
-import sseRouter from "./routes/sse.route";
-import notificationRouter from "./routes/notification.route";
-import actionTestRouter from "./routes/actionTest.route";
+
+// 라우터 import
+import authIndexRoutes from "./routes/authIndex.routes";
+import notificationIndexRoutes from "./routes/notificationIndex.routes";
+import businessRoutes from "./routes/index.routes";
 
 // 환경변수 로드
 dotenv.config();
@@ -22,21 +16,14 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5050;
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
-  "http://localhost:3000",
-  "https://gomoving.site", // 기본값
-  "https://www.gomoving.site", // 기본값
-];
+// CORS 설정 - 환경변수에서 가져오거나 기본값 사용
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").map((origin) => origin.trim()) || [];
 
 app.use(
   cors({
     origin: (origin, callback) => {
       // ngrok 테스트용 cors 설정
-      if (
-        !origin ||
-        allowedOrigins.includes(origin) ||
-        origin.endsWith(".ngrok-free.app")
-      ) {
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".ngrok-free.app")) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
@@ -45,47 +32,20 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  })
+  }),
 );
 
 app.use(cookieParser());
 app.use(express.json()); // JSON 파싱
 app.use(express.urlencoded({ extended: true })); // URL 인코딩 파싱
 
-// Health Check 엔드포인트
-/**
- * GET /health
- * @summary 서버 상태 확인
- * @tags Health
- * @return {object} 200 - 서버 정상 작동
- */
-app.get("/health", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "",
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-  });
-});
-
 // Swagger 자동 설정 (API 라우트들을 자동으로 스캔)
 setupAutoSwagger(app);
 
 // API 라우트 연결
-// app.use('/api/users', userRoutes);
-app.use("/movers", moverRouter);
-app.use("/auth", authRouter);
-app.use("/users", userRouter);
-app.use("/reviews", reviewRouter);
-app.use("/customer-quotes", userQuoteRouter);
-app.use("/quotes", quoteRouter);
-app.use("/mover-estimates", moverEstimateRouter);
-app.use("/favorites", favoriteRouter);
-app.use("/notifications", notificationRouter);
-app.use("/actions", actionTestRouter);
-
-// SSE 라우팅
-app.use("/sse/notification", sseRouter);
+app.use("/", authIndexRoutes); // 인증/인가 관련 라우터
+app.use("/", notificationIndexRoutes); // 알림 관련 라우터
+app.use("/", businessRoutes); // 일반 비즈니스 로직 라우터 (헬스 체크 포함)
 
 // 404 에러 핸들링
 app.use(notFoundHandler);

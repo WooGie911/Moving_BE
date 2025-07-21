@@ -1,772 +1,540 @@
 import {
   PrismaClient,
   UserType,
-  MovingType,
-  EstimateStatus,
+  AuthProvider,
+  MoveType,
   RequestStatus,
-  ReviewStatus,
-  SocialProvider,
-  Region,
-  ActionType,
+  EstimateStatus,
+  AddressRole,
+  RegionType,
   NotificationType,
-  MoverActionType,
-  MoverActivityStatus,
+  ActionType,
 } from "@prisma/client";
-import * as bcrypt from "bcrypt";
 import { encryptPhoneNumber } from "../../utils/phoneEncryption";
+import * as bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 시드 데이터 생성을 시작합니다...");
+  console.log("🌱 Starting seed...");
 
-  // 1. 서비스 데이터 생성
-  console.log("🔧 서비스 데이터 생성 중...");
-  const services = await prisma.service.createMany({
-    data: [
-      {
-        name: "소형이사",
-        description: "원룸, 투룸 등 소규모 이사",
-        isActive: true,
-        iconUrl: "https://s3.amazonaws.com/moving-icons/small-moving.svg",
-      },
-      {
-        name: "가정이사",
-        description: "일반 가정용 이사",
-        isActive: true,
-        iconUrl: "https://s3.amazonaws.com/moving-icons/home-moving.svg",
-      },
-      {
-        name: "사무실이사",
-        description: "사무실 및 오피스 이사",
-        isActive: true,
-        iconUrl: "https://s3.amazonaws.com/moving-icons/office-moving.svg",
-      },
-    ],
-  });
+  // 기존 데이터 삭제
+  await prisma.notification.deleteMany();
+  await prisma.action.deleteMany();
+  await prisma.favorite.deleteMany();
+  await prisma.review.deleteMany();
+  await prisma.estimate.deleteMany();
+  await prisma.designatedMover.deleteMany();
+  await prisma.estimateRequest.deleteMany();
+  await prisma.userAddress.deleteMany();
+  await prisma.moverServiceArea.deleteMany();
+  await prisma.address.deleteMany();
+  await prisma.user.deleteMany();
 
-  // 생성된 서비스 조회
-  const createdServices = await prisma.service.findMany();
+  // 주소 데이터 생성
+  const addresses = await Promise.all([
+    prisma.address.create({
+      data: {
+        postalCode: "06123",
+        city: "강남구",
+        district: "역삼동",
+        detail: "테헤란로 123",
+        region: RegionType.SEOUL,
+      },
+    }),
+    prisma.address.create({
+      data: {
+        postalCode: "06124",
+        city: "강남구",
+        district: "역삼동",
+        detail: "테헤란로 456",
+        region: RegionType.SEOUL,
+      },
+    }),
+    prisma.address.create({
+      data: {
+        postalCode: "06234",
+        city: "서초구",
+        district: "서초동",
+        detail: "서초대로 789",
+        region: RegionType.SEOUL,
+      },
+    }),
+    prisma.address.create({
+      data: {
+        postalCode: "13529",
+        city: "성남시 분당구",
+        district: "정자동",
+        detail: "판교로 321",
+        region: RegionType.GYEONGGI,
+      },
+    }),
+    prisma.address.create({
+      data: {
+        postalCode: "13530",
+        city: "성남시 분당구",
+        district: "정자동",
+        detail: "판교로 654",
+        region: RegionType.GYEONGGI,
+      },
+    }),
+  ]);
 
-  // 2. 사용자 데이터 생성 (고객)
-  console.log("👥 고객 사용자 데이터 생성 중...");
-  const customers = await Promise.all([
+  // 사용자 데이터 생성
+  const users = await Promise.all([
+    // 고객들
     prisma.user.create({
       data: {
         email: "customer1@example.com",
-        name: "김고객",
         encryptedPassword: await bcrypt.hash("password123", 10),
         encryptedPhoneNumber: encryptPhoneNumber("010-1234-5678"),
-        currentRole: UserType.CUSTOMER,
-        hasProfile: false,
-        currentRegion: Region.SEOUL, // enum 직접 사용
-        lastLoginAt: new Date(),
-        userRoles: {
-          create: {
-            role: UserType.CUSTOMER,
-            isActive: true,
-          },
-        },
+        name: "김고객",
+        userType: [UserType.CUSTOMER],
+        provider: AuthProvider.LOCAL,
+        customerImage: "https://example.com/customer1.jpg",
+        nickname: "이사고객1",
+        currentArea: RegionType.SEOUL,
+        preferredServices: [MoveType.HOME, MoveType.SMALL],
       },
     }),
     prisma.user.create({
       data: {
         email: "customer2@example.com",
-        name: "박고객",
         encryptedPassword: await bcrypt.hash("password123", 10),
         encryptedPhoneNumber: encryptPhoneNumber("010-2345-6789"),
-        currentRole: UserType.CUSTOMER,
-        hasProfile: false,
-        currentRegion: Region.GYEONGGI, // enum 직접 사용
-        lastLoginAt: new Date(),
-        userRoles: {
-          create: {
-            role: UserType.CUSTOMER,
-            isActive: true,
-          },
-        },
+        name: "이고객",
+        userType: [UserType.CUSTOMER],
+        provider: AuthProvider.LOCAL,
+        customerImage: "https://example.com/customer2.jpg",
+        nickname: "이사고객2",
+        currentArea: RegionType.GYEONGGI,
+        preferredServices: [MoveType.OFFICE],
       },
     }),
     prisma.user.create({
       data: {
         email: "customer3@example.com",
-        name: "이고객",
         encryptedPassword: await bcrypt.hash("password123", 10),
         encryptedPhoneNumber: encryptPhoneNumber("010-3456-7890"),
-        currentRole: UserType.CUSTOMER,
-        hasProfile: false,
-        currentRegion: Region.INCHEON, // enum 직접 사용
-        lastLoginAt: new Date(),
-        userRoles: {
-          create: {
-            role: UserType.CUSTOMER,
-            isActive: true,
-          },
-        },
+        name: "박고객",
+        userType: [UserType.CUSTOMER],
+        provider: AuthProvider.GOOGLE,
+        providerId: "google123",
+        customerImage: "https://example.com/customer3.jpg",
+        nickname: "이사고객3",
+        currentArea: RegionType.SEOUL,
+        preferredServices: [MoveType.HOME],
       },
     }),
-  ]);
 
-  // 3. 기사님 사용자 데이터 생성
-  console.log("🚛 기사님 사용자 데이터 생성 중...");
-  const movers = await Promise.all([
+    // 고객이면서 기사님도 하는 사용자 (이중 역할)
+    prisma.user.create({
+      data: {
+        email: "hybrid1@example.com",
+        encryptedPassword: await bcrypt.hash("password123", 10),
+        encryptedPhoneNumber: encryptPhoneNumber("010-4444-5555"),
+        name: "최하이브리드",
+        userType: [UserType.CUSTOMER, UserType.MOVER], // 둘 다 가능
+        provider: AuthProvider.LOCAL,
+        customerImage: "https://example.com/hybrid1_customer.jpg",
+        moverImage: "https://example.com/hybrid1_mover.jpg",
+        nickname: "하이브리드전문가",
+        currentArea: RegionType.GYEONGGI,
+        preferredServices: [MoveType.SMALL, MoveType.HOME],
+        isVeteran: true,
+        shortIntro: "고객이면서 기사님도 하는 하이브리드 전문가",
+        detailIntro: "고객의 입장을 잘 아는 기사님입니다. 고객이 원하는 서비스를 정확히 제공해드립니다.",
+        career: 5,
+        workedCount: 45,
+        averageRating: 4.9,
+        totalReviewCount: 42,
+        serviceTypes: [MoveType.SMALL, MoveType.HOME],
+      },
+    }),
+
+    // 기사님들
     prisma.user.create({
       data: {
         email: "mover1@example.com",
-        name: "김민수", // 기사님 실명
         encryptedPassword: await bcrypt.hash("password123", 10),
-        encryptedPhoneNumber: encryptPhoneNumber("010-4567-8901"),
-        currentRole: UserType.MOVER,
-        hasProfile: true,
-        lastLoginAt: new Date(),
-        userRoles: {
-          create: {
-            role: UserType.MOVER,
-            isActive: true,
-          },
-        },
+        encryptedPhoneNumber: encryptPhoneNumber("010-1111-2222"),
+        name: "김기사",
+        userType: [UserType.MOVER],
+        provider: AuthProvider.LOCAL,
+        moverImage: "https://example.com/mover1.jpg",
+        nickname: "베테랑기사",
+        currentArea: RegionType.SEOUL,
+        isVeteran: true,
+        shortIntro: "10년 경력의 베테랑 기사입니다",
+        detailIntro:
+          "소형이사부터 사무실이사까지 모든 이사를 전문적으로 처리합니다. 안전하고 신속한 서비스를 제공합니다.",
+        career: 10,
+        workedCount: 150,
+        averageRating: 4.8,
+        totalReviewCount: 120,
+        serviceTypes: [MoveType.SMALL, MoveType.HOME, MoveType.OFFICE],
       },
     }),
     prisma.user.create({
       data: {
         email: "mover2@example.com",
-        name: "박성호", // 기사님 실명
         encryptedPassword: await bcrypt.hash("password123", 10),
-        encryptedPhoneNumber: encryptPhoneNumber("010-5678-9012"),
-        currentRole: UserType.MOVER,
-        hasProfile: true,
-        lastLoginAt: new Date(),
-        userRoles: {
-          create: {
-            role: UserType.MOVER,
-            isActive: true,
-          },
-        },
+        encryptedPhoneNumber: encryptPhoneNumber("010-2222-3333"),
+        name: "이기사",
+        userType: [UserType.MOVER],
+        provider: AuthProvider.LOCAL,
+        moverImage: "https://example.com/mover2.jpg",
+        nickname: "신입기사",
+        currentArea: RegionType.SEOUL,
+        isVeteran: false,
+        shortIntro: "신입이지만 열정만큼은 누구보다 강합니다",
+        detailIntro: "신입 기사이지만 고객 만족을 위해 최선을 다하겠습니다. 합리적인 가격으로 서비스를 제공합니다.",
+        career: 1,
+        workedCount: 5,
+        averageRating: 4.2,
+        totalReviewCount: 5,
+        serviceTypes: [MoveType.SMALL, MoveType.HOME],
       },
     }),
     prisma.user.create({
       data: {
         email: "mover3@example.com",
-        name: "이준혁", // 기사님 실명
         encryptedPassword: await bcrypt.hash("password123", 10),
-        encryptedPhoneNumber: encryptPhoneNumber("010-6789-0123"),
-        currentRole: UserType.MOVER,
-        hasProfile: true,
-        lastLoginAt: new Date(),
-        userRoles: {
-          create: {
-            role: UserType.MOVER,
-            isActive: true,
-          },
-        },
-      },
-    }),
-    prisma.user.create({
-      data: {
-        email: "mover4@example.com",
-        name: "최동철", // 기사님 실명
-        encryptedPassword: await bcrypt.hash("password123", 10),
-        encryptedPhoneNumber: encryptPhoneNumber("010-7890-1234"),
-        currentRole: UserType.MOVER,
-        hasProfile: true,
-        lastLoginAt: new Date(),
-        userRoles: {
-          create: {
-            role: UserType.MOVER,
-            isActive: true,
-          },
-        },
+        encryptedPhoneNumber: encryptPhoneNumber("010-3333-4444"),
+        name: "박기사",
+        userType: [UserType.MOVER],
+        provider: AuthProvider.KAKAO,
+        providerId: "kakao123",
+        moverImage: "https://example.com/mover3.jpg",
+        nickname: "전문기사",
+        currentArea: RegionType.GYEONGGI,
+        isVeteran: true,
+        shortIntro: "사무실 이사 전문 기사입니다",
+        detailIntro: "사무실 이사에 특화된 전문 기사입니다. 사무용품과 장비의 안전한 이전을 보장합니다.",
+        career: 8,
+        workedCount: 80,
+        averageRating: 4.6,
+        totalReviewCount: 75,
+        serviceTypes: [MoveType.OFFICE, MoveType.HOME],
       },
     }),
   ]);
 
-  // 4. 기사님 프로필 데이터 생성 (통계 데이터 포함)
-  console.log("📝 기사님 프로필 데이터 생성 중...");
-  const profiles = await Promise.all([
-    prisma.profile.create({
+  const [customer1, customer2, customer3, hybridUser, mover1, mover2, mover3] = users;
+
+  // 기사님 서비스 지역 설정
+  await Promise.all([
+    prisma.moverServiceArea.create({
       data: {
-        userId: movers[0].id,
-        nickname: "믿을만한김기사",
-        profileImage: "https://s3.amazonaws.com/profiles/profile1.jpg",
-        experience: 5,
-        introduction: "5년 경력의 꼼꼼한 이사 전문가입니다",
-        description: "안전하고 신속한 이사를 약속드립니다. 고객 만족도 98%를 자랑하는 전문 기사입니다.",
-        completedCount: 136,
-        avgRating: 5.0,
-        reviewCount: 128,
-        favoriteCount: 45,
-        lastActivityAt: new Date(),
+        userId: mover1.id,
+        region: RegionType.SEOUL,
+        district: "강남구",
       },
     }),
-    prisma.profile.create({
+    prisma.moverServiceArea.create({
       data: {
-        userId: movers[1].id,
-        nickname: "신속한박기사",
-        profileImage: "https://s3.amazonaws.com/profiles/profile2.jpg",
-        experience: 8,
-        introduction: "8년 경력의 신속한 이사 서비스",
-        description: "빠르고 정확한 이사로 고객님의 시간을 절약해드립니다. 대형 이사도 전문적으로 처리합니다.",
-        completedCount: 334,
-        avgRating: 4.8,
-        reviewCount: 298,
-        favoriteCount: 67,
-        lastActivityAt: new Date(),
+        userId: mover1.id,
+        region: RegionType.SEOUL,
+        district: "서초구",
       },
     }),
-    prisma.profile.create({
+    prisma.moverServiceArea.create({
       data: {
-        userId: movers[2].id,
-        nickname: "친절한이기사",
-        profileImage: "https://s3.amazonaws.com/profiles/profile3.jpg",
-        experience: 3,
-        introduction: "고객 서비스 최우선 3년차 기사",
-        description: "고객님의 소중한 물건을 내 것처럼 소중히 다뤄드립니다. 친절한 서비스가 저의 장점입니다.",
-        completedCount: 78,
-        avgRating: 4.9,
-        reviewCount: 72,
-        favoriteCount: 23,
-        lastActivityAt: new Date(),
+        userId: mover2.id,
+        region: RegionType.SEOUL,
+        district: "강남구",
       },
     }),
-    prisma.profile.create({
+    prisma.moverServiceArea.create({
       data: {
-        userId: movers[3].id,
-        nickname: "전문가최기사",
-        profileImage: "https://s3.amazonaws.com/profiles/profile4.jpg",
-        experience: 12,
-        introduction: "12년 경력의 이사 전문가",
-        description: "어떤 이사든 완벽하게 처리해드립니다. 장거리 이사와 특수 물품 운반도 전문적으로 해드립니다.",
-        completedCount: 512,
-        avgRating: 4.7,
-        reviewCount: 489,
-        favoriteCount: 89,
-        lastActivityAt: new Date(),
+        userId: mover3.id,
+        region: RegionType.GYEONGGI,
+        district: "성남시 분당구",
+      },
+    }),
+    // 하이브리드 기사님 서비스 지역
+    prisma.moverServiceArea.create({
+      data: {
+        userId: hybridUser.id,
+        region: RegionType.GYEONGGI,
+        district: "성남시 분당구",
+      },
+    }),
+    prisma.moverServiceArea.create({
+      data: {
+        userId: hybridUser.id,
+        region: RegionType.SEOUL,
+        district: "강남구",
       },
     }),
   ]);
 
-  // 5. 기사님 서비스 지역 설정 (enum 직접 사용)
-  console.log("🗺️ 기사님 서비스 지역 설정 중...");
-  await prisma.profileRegion.createMany({
-    data: [
-      // 김기사 - 서울, 경기
-      { profileId: profiles[0].id, region: Region.SEOUL },
-      { profileId: profiles[0].id, region: Region.GYEONGGI },
-
-      // 박기사 - 서울, 인천, 경기
-      { profileId: profiles[1].id, region: Region.SEOUL },
-      { profileId: profiles[1].id, region: Region.INCHEON },
-      { profileId: profiles[1].id, region: Region.GYEONGGI },
-
-      // 이기사 - 부산, 경상남도
-      { profileId: profiles[2].id, region: Region.BUSAN },
-      { profileId: profiles[2].id, region: Region.GYEONGNAM },
-
-      // 최기사 - 전국 서비스
-      { profileId: profiles[3].id, region: Region.SEOUL },
-      { profileId: profiles[3].id, region: Region.BUSAN },
-      { profileId: profiles[3].id, region: Region.DAEGU },
-      { profileId: profiles[3].id, region: Region.GYEONGGI },
-    ],
-  });
-
-  // 6. 기사님 서비스 종류 설정
-  console.log("🔧 기사님 서비스 종류 설정 중...");
-  await prisma.profileService.createMany({
-    data: [
-      // 김기사 - 소형이사, 가정이사
-      { profileId: profiles[0].id, serviceId: createdServices[0].id },
-      { profileId: profiles[0].id, serviceId: createdServices[1].id },
-
-      // 박기사 - 모든 서비스
-      { profileId: profiles[1].id, serviceId: createdServices[0].id },
-      { profileId: profiles[1].id, serviceId: createdServices[1].id },
-      { profileId: profiles[1].id, serviceId: createdServices[2].id },
-
-      // 이기사 - 소형이사, 가정이사
-      { profileId: profiles[2].id, serviceId: createdServices[0].id },
-      { profileId: profiles[2].id, serviceId: createdServices[1].id },
-
-      // 최기사 - 가정이사, 사무실이사
-      { profileId: profiles[3].id, serviceId: createdServices[1].id },
-      { profileId: profiles[3].id, serviceId: createdServices[2].id },
-    ],
-  });
-
-  // 7. 견적 요청 데이터 생성 (Quote - 회원님이 기사님께 보내는 견적 요청)
-  console.log("📦 견적 요청 데이터 생성 중...");
-  const quotes = await Promise.all([
-    prisma.quote.create({
+  // 사용자별 주소 등록
+  await Promise.all([
+    prisma.userAddress.create({
       data: {
-        userId: customers[0].id,
-        movingType: MovingType.SMALL,
-        movingDate: new Date("2024-02-15"),
-        departureAddr: "서울시 강남구 역삼동 123-45",
-        arrivalAddr: "서울시 서초구 서초동 678-90",
-        departureDetail: "3층 원룸",
-        arrivalDetail: "2층 투룸",
-        departureRegion: Region.SEOUL, // enum 직접 사용
-        arrivalRegion: Region.SEOUL, // enum 직접 사용
-        description: "냉장고와 세탁기 운반 주의 필요",
-        status: RequestStatus.ACTIVE,
-        estimatedDistance: 5.2,
-        floor: 3,
-        hasElevator: false,
-        estimateCount: 2,
-        isUrgent: false,
-        maxBudget: 200000,
+        userId: customer1.id,
+        addressId: addresses[0].id,
+        role: AddressRole.FROM,
+        customLabel: "현재 집",
       },
     }),
-    prisma.quote.create({
+    prisma.userAddress.create({
       data: {
-        userId: customers[1].id,
-        movingType: MovingType.HOME,
-        movingDate: new Date("2024-02-20"),
-        departureAddr: "경기도 성남시 분당구 정자동 456-78",
-        arrivalAddr: "서울시 송파구 잠실동 789-01",
-        departureDetail: "아파트 15층",
-        arrivalDetail: "아파트 8층",
-        departureRegion: Region.GYEONGGI, // enum 직접 사용
-        arrivalRegion: Region.SEOUL, // enum 직접 사용
-        description: "피아노 운반 포함, 엘리베이터 사용 가능",
-        status: RequestStatus.CONFIRMED,
-        estimatedDistance: 25.8,
-        floor: 15,
-        hasElevator: true,
-        estimateCount: 3,
-        isUrgent: true,
-        maxBudget: 500000,
+        userId: customer1.id,
+        addressId: addresses[1].id,
+        role: AddressRole.TO,
+        customLabel: "새 집",
       },
     }),
-    prisma.quote.create({
+    prisma.userAddress.create({
       data: {
-        userId: customers[2].id,
-        movingType: MovingType.OFFICE,
-        movingDate: new Date("2024-02-25"),
-        departureAddr: "서울시 중구 명동 234-56",
-        arrivalAddr: "서울시 영등포구 여의도 567-89",
-        departureDetail: "오피스텔 12층",
-        arrivalDetail: "오피스빌딩 20층",
-        departureRegion: Region.SEOUL, // enum 직접 사용
-        arrivalRegion: Region.SEOUL, // enum 직접 사용
-        description: "사무용 컴퓨터 및 서류 다수, 주말 이사 희망",
-        status: RequestStatus.ACTIVE,
-        estimatedDistance: 8.3,
-        floor: 12,
-        hasElevator: true,
-        estimateCount: 1,
-        isUrgent: false,
-        maxBudget: 1000000,
+        userId: customer2.id,
+        addressId: addresses[2].id,
+        role: AddressRole.FROM,
+        customLabel: "회사",
+      },
+    }),
+    prisma.userAddress.create({
+      data: {
+        userId: customer2.id,
+        addressId: addresses[3].id,
+        role: AddressRole.TO,
+        customLabel: "새 사무실",
       },
     }),
   ]);
 
-  // 8. 견적 가격 데이터 생성 (Estimate - 기사님이 회원님에게 보내는 견적 가격)
-  console.log("💰 견적 가격 데이터 생성 중...");
+  // 견적 요청 생성
+  const estimateRequests = await Promise.all([
+    prisma.estimateRequest.create({
+      data: {
+        customerId: customer1.id,
+        moveType: MoveType.HOME,
+        moveDate: new Date("2024-02-15"),
+        fromAddressId: addresses[0].id,
+        toAddressId: addresses[1].id,
+        status: RequestStatus.COMPLETED,
+        description: "1인 가구 소형 이사입니다. 가전제품과 옷장 정도만 있습니다.",
+      },
+    }),
+    prisma.estimateRequest.create({
+      data: {
+        customerId: customer2.id,
+        moveType: MoveType.OFFICE,
+        moveDate: new Date("2024-02-20"),
+        fromAddressId: addresses[2].id,
+        toAddressId: addresses[3].id,
+        status: RequestStatus.PENDING,
+        description: "소규모 사무실 이사입니다. 책상 5개와 서랍장 2개 정도입니다.",
+      },
+    }),
+    prisma.estimateRequest.create({
+      data: {
+        customerId: customer3.id,
+        moveType: MoveType.HOME,
+        moveDate: new Date("2024-02-25"),
+        fromAddressId: addresses[0].id,
+        toAddressId: addresses[4].id,
+        status: RequestStatus.APPROVED,
+        description: "가족 이사입니다. 가전제품과 가구가 많습니다.",
+      },
+    }),
+    // 하이브리드 사용자의 견적 요청
+    prisma.estimateRequest.create({
+      data: {
+        customerId: hybridUser.id,
+        moveType: MoveType.SMALL,
+        moveDate: new Date("2024-03-01"),
+        fromAddressId: addresses[3].id,
+        toAddressId: addresses[0].id,
+        status: RequestStatus.PENDING,
+        description: "하이브리드 사용자의 소형 이사 요청입니다. 고객이면서 기사님도 하는 사용자입니다.",
+      },
+    }),
+  ]);
+
+  const [request1, request2, request3, request4] = estimateRequests;
+
+  // 견적 생성
   const estimates = await Promise.all([
-    // 첫 번째 요청에 대한 견적들
     prisma.estimate.create({
       data: {
-        quoteId: quotes[0].id,
-        moverId: movers[0].id,
+        moverId: mover1.id,
+        estimateRequestId: request1.id,
         price: 150000,
-        description: "소형이사 전문 서비스입니다. 냉장고, 세탁기 안전 운반 보장",
-        status: EstimateStatus.SENT,
-        validUntil: new Date("2024-02-10"),
-        responseTime: 30, // 30분 후 응답
-        workingHours: "3-4시간",
-        includesPackaging: true,
-        insuranceAmount: 1000000,
-      },
-    }),
-    prisma.estimate.create({
-      data: {
-        quoteId: quotes[0].id,
-        moverId: movers[1].id,
-        price: 180000,
-        description: "신속하고 안전한 이사 서비스. 포장재 무료 제공",
-        status: EstimateStatus.SENT,
-        validUntil: new Date("2024-02-10"),
-        responseTime: 15, // 15분 후 응답
-        workingHours: "2-3시간",
-        includesPackaging: true,
-        insuranceAmount: 1500000,
-      },
-    }),
-
-    // 두 번째 요청에 대한 견적들
-    prisma.estimate.create({
-      data: {
-        quoteId: quotes[1].id,
-        moverId: movers[1].id,
-        price: 450000,
-        description: "피아노 전문 운반 서비스 포함. 보험 적용",
+        comment: "안전하고 신속하게 처리해드리겠습니다.",
         status: EstimateStatus.ACCEPTED,
-        validUntil: new Date("2024-02-15"),
-        responseTime: 45, // 45분 후 응답
-        workingHours: "5-6시간",
+        workingHours: "3-4시간",
         includesPackaging: true,
         insuranceAmount: 5000000,
       },
     }),
     prisma.estimate.create({
       data: {
-        quoteId: quotes[1].id,
-        moverId: movers[3].id,
-        price: 500000,
-        description: "12년 경력 전문가의 완벽한 가정이사 서비스",
-        status: EstimateStatus.SENT,
-        validUntil: new Date("2024-02-15"),
-        responseTime: 120, // 2시간 후 응답
+        moverId: mover2.id,
+        estimateRequestId: request1.id,
+        price: 120000,
+        comment: "합리적인 가격으로 서비스 제공합니다.",
+        status: EstimateStatus.REJECTED,
         workingHours: "4-5시간",
+        includesPackaging: false,
+        insuranceAmount: 3000000,
+      },
+    }),
+    prisma.estimate.create({
+      data: {
+        moverId: mover3.id,
+        estimateRequestId: request2.id,
+        price: 300000,
+        comment: "사무실 이사 전문으로 처리해드립니다.",
+        status: EstimateStatus.PROPOSED,
+        workingHours: "6-8시간",
         includesPackaging: true,
         insuranceAmount: 10000000,
       },
     }),
-
-    // 세 번째 요청에 대한 견적
+    // 하이브리드 사용자가 제출한 견적
     prisma.estimate.create({
       data: {
-        quoteId: quotes[2].id,
-        moverId: movers[3].id,
-        price: 800000,
-        description: "사무실 이사 전문. IT 장비 안전 운반 및 설치 지원",
-        status: EstimateStatus.SENT,
-        validUntil: new Date("2024-02-20"),
-        responseTime: 60, // 1시간 후 응답
-        workingHours: "6-8시간",
+        moverId: hybridUser.id,
+        estimateRequestId: request4.id,
+        price: 80000,
+        comment: "고객의 입장을 잘 아는 기사님입니다. 합리적인 가격으로 서비스 제공합니다.",
+        status: EstimateStatus.PROPOSED,
+        workingHours: "2-3시간",
+        includesPackaging: true,
+        insuranceAmount: 2000000,
+      },
+    }),
+    // 다른 기사님이 하이브리드 사용자의 요청에 제출한 견적
+    prisma.estimate.create({
+      data: {
+        moverId: mover1.id,
+        estimateRequestId: request4.id,
+        price: 100000,
+        comment: "하이브리드 고객님의 요청에 견적 제출합니다.",
+        status: EstimateStatus.PROPOSED,
+        workingHours: "3-4시간",
         includesPackaging: false,
-        insuranceAmount: 20000000,
+        insuranceAmount: 3000000,
       },
     }),
   ]);
 
-  // 9. 확정된 견적 업데이트
-  console.log("✅ 확정된 견적 업데이트 중...");
-  await prisma.quote.update({
-    where: { id: quotes[1].id },
+  // 리뷰 생성
+  await prisma.review.create({
     data: {
-      confirmedEstimateId: estimates[2].id,
-      status: RequestStatus.CONFIRMED,
+      customerId: customer1.id,
+      moverId: mover1.id,
+      estimateRequestId: request1.id,
+      rating: 5,
+      content: "정말 만족스러운 서비스였습니다. 기사님이 친절하고 안전하게 처리해주셨습니다.",
     },
   });
 
-  // 10. 리뷰 데이터 생성
-  console.log("📝 리뷰 데이터 생성 중...");
+  // 찜 기능
   await Promise.all([
-    prisma.review.create({
+    prisma.favorite.create({
       data: {
-        quoteId: quotes[1].id,
-        estimateId: estimates[2].id,
-        userId: customers[1].id,
-        moverId: movers[1].id,
-        rating: 5,
-        content:
-          "정말 친절하고 꼼꼼하게 이사해주셨어요! 피아노도 안전하게 운반해주시고 시간도 정확하게 지켜주셨습니다.",
-        status: ReviewStatus.COMPLETED,
-        isPublic: true,
+        customerId: customer1.id,
+        moverId: mover1.id,
+      },
+    }),
+    prisma.favorite.create({
+      data: {
+        customerId: customer2.id,
+        moverId: mover3.id,
+      },
+    }),
+    prisma.favorite.create({
+      data: {
+        customerId: customer3.id,
+        moverId: mover1.id,
+      },
+    }),
+    // 하이브리드 사용자의 찜
+    prisma.favorite.create({
+      data: {
+        customerId: hybridUser.id,
+        moverId: mover1.id,
+      },
+    }),
+    // 다른 고객이 하이브리드 기사님을 찜
+    prisma.favorite.create({
+      data: {
+        customerId: customer1.id,
+        moverId: hybridUser.id,
       },
     }),
   ]);
 
-  // 11. 찜하기 데이터
-  console.log("❤️ 찜하기 데이터 생성 중...");
-  await prisma.favorite.createMany({
-    data: [
-      { userId: customers[0].id, moverId: movers[0].id },
-      { userId: customers[0].id, moverId: movers[1].id },
-      { userId: customers[1].id, moverId: movers[3].id },
-      { userId: customers[2].id, moverId: movers[1].id },
-    ],
-  });
-
-  // 12. 소셜 계정 데이터
-  console.log("📱 소셜 계정 데이터 생성 중...");
-  await prisma.socialAccount.createMany({
-    data: [
-      {
-        provider: SocialProvider.KAKAO,
-        providerId: "kakao_123456",
-        userId: customers[1].id,
-      },
-      {
-        provider: SocialProvider.GOOGLE,
-        providerId: "google_789012",
-        userId: customers[2].id,
-      },
-      {
-        provider: SocialProvider.NAVER,
-        providerId: "naver_345678",
-        userId: movers[2].id,
-      },
-    ],
-  });
-
-  // 13. 일반 유저 서비스 선택 데이터
-  console.log("🔧 일반 유저 서비스 선택 데이터 생성 중...");
-  await prisma.userService.createMany({
-    data: [
-      { userId: customers[0].id, serviceId: createdServices[0].id }, // 소형이사
-      { userId: customers[1].id, serviceId: createdServices[1].id }, // 가정이사
-      { userId: customers[2].id, serviceId: createdServices[2].id }, // 사무실이사
-    ],
-  });
-
-  // 14. 액션 데이터 생성 (사용자 활동 추적)
-  console.log("📊 액션 데이터 생성 중...");
+  // 사용자 활동 생성
   const actions = await Promise.all([
-    // 견적 생성 액션
     prisma.action.create({
       data: {
-        userId: customers[0].id,
-        type: ActionType.QUOTE_CREATE,
-        entityId: quotes[0].id,
-        entityType: "QUOTE",
-        description: "소형이사 견적 요청을 생성했습니다.",
-        metadata: { movingType: "SMALL", distance: 5.2 },
+        userId: customer1.id,
+        type: ActionType.ESTIMATE_REQUEST_CREATE,
+        entityId: request1.id,
+        entityType: "EstimateRequest",
+        description: "견적 요청을 생성했습니다.",
       },
     }),
     prisma.action.create({
       data: {
-        userId: customers[1].id,
-        type: ActionType.QUOTE_CREATE,
-        entityId: quotes[1].id,
-        entityType: "QUOTE",
-        description: "가정이사 견적 요청을 생성했습니다.",
-        metadata: { movingType: "HOME", distance: 25.8 },
-      },
-    }),
-    prisma.action.create({
-      data: {
-        userId: customers[2].id,
-        type: ActionType.QUOTE_CREATE,
-        entityId: quotes[2].id,
-        entityType: "QUOTE",
-        description: "사무실이사 견적 요청을 생성했습니다.",
-        metadata: { movingType: "OFFICE", distance: 8.3 },
-      },
-    }),
-
-    // 견적 제출 액션
-    prisma.action.create({
-      data: {
-        userId: movers[0].id,
+        userId: mover1.id,
         type: ActionType.ESTIMATE_SUBMITTED,
         entityId: estimates[0].id,
-        entityType: "ESTIMATE",
-        description: "소형이사 견적을 제출했습니다.",
-        metadata: { price: 150000, quoteId: quotes[0].id },
+        entityType: "Estimate",
+        description: "견적을 제출했습니다.",
       },
     }),
     prisma.action.create({
       data: {
-        userId: movers[1].id,
-        type: ActionType.ESTIMATE_SUBMITTED,
-        entityId: estimates[1].id,
-        entityType: "ESTIMATE",
-        description: "소형이사 견적을 제출했습니다.",
-        metadata: { price: 180000, quoteId: quotes[0].id },
-      },
-    }),
-    prisma.action.create({
-      data: {
-        userId: movers[1].id,
-        type: ActionType.ESTIMATE_SUBMITTED,
-        entityId: estimates[2].id,
-        entityType: "ESTIMATE",
-        description: "가정이사 견적을 제출했습니다.",
-        metadata: { price: 450000, quoteId: quotes[1].id },
-      },
-    }),
-
-    // 견적 확정 액션
-    prisma.action.create({
-      data: {
-        userId: customers[1].id,
+        userId: customer1.id,
         type: ActionType.ESTIMATE_ACCEPTED,
-        entityId: estimates[2].id,
-        entityType: "ESTIMATE",
-        description: "가정이사 견적을 확정했습니다.",
-        metadata: { price: 450000, quoteId: quotes[1].id },
-      },
-    }),
-
-    // 이사 완료 액션
-    prisma.action.create({
-      data: {
-        userId: customers[1].id,
-        type: ActionType.MOVING_COMPLETED,
-        entityId: quotes[1].id,
-        entityType: "QUOTE",
-        description: "가정이사가 완료되었습니다.",
-        metadata: { completedAt: new Date().toISOString() },
-      },
-    }),
-
-    // 리뷰 제출 액션
-    prisma.action.create({
-      data: {
-        userId: customers[1].id,
-        type: ActionType.REVIEW_SUBMITTED,
-        entityId: quotes[1].id,
-        entityType: "REVIEW",
-        description: "이사 서비스에 대한 리뷰를 제출했습니다.",
-        metadata: { rating: 5, moverId: movers[1].id },
+        entityId: estimates[0].id,
+        entityType: "Estimate",
+        description: "견적을 수락했습니다.",
       },
     }),
   ]);
 
-  // 15. 알림 데이터 생성
-  console.log("🔔 알림 데이터 생성 중...");
+  // 알림 생성
   await Promise.all([
-    // 새로운 견적 알림
     prisma.notification.create({
       data: {
-        userId: customers[0].id,
-        actionId: actions[3].id, // 견적 제출 액션
-        type: NotificationType.NEW_ESTIMATE,
+        actionId: actions[1].id,
+        userId: customer1.id,
+        type: NotificationType.ESTIMATE_ARRIVED,
         title: "새로운 견적이 도착했습니다",
-        content: "소형이사 견적 요청에 대한 새로운 견적이 제출되었습니다.",
-        isRead: false,
-        actionUrl: `/quotes/${quotes[0].id}/estimates`,
-        isRealTime: true,
-        sseSent: false,
+        content: "김기사님이 견적을 제출했습니다.",
+        path: `/estimates/${estimates[0].id}`,
       },
     }),
     prisma.notification.create({
       data: {
-        userId: customers[0].id,
-        actionId: actions[4].id, // 견적 제출 액션
-        type: NotificationType.NEW_ESTIMATE,
-        title: "새로운 견적이 도착했습니다",
-        content: "소형이사 견적 요청에 대한 새로운 견적이 제출되었습니다.",
-        isRead: false,
-        actionUrl: `/quotes/${quotes[0].id}/estimates`,
-        isRealTime: true,
-        sseSent: false,
-      },
-    }),
-
-    // 견적 확정 알림
-    prisma.notification.create({
-      data: {
-        userId: movers[1].id,
-        actionId: actions[6].id, // 견적 확정 액션
-        type: NotificationType.ESTIMATE_CONFIRMED,
-        title: "견적이 확정되었습니다",
-        content: "제출하신 가정이사 견적이 고객님에 의해 확정되었습니다.",
-        isRead: false,
-        actionUrl: `/estimates/${estimates[2].id}`,
-        isRealTime: true,
-        sseSent: false,
-      },
-    }),
-
-    // 이사 완료 알림
-    prisma.notification.create({
-      data: {
-        userId: movers[1].id,
-        actionId: actions[7].id, // 이사 완료 액션
-        type: NotificationType.MOVING_DAY,
-        title: "이사가 완료되었습니다",
-        content: "가정이사 서비스가 성공적으로 완료되었습니다.",
-        isRead: false,
-        actionUrl: `/quotes/${quotes[1].id}`,
-        isRealTime: true,
-        sseSent: false,
-      },
-    }),
-
-    // 리뷰 요청 알림
-    prisma.notification.create({
-      data: {
-        userId: customers[1].id,
-        actionId: actions[7].id, // 이사 완료 액션
-        type: NotificationType.REVIEW_REQUEST,
-        title: "리뷰를 작성해주세요",
-        content: "완료된 이사 서비스에 대한 리뷰를 작성해주세요.",
-        isRead: false,
-        actionUrl: `/quotes/${quotes[1].id}/review`,
-        isRealTime: true,
-        sseSent: false,
+        actionId: actions[2].id,
+        userId: mover1.id,
+        type: NotificationType.ESTIMATE_STATUS_UPDATED,
+        title: "견적이 수락되었습니다",
+        content: "고객님이 견적을 수락했습니다.",
+        path: `/estimates/${estimates[0].id}`,
       },
     }),
   ]);
 
-  // 16. 기사님 활동 데이터 생성
-  console.log("🚛 기사님 활동 데이터 생성 중...");
-  await Promise.all([
-    prisma.moverActivity.create({
-      data: {
-        moverId: movers[0].id,
-        quoteId: quotes[0].id,
-        actionType: MoverActionType.VIEWED,
-        status: MoverActivityStatus.VIEWED,
-        viewedAt: new Date("2024-02-01T10:00:00Z"),
-        note: "소형이사 요청 조회",
-      },
-    }),
-    prisma.moverActivity.create({
-      data: {
-        moverId: movers[1].id,
-        quoteId: quotes[0].id,
-        actionType: MoverActionType.ESTIMATED,
-        status: MoverActivityStatus.ESTIMATED,
-        viewedAt: new Date("2024-02-01T11:00:00Z"),
-        estimatedAt: new Date("2024-02-01T11:30:00Z"),
-        note: "소형이사 견적 작성 완료",
-      },
-    }),
-    prisma.moverActivity.create({
-      data: {
-        moverId: movers[1].id,
-        quoteId: quotes[1].id,
-        actionType: MoverActionType.ESTIMATED,
-        status: MoverActivityStatus.ESTIMATED,
-        viewedAt: new Date("2024-02-02T09:00:00Z"),
-        estimatedAt: new Date("2024-02-02T09:45:00Z"),
-        note: "가정이사 견적 작성 완료",
-      },
-    }),
-    prisma.moverActivity.create({
-      data: {
-        moverId: movers[3].id,
-        quoteId: quotes[2].id,
-        actionType: MoverActionType.BOOKMARKED,
-        status: MoverActivityStatus.BOOKMARKED,
-        viewedAt: new Date("2024-02-03T14:00:00Z"),
-        note: "사무실이사 요청 북마크",
-      },
-    }),
-  ]);
-
-  console.log("✨ 시드 데이터 생성이 완료되었습니다!");
-  console.log(`
-  📊 생성된 데이터 요약:
-  - 서비스: 3개 (소형/가정/사무실)
-  - 고객: 3명
-  - 기사님: 4명 (통계 데이터 포함)
-  - 프로필: 4개
-  - 견적 요청 (Quote): 3개 (다양한 상태)
-  - 견적 가격 (Estimate): 5개 (편의 필드 포함)
-  - 리뷰: 1개
-  - 찜하기: 4개
-  - 소셜 계정: 3개
-  - 일반 유저 서비스: 3개
-  - 액션: 9개 (사용자 활동 추적)
-  - 알림: 5개 (실시간 알림 포함)
-  - 기사님 활동: 4개 (견적 요청 활동 추적)
-  
-  🎯 챌린지 기능 (별도 구현):
-  - 채팅 시스템 (ChatRoom, ChatMessage)
-  - 실시간 알림 (SSE)
-  `);
+  console.log("✅ Seed completed successfully!");
+  console.log(`📊 Created ${users.length} users (including hybrid user)`);
+  console.log(`🏠 Created ${addresses.length} addresses`);
+  console.log(`📋 Created ${estimateRequests.length} estimate requests`);
+  console.log(`💰 Created ${estimates.length} estimates`);
+  console.log(`🎭 Hybrid user: ${hybridUser.name} (Customer: ${hybridUser.email}, Mover: ${hybridUser.email})`);
 }
 
 main()
   .catch((e) => {
-    console.error("❌ 시드 데이터 생성 중 오류 발생:");
-    console.error(e);
+    console.error("❌ Seed failed:", e);
     process.exit(1);
   })
   .finally(async () => {
