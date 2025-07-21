@@ -1,7 +1,7 @@
 import { Router } from "express";
 import moverRouter from "./mover.routes";
 import reviewRouter from "./review.route";
-import userQuoteRouter from "./userQuote.route";
+import customerEstimateRequestRouter from "./customerEstimateRequest.route";
 import quoteRouter from "./quote.routes";
 import moverEstimateRouter from "./moverEstimate.routes";
 import favoriteRouter from "./favorite.routes";
@@ -27,7 +27,7 @@ businessRoutes.get("/health", (req, res) => {
 // 일반 비즈니스 로직 라우터
 businessRoutes.use("/movers", moverRouter);
 businessRoutes.use("/reviews", reviewRouter);
-businessRoutes.use("/customer-quotes", userQuoteRouter);
+businessRoutes.use("/customer-quotes", customerEstimateRequestRouter);
 businessRoutes.use("/quotes", quoteRouter);
 businessRoutes.use("/mover-estimates", moverEstimateRouter);
 businessRoutes.use("/favorites", favoriteRouter);
