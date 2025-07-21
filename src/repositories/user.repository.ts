@@ -5,12 +5,14 @@ import {
   TCreateCustomerProfile,
   TUpdateUserProfile,
   TServiceId,
+  RegionType,
+  MoveType,
 } from "../types/user.types";
-import { PROFILE_DEFAULTS } from "../constants/profile.constants";
 
 const prisma = new PrismaClient();
 
-const getUserById = async (userId: number) => {
+// 사용자 정보 조회
+const getUserById = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -18,183 +20,166 @@ const getUserById = async (userId: number) => {
       name: true,
       email: true,
       encryptedPhoneNumber: true,
-      currentRole: true,
-      accessToken: true,
-      hasProfile: true,
+      currentArea: true,
+      preferredServices: true,
+      nickname: true,
+      customerImage: true,
+      moverImage: true,
+      userType: true,
+      refreshToken: true,
     },
   });
   return user;
 };
 
 // 사용자 정보 조회 (비밀번호 포함)
-const getUserWithPassword = async (userId: number) => {
+const getUserWithPassword = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       id: true,
       name: true,
       encryptedPassword: true,
-      currentRole: true,
+      currentArea: true,
+      userType: true,
     },
   });
   return user;
 };
 
 // 일반 유저(CUSTOMER) 프로필 생성 및 유저 정보 업데이트
-const createCustomerProfile = async (
-  profileData: TCreateCustomerProfile,
-  userData: TUpdateCustomerUser,
-  serviceIds: TServiceId[]
-) => {
-  return await prisma.$transaction(async (tx) => {
-    // 프로필 생성
-    await tx.profile.create({
-      data: {
-        userId: profileData.userId,
-        nickname: profileData.nickname,
-        profileImage: profileData.profileImage,
-        experience:
-          profileData.experience || PROFILE_DEFAULTS.CUSTOMER_EXPERIENCE,
-        introduction:
-          profileData.introduction || PROFILE_DEFAULTS.EMPTY_INTRODUCTION,
-        description:
-          profileData.description || PROFILE_DEFAULTS.EMPTY_DESCRIPTION,
-      },
-    });
-
-    // 유저 정보 업데이트
-    await tx.user.update({
-      where: { id: profileData.userId },
-      data: {
-        currentRegion: userData.currentRegion as any, // Region enum
-        hasProfile: userData.hasProfile,
-      },
-    });
-
-    // 유저 서비스 등록
-    if (serviceIds.length > 0) {
-      await tx.userService.createMany({
-        data: serviceIds.map((serviceId) => ({
-          userId: profileData.userId,
-          serviceId,
-        })),
-      });
-    }
+const createCustomerProfile = async (profileData: TCreateCustomerProfile) => {
+  return await prisma.user.update({
+    where: { id: profileData.userId },
+    data: {
+      customerImage: profileData.customerImage,
+      currentArea: profileData.currentArea,
+      preferredServices: profileData.preferredServices,
+      nickname: profileData.nickname,
+    },
+    select: {
+      id: true,
+      name: true,
+      nickname: true,
+      customerImage: true,
+      currentArea: true,
+      preferredServices: true,
+    },
   });
 };
 
 // 기사님(MOVER) 프로필 생성
-const createMoverProfile = async (
-  profileData: TCreateMoverProfile,
-  regionIds: string[],
-  serviceIds: TServiceId[]
-) => {
-  return await prisma.$transaction(async (tx) => {
-    // 프로필 생성
-    const profile = await tx.profile.create({
-      data: {
-        userId: profileData.userId,
-        nickname: profileData.nickname,
-        profileImage: profileData.profileImage,
-        experience: profileData.experience,
-        introduction: profileData.introduction,
-        description: profileData.description,
-      },
-    });
-
-    // 서비스 지역 등록
-    if (regionIds.length > 0) {
-      await tx.profileRegion.createMany({
-        data: regionIds.map((region) => ({
-          profileId: profile.id,
-          region: region as any, // Region enum
-        })),
-      });
-    }
-
-    // 서비스 타입 등록
-    if (serviceIds.length > 0) {
-      await tx.profileService.createMany({
-        data: serviceIds.map((serviceId) => ({
-          profileId: profile.id,
-          serviceId,
-        })),
-      });
-    }
-
-    // 유저의 hasProfile을 true로 업데이트
-    await tx.user.update({
-      where: { id: profileData.userId },
-      data: { hasProfile: PROFILE_DEFAULTS.HAS_PROFILE_TRUE },
-    });
+const createMoverProfile = async (profileData: TCreateMoverProfile) => {
+  return await prisma.user.update({
+    where: { id: profileData.userId },
+    data: {
+      nickname: profileData.nickname,
+      moverImage: profileData.profileImage,
+      career: profileData.experience,
+      shortIntro: profileData.introduction,
+      detailIntro: profileData.description,
+      serviceTypes: profileData.serviceTypes,
+      currentArea: profileData.currentArea,
+    },
+    select: {
+      id: true,
+      name: true,
+      nickname: true,
+      moverImage: true,
+      career: true,
+      shortIntro: true,
+      detailIntro: true,
+      serviceTypes: true,
+    },
   });
-};
-
-// 프로필 존재 여부 확인
-const checkProfileExists = async (userId: number) => {
-  const profile = await prisma.profile.findUnique({
-    where: { userId },
-  });
-  return !!profile;
 };
 
 // 닉네임 중복 확인
 const checkNicknameExists = async (nickname: string) => {
-  const profile = await prisma.profile.findUnique({
+  const user = await prisma.user.findUnique({
     where: { nickname },
   });
-  return !!profile;
+  return !!user;
 };
 
-// 사용자 프로필 업데이트 (user + profile + userService)
+// 사용자 프로필 업데이트
 const updateUserProfile = async (
-  userId: number,
+  userId: string,
   updateData: TUpdateUserProfile,
   serviceIds?: TServiceId[]
 ) => {
-  return await prisma.$transaction(async (tx) => {
-    // 1. user 테이블 업데이트 (기본 정보 + currentRegion)
-    const userFields = {
-      name: updateData.name,
-      encryptedPhoneNumber: updateData.encryptedPhoneNumber,
-      encryptedPassword: updateData.encryptedPassword,
-      currentRegion: updateData.currentRegion,
-    };
+  // 업데이트할 데이터 준비
+  const updateFields: any = {};
 
-    // undefined 값 제거 후 업데이트
-    const userUpdateData = Object.fromEntries(
-      Object.entries(userFields).filter(([_, value]) => value !== undefined)
-    );
+  if (updateData.name !== undefined) {
+    updateFields.name = updateData.name;
+  }
+  if (updateData.encryptedPhoneNumber !== undefined) {
+    updateFields.encryptedPhoneNumber = updateData.encryptedPhoneNumber;
+  }
+  if (updateData.encryptedPassword !== undefined) {
+    updateFields.encryptedPassword = updateData.encryptedPassword;
+  }
+  if (updateData.currentRegion !== undefined) {
+    updateFields.currentArea = updateData.currentRegion as RegionType;
+  }
+  if (updateData.profileImage !== undefined) {
+    // 사용자 타입에 따라 다른 이미지 필드 사용
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { userType: true },
+    });
 
-    if (Object.keys(userUpdateData).length > 0) {
-      await tx.user.update({
-        where: { id: userId },
-        data: userUpdateData,
-      });
+    if (user?.userType.includes("CUSTOMER")) {
+      updateFields.customerImage = updateData.profileImage;
     }
-
-    // 2. profile 테이블 업데이트 (profileImage)
-    if (updateData.profileImage !== undefined) {
-      await tx.profile.update({
-        where: { userId },
-        data: { profileImage: updateData.profileImage },
-      });
+    if (user?.userType.includes("MOVER")) {
+      updateFields.moverImage = updateData.profileImage;
     }
+  }
 
-    // 3. userService 테이블 업데이트 (서비스 목록 완전 교체)
-    if (serviceIds !== undefined) {
-      // 기존 서비스 모두 삭제
-      await tx.userService.deleteMany({
-        where: { userId },
-      });
+  // 서비스 타입 업데이트
+  if (serviceIds !== undefined) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { userType: true },
+    });
 
-      // 새로운 서비스 추가 (빈 배열이면 서비스 없음으로 설정)
-      if (serviceIds.length > 0) {
-        await tx.userService.createMany({
-          data: serviceIds.map((serviceId) => ({ userId, serviceId })),
-        });
+    const moveTypes = serviceIds.map((id) => {
+      switch (id) {
+        case 1:
+          return "SMALL" as MoveType;
+        case 2:
+          return "HOME" as MoveType;
+        case 3:
+          return "OFFICE" as MoveType;
+        default:
+          return "SMALL" as MoveType;
       }
+    });
+
+    if (user?.userType.includes("CUSTOMER")) {
+      updateFields.preferredServices = moveTypes;
     }
+    if (user?.userType.includes("MOVER")) {
+      updateFields.serviceTypes = moveTypes;
+    }
+  }
+
+  return await prisma.user.update({
+    where: { id: userId },
+    data: updateFields,
+    select: {
+      id: true,
+      name: true,
+      nickname: true,
+      customerImage: true,
+      moverImage: true,
+      currentArea: true,
+      preferredServices: true,
+      serviceTypes: true,
+      userType: true,
+    },
   });
 };
 
@@ -204,6 +189,5 @@ export {
   createCustomerProfile,
   createMoverProfile as createMoverProfileRepository,
   updateUserProfile,
-  checkProfileExists,
   checkNicknameExists,
 };

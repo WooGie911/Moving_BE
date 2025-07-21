@@ -4,7 +4,7 @@ import { TUserTokenCreate } from "../types/user.types";
 
 export function generateAccessToken(user: TUserTokenCreate): string {
   const payload = {
-    id: user.id,
+    userId: user.id,
     name: user.name,
     userType: user.userType,
   };
@@ -25,7 +25,7 @@ export function generateAccessToken(user: TUserTokenCreate): string {
 
 export function generateRefreshToken(user: TUserTokenCreate): string {
   const payload = {
-    id: user.id,
+    userId: user.id,
     name: user.name,
     userType: user.userType,
   };

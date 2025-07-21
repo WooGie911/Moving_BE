@@ -10,7 +10,6 @@ import { handleError } from "../utils/handleError";
 import {
   TCustomerProfileInput,
   TMoverProfileInput,
-  TUserProfileUpdateInput,
   TUserRole,
 } from "../types/user.types";
 import {
@@ -18,28 +17,33 @@ import {
   PROFILE_ERROR_MESSAGES,
 } from "../constants/profile.constants";
 
+// 유저 정보 조회
 const getUser = async (req: Request, res: Response) => {
-  const { userId } = req.user as { userId: number };
+  const { userId, userType } = req.user as {
+    userId: string;
+    userType: "CUSTOMER" | "MOVER";
+  };
 
-  const user = await userInfo(userId);
+  const user = await userInfo(userId, userType);
 
   res.json({ success: true, data: user });
 };
 
-// 유저 프로필 등록(role별 분기 처리)
-const postUserProfile = async (req: Request, res: Response) => {
+// 프로필 등록 및 수정
+const postProfile = async (req: Request, res: Response) => {
   try {
-    const { userId, role } = req.user as {
-      userId: number;
-      role: TUserRole;
+    const { userId, userType } = req.user as {
+      userId: string;
+      userType: TUserRole;
     };
 
-    if (role === "CUSTOMER") {
+    if (userType === "CUSTOMER") {
       // 일반 유저 프로필 등록
       const profileData: TCustomerProfileInput = {
-        profileImage: req.body.profileImage,
-        currentRegion: req.body.currentRegion,
-        userServices: req.body.userServices,
+        nickname: req.body.nickname,
+        customerImage: req.body.customerImage,
+        currentArea: req.body.currentArea,
+        preferredServices: req.body.preferredServices,
       };
 
       const result = await createCustomerProfile(userId, profileData);
@@ -48,16 +52,16 @@ const postUserProfile = async (req: Request, res: Response) => {
         message: PROFILE_SUCCESS_MESSAGES.CUSTOMER_PROFILE_CREATED,
         data: result,
       });
-    } else if (role === "MOVER") {
+    } else if (userType === "MOVER") {
       // 기사님 프로필 등록
       const profileData: TMoverProfileInput = {
-        profileImage: req.body.profileImage,
         nickname: req.body.nickname,
-        experience: req.body.experience,
-        introduction: req.body.introduction,
-        description: req.body.description,
-        serviceRegions: req.body.serviceRegions,
+        moverImage: req.body.moverImage,
+        shortIntro: req.body.shortIntro,
+        detailIntro: req.body.detailIntro,
         serviceTypes: req.body.serviceTypes,
+        currentArea: req.body.currentArea,
+        career: req.body.career,
       };
 
       const result = await createMoverProfile(userId, profileData);
@@ -73,45 +77,16 @@ const postUserProfile = async (req: Request, res: Response) => {
       });
     }
   } catch (error) {
-    handleError(res, error, PROFILE_ERROR_MESSAGES.PROFILE_CREATION_FALLBACK);
-  }
-};
-
-// 일반 유저 프로필 수정
-const patchCustomerProfile = async (req: Request, res: Response) => {
-  try {
-    const { userId } = req.user as { userId: number };
-
-    // 통합 프로필 수정 데이터 준비
-    const updateData: TUserProfileUpdateInput = {
-      // 기본 정보
-      name: req.body.name,
-      phoneNumber: req.body.phoneNumber,
-      // 비밀번호 변경
-      currentPassword: req.body.currentPassword,
-      newPassword: req.body.newPassword,
-      // 프로필 정보
-      profileImage: req.body.profileImage,
-      currentRegion: req.body.currentRegion,
-      userServices: req.body.userServices,
-    };
-
-    await updateCustomerProfile(userId, updateData);
-
-    res.json({
-      success: true,
-      message: "사용자 프로필이 성공적으로 수정되었습니다",
-    });
-  } catch (error) {
     console.log(error);
-    handleError(res, error, "사용자 프로필 수정 중 오류가 발생했습니다");
+    handleError(res, error, PROFILE_ERROR_MESSAGES.PROFILE_CREATION_FALLBACK);
   }
 };
 
 // 기사님 기본정보 수정
 const patchMoverBasicInfo = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.user as { userId: number };
+    const { userId } = req.user as { userId: string };
+
     const updateData = {
       name: req.body.name,
       phoneNumber: req.body.phoneNumber,
@@ -119,10 +94,13 @@ const patchMoverBasicInfo = async (req: Request, res: Response) => {
       newPassword: req.body.newPassword,
     };
     await updateMoverBasicInfo(userId, updateData);
-    res.json({ success: true, message: "기사님 기본정보가 성공적으로 수정되었습니다." });
+    res.json({
+      success: true,
+      message: "기사님 기본정보가 성공적으로 수정되었습니다.",
+    });
   } catch (error) {
     handleError(res, error, "기사님 기본정보 수정 중 오류가 발생했습니다");
   }
 };
 
-export { getUser, postUserProfile, patchCustomerProfile, patchMoverBasicInfo };
+export { getUser, postProfile, patchMoverBasicInfo };

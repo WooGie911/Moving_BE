@@ -281,22 +281,22 @@ export type TCreateMoverProfile = {
   experience: number;
   introduction: string;
   description: string;
+  currentArea: RegionType;
+  serviceTypes: MoveType[];
 };
 
 // @deprecated - TCustomerProfileInput으로 대체 예정
 export type TCreateCustomerProfile = {
   userId: string;
   nickname: string;
-  profileImage?: string;
-  experience?: number;
-  introduction?: string;
-  description?: string;
+  customerImage?: string;
+  currentArea: RegionType;
+  preferredServices: MoveType[];
 };
 
 // @deprecated - TUserUpdateData로 대체 예정
 export type TUpdateCustomerUser = {
   currentRegion: string;
-  hasProfile: boolean;
 };
 
 // @deprecated - 새로운 타입으로 대체 예정
