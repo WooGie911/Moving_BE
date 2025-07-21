@@ -20,7 +20,7 @@ import {
 const getUser = async (req: Request, res: Response) => {
   const { userId, userType } = req.user as {
     userId: string;
-    userType: "CUSTOMER" | "MOVER";
+    userType: TUserRole;
   };
 
   const user = await userInfo(userId, userType);

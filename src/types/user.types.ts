@@ -90,6 +90,7 @@ export type TUserLegacy = {
 export type TUserTokenCreate = {
   id: string; // 기존 코드 호환성
   name: string;
+  nickname: string;
   userType: TUserRole; // 기존 코드 호환성
 };
 

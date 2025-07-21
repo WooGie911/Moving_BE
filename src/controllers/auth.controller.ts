@@ -32,7 +32,7 @@ const postSignin = async (req: Request, res: Response) => {
     );
 
     res.status(200).json({
-      status: 200,
+      success: true,
       message: "로그인 성공",
       user: {
         id,
@@ -71,7 +71,7 @@ const postSignup = async (req: Request, res: Response) => {
     );
 
     res.status(200).json({
-      status: 200,
+      success: true,
       message: "회원가입 성공",
       user: {
         id,
@@ -94,7 +94,7 @@ const postLogout = async (req: Request, res: Response) => {
     res.clearCookie("accessToken", authCookieOptions(0));
     res.clearCookie("refreshToken", authCookieOptions(0));
 
-    res.status(200).json({ message: "로그아웃 성공" });
+    res.status(200).json({ success: true, message: "로그아웃 성공" });
   } catch (error: any) {
     handleError(res, error);
   }
@@ -102,7 +102,7 @@ const postLogout = async (req: Request, res: Response) => {
 
 const postRefresh = (req: Request, res: Response) => {
   const { refreshToken } = req.body;
-  res.status(200).json({ message: "refresh" });
+  res.status(200).json({ success: true, message: "refresh" });
 };
 
 export { postSignin, postSignup, postLogout, postRefresh };
