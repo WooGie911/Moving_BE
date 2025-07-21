@@ -19,14 +19,18 @@ const swaggerOptions = {
   },
   baseDir: __dirname + "/../", // src 디렉토리
   // 스캔할 파일들
-  filesPattern: ["./routes/**/*.ts", "./controllers/**/*.ts", "./app.ts"],
+  filesPattern: [
+    "./routes/**/*.ts",
+    "./routes/**/*.js",
+    "./controllers/**/*.ts",
+    "./controllers/**/*.js",
+    "./app.ts",
+    "./app.js",
+  ],
   // Swagger UI 설정
   swaggerUIPath: "/api-docs",
   // API 기본 경로
-  baseURL:
-    process.env.NODE_ENV === "production"
-      ? "https://your-production-domain.com"
-      : `http://localhost:${process.env.PORT || 5050}`,
+  baseURL: process.env.BASE_URL,
   // 추가 옵션
   exposeSwaggerUI: true,
   exposeApiDocs: true,

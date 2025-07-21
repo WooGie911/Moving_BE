@@ -10,13 +10,12 @@ const saveUser = async (user: TUserSignup) => {
       name: user.name,
       encryptedPassword: user.encryptedPassword,
       encryptedPhoneNumber: user.encryptedPhoneNumber,
-      currentRole: user.currentRole,
+      userType: [user.userType],
     },
     select: {
       id: true,
       name: true,
-      currentRole: true,
-      hasProfile: true,
+      userType: true,
     },
   });
 };
@@ -28,10 +27,11 @@ const findUserByEmailAndPassword = async (email: string) => {
     select: {
       id: true,
       name: true,
-      currentRole: true,
+      userType: true,
       email: true,
       encryptedPassword: true,
-      hasProfile: true,
+      customerImage: true,
+      moverImage: true,
     },
   });
 };
@@ -44,15 +44,15 @@ const findUserByEmail = async (email: string) => {
 };
 
 // 로그인에 따른 유저 토큰 업데이트
-const updateUserToken = async (userId: number, accessToken: string | null, refreshToken: string | null) => {
+const updateUserToken = async (userId: string, refreshToken: string | null) => {
   return await prisma.user.update({
     where: { id: userId },
-    data: { accessToken, refreshToken },
+    data: { refreshToken },
   });
 };
 
 // 유저 조회
-const findUserById = async (userId: number) => {
+const findUserById = async (userId: string) => {
   return await prisma.user.findUnique({
     where: { id: userId },
   });

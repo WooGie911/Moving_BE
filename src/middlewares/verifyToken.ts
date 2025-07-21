@@ -1,7 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-export const verifyAccessToken = (req: Request, res: Response, next: NextFunction) => {
+export const verifyAccessToken = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
@@ -10,13 +14,15 @@ export const verifyAccessToken = (req: Request, res: Response, next: NextFunctio
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY!) as {
-      userId: number;
+      userId: string;
       name: string;
       role: string;
     };
     req.user = decoded;
     next();
   } catch (err) {
-    return res.status(401).json({ message: "Access token이 유효하지 않습니다." });
+    return res
+      .status(401)
+      .json({ message: "Access token이 유효하지 않습니다." });
   }
 };
