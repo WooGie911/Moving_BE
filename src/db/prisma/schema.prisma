@@ -116,6 +116,7 @@ model User {
   id                   String       @id @default(cuid())
   email                String       @unique // 이메일 (고유)
   encryptedPassword    String? // 암호화된 비밀번호 (소셜 로그인은 null)
+  refreshToken         String? // 리프레시 토큰 (JWT, 암호화 저장 권장)
   encryptedPhoneNumber String? // 암호화된 전화번호
   name                 String // 실명
   userType             UserType[] // 유저 타입 배열 (CUSTOMER, MOVER 둘 다 가능)
@@ -130,7 +131,7 @@ model User {
   deletedAt            DateTime? // 소프트 삭제
 
   // Customer 전용 필드
-  currentArea       RegionType // 현재 거주 지역
+  currentArea       RegionType? // 현재 거주 지역
   preferredServices MoveType[] // 이용하고 싶은 서비스 타입들
 
   // Mover 전용 필드
