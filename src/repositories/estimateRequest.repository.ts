@@ -60,6 +60,29 @@ const hasEstimateFromMover = async (userId: string): Promise<boolean> => {
   });
   return !!estimate;
 };
+const findOrCreateAddress = async ({
+  city,
+  district,
+  detail,
+  region,
+}: {
+  city: string;
+  district: string;
+  detail?: string;
+  region: string;
+}) => {
+  // region enum 변환
+  // Prisma의 $Enums.RegionType을 import하지 않고, prisma.address의 타입 추론을 활용
+  let address = await prisma.address.findFirst({
+    where: { city, district, detail, region: region as any },
+  });
+  if (!address) {
+    address = await prisma.address.create({
+      data: { city, district, detail, region: region as any, postalCode: "" },
+    });
+  }
+  return address;
+};
 export default {
   createEstimateRequest,
   getActiveEstimateRequestByUserId,
@@ -68,4 +91,5 @@ export default {
   hasPendingRequest,
   isActiveRequestPending,
   hasEstimateFromMover,
+  findOrCreateAddress,
 };
