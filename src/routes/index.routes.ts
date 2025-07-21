@@ -2,7 +2,7 @@ import { Router } from "express";
 import moverRouter from "./mover.routes";
 import reviewRouter from "./review.route";
 import userQuoteRouter from "./userQuote.route";
-import quoteRouter from "./quote.routes";
+import estimateRequestRouter from "./estimateRequest.routes";
 import moverEstimateRouter from "./moverEstimate.routes";
 import favoriteRouter from "./favorite.routes";
 
@@ -28,7 +28,7 @@ businessRoutes.get("/health", (req, res) => {
 businessRoutes.use("/movers", moverRouter);
 businessRoutes.use("/reviews", reviewRouter);
 businessRoutes.use("/customer-quotes", userQuoteRouter);
-businessRoutes.use("/quotes", quoteRouter);
+businessRoutes.use("/estimate-requests", estimateRequestRouter);
 businessRoutes.use("/mover-estimates", moverEstimateRouter);
 businessRoutes.use("/favorites", favoriteRouter);
 
