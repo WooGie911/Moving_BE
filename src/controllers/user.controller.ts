@@ -3,7 +3,6 @@ import {
   userInfo,
   createCustomerProfile,
   createMoverProfile,
-  updateCustomerProfile,
   updateMoverBasicInfo,
 } from "../services/user.service";
 import { handleError } from "../utils/handleError";
