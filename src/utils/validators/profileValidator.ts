@@ -1,50 +1,49 @@
 import { VALID_REGIONS } from "../../constants/regions.constants";
 import {
-  VALID_SERVICE_IDS,
   PROFILE_ERROR_MESSAGES,
   VALIDATION_CONFIG,
 } from "../../constants/profile.constants";
 import { ValidationError, ForbiddenError } from "../../types/commonError.types";
 import {
-  TServiceId,
   TCustomerProfileInput,
   TMoverProfileInput,
   TUserProfileUpdateInput,
+  MoveType,
+  RegionType,
 } from "../../types/user.types";
-import {
-  checkProfileExists,
-  checkNicknameExists,
-} from "../../repositories/user.repository";
+import { checkNicknameExists } from "../../repositories/user.repository";
 
-// ServiceId 배열 유효성 검사 함수
-export const validateServiceIds = (
-  serviceIds: number[]
-): serviceIds is TServiceId[] => {
-  if (!serviceIds || serviceIds.length < VALIDATION_CONFIG.MIN_SERVICE_COUNT) {
+// MoveType 유효성 검사
+export const validateMoveTypes = (moveTypes: MoveType[]): boolean => {
+  if (!moveTypes || moveTypes.length < VALIDATION_CONFIG.MIN_SERVICE_COUNT) {
     return false;
   }
-  return serviceIds.every((id) => VALID_SERVICE_IDS.includes(id as TServiceId));
+  const validTypes: MoveType[] = ["SMALL", "HOME", "OFFICE"];
+  return moveTypes.every((type) => validTypes.includes(type));
 };
 
 // Region 유효성 검사 함수
-export const validateRegion = (region: string): boolean => {
-  return VALID_REGIONS.includes(region);
-};
-
-// 여러 Region 유효성 검사 함수
-export const validateRegions = (regions: string[]): boolean => {
-  if (!regions || regions.length < VALIDATION_CONFIG.MIN_REGION_COUNT) {
-    return false;
-  }
-  return regions.every((region) => VALID_REGIONS.includes(region));
-};
-
-// 프로필 존재 여부 확인 및 에러 처리
-export const ensureProfileNotExists = async (userId: number): Promise<void> => {
-  const hasProfile = await checkProfileExists(userId);
-  if (hasProfile) {
-    throw new ForbiddenError(PROFILE_ERROR_MESSAGES.PROFILE_ALREADY_EXISTS);
-  }
+export const validateRegion = (region: RegionType): boolean => {
+  const validRegions: RegionType[] = [
+    "SEOUL",
+    "BUSAN",
+    "DAEGU",
+    "INCHEON",
+    "GWANGJU",
+    "DAEJEON",
+    "ULSAN",
+    "SEJONG",
+    "GYEONGGI",
+    "GANGWON",
+    "CHUNGBUK",
+    "CHUNGNAM",
+    "JEONBUK",
+    "JEONNAM",
+    "GYEONGBUK",
+    "GYEONGNAM",
+    "JEJU",
+  ];
+  return validRegions.includes(region);
 };
 
 // 닉네임 중복 확인 및 에러 처리
@@ -58,53 +57,62 @@ export const ensureNicknameUnique = async (nickname: string): Promise<void> => {
 
   const nicknameExists = await checkNicknameExists(nickname);
   if (nicknameExists) {
-    throw new ForbiddenError(PROFILE_ERROR_MESSAGES.NICKNAME_ALREADY_EXISTS);
+    throw new ValidationError(PROFILE_ERROR_MESSAGES.NICKNAME_ALREADY_EXISTS);
   }
 };
 
-// 일반 유저(CUSTOMER) 프로필 데이터 유효성 검사
+// Customer 프로필 데이터 유효성 검사
 export const validateCustomerProfileData = async (
-  userId: number,
   profileData: TCustomerProfileInput
 ): Promise<void> => {
-  // 프로필 존재 여부 확인
-  await ensureProfileNotExists(userId);
+  // 닉네임 유효성 검사 (선택사항)
+  if (profileData.nickname) {
+    await ensureNicknameUnique(profileData.nickname);
+  }
 
-  // 필수 필드 검사
-  if (!profileData.currentRegion) {
+  // 현재 지역 유효성 검사
+  if (!profileData.currentArea) {
     throw new ValidationError(PROFILE_ERROR_MESSAGES.CURRENT_REGION_REQUIRED);
   }
 
+  if (!validateRegion(profileData.currentArea)) {
+    throw new ValidationError(PROFILE_ERROR_MESSAGES.INVALID_REGION);
+  }
+
+  // 선호 서비스 유효성 검사
   if (
-    !profileData.userServices ||
-    profileData.userServices.length < VALIDATION_CONFIG.MIN_SERVICE_COUNT
+    !profileData.preferredServices ||
+    profileData.preferredServices.length < VALIDATION_CONFIG.MIN_SERVICE_COUNT
   ) {
     throw new ValidationError(PROFILE_ERROR_MESSAGES.USER_SERVICES_REQUIRED);
   }
 
-  // ServiceId 유효성 검사
-  if (!validateServiceIds(profileData.userServices)) {
+  if (!validateMoveTypes(profileData.preferredServices)) {
     throw new ValidationError(PROFILE_ERROR_MESSAGES.INVALID_SERVICE_ID);
-  }
-
-  // Region 유효성 검사
-  if (!validateRegion(profileData.currentRegion)) {
-    throw new ValidationError(PROFILE_ERROR_MESSAGES.INVALID_REGION);
   }
 };
 
 // 기사님(MOVER) 프로필 데이터 유효성 검사
 export const validateMoverProfileData = async (
-  userId: number,
   profileData: TMoverProfileInput
 ): Promise<void> => {
-  // 프로필 존재 여부 확인
-  await ensureProfileNotExists(userId);
+  console.log("profileData", profileData);
 
-  // 닉네임 검사 및 중복 확인
+  // 1. 닉네임 검사 및 중복 확인 (필수)
   await ensureNicknameUnique(profileData.nickname);
 
-  // 서비스 타입 유효성 검사
+  // 2. 현재 활동 지역 유효성 검사 (필수)
+  if (!profileData.currentArea) {
+    throw new ValidationError(
+      PROFILE_ERROR_MESSAGES.MOVER_CURRENT_REGION_REQUIRED
+    );
+  }
+
+  if (!validateRegion(profileData.currentArea)) {
+    throw new ValidationError(PROFILE_ERROR_MESSAGES.INVALID_REGION);
+  }
+
+  // 3. 제공 서비스 타입 유효성 검사 (필수)
   if (
     !profileData.serviceTypes ||
     profileData.serviceTypes.length < VALIDATION_CONFIG.MIN_SERVICE_COUNT
@@ -112,52 +120,56 @@ export const validateMoverProfileData = async (
     throw new ValidationError(PROFILE_ERROR_MESSAGES.SERVICE_TYPES_REQUIRED);
   }
 
-  // 경력 유효성 검사
-  if (!profileData.experience) {
-    throw new ValidationError(PROFILE_ERROR_MESSAGES.EXPERIENCE_REQUIRED);
-  }
-
-  // 한줄 소개 유효성 검사
-  if (
-    profileData.introduction &&
-    profileData.introduction.length < VALIDATION_CONFIG.MIN_INTRODUCTION_LENGTH
-  ) {
-    throw new ValidationError(PROFILE_ERROR_MESSAGES.INTRODUCTION_REQUIRED);
-  } else if (!profileData.introduction) {
-    throw new ValidationError(PROFILE_ERROR_MESSAGES.INTRODUCTION_REQUIRED);
-  }
-
-  // 상세 설명 유효성 검사
-  if (
-    profileData.description &&
-    profileData.description.length < VALIDATION_CONFIG.MIN_DESCRIPTION_LENGTH
-  ) {
-    throw new ValidationError(PROFILE_ERROR_MESSAGES.DESCRIPTION_REQUIRED);
-  } else if (!profileData.description) {
-    throw new ValidationError(PROFILE_ERROR_MESSAGES.DESCRIPTION_REQUIRED);
-  }
-
-  // 제공 서비스 유효성 검사
-  if (!validateServiceIds(profileData.serviceTypes)) {
+  if (!validateMoveTypes(profileData.serviceTypes)) {
     throw new ValidationError(PROFILE_ERROR_MESSAGES.INVALID_SERVICE_ID);
   }
 
-  // 서비스 가능 지역 최소 선택 유효성 검사
-  if (
-    !profileData.serviceRegions ||
-    profileData.serviceRegions.length < VALIDATION_CONFIG.MIN_REGION_COUNT
-  ) {
-    throw new ValidationError(PROFILE_ERROR_MESSAGES.SERVICE_REGIONS_REQUIRED);
+  // 4. 경력 유효성 검사 (선택사항, 있으면 0 이상)
+  if (profileData.career !== undefined && profileData.career < 0) {
+    throw new ValidationError("경력은 0년 이상이어야 합니다");
+  } else if (!profileData.career) {
+    throw new ValidationError(PROFILE_ERROR_MESSAGES.EXPERIENCE_REQUIRED);
   }
 
-  // 서비스 가능 지역 유효성 검사
-  if (!validateRegions(profileData.serviceRegions)) {
-    const invalidRegions = profileData.serviceRegions.filter(
-      (region) => !validateRegion(region)
-    );
-    throw new ValidationError(
-      `${PROFILE_ERROR_MESSAGES.INVALID_REGIONS}: ${invalidRegions.join(", ")}`
-    );
+  // 5. 한줄 소개 유효성 검사 (선택사항, 있으면 최소 길이 체크)
+  if (profileData.shortIntro !== undefined) {
+    if (
+      profileData.shortIntro.trim().length > 0 &&
+      profileData.shortIntro.trim().length <
+        VALIDATION_CONFIG.MIN_INTRODUCTION_LENGTH
+    ) {
+      throw new ValidationError(PROFILE_ERROR_MESSAGES.INTRODUCTION_REQUIRED);
+    }
+  } else if (!profileData.shortIntro) {
+    throw new ValidationError(PROFILE_ERROR_MESSAGES.INTRODUCTION_REQUIRED);
+  }
+
+  // 6. 상세 소개 유효성 검사 (선택사항, 있으면 최소 길이 체크)
+  if (profileData.detailIntro !== undefined) {
+    if (
+      profileData.detailIntro.trim().length > 0 &&
+      profileData.detailIntro.trim().length <
+        VALIDATION_CONFIG.MIN_DESCRIPTION_LENGTH
+    ) {
+      throw new ValidationError(PROFILE_ERROR_MESSAGES.DESCRIPTION_REQUIRED);
+    }
+  } else if (!profileData.detailIntro) {
+    throw new ValidationError(PROFILE_ERROR_MESSAGES.DESCRIPTION_REQUIRED);
+  }
+
+  // 7. 프로필 이미지 유효성 검사 (선택사항, URL 형식 체크)
+  if (profileData.moverImage !== undefined && profileData.moverImage !== null) {
+    if (profileData.moverImage.trim().length === 0) {
+      throw new ValidationError("프로필 이미지 URL이 유효하지 않습니다");
+    }
+    // URL 형식 간단 검증
+    try {
+      new URL(profileData.moverImage);
+    } catch {
+      throw new ValidationError(
+        "프로필 이미지는 유효한 URL 형식이어야 합니다 "
+      );
+    }
   }
 };
 
@@ -200,7 +212,6 @@ export const validateUpdateCustomerProfile = async (
   const hasNewPassword = profileData.newPassword !== undefined;
 
   if (hasCurrentPassword || hasNewPassword) {
-    // 비밀번호 변경 시 현재 비밀번호와 새 비밀번호 모두 필요
     if (!hasCurrentPassword) {
       throw new ValidationError("현재 비밀번호를 입력해주세요");
     }
@@ -235,7 +246,6 @@ export const validateUpdateCustomerProfile = async (
     if (profileData.profileImage.trim().length === 0) {
       throw new ValidationError("프로필 이미지 URL이 유효하지 않습니다");
     }
-    // URL 형식 간단 검증
     try {
       new URL(profileData.profileImage);
     } catch {
@@ -248,7 +258,7 @@ export const validateUpdateCustomerProfile = async (
     if (!profileData.currentRegion) {
       throw new ValidationError(PROFILE_ERROR_MESSAGES.CURRENT_REGION_REQUIRED);
     }
-    if (!validateRegion(profileData.currentRegion)) {
+    if (!validateRegion(profileData.currentRegion as RegionType)) {
       throw new ValidationError(PROFILE_ERROR_MESSAGES.INVALID_REGION);
     }
   }
@@ -261,7 +271,23 @@ export const validateUpdateCustomerProfile = async (
 
     // 빈 배열 허용 (서비스 제거 가능)
     if (profileData.userServices.length > 0) {
-      if (!validateServiceIds(profileData.userServices)) {
+      // userServices는 number[] 타입이므로 MoveType으로 변환 필요
+      const moveTypes = profileData.userServices.map((serviceId) => {
+        switch (serviceId) {
+          case 1:
+            return "SMALL" as MoveType;
+          case 2:
+            return "HOME" as MoveType;
+          case 3:
+            return "OFFICE" as MoveType;
+          default:
+            throw new ValidationError(
+              PROFILE_ERROR_MESSAGES.INVALID_SERVICE_ID
+            );
+        }
+      });
+
+      if (!validateMoveTypes(moveTypes)) {
         throw new ValidationError(PROFILE_ERROR_MESSAGES.INVALID_SERVICE_ID);
       }
     }

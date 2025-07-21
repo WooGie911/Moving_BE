@@ -16,6 +16,7 @@ const saveUser = async (user: TUserSignup) => {
       id: true,
       name: true,
       userType: true,
+      nickname: true,
     },
   });
 };
@@ -32,6 +33,7 @@ const findUserByEmailAndPassword = async (email: string) => {
       encryptedPassword: true,
       customerImage: true,
       moverImage: true,
+      nickname: true,
     },
   });
 };

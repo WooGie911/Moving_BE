@@ -39,6 +39,7 @@ const signin = async (email: string, password: string, userType: TUserRole) => {
       id: String(existingUser.id),
       name: existingUser.name,
       userType,
+      nickname: existingUser.nickname || "",
     });
 
     accessToken = newAccessToken;
@@ -48,6 +49,7 @@ const signin = async (email: string, password: string, userType: TUserRole) => {
       id: String(existingUser.id),
       name: existingUser.name,
       userType,
+      nickname: existingUser.nickname || "",
     });
 
     accessToken = newAccessToken;
@@ -114,6 +116,7 @@ const signup = async ({
       id: String(user.id),
       name: user.name,
       userType: user.userType[0],
+      nickname: user.nickname || "",
     });
 
     accessToken = newAccessToken;
@@ -123,6 +126,7 @@ const signup = async ({
       id: String(user.id),
       name: user.name,
       userType: user.userType[0],
+      nickname: user.nickname || "",
     });
 
     accessToken = newAccessToken;

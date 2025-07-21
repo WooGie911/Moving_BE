@@ -32,7 +32,7 @@ const postSignin = async (req: Request, res: Response) => {
     );
 
     res.status(200).json({
-      status: 200,
+      success: true,
       message: "로그인 성공",
       user: {
         id,
@@ -71,7 +71,7 @@ const postSignup = async (req: Request, res: Response) => {
     );
 
     res.status(200).json({
-      status: 200,
+      success: true,
       message: "회원가입 성공",
       user: {
         id,
