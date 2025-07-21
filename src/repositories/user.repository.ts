@@ -16,6 +16,8 @@ const getUserById = async (userId: number) => {
     select: {
       id: true,
       name: true,
+      email: true,
+      encryptedPhoneNumber: true,
       currentRole: true,
       accessToken: true,
       hasProfile: true,
