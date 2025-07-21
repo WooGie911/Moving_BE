@@ -4,9 +4,9 @@ import { TUserTokenCreate } from "../types/user.types";
 
 export function generateAccessToken(user: TUserTokenCreate): string {
   const payload = {
-    userId: user.id,
+    id: user.id,
     name: user.name,
-    role: user.currentRole,
+    userType: user.userType,
   };
 
   const accessSecret = process.env.JWT_SECRET_KEY;
@@ -16,18 +16,18 @@ export function generateAccessToken(user: TUserTokenCreate): string {
     throw new Error("시크릿키를 확인하세요");
   }
 
-  const accessToken = jwt.sign(payload, accessSecret, {
+  const newAccessToken = jwt.sign(payload, accessSecret, {
     expiresIn: TOKEN_EXPIRES.ACCESS_TOKEN,
   });
 
-  return accessToken;
+  return newAccessToken;
 }
 
 export function generateRefreshToken(user: TUserTokenCreate): string {
   const payload = {
-    userId: user.id,
+    id: user.id,
     name: user.name,
-    role: user.currentRole,
+    userType: user.userType,
   };
 
   const refreshSecret = process.env.JWT_REFRESH_SECRET_KEY;
@@ -37,9 +37,19 @@ export function generateRefreshToken(user: TUserTokenCreate): string {
     throw new Error("시크릿키를 확인하세요");
   }
 
-  const refreshToken = jwt.sign(payload, refreshSecret, {
+  const newRefreshToken = jwt.sign(payload, refreshSecret, {
     expiresIn: TOKEN_EXPIRES.REFRESH_TOKEN,
   });
 
-  return refreshToken;
+  return newRefreshToken;
+}
+
+export function generateToken(user: TUserTokenCreate): {
+  newAccessToken: string;
+  newRefreshToken: string;
+} {
+  const newAccessToken = generateAccessToken(user);
+  const newRefreshToken = generateRefreshToken(user);
+
+  return { newAccessToken, newRefreshToken };
 }

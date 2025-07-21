@@ -1,7 +1,7 @@
 import authRepository from "../repositories/auth.repository";
 import bcrypt from "bcrypt";
-import { generateAccessToken, generateRefreshToken } from "../utils/generateToken";
-import { TUserSignupInput } from "../types/user.types";
+import { generateToken } from "../utils/generateToken";
+import { TUserRole, TUserSignupInput } from "../types/user.types";
 import { encryptPhoneNumber } from "../utils/phoneEncryption";
 import { validateUserSignupInput } from "../utils/validators/userValidator";
 import {
@@ -13,7 +13,7 @@ import {
 } from "../types/commonError.types";
 
 // 로그인 검증
-const signin = async (email: string, password: string) => {
+const signin = async (email: string, password: string, userType: TUserRole) => {
   // 0. 유효성 검사
   validateUserSignupInput({ email, password });
 
@@ -24,41 +24,59 @@ const signin = async (email: string, password: string) => {
     throw new AuthenticationError("존재하지 않는 유저입니다");
   }
   // 2. 비밀번호 검증
-  if (!existingUser.encryptedPassword || !(await bcrypt.compare(password, existingUser.encryptedPassword))) {
+  if (
+    !existingUser.encryptedPassword ||
+    !(await bcrypt.compare(password, existingUser.encryptedPassword))
+  ) {
     throw new AuthenticationError("비밀번호가 일치하지 않습니다");
   }
 
-  // 3. 토큰 생성
-  const accessToken = generateAccessToken({
-    id: existingUser.id,
-    name: existingUser.name,
-    currentRole: existingUser.currentRole,
-  });
+  let accessToken, refreshToken;
 
-  const refreshToken = generateRefreshToken({
-    id: existingUser.id,
-    name: existingUser.name,
-    currentRole: existingUser.currentRole,
-  });
+  // 3. 유저 role에 따른 토큰 생성
+  if (userType === "CUSTOMER") {
+    const { newAccessToken, newRefreshToken } = generateToken({
+      id: String(existingUser.id),
+      name: existingUser.name,
+      userType: existingUser.userType[0],
+    });
+
+    accessToken = newAccessToken;
+    refreshToken = newRefreshToken;
+  } else if (userType === "MOVER") {
+    const { newAccessToken, newRefreshToken } = generateToken({
+      id: String(existingUser.id),
+      name: existingUser.name,
+      userType: existingUser.userType[0],
+    });
+
+    accessToken = newAccessToken;
+    refreshToken = newRefreshToken;
+  }
 
   if (!accessToken || !refreshToken) {
     throw new ServerError("토큰 생성 실패로 인한 로그인 실패");
   }
 
-  await authRepository.updateUserToken(existingUser.id, accessToken, refreshToken);
+  await authRepository.updateUserToken(String(existingUser.id), refreshToken);
 
   return {
     id: existingUser.id,
     userName: existingUser.name,
-    userRole: existingUser.currentRole,
-    hasProfile: existingUser.hasProfile,
+    userType: userType === "CUSTOMER" ? "CUSTOMER" : "MOVER",
     accessToken,
     refreshToken,
   };
 };
 
 // 회원가입 검증
-const signup = async ({ name, email, phoneNumber, password, currentRole }: TUserSignupInput) => {
+const signup = async ({
+  name,
+  email,
+  phoneNumber,
+  password,
+  userType,
+}: TUserSignupInput) => {
   // email 중복 체크
   const existingUser = await authRepository.findUserByEmail(email);
 
@@ -81,25 +99,35 @@ const signup = async ({ name, email, phoneNumber, password, currentRole }: TUser
     email,
     encryptedPassword,
     encryptedPhoneNumber,
-    currentRole,
+    userType,
   });
 
   if (!user) {
     throw new DatabaseError("유저 생성 실패로 인한 회원가입 실패");
   }
 
-  // 3. 토큰 생성
-  const accessToken = generateAccessToken({
-    id: user.id,
-    name: user.name,
-    currentRole: user.currentRole,
-  });
+  let accessToken, refreshToken;
 
-  const refreshToken = generateRefreshToken({
-    id: user.id,
-    name: user.name,
-    currentRole: user.currentRole,
-  });
+  // 3. 토큰 생성
+  if (userType === "CUSTOMER") {
+    const { newAccessToken, newRefreshToken } = generateToken({
+      id: String(user.id),
+      name: user.name,
+      userType: user.userType[0],
+    });
+
+    accessToken = newAccessToken;
+    refreshToken = newRefreshToken;
+  } else if (userType === "MOVER") {
+    const { newAccessToken, newRefreshToken } = generateToken({
+      id: String(user.id),
+      name: user.name,
+      userType: user.userType[0],
+    });
+
+    accessToken = newAccessToken;
+    refreshToken = newRefreshToken;
+  }
 
   if (!accessToken || !refreshToken) {
     throw new ServerError("토큰 생성 실패로 인한 회원가입 실패");
@@ -108,8 +136,7 @@ const signup = async ({ name, email, phoneNumber, password, currentRole }: TUser
   return {
     id: user.id,
     userName: user.name,
-    userRole: user.currentRole,
-    hasProfile: user.hasProfile,
+    userType: userType === "CUSTOMER" ? "CUSTOMER" : "MOVER",
     accessToken,
     refreshToken,
   };
@@ -121,7 +148,7 @@ const logout = async (userId: number) => {
     throw new AuthenticationError("토큰 인증 실패");
   }
 
-  const user = await authRepository.findUserById(userId);
+  const user = await authRepository.findUserById(String(userId));
 
   if (!user) {
     throw new NotFoundError("존재하지 않는 유저입니다");
@@ -131,7 +158,7 @@ const logout = async (userId: number) => {
     throw new AuthenticationError("이미 로그아웃된 상태입니다");
   }
 
-  await authRepository.updateUserToken(userId, null, null);
+  await authRepository.updateUserToken(String(userId), null);
 };
 
 export default { signin, signup, logout };

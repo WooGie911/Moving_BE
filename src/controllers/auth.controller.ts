@@ -14,11 +14,16 @@ const authCookieOptions = (maxAgeSeconds: number): TCookieOptions => ({
 });
 
 const postSignin = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  const { email, password, userType } = req.body;
 
   try {
-    const { id, userName, userRole, hasProfile, accessToken, refreshToken } =
-      await authService.signin(email, password);
+    const {
+      id,
+      userName,
+      userType: userTypeResponse,
+      accessToken,
+      refreshToken,
+    } = await authService.signin(email, password, userType);
 
     res.cookie(
       "refreshToken",
@@ -32,8 +37,7 @@ const postSignin = async (req: Request, res: Response) => {
       user: {
         id,
         userName,
-        userRole,
-        hasProfile,
+        userType: userTypeResponse,
       },
       accessToken,
     });
@@ -43,17 +47,23 @@ const postSignin = async (req: Request, res: Response) => {
 };
 
 const postSignup = async (req: Request, res: Response) => {
-  const { name, email, phoneNumber, password, currentRole } = req.body;
+  const { name, email, phoneNumber, password, userType } = req.body;
 
   try {
-    const { id, userName, userRole, hasProfile, accessToken, refreshToken } =
-      await authService.signup({
-        name,
-        email,
-        phoneNumber,
-        password,
-        currentRole,
-      });
+    //  이부분 어짜피 getUser 하면 되잖아
+    const {
+      id,
+      userName,
+      userType: userTypeResponse,
+      accessToken,
+      refreshToken,
+    } = await authService.signup({
+      name,
+      email,
+      phoneNumber,
+      password,
+      userType,
+    });
 
     res.cookie(
       "refreshToken",
@@ -67,8 +77,7 @@ const postSignup = async (req: Request, res: Response) => {
       user: {
         id,
         userName,
-        userRole,
-        hasProfile,
+        userType: userTypeResponse,
       },
       accessToken,
     });
