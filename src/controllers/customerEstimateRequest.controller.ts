@@ -188,7 +188,6 @@ const customerEstimateRequestController = {
   ): Promise<void> => {
     try {
       const userId = req.user?.userId;
-      const userRole = req.user?.role;
       const estimateRequestId = req.query.estimateRequestId;
       const { message, moverId } = req.body;
       if (!userId || typeof userId !== "string") {
@@ -198,13 +197,7 @@ const customerEstimateRequestController = {
         });
         return;
       }
-      if (userRole !== "CUSTOMER") {
-        res.status(403).json({
-          success: false,
-          message: "현재 유저타입이 고객이 아닙니다.",
-        });
-        return;
-      }
+
       if (!estimateRequestId || typeof estimateRequestId !== "string") {
         res.status(400).json({
           success: false,
