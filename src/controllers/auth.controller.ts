@@ -50,7 +50,6 @@ const postSignup = async (req: Request, res: Response) => {
   const { name, email, phoneNumber, password, userType } = req.body;
 
   try {
-    //  이부분 어짜피 getUser 하면 되잖아
     const {
       id,
       userName,
@@ -87,7 +86,7 @@ const postSignup = async (req: Request, res: Response) => {
 };
 
 const postLogout = async (req: Request, res: Response) => {
-  const { userId } = req.user as { userId: number };
+  const { userId } = req.user as { userId: string };
 
   try {
     await authService.logout(userId);
