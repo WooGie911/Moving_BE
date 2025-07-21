@@ -77,7 +77,7 @@ const postProfile = async (req: Request, res: Response) => {
     }
   } catch (error) {
     console.log(error);
-    handleError(res, error, PROFILE_ERROR_MESSAGES.PROFILE_CREATION_FALLBACK);
+    handleError(res, error);
   }
 };
 

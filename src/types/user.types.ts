@@ -190,7 +190,7 @@ export type TMoverProfile = {
 
 // Customer 프로필 등록 입력 타입
 export type TCustomerProfileInput = {
-  nickname?: string;
+  nickname: string;
   customerImage?: string;
   currentArea: RegionType;
   preferredServices: MoveType[];
@@ -199,13 +199,13 @@ export type TCustomerProfileInput = {
 
 // Mover 프로필 등록 입력 타입
 export type TMoverProfileInput = {
-  nickname: string;
   moverImage?: string;
-  currentArea: RegionType;
-  serviceTypes: MoveType[];
+  nickname: string;
+  career?: number;
   shortIntro?: string;
   detailIntro?: string;
-  career?: number;
+  currentArea: RegionType;
+  serviceTypes: MoveType[];
   isVeteran?: boolean;
 };
 

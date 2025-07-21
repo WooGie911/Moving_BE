@@ -19,6 +19,10 @@ import {
   TUserRole,
 } from "../types/user.types";
 import { PROFILE_ERROR_MESSAGES } from "../constants/profile.constants";
+import {
+  validateCustomerProfileData,
+  validateMoverProfileData,
+} from "../utils/validators/profileValidator";
 
 // 유저 정보 조회
 const userInfo = async (userId: string, userType: TUserRole) => {
@@ -58,6 +62,9 @@ const createCustomerProfile = async (
     throw new NotFoundError(PROFILE_ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
+  // 프로필 데이터 유효성 검사
+  await validateCustomerProfileData(profileData);
+
   // 프로필 생성 데이터 준비
   const createProfileData: TCreateCustomerProfile = {
     userId,
@@ -82,11 +89,8 @@ const createMoverProfile = async (
     throw new NotFoundError(PROFILE_ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
-  // 닉네임 중복 확인
-  const nicknameExists = await checkNicknameExists(profileData.nickname);
-  if (nicknameExists) {
-    throw new ValidationError("이미 사용중인 닉네임입니다");
-  }
+  // 프로필 데이터 유효성 검사
+  await validateMoverProfileData(profileData);
 
   // 프로필 생성 데이터 준비
   const createProfileData: TCreateMoverProfile = {
