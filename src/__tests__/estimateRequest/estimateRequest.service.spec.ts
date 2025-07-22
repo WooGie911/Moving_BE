@@ -43,6 +43,34 @@ describe("EstimateRequestService - 정상/에러 케이스", () => {
     expect(result).toEqual({ id: "reqId" });
   });
 
+  it("should not allow creating estimate request with same from/to address", async () => {
+    // 컨트롤러 단위 테스트 예시 (Express req/res mock)
+    const req: any = {
+      user: { userId: "user1" },
+      body: {
+        moveType: "HOME",
+        fromCity: "부산광역시",
+        fromDistrict: "연산동",
+        fromDetail: "715-1 501호",
+        fromRegion: "BUSAN",
+        toCity: "부산광역시",
+        toDistrict: "연산동",
+        toDetail: "715-1 501호",
+        toRegion: "BUSAN",
+        moveDate: "2024-08-15",
+        description: "동일 주소 테스트",
+      },
+    };
+    const res: any = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const controller = new (require("../../controllers/estimateRequest.controller").default)();
+    await controller.createEstimateRequest(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ success: false, message: "출발지와 도착지는 달라야 합니다." });
+  });
+
   it("should throw error if duplicate pending request exists", async () => {
     mockRepo.hasPendingRequest.mockResolvedValueOnce(true);
     await expect(service.hasPendingRequest("user1")).resolves.toBe(true);
@@ -98,5 +126,20 @@ describe("EstimateRequestService - 정상/에러 케이스", () => {
     mockRepo.hasPendingRequest.mockResolvedValueOnce(false);
     const result = await service.hasPendingRequest("user1");
     expect(result).toBe(false);
+  });
+
+  it("should return hasActive true and data if active exists", async () => {
+    mockRepo.getActiveEstimateRequestByUserId.mockResolvedValueOnce({ id: "reqId", moveType: "HOME" } as any);
+    const service = new EstimateRequestService();
+    const result = await service.getActiveEstimateRequestByUserId("user1");
+    expect(result).toEqual({ id: "reqId", moveType: "HOME" });
+    // 컨트롤러 레벨 테스트는 통합 테스트에서 별도 작성 필요
+  });
+
+  it("should return hasActive false if no active exists", async () => {
+    mockRepo.getActiveEstimateRequestByUserId.mockResolvedValueOnce(null);
+    const service = new EstimateRequestService();
+    const result = await service.getActiveEstimateRequestByUserId("user1");
+    expect(result).toBeNull();
   });
 });
