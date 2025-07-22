@@ -60,7 +60,11 @@ const signin = async (email: string, password: string, userType: TUserRole) => {
     throw new ServerError("토큰 생성 실패로 인한 로그인 실패");
   }
 
-  await authRepository.updateUserToken(String(existingUser.id), refreshToken);
+  await authRepository.updateUserToken(
+    String(existingUser.id),
+    refreshToken,
+    userType
+  );
 
   return {
     id: existingUser.id,
