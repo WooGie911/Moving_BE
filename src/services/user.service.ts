@@ -23,6 +23,7 @@ import {
   validateCustomerProfileData,
   validateMoverProfileData,
 } from "../utils/validators/profileValidator";
+import { generateToken } from "../utils/generateToken";
 
 // 유저 정보 조회
 const userInfo = async (userId: string, userType: TUserRole) => {
@@ -74,8 +75,19 @@ const createCustomerProfile = async (
     preferredServices: profileData.preferredServices,
   };
 
+  const { newAccessToken, newRefreshToken } = generateToken({
+    id: user.id,
+    name: user.name,
+    nickname: user.nickname || "",
+    userType: user.userType[0],
+  });
+
   const result = await createCustomerProfileRepository(createProfileData);
-  return result;
+  return {
+    result,
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
+  };
 };
 
 // 기사님(MOVER) 프로필 등록
@@ -104,8 +116,19 @@ const createMoverProfile = async (
     serviceTypes: profileData.serviceTypes,
   };
 
+  const { newAccessToken, newRefreshToken } = generateToken({
+    id: user.id,
+    name: user.name,
+    nickname: user.nickname || "",
+    userType: user.userType[0],
+  });
+
   const result = await createMoverProfileRepository(createProfileData);
-  return result;
+  return {
+    result,
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
+  };
 };
 
 // 기사님 기본정보 수정

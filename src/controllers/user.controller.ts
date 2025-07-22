@@ -15,6 +15,8 @@ import {
   PROFILE_SUCCESS_MESSAGES,
   PROFILE_ERROR_MESSAGES,
 } from "../constants/profile.constants";
+import { authCookieOptions } from "./auth.controller";
+import { TOKEN_EXPIRES } from "../constants/token.constants";
 
 // 유저 정보 조회
 const getUser = async (req: Request, res: Response) => {
@@ -45,11 +47,22 @@ const postProfile = async (req: Request, res: Response) => {
         preferredServices: req.body.preferredServices,
       };
 
-      const result = await createCustomerProfile(userId, profileData);
+      const { result, accessToken, refreshToken } = await createCustomerProfile(
+        userId,
+        profileData
+      );
+
+      res.cookie(
+        "refreshToken",
+        refreshToken,
+        authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
+      );
+
       res.json({
         success: true,
         message: PROFILE_SUCCESS_MESSAGES.CUSTOMER_PROFILE_CREATED,
         data: result,
+        accessToken,
       });
     } else if (userType === "MOVER") {
       // 기사님 프로필 등록
@@ -63,11 +76,22 @@ const postProfile = async (req: Request, res: Response) => {
         serviceTypes: req.body.serviceTypes,
       };
 
-      const result = await createMoverProfile(userId, profileData);
+      const { result, accessToken, refreshToken } = await createMoverProfile(
+        userId,
+        profileData
+      );
+
+      res.cookie(
+        "refreshToken",
+        refreshToken,
+        authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
+      );
+
       res.json({
         success: true,
         message: PROFILE_SUCCESS_MESSAGES.MOVER_PROFILE_CREATED,
         data: result,
+        accessToken,
       });
     } else {
       res.status(400).json({

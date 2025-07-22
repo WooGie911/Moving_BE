@@ -5,7 +5,7 @@ import { TOKEN_EXPIRES } from "../constants/token.constants";
 import { handleError } from "../utils/handleError";
 import { TCookieOptions } from "../types/cookie.types";
 
-const authCookieOptions = (maxAgeSeconds: number): TCookieOptions => ({
+export const authCookieOptions = (maxAgeSeconds: number): TCookieOptions => ({
   httpOnly: true,
   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 개발환경에서는 lax 사용
   secure: process.env.NODE_ENV === "production", // 개발환경에서는 false
