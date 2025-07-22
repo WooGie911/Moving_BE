@@ -43,7 +43,9 @@ async function main() {
     detail: `테스트로 ${i * 10}`,
     region: i % 2 === 0 ? RegionType.SEOUL : RegionType.GYEONGGI,
   }));
-  const addresses = await Promise.all(addressData.map((data) => prisma.address.create({ data })));
+  const addresses = await Promise.all(
+    addressData.map((data) => prisma.address.create({ data }))
+  );
 
   // 유저 30명 생성 (모두 고객+기사)
   const allNames = [
@@ -86,11 +88,13 @@ async function main() {
       encryptedPhoneNumber: encryptPhoneNumber(`010-${1000 + i}`),
       name: allNames[i],
       userType: [UserType.CUSTOMER, UserType.MOVER],
+
       provider: AuthProvider.LOCAL,
       nickname: allNames[i] + "닉네임",
       customerImage: "",
       moverImage: "",
       currentArea: getRandom([RegionType.SEOUL, RegionType.GYEONGGI]),
+
       preferredServices: [getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE])],
       shortIntro: `${allNames[i]}은(는) 친절하고 꼼꼼한 기사입니다!`,
       detailIntro: `${allNames[i]}은(는) 다양한 이사 경험을 바탕으로 최고의 서비스를 제공합니다.`,
@@ -106,6 +110,7 @@ async function main() {
   }
   const users = await Promise.all(userArr.map((data) => prisma.user.create({ data })));
 
+
   // 기사님 서비스 지역 (모든 유저)
   const moverUsers = users; // 모든 유저가 기사 역할
   await Promise.all(
@@ -116,8 +121,8 @@ async function main() {
           region: getRandom([RegionType.SEOUL, RegionType.GYEONGGI]),
           district: idx % 2 === 0 ? "강남구" : "서초구",
         },
-      }),
-    ),
+      })
+    )
   );
 
   // 사용자별 주소 등록 (각 유저마다 2개씩)
@@ -140,8 +145,8 @@ async function main() {
             customLabel: "이사갈 곳",
           },
         }),
-      ]),
-    ),
+      ])
+    )
   );
 
   // 견적 요청 60개 생성 (고객 역할 유저 랜덤)
@@ -164,8 +169,8 @@ async function main() {
           ]),
           description: `테스트 견적 요청 ${i + 1}`,
         },
-      }),
-    ),
+      })
+    )
   );
 
   // 견적 80개 생성 (기사 역할 유저 랜덤, 중복 방지)
@@ -199,10 +204,12 @@ async function main() {
           includesPackaging: i % 2 === 0,
           insuranceAmount: 1000000 + i * 100000,
         },
+
       }),
     );
   }
   const estimates = await Promise.all(estimatesArr);
+
 
   // 찜 100개 생성 (고객이 기사/하이브리드 찜, 모든 유저 랜덤, 중복 방지)
   const favoritePairs = new Set();
@@ -223,7 +230,7 @@ async function main() {
           customerId: users[customerIdx].id,
           moverId: users[moverIdx].id,
         },
-      }),
+      })
     );
     // totalFavoriteCount 증가도 반영
     await prisma.user.update({
@@ -260,11 +267,13 @@ async function main() {
           rating: 3 + (reviewCount % 3),
           content: `테스트 리뷰 내용 ${reviewCount + 1}`,
         },
+
       }),
     );
     reviewCount++;
   }
   await Promise.all(reviewArr);
+
 
   // 사용자 활동 30개 생성
   const actions = await Promise.all(
@@ -283,8 +292,8 @@ async function main() {
           entityType: "EstimateRequest",
           description: `테스트 활동 ${i + 1}`,
         },
-      }),
-    ),
+      })
+    )
   );
 
   // 알림 30개 생성
@@ -305,8 +314,8 @@ async function main() {
           content: `테스트 알림 내용 ${i + 1}`,
           path: `/test/${i + 1}`,
         },
-      }),
-    ),
+      })
+    )
   );
 
   console.log("✅ Seed completed successfully!");
