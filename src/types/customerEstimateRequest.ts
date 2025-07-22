@@ -72,6 +72,7 @@ export type TMoverInfo = {
   totalReviewCount: number | null;
   serviceTypes: any;
   serviceAreas: any;
+  isFavorite: boolean; // 찜 여부 추가
 };
 
 // 견적 상세 조회 응답 타입

@@ -9,11 +9,11 @@ const moverEstimateController = {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const userId = req.user?.userId;
-      const userRole = req.user?.role;
-      const { quoteId, price, description } = req.body;
+      const moverId = req.user?.userId;
+      const userType = req.user?.userType;
+      const { estimateRequestId, price, comment } = req.body;
 
-      if (!userId || typeof userId !== "number" || userId <= 0) {
+      if (!moverId || typeof moverId !== "string") {
         res.status(401).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
@@ -22,7 +22,7 @@ const moverEstimateController = {
       }
 
       // 무버 권한 확인
-      if (userRole !== "MOVER") {
+      if (userType !== "MOVER") {
         res.status(403).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
@@ -30,7 +30,7 @@ const moverEstimateController = {
         return;
       }
 
-      if (!quoteId || typeof quoteId !== "number" || quoteId <= 0) {
+      if (!estimateRequestId || typeof estimateRequestId !== "string") {
         res.status(400).json({
           success: false,
           message: "유효하지 않은 견적 요청 ID입니다.",
@@ -47,31 +47,31 @@ const moverEstimateController = {
       }
 
       if (
-        !description ||
-        typeof description !== "string" ||
-        description.trim().length === 0
+        !comment ||
+        typeof comment !== "string" ||
+        comment.trim().length === 0
       ) {
         res.status(400).json({
           success: false,
-          message: "견적 설명을 입력해주세요.",
+          message: "견적 코멘트를 입력해주세요.",
         });
         return;
       }
 
-      // 설명 길이 제한 (예: 1000자)
-      if (description.length > 1000) {
+      // 코멘트 길이 제한 (예: 1000자)
+      if (comment.length > 1000) {
         res.status(400).json({
           success: false,
-          message: "견적 설명은 1000자 이내로 입력해주세요.",
+          message: "견적 코멘트는 1000자 이내로 입력해주세요.",
         });
         return;
       }
 
       const result = await moverEstimateService.createEstimate({
-        quoteId,
-        userId,
+        estimateRequestId,
+        moverId,
         price,
-        description: description.trim(),
+        comment: comment.trim(),
       });
 
       res.status(201).json({
@@ -91,11 +91,11 @@ const moverEstimateController = {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const userId = req.user?.userId;
-      const userRole = req.user?.role;
-      const { quoteId, description } = req.body;
+      const moverId = req.user?.userId;
+      const userType = req.user?.userType;
+      const { estimateRequestId, comment } = req.body;
 
-      if (!userId || typeof userId !== "number" || userId <= 0) {
+      if (!moverId || typeof moverId !== "string") {
         res.status(401).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
@@ -104,7 +104,7 @@ const moverEstimateController = {
       }
 
       // 무버 권한 확인
-      if (userRole !== "MOVER") {
+      if (userType !== "MOVER") {
         res.status(403).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
@@ -112,7 +112,7 @@ const moverEstimateController = {
         return;
       }
 
-      if (!quoteId || typeof quoteId !== "number" || quoteId <= 0) {
+      if (!estimateRequestId || typeof estimateRequestId !== "string") {
         res.status(400).json({
           success: false,
           message: "유효하지 않은 견적 요청 ID입니다.",
@@ -121,9 +121,9 @@ const moverEstimateController = {
       }
 
       if (
-        !description ||
-        typeof description !== "string" ||
-        description.trim().length === 0
+        !comment ||
+        typeof comment !== "string" ||
+        comment.trim().length === 0
       ) {
         res.status(400).json({
           success: false,
@@ -132,8 +132,8 @@ const moverEstimateController = {
         return;
       }
 
-      // 설명 길이 제한 (예: 500자)
-      if (description.length > 500) {
+      // 코멘트 길이 제한 (예: 500자)
+      if (comment.length > 500) {
         res.status(400).json({
           success: false,
           message: "반려 사유는 500자 이내로 입력해주세요.",
@@ -142,9 +142,9 @@ const moverEstimateController = {
       }
 
       const result = await moverEstimateService.rejectEstimate({
-        quoteId,
-        userId,
-        description: description.trim(),
+        estimateRequestId,
+        moverId,
+        comment: comment.trim(),
       });
 
       res.status(201).json({
@@ -158,17 +158,17 @@ const moverEstimateController = {
   },
 
   // 3. 서비스 가능 지역 견적 조회
-  getRegionQuote: async (
+  getRegionEstimateRequest: async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      const userId = req.user?.userId;
-      const userRole = req.user?.role;
-      const { availableRegion, sortBy, customerName, movingType } = req.query;
+      const moverId = req.user?.userId;
+      const userType = req.user?.userType;
+      const { sortBy, customerName, movingType } = req.query;
 
-      if (!userId || typeof userId !== "number" || userId <= 0) {
+      if (!moverId || typeof moverId !== "string") {
         res.status(401).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
@@ -177,7 +177,7 @@ const moverEstimateController = {
       }
 
       // 무버 권한 확인
-      if (userRole !== "MOVER") {
+      if (userType !== "MOVER") {
         res.status(403).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
@@ -185,20 +185,8 @@ const moverEstimateController = {
         return;
       }
 
-      if (
-        !availableRegion ||
-        typeof availableRegion !== "string" ||
-        availableRegion.trim().length === 0
-      ) {
-        res.status(400).json({
-          success: false,
-          message: "서비스 가능 지역을 입력해주세요.",
-        });
-        return;
-      }
-
       // 정렬 옵션 검증
-      if (sortBy && !["movingDate", "createdAt"].includes(sortBy as string)) {
+      if (sortBy && !["moveDate", "createdAt"].includes(sortBy as string)) {
         res.status(400).json({
           success: false,
           message: "유효하지 않은 정렬 옵션입니다.",
@@ -218,9 +206,9 @@ const moverEstimateController = {
         return;
       }
 
-      const result = await moverEstimateService.getRegionQuote(
-        availableRegion.trim(),
-        sortBy as "movingDate" | "createdAt" | undefined,
+      const result = await moverEstimateService.getRegionEstimateRequest(
+        moverId,
+        sortBy as "moveDate" | "createdAt" | undefined,
         customerName as string | undefined,
         movingType as "SMALL" | "HOME" | "OFFICE" | undefined
       );
@@ -236,17 +224,17 @@ const moverEstimateController = {
   },
 
   // 4. 지정 견적 조회
-  getDesignatedQuote: async (
+  getDesignatedEstimateRequest: async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      const userId = req.user?.userId;
-      const userRole = req.user?.role;
+      const moverId = req.user?.userId;
+      const userType = req.user?.userType;
       const { sortBy, customerName, movingType } = req.query;
 
-      if (!userId || typeof userId !== "number" || userId <= 0) {
+      if (!moverId || typeof moverId !== "string") {
         res.status(401).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
@@ -255,7 +243,7 @@ const moverEstimateController = {
       }
 
       // 무버 권한 확인
-      if (userRole !== "MOVER") {
+      if (userType !== "MOVER") {
         res.status(403).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
@@ -264,7 +252,7 @@ const moverEstimateController = {
       }
 
       // 정렬 옵션 검증
-      if (sortBy && !["movingDate", "createdAt"].includes(sortBy as string)) {
+      if (sortBy && !["moveDate", "createdAt"].includes(sortBy as string)) {
         res.status(400).json({
           success: false,
           message: "유효하지 않은 정렬 옵션입니다.",
@@ -284,9 +272,9 @@ const moverEstimateController = {
         return;
       }
 
-      const result = await moverEstimateService.getDesignatedQuote(
-        userId,
-        sortBy as "movingDate" | "createdAt" | undefined,
+      const result = await moverEstimateService.getDesignatedEstimateRequest(
+        moverId,
+        sortBy as "moveDate" | "createdAt" | undefined,
         customerName as string | undefined,
         movingType as "SMALL" | "HOME" | "OFFICE" | undefined
       );
@@ -302,31 +290,25 @@ const moverEstimateController = {
   },
 
   // 5. 지역/지정 견적 통합 조회
-  getAllQuotes: async (
+  getAllEstimateRequests: async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      const userId = req.user?.userId;
-      const userRole = req.user?.role;
-      const {
-        region,
-        designated,
-        availableRegion,
-        sortBy,
-        customerName,
-        movingType,
-      } = req.query;
+      const moverId = req.user?.userId;
+      const userType = req.user?.userType;
+      const { region, designated, sortBy, customerName, movingType } =
+        req.query;
 
-      if (!userId || typeof userId !== "number" || userId <= 0) {
+      if (!moverId || typeof moverId !== "string") {
         res.status(401).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
         });
         return;
       }
-      if (userRole !== "MOVER") {
+      if (userType !== "MOVER") {
         res.status(403).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
@@ -342,19 +324,21 @@ const moverEstimateController = {
         res.status(200).json({
           success: true,
           message: "조회 결과 없음",
-          data: { regionQuotes: [], designatedQuotes: [] },
+          data: { regionEstimateRequests: [], designatedEstimateRequests: [] },
         });
         return;
       }
 
-      const result = await moverEstimateService.getAllQuotes(userId, {
-        region: regionBool,
-        designated: designatedBool,
-        availableRegion: availableRegion as string | undefined,
-        sortBy: sortBy as "movingDate" | "createdAt" | undefined,
-        customerName: customerName as string | undefined,
-        movingType: movingType as "SMALL" | "HOME" | "OFFICE" | undefined,
-      });
+      const result = await moverEstimateService.getAllEstimateRequests(
+        moverId,
+        {
+          region: regionBool,
+          designated: designatedBool,
+          sortBy: sortBy as "moveDate" | "createdAt" | undefined,
+          customerName: customerName as string | undefined,
+          movingType: movingType as "SMALL" | "HOME" | "OFFICE" | undefined,
+        }
+      );
 
       res.status(200).json({
         success: true,
@@ -366,18 +350,18 @@ const moverEstimateController = {
     }
   },
 
-  // 6. 견적 상세 조회
-  getQuoteById: async (
+  // 6. 견적 요청 상세 조회
+  getEstimateRequestById: async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      const userId = req.user?.userId;
-      const userRole = req.user?.role;
-      const quoteId = Number(req.params.quoteId);
+      const moverId = req.user?.userId;
+      const userType = req.user?.userType;
+      const estimateRequestId = req.params.estimateRequestId;
 
-      if (!userId || typeof userId !== "number" || userId <= 0) {
+      if (!moverId || typeof moverId !== "string") {
         res.status(401).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
@@ -386,7 +370,7 @@ const moverEstimateController = {
       }
 
       // 무버 권한 확인
-      if (userRole !== "MOVER") {
+      if (userType !== "MOVER") {
         res.status(403).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
@@ -394,18 +378,19 @@ const moverEstimateController = {
         return;
       }
 
-      if (!quoteId || isNaN(quoteId) || quoteId <= 0) {
+      if (!estimateRequestId || typeof estimateRequestId !== "string") {
         res.status(400).json({
           success: false,
-          message: "유효하지 않은 견적 ID입니다.",
+          message: "유효하지 않은 견적 요청 ID입니다.",
         });
         return;
       }
 
-      const result = await moverEstimateService.getQuoteById(quoteId);
+      const result =
+        await moverEstimateService.getEstimateRequestById(estimateRequestId);
       res.status(200).json({
         success: true,
-        message: "견적 상세 조회 성공",
+        message: "견적 요청 상세 조회 성공",
         data: result,
       });
     } catch (error) {
@@ -420,10 +405,10 @@ const moverEstimateController = {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const userId = req.user?.userId;
-      const userRole = req.user?.role;
+      const moverId = req.user?.userId;
+      const userType = req.user?.userType;
 
-      if (!userId || typeof userId !== "number" || userId <= 0) {
+      if (!moverId || typeof moverId !== "string") {
         res.status(401).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
@@ -432,7 +417,7 @@ const moverEstimateController = {
       }
 
       // 무버 권한 확인
-      if (userRole !== "MOVER") {
+      if (userType !== "MOVER") {
         res.status(403).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
@@ -440,7 +425,7 @@ const moverEstimateController = {
         return;
       }
 
-      const result = await moverEstimateService.getMyEstimate(userId);
+      const result = await moverEstimateService.getMyEstimate(moverId);
       res.status(200).json({
         success: true,
         message: "내가 보낸 견적서 조회 성공",
@@ -452,16 +437,16 @@ const moverEstimateController = {
   },
 
   // 8. 내가 반려한 견적 조회
-  getMyRejectedQuotes: async (
+  getMyRejectedEstimates: async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      const userId = req.user?.userId;
-      const userRole = req.user?.role;
+      const moverId = req.user?.userId;
+      const userType = req.user?.userType;
 
-      if (!userId || typeof userId !== "number" || userId <= 0) {
+      if (!moverId || typeof moverId !== "string") {
         res.status(401).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
@@ -470,7 +455,7 @@ const moverEstimateController = {
       }
 
       // 무버 권한 확인
-      if (userRole !== "MOVER") {
+      if (userType !== "MOVER") {
         res.status(403).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
@@ -478,7 +463,7 @@ const moverEstimateController = {
         return;
       }
 
-      const result = await moverEstimateService.getMyRejectedQuotes(userId);
+      const result = await moverEstimateService.getMyRejectedEstimates(moverId);
       res.status(200).json({
         success: true,
         message: "내가 반려한 견적 조회 성공",
@@ -496,12 +481,12 @@ const moverEstimateController = {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const userId = req.user?.userId;
-      const userRole = req.user?.role;
-      const estimateId = Number(req.query.estimateId);
+      const moverId = req.user?.userId;
+      const userType = req.user?.userType;
+      const estimateId = req.query.estimateId as string;
       const { status } = req.body;
 
-      if (!userId || typeof userId !== "number" || userId <= 0) {
+      if (!moverId || typeof moverId !== "string") {
         res.status(401).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
@@ -510,7 +495,7 @@ const moverEstimateController = {
       }
 
       // 무버 권한 확인
-      if (userRole !== "MOVER") {
+      if (userType !== "MOVER") {
         res.status(403).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
@@ -518,7 +503,7 @@ const moverEstimateController = {
         return;
       }
 
-      if (!estimateId || isNaN(estimateId) || estimateId <= 0) {
+      if (!estimateId || typeof estimateId !== "string") {
         res.status(400).json({
           success: false,
           message: "유효하지 않은 견적서 ID입니다.",
@@ -528,7 +513,7 @@ const moverEstimateController = {
 
       if (
         !status ||
-        !["PENDING", "ACCEPTED", "REJECTED", "EXPIRED"].includes(status)
+        !["PROPOSED", "ACCEPTED", "REJECTED", "AUTO_REJECTED"].includes(status)
       ) {
         res.status(400).json({
           success: false,
@@ -539,7 +524,7 @@ const moverEstimateController = {
 
       const result = await moverEstimateService.updateEstimateStatus({
         estimateId,
-        userId,
+        moverId,
         status,
       });
 
@@ -560,12 +545,12 @@ const moverEstimateController = {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const userId = req.user?.userId;
-      const userRole = req.user?.role;
-      const estimateId = Number(req.query.estimateId);
-      const { price, description } = req.body;
+      const moverId = req.user?.userId;
+      const userType = req.user?.userType;
+      const estimateId = req.query.estimateId as string;
+      const { price, comment } = req.body;
 
-      if (!userId || typeof userId !== "number" || userId <= 0) {
+      if (!moverId || typeof moverId !== "string") {
         res.status(401).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
@@ -574,7 +559,7 @@ const moverEstimateController = {
       }
 
       // 무버 권한 확인
-      if (userRole !== "MOVER") {
+      if (userType !== "MOVER") {
         res.status(403).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
@@ -582,7 +567,7 @@ const moverEstimateController = {
         return;
       }
 
-      if (!estimateId || isNaN(estimateId) || estimateId <= 0) {
+      if (!estimateId || typeof estimateId !== "string") {
         res.status(400).json({
           success: false,
           message: "유효하지 않은 견적서 ID입니다.",
@@ -599,31 +584,31 @@ const moverEstimateController = {
       }
 
       if (
-        !description ||
-        typeof description !== "string" ||
-        description.trim().length === 0
+        !comment ||
+        typeof comment !== "string" ||
+        comment.trim().length === 0
       ) {
         res.status(400).json({
           success: false,
-          message: "견적 설명 10자 이상 입력해주세요.",
+          message: "견적 코멘트를 입력해주세요.",
         });
         return;
       }
 
-      // 설명 길이 제한 (예: 1000자)
-      if (description.length > 1000) {
+      // 코멘트 길이 제한 (예: 1000자)
+      if (comment.length > 1000) {
         res.status(400).json({
           success: false,
-          message: "견적 설명은 1000자 이내로 입력해주세요.",
+          message: "견적 코멘트는 1000자 이내로 입력해주세요.",
         });
         return;
       }
 
       const result = await moverEstimateService.updateEstimate({
         estimateId,
-        userId,
+        moverId,
         price,
-        description: description.trim(),
+        comment: comment.trim(),
       });
 
       res.status(200).json({
