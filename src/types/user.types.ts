@@ -229,6 +229,7 @@ export type TCustomerProfileUpdateInput = {
   email?: string;
   phoneNumber?: string;
   password?: string;
+  newPassword?: string;
   customerImage?: string;
   currentArea?: RegionType;
   preferredServices?: MoveType[];

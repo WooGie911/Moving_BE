@@ -130,6 +130,7 @@ const patchCustomerProfile = async (req: Request, res: Response) => {
       email: req.body.email,
       phoneNumber: req.body.phoneNumber,
       password: req.body.password,
+      newPassword: req.body.newPassword,
       customerImage: req.body.customerImage,
       currentArea: req.body.currentArea,
       preferredServices: req.body.preferredServices,

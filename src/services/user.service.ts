@@ -135,10 +135,6 @@ const updateCustomerProfileCheck = async (
     throw new NotFoundError(PROFILE_ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
-  if (user.userType[0] !== "CUSTOMER") {
-    throw new ValidationError("유저 타입이 일반 유저가 아닙니다");
-  }
-
   // 비밀번호 변경 요청 시 현재 비밀번호 검증
   if (updateData.password) {
     const isCurrentPasswordValid = await bcrypt.compare(
@@ -153,14 +149,21 @@ const updateCustomerProfileCheck = async (
   // 업데이트 데이터 준비
   const encryptedPhoneNumber = encryptPhoneNumber(updateData.phoneNumber!);
 
+  // 비밀 번호 변경 요청 시 새로운 비밀 번호 암호화 및 업데이트
+  let newEncryptedPassword: string | undefined;
+  if (updateData.newPassword) {
+    newEncryptedPassword = await bcrypt.hash(updateData.newPassword, 10);
+  } else {
+    // 아니라면 원래 비밀번호 다시 저장
+    newEncryptedPassword = user.encryptedPassword || undefined;
+  }
+
   const newUpdateData: TCustomerProfileUpdate = {
     name: updateData.name,
     nickname: updateData.nickname,
     email: updateData.email,
     encryptedPhoneNumber,
-    encryptedPassword: updateData.password
-      ? await bcrypt.hash(updateData.password, 10)
-      : undefined,
+    encryptedPassword: newEncryptedPassword,
     customerImage: updateData.customerImage,
     currentArea: updateData.currentArea,
     preferredServices: updateData.preferredServices,
