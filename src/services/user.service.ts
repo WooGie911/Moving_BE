@@ -8,7 +8,7 @@ import {
   updateUserProfile,
   checkNicknameExists,
 } from "../repositories/user.repository";
-import { encryptPhoneNumber } from "../utils/phoneEncryption";
+import { encryptPhoneNumber, decryptPhoneNumber } from "../utils/phoneEncryption";
 import { NotFoundError, ValidationError } from "../types/commonError.types";
 import {
   TCustomerProfileInput,
@@ -37,6 +37,8 @@ const userInfo = async (userId: string, userType: TUserRole) => {
     return {
       id: user.id,
       name: user.name,
+      email: user.email,
+      phoneNumber: user.encryptedPhoneNumber ? decryptPhoneNumber(user.encryptedPhoneNumber) : null,
       nickname: user.nickname,
       customerImage: user.customerImage || "",
       userType,
@@ -45,6 +47,8 @@ const userInfo = async (userId: string, userType: TUserRole) => {
     return {
       id: user.id,
       name: user.name,
+      email: user.email,
+      phoneNumber: user.encryptedPhoneNumber ? decryptPhoneNumber(user.encryptedPhoneNumber) : null,
       nickname: user.nickname,
       moverImage: user.moverImage || "",
       userType,
