@@ -1,85 +1,59 @@
+import type {
+  MoverListFilter,
+  DesignatedQuoteRequestDto,
+} from "../types/mover.types";
 import {
   getMoverList,
   getFavoriteMovers,
+  getMoverDetail,
   createDesignatedEstimateRequest,
+  checkDesignatedEstimateRequest,
 } from "../repositories/mover.repository";
-import { IMoverListFilter } from "../types/mover.types";
-import prisma from "../db/prisma/prisma";
 
 /**
- * 기사님 리스트 조회 (필터, 정렬, 키워드)
+ * 기사님 리스트 조회
  */
-export const fetchMoverList = async (filter: IMoverListFilter) => {
-  const movers = await getMoverList(filter);
-  return movers;
+export const fetchMoverList = async (filter: MoverListFilter) => {
+  return await getMoverList(filter);
 };
 
 /**
- * 찜한 기사님 조회
+ * 찜한 기사님 리스트 조회
  */
-export const fetchFavoriteMovers = async (userId: number) => {
-  const movers = await getFavoriteMovers(userId);
-  return movers;
+export const fetchFavoriteMovers = async (customerId: string) => {
+  return await getFavoriteMovers(customerId);
 };
-
 
 /**
  * 기사님 상세 조회
  */
-export const fetchMoverDetail = async (id: number) => {
-  return await prisma.profile.findUnique({
-    where: { id },
-    include: {
-      user: { select: { id: true, name: true, email: true } },
-      serviceRegions: true,
-      serviceTypes: { include: { service: true } },
-    },
-  });
+export const fetchMoverDetail = async (id: string) => {
+  return await getMoverDetail(id);
 };
 
 /**
- * 지정 견적 요청 
+ * 지정 견적 요청 생성
  */
-export const requestDesignatedQuote = async ({
-  quoteId,
-  moverId,
-  customerId,
-  message,
-  expiresAt,
-}: {
-  quoteId: number;
-  moverId: number;
-  customerId: number;
-  message?: string;
-  expiresAt: Date;
-}) => {
-  // 본인 견적 확인
-  const quote = await prisma.quote.findUnique({ where: { id: quoteId } });
-  if (!quote || quote.userId !== customerId) {
-    throw new Error("본인 견적에만 요청할 수 있습니다.");
-  }
-  // 중복 체크
-  const exists = await prisma.designatedEstimateRequest.findUnique({
-    where: { quoteId_moverId: { quoteId, moverId } },
-  });
-  if (exists) {
-    throw new Error("이미 해당 기사님에게 지정 견적을 요청했습니다.");
-  }
-  // 생성
-  return await createDesignatedEstimateRequest({
-    quoteId,
-    customerId,
-    moverId,
-    message,
-    expiresAt,
-  });
+export const requestDesignatedQuote = async (
+  dto: DesignatedQuoteRequestDto
+) => {
+  return await createDesignatedEstimateRequest(dto);
 };
 
-const moverService = {
+/**
+ * 지정 견적 요청 여부 조회
+ */
+export const checkDesignatedQuoteRequest = async (params: {
+  quoteId: string;
+  moverId: string;
+}) => {
+  return await checkDesignatedEstimateRequest(params);
+};
+
+export default {
   fetchMoverList,
   fetchFavoriteMovers,
   fetchMoverDetail,
   requestDesignatedQuote,
+  checkDesignatedQuoteRequest,
 };
-
-export default moverService;
