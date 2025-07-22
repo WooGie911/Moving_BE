@@ -115,6 +115,7 @@ const customerEstimateRequestRepository = {
                 totalReviewCount: true,
                 serviceTypes: true,
                 serviceAreas: true,
+                //totalFavoriteCount   :true,
                 // 찜 여부 확인을 위한 Favorite 관계 추가
                 Favorite: {
                   where: {

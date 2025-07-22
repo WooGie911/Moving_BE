@@ -131,7 +131,7 @@ async function main() {
     prisma.user.create({
       data: {
         email: "hybrid1@example.com",
-        encryptedPassword: await bcrypt.hash("password123", 10),
+        encryptedPassword: await bcrypt.hash("password123@", 10),
         encryptedPhoneNumber: encryptPhoneNumber("010-4444-5555"),
         name: "최하이브리드",
         userType: [UserType.CUSTOMER, UserType.MOVER], // 둘 다 가능

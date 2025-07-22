@@ -5,7 +5,7 @@ import { verifyAccessToken } from "../middlewares/verifyToken";
 const customerEstimateRequestRouter = Router();
 
 /**
- * GET /user-quotes/pending
+ * GET /customer-quotes/pending
  * @summary 진행중인 견적요청 조회
  * @description 사용자의 진행중인 견적요청을 조회합니다.
  * @tags UserQuote
@@ -76,7 +76,7 @@ customerEstimateRequestRouter.get(
 );
 
 /**
- * GET /user-quotes/received
+ * GET /customer-quotes/received
  * @summary 완료된 견적요청 목록 조회
  * @description 사용자의 완료된 견적요청 목록을 조회합니다.
  * @tags UserQuote
@@ -113,7 +113,7 @@ customerEstimateRequestRouter.get(
 );
 
 /**
- * GET /user-quotes/pending/:estimateId
+ * GET /customer-quotes/pending/:estimateId
  * @summary 진행중인 견적요청의 특정 견적 상세 조회
  * @description 진행중인 견적요청의 특정 견적 상세 정보를 조회합니다.
  * @tags UserQuote
@@ -161,7 +161,7 @@ customerEstimateRequestRouter.get(
 );
 
 /**
- * GET /user-quotes/received/:estimateRequestId/:estimateId
+ * GET /customer-quotes/received/:estimateRequestId/:estimateId
  * @summary 완료된 견적요청의 특정 견적 상세 조회
  * @description 완료된 견적요청의 특정 견적 상세 정보를 조회합니다.
  * @tags UserQuote
@@ -210,7 +210,7 @@ customerEstimateRequestRouter.get(
 );
 
 /**
- * PATCH /user-quotes/confirm
+ * PATCH /customer-quotes/confirm
  * @summary 견적 확정
  * @description 특정 견적을 확정합니다.
  * @tags UserQuote
