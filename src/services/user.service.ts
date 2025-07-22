@@ -75,17 +75,6 @@ const createCustomerProfile = async (
     preferredServices: profileData.preferredServices,
   };
 
-<<<<<<< Updated upstream
-  const { newAccessToken, newRefreshToken } = generateToken({
-    id: user.id,
-    name: user.name,
-    nickname: user.nickname || "",
-    userType: user.userType[0],
-  });
-
-=======
-<<<<<<< Updated upstream
-=======
   const { newAccessToken, newRefreshToken } = generateToken({
     id: user.id,
     name: user.name,
@@ -93,8 +82,6 @@ const createCustomerProfile = async (
     userType: user.userType[0],
   });
 
->>>>>>> Stashed changes
->>>>>>> Stashed changes
   const result = await createCustomerProfileRepository(createProfileData);
   return {
     result,
@@ -129,17 +116,6 @@ const createMoverProfile = async (
     serviceTypes: profileData.serviceTypes,
   };
 
-<<<<<<< Updated upstream
-  const { newAccessToken, newRefreshToken } = generateToken({
-    id: user.id,
-    name: user.name,
-    nickname: user.nickname || "",
-    userType: user.userType[0],
-  });
-
-=======
-<<<<<<< Updated upstream
-=======
   const { newAccessToken, newRefreshToken } = generateToken({
     id: user.id,
     name: user.name,
@@ -147,8 +123,6 @@ const createMoverProfile = async (
     userType: user.userType[0],
   });
 
->>>>>>> Stashed changes
->>>>>>> Stashed changes
   const result = await createMoverProfileRepository(createProfileData);
   return {
     result,
