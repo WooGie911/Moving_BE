@@ -1,36 +1,43 @@
 import { Prisma } from "@prisma/client";
 import prisma from "../db/prisma/prisma";
 
-// Prisma 미들웨어: Quote.update에서 confirmedEstimateId가 새로 설정될 때 Review 자동 생성
-export const reviewPrismaMiddleware: Prisma.Middleware = async (params, next) => {
-  if (params.model === "Quote" && params.action === "update" && params.args?.data?.confirmedEstimateId !== undefined) {
-    // 기존 Quote를 먼저 조회
-    const quote = await prisma.quote.findUnique({
+// Prisma 미들웨어: EstimateRequest.update에서 확정 견적이 설정될 때 Review 자동 생성
+export const reviewPrismaMiddleware: Prisma.Middleware = async (
+  params,
+  next
+) => {
+  if (
+    params.model === "EstimateRequest" &&
+    params.action === "update" &&
+    params.args?.data?.status === "COMPLETED"
+  ) {
+    // 기존 EstimateRequest를 먼저 조회
+    const estimateRequest = await prisma.estimateRequest.findUnique({
       where: params.args.where,
-      select: { confirmedEstimateId: true, id: true, userId: true },
+      include: {
+        estimates: true,
+        review: true,
+      },
     });
-    const afterId = params.args.data.confirmedEstimateId;
-    if (quote && !quote.confirmedEstimateId && afterId) {
-      // 이미 해당 quoteId, userId로 리뷰가 있는지 확인
-      const reviewExists = await prisma.review.findFirst({
-        where: {
-          quoteId: quote.id,
-          userId: quote.userId,
-        },
-      });
-      if (!reviewExists) {
-        // estimateId, moverId를 찾아야 할 수 있음
-        const estimate = await prisma.estimate.findUnique({
-          where: { id: afterId },
-          select: { id: true, moverId: true },
+    if (estimateRequest && !estimateRequest.review) {
+      // 확정된 견적 찾기 (status: 'ACCEPTED')
+      const acceptedEstimate = estimateRequest.estimates.find(
+        (e: any) => e.status === "ACCEPTED"
+      );
+      if (acceptedEstimate) {
+        // 이미 해당 estimateRequestId, customerId로 리뷰가 있는지 확인
+        const reviewExists = await prisma.review.findFirst({
+          where: {
+            estimateRequestId: estimateRequest.id,
+            customerId: estimateRequest.customerId,
+          },
         });
-        if (estimate) {
+        if (!reviewExists) {
           await prisma.review.create({
             data: {
-              quoteId: quote.id,
-              estimateId: estimate.id,
-              userId: quote.userId,
-              moverId: estimate.moverId,
+              estimateRequestId: estimateRequest.id,
+              customerId: estimateRequest.customerId,
+              moverId: acceptedEstimate.moverId,
               rating: 0,
               content: "",
             },

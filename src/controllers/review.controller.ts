@@ -9,7 +9,7 @@ const reviewController = {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const reviewId = Number(req.params.reviewId);
+      const reviewId = req.params.reviewId;
       const { rating, content } = req.body;
       if (!reviewId || rating == null || content == null) {
         res.status(400).json({ message: "reviewId, rating, content required" });
@@ -26,28 +26,28 @@ const reviewController = {
     }
   },
 
-  // 2. 리뷰 작성 가능한 Quote 리스트 조회
-  getWritableQuotes: async (
+  // 2. 리뷰 작성 가능한 estimateRequests 리스트 조회
+  getWritableEstimateRequests: async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      const customerId = Number(req.user?.userId);
+      const customerId = req.user?.userId;
       if (!customerId) {
         res.status(400).json({ message: "유저를 찾을수 없습니다." });
         return;
       }
       const page = Number(req.query.page) || 1;
       const pageSize = Number(req.query.pageSize) || 4;
-      const quotes = await reviewService.getWritableQuotes(customerId, {
-        page,
-        pageSize,
-      });
+      const estimateRequests = await reviewService.getWritableEstimateRequests(
+        customerId,
+        { page, pageSize }
+      );
       res.json({
         success: true,
-        message: "리뷰 작성 가능한 견적 리스트입니다.",
-        data: quotes,
+        message: "리뷰 작성 가능한 견적 요청 리스트입니다.",
+        data: estimateRequests,
       });
     } catch (error) {
       next(error);
@@ -61,7 +61,7 @@ const reviewController = {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const customerId = Number(req.params.customerId);
+      const customerId = req.params.customerId;
       if (!customerId) {
         res.status(400).json({ message: "유저를 찾을수 없습니다." });
         return;
@@ -88,7 +88,7 @@ const reviewController = {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const moverId = Number(req.params.moverId);
+      const moverId = req.params.moverId;
       if (!moverId) {
         res.status(400).json({ message: "유저를 찾을수 없습니다." });
         return;

@@ -5,20 +5,25 @@ const reviewService = {
     return reviewRepository.postReview(reviewId, rating, content);
   },
 
-  getWritableEstimateRequests: async (customerId: string, pageQuery: { page: number; pageSize: number }) => {
-    const { items, total, page, pageSize } = await reviewRepository.getWritableEstimateRequests(customerId, pageQuery);
-    // FE가 원하는 필드만 추출 (예시)
+  getWritableEstimateRequests: async (
+    customerId: string,
+    pageQuery: { page: number; pageSize: number }
+  ) => {
+    const { items, total, page, pageSize } =
+      await reviewRepository.getWritableEstimateRequests(customerId, pageQuery);
     const mappedItems = items.map((req: any) => {
-      const acceptedEstimate = req.estimates?.find((e: any) => e.status === "ACCEPTED");
+      const acceptedEstimate = req.estimates?.find(
+        (e: any) => e.status === "ACCEPTED"
+      );
       return {
         id: req.id,
-        profileImage: acceptedEstimate?.mover?.profile?.profileImage ?? null,
-        nickname: acceptedEstimate?.mover?.profile?.nickname ?? null,
+        profileImage: acceptedEstimate?.mover?.profileImage ?? null,
+        nickname: acceptedEstimate?.mover?.nickname ?? null,
         moveType: req.moveType,
         isDesigned: acceptedEstimate?.isDesignated ?? false,
-        moverIntroduction: acceptedEstimate?.mover?.profile?.introduction ?? null,
-        fromAddress: req.fromAddress,
-        toAddress: req.toAddress,
+        moverIntroduction: acceptedEstimate?.mover?.introduction ?? null,
+        fromAddress: req.fromAddress ?? null,
+        toAddress: req.toAddress ?? null,
         moveDate: req.moveDate,
         price: acceptedEstimate?.price ?? null,
       };
@@ -26,20 +31,27 @@ const reviewService = {
     return { items: mappedItems, total, page, pageSize };
   },
 
-  getWrittenReviews: async (customerId: string, pageQuery: { page: number; pageSize: number }) => {
-    const { items, total, page, pageSize } = await reviewRepository.getWrittenReviews(customerId, pageQuery);
+  getWrittenReviews: async (
+    customerId: string,
+    pageQuery: { page: number; pageSize: number }
+  ) => {
+    const { items, total, page, pageSize } =
+      await reviewRepository.getWrittenReviews(customerId, pageQuery);
     const mappedItems = items.map((review: any) => {
+      const acceptedEstimate = review.request?.estimates?.find(
+        (e: any) => e.status === "ACCEPTED"
+      );
       return {
         id: review.id,
         moverId: review.moverId,
-        profileImage: review.mover?.profile?.profileImage ?? null,
-        nickname: review.mover?.profile?.nickname ?? null,
-        moverIntroduction: review.mover?.profile?.introduction ?? null,
-        moveType: review.estimateRequest?.moveType ?? null,
-        isDesigned: review.estimate?.isDesignated ?? false,
-        fromAddress: review.estimateRequest?.fromAddress ?? null,
-        toAddress: review.estimateRequest?.toAddress ?? null,
-        moveDate: review.estimateRequest?.moveDate ?? null,
+        profileImage: review.mover?.profileImage ?? null,
+        nickname: review.mover?.nickname ?? null,
+        moverIntroduction: review.mover?.introduction ?? null,
+        moveType: review.request?.moveType ?? null,
+        isDesigned: acceptedEstimate?.isDesignated ?? false,
+        fromAddress: review.request?.fromAddress ?? null,
+        toAddress: review.request?.toAddress ?? null,
+        moveDate: review.request?.moveDate ?? null,
         rating: review.rating,
         content: review.content,
         createdAt: review.createdAt,
@@ -48,21 +60,49 @@ const reviewService = {
     return { items: mappedItems, total, page, pageSize };
   },
 
-  getReceivedReviews: async (moverId: string, pageQuery: { page: number; pageSize: number }) => {
-    const { items, total, page, pageSize } = await reviewRepository.getReceivedReviews(moverId, pageQuery);
-    const mappedItems = items.map((review: any) => ({
-      id: review.id,
-      customerId: review.customerId,
-      nickname: review.writer?.profile?.nickname ?? null,
-      profileImage: review.writer?.profile?.profileImage ?? null,
-      moveType: review.estimateRequest?.moveType ?? null,
-      fromAddress: review.estimateRequest?.fromAddress ?? null,
-      toAddress: review.estimateRequest?.toAddress ?? null,
-      moveDate: review.estimateRequest?.moveDate ?? null,
-      rating: review.rating,
-      content: review.content,
-      createdAt: review.createdAt,
-    }));
+  getReceivedReviews: async (
+    moverId: string,
+    pageQuery: { page: number; pageSize: number }
+  ) => {
+    const { items, total, page, pageSize } =
+      await reviewRepository.getReceivedReviews(moverId, pageQuery);
+    const mappedItems = items.map((review: any) => {
+      const acceptedEstimate = review.request?.estimates?.find(
+        (e: any) => e.status === "ACCEPTED"
+      );
+      return {
+        id: review.id,
+        estimateRequestId: review.request?.id ?? null,
+        customerId: review.customerId,
+        moverId: review.moverId,
+        profileImage: review.writer?.profileImage ?? null,
+        nickname: review.writer?.nickname ?? null,
+        moveType: review.request?.moveType ?? null,
+        isDesigned: acceptedEstimate?.isDesignated ?? false,
+        moverIntroduction: review.writer?.introduction ?? null,
+        fromAddress: review.request?.fromAddress ?? null,
+        toAddress: review.request?.toAddress ?? null,
+        moveDate: review.request?.moveDate ?? null,
+        rating: review.rating,
+        content: review.content,
+        createdAt: review.createdAt,
+        estimate: acceptedEstimate
+          ? {
+              id: acceptedEstimate.id,
+              price: acceptedEstimate.price,
+              comment: acceptedEstimate.comment,
+              status: acceptedEstimate.status,
+              isDesignated: acceptedEstimate.isDesignated,
+              validUntil: acceptedEstimate.validUntil,
+              workingHours: acceptedEstimate.workingHours,
+              includesPackaging: acceptedEstimate.includesPackaging,
+              insuranceAmount: acceptedEstimate.insuranceAmount,
+              createdAt: acceptedEstimate.createdAt,
+              updatedAt: acceptedEstimate.updatedAt,
+            }
+          : null,
+      };
+    });
     return { items: mappedItems, total, page, pageSize };
   },
 };
