@@ -3,6 +3,7 @@ import {
   getUser,
   postProfile,
   patchMoverBasicInfo,
+  getProfile,
 } from "../controllers/user.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 import generatePresignedUrls from "../middlewares/presignedUrl";
@@ -101,6 +102,19 @@ const userRouter = Router();
  * }
  */
 userRouter.get("/", verifyAccessToken, getUser);
+
+/**
+ * GET /users/profile
+ * @summary 프로필 조회
+ * @description 사용자 타입에 따라 고객 또는 기사님 프로필을 조회합니다.
+ * @tags Users
+ * @security BearerAuth
+ * @return {SuccessResponse} 200 - 프로필 조회 성공
+ * @return {ErrorResponse} 401 - 인증 실패 (유효하지 않은 토큰)
+ * @return {ErrorResponse} 404 - 사용자를 찾을 수 없음
+ * @return {ErrorResponse} 500 - 서버 내부 오류
+ */
+userRouter.get("/profile", verifyAccessToken, getProfile);
 
 /**
  * POST /users/profile
