@@ -1,155 +1,135 @@
 import { PrismaClient } from "@prisma/client";
-import { IMoverListFilter, TOrderByType } from "../types/mover.types";
+import type {
+  MoverListFilter,
+  DesignatedQuoteRequestDto,
+} from "../types/mover.types";
 const prisma = new PrismaClient();
 
 /**
- * 정렬 조건 생성 함수
+ * 기사님 리스트 조회
  */
-const getOrderBy = (sort: string): TOrderByType => {
-  switch (sort) {
-    case "rating":
-      return { avgRating: "desc" };
-    case "career":
-      return { experience: "desc" };
-    case "confirmed":
-      return { completedCount: "desc" };
-    default:
-      return { reviewCount: "desc" };
-  }
-};
-
-/**
- * 기사님 리스트 조회 (필터, 정렬, 키워드)
- */
-export const getMoverList = async (filter: IMoverListFilter) => {
+export const getMoverList = async (filter: MoverListFilter) => {
   const {
     region,
-    serviceTypeId,
+    serviceType,
     search,
-    sort = "review",
+    sort = "rating",
     cursor,
-    take = 20,
+    take = 4,
   } = filter;
 
-  // 필터, 검색
   const where: any = {
     deletedAt: null,
-    user: {
-      currentRole: "MOVER",
-      hasProfile: true,
-      deletedAt: null,
-    },
-    ...(search && { nickname: { contains: search } }),
-    ...(region && {
-      serviceRegions: {
-        some: { region },
-      },
+    userType: { has: "MOVER" },
+    ...(search && {
+      OR: [{ nickname: { contains: search } }, { name: { contains: search } }],
     }),
-    ...(serviceTypeId && {
-      serviceTypes: {
-        some: { serviceId: serviceTypeId },
+    ...(serviceType && {
+      serviceTypes: { has: serviceType },
+    }),
+    ...(region && {
+      serviceAreas: {
+        some: { region },
       },
     }),
   };
 
-  // 정렬
-  const orderBy = getOrderBy(sort);
+  const SORT_MAP: Record<string, string> = {
+    rating: "averageRating",
+    career: "career",
+    confirmed: "workedCount",
+    review: "totalReviewCount",
+  };
+  const orderByField = SORT_MAP[sort] || "averageRating";
+  const orderBy = { [orderByField]: "desc" };
 
-  return prisma.profile.findMany({
+  const movers = await prisma.user.findMany({
     where,
     orderBy,
     skip: cursor ? 1 : 0,
     ...(cursor && { cursor: { id: cursor } }),
-    take,
+    take: take + 1,
     include: {
-      user: {
-        select: { id: true, name: true, email: true },
-      },
-      serviceRegions: true,
-      serviceTypes: { include: { service: true } },
+      serviceAreas: true,
+      favorites: true,
+    },
+  });
+  const hasNext = movers.length > take;
+  const items = hasNext ? movers.slice(0, take) : movers;
+  const nextCursor = hasNext ? items[items.length - 1].id : null;
+  return { items, nextCursor, hasNext };
+};
+
+/**
+ * 기사님 상세 조회
+ */
+export const getMoverDetail = async (id: string) => {
+  return prisma.user.findUnique({
+    where: { id, deletedAt: null },
+    include: {
+      serviceAreas: true,
+      favorites: true,
     },
   });
 };
 
 /**
- * 찜한 기사님 조회
+ * 찜한 기사님 리스트 조회
  */
-export const getFavoriteMovers = async (userId: number) => {
+export const getFavoriteMovers = async (customerId: string) => {
   const favorites = await prisma.favorite.findMany({
-    where: {
-      userId: userId,
-      mover: {
-        currentRole: "MOVER",
-        hasProfile: true,
-        deletedAt: null,
-        profile: {
-          deletedAt: null,
-        },
-      },
-    },
-    orderBy: {
-      createdAt: "desc", // 유저가 찜한 시간을 기준으로 최신순 조회
-    },
-    take: 3,
+    where: { customerId, deletedAt: null },
     include: {
       mover: {
         include: {
-          profile: {
-            include: {
-              user: {
-                select: { id: true, name: true, email: true },
-              },
-              serviceRegions: true,
-              serviceTypes: { include: { service: true } },
-            },
-          },
+          serviceAreas: true,
         },
       },
     },
   });
-
-  return favorites
-    .map((favorite) => favorite.mover.profile)
-    .filter((profile) => profile !== null);
-};
-
-/**
- *  기사님 상세 조회
- */
-const getMoverDetail = async (id: number) => {
-  return prisma.profile.findUnique({
-    where: { id },
-    include: {
-      user: true,
-      serviceRegions: true,
-      serviceTypes: { include: { service: true } },
-    },
-  });
+  return favorites.map((fav) => fav.mover);
 };
 
 /**
  * 지정 견적 요청 생성
  */
-export const createDesignatedEstimateRequest = async ({
-  quoteId,
-  customerId,
-  moverId,
-  message,
-  expiresAt,
-}: {
-  quoteId: number;
-  customerId: number;
-  moverId: number;
-  message?: string;
-  expiresAt: Date;
-}) => {
-  return await prisma.designatedEstimateRequest.create({
+export const createDesignatedEstimateRequest = async (
+  dto: DesignatedQuoteRequestDto
+) => {
+  const { quoteId, moverId, message, expiresAt } = dto;
+  const exists = await prisma.designatedMover.findFirst({
+    where: { estimateRequestId: quoteId, moverId },
+  });
+  if (exists) return null;
+  return await prisma.designatedMover.create({
     data: {
-      quoteId,
-      customerId,
+      estimateRequestId: quoteId,
       moverId,
       message,
       expiresAt,
+    },
+  });
+};
+
+/**
+ * 지정 견적 요청 여부 조회
+ */
+export const checkDesignatedEstimateRequest = async (params: {
+  quoteId: string;
+  moverId: string;
+}) => {
+  const { quoteId, moverId } = params;
+  return await prisma.designatedMover.findFirst({
+    where: {
+      estimateRequestId: quoteId,
+      moverId,
+      deletedAt: null,
+    },
+    select: {
+      id: true,
+      message: true,
+      expiresAt: true,
+      createdAt: true,
     },
   });
 };
@@ -159,6 +139,7 @@ const moverRepository = {
   getFavoriteMovers,
   getMoverDetail,
   createDesignatedEstimateRequest,
+  checkDesignatedEstimateRequest,
 };
 
 export default moverRepository;

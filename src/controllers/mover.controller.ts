@@ -1,15 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import {
-  fetchMoverList,
-  fetchFavoriteMovers,
-  requestDesignatedQuote,
-} from "../services/mover.service";
-import { IMoverListFilter } from "../types/mover.types";
-import { handleError } from "../utils/handleError";
 import moverService from "../services/mover.service";
 
+const ALLOWED_SORT = ["rating", "career", "confirmed", "review"];
+
 /**
- * 기사님 리스트 조회 (필터, 정렬, 키워드)
+ * 기사님 리스트 조회
  */
 export const getMoverListController = async (
   req: Request,
@@ -17,30 +12,42 @@ export const getMoverListController = async (
   next: NextFunction
 ) => {
   try {
-    const { region, serviceTypeId, search, sort, cursor, take } = req.query;
-
-    const filter: IMoverListFilter = {
-      region: region as any,
-      serviceTypeId: serviceTypeId ? Number(serviceTypeId) : undefined,
-      search: search as string,
-      sort: sort as any,
-      cursor: cursor ? Number(cursor) : undefined,
-      take: take ? Number(take) : undefined,
+    let { region, serviceType, search, sort, cursor, take } = req.query;
+    region = region ? String(region) : undefined;
+    serviceType = serviceType ? String(serviceType) : undefined;
+    search = search ? String(search) : undefined;
+    sort =
+      sort && ALLOWED_SORT.includes(String(sort)) ? String(sort) : "rating";
+    cursor = cursor ? String(cursor) : undefined;
+    let takeNum: number | undefined = undefined;
+    if (take !== undefined) {
+      const parsed = Number(take);
+      if (!isNaN(parsed)) takeNum = parsed;
+    }
+    const filter = {
+      region,
+      serviceType,
+      search,
+      sort,
+      cursor,
+      take: takeNum,
     };
-
-    const movers = await fetchMoverList(filter);
+    const { items, nextCursor, hasNext } =
+      await moverService.fetchMoverList(filter);
     res.json({
       success: true,
       message: "기사님 목록을 성공적으로 조회했습니다.",
-      data: movers,
+      data: items,
+      nextCursor,
+      hasNext,
     });
   } catch (err) {
-    handleError(res, err);
+    next(err);
   }
 };
 
 /**
- * 찜한 기사님 조회
+ * 찜한 기사님 리스트 조회
  */
 export const getFavoriteMoversController = async (
   req: Request,
@@ -48,15 +55,17 @@ export const getFavoriteMoversController = async (
   next: NextFunction
 ) => {
   try {
-    const { userId } = req.user as { userId: number };
-    const favoriteMovers = await fetchFavoriteMovers(userId);
+    const { userId } = req.user as { userId: string | number };
+    const favoriteMovers = await moverService.fetchFavoriteMovers(
+      String(userId)
+    );
     res.json({
       success: true,
       message: "찜한 기사님 목록을 성공적으로 조회했습니다.",
       data: favoriteMovers,
     });
   } catch (err) {
-    handleError(res, err);
+    next(err);
   }
 };
 
@@ -69,7 +78,7 @@ export const getMoverDetailController = async (
   next: NextFunction
 ) => {
   try {
-    const id = Number(req.params.moverId);
+    const id = String(req.params.moverId);
     if (!id)
       return res
         .status(400)
@@ -86,7 +95,7 @@ export const getMoverDetailController = async (
 };
 
 /**
- * 지정 견적 요청 
+ * 지정 견적 요청 생성
  */
 export const postDesignatedQuoteRequestController = async (
   req: Request,
@@ -96,8 +105,18 @@ export const postDesignatedQuoteRequestController = async (
   try {
     const { moverId } = req.params;
     const { quoteId, message, expiresAt } = req.body;
-    const user = req.user as { userId: number; role: string };
-    if (!user || user.role !== "CUSTOMER") {
+    const user = req.user as {
+      userId: string;
+      name: string;
+      userType: string | string[];
+    };
+
+    // userType이 문자열이거나 배열일 수 있으므로 둘 다 처리
+    const userTypes = Array.isArray(user.userType)
+      ? user.userType
+      : [user.userType];
+
+    if (!user || !userTypes.includes("CUSTOMER")) {
       return res.status(401).json({
         success: false,
         message: "회원만 지정 견적 요청이 가능합니다.",
@@ -106,13 +125,19 @@ export const postDesignatedQuoteRequestController = async (
     if (!quoteId || !expiresAt) {
       return res.status(400).json({ success: false, message: "필수값 누락" });
     }
-    const request = await requestDesignatedQuote({
-      quoteId: Number(quoteId),
-      moverId: Number(moverId),
-      customerId: user.userId,
+    const request = await moverService.requestDesignatedQuote({
+      quoteId: String(quoteId),
+      moverId: String(moverId),
       message,
       expiresAt: new Date(expiresAt),
     });
+    if (!request) {
+      return res.json({
+        success: false,
+        message: "이미 해당 기사님에게 지정 견적을 요청하셨습니다.",
+        data: null,
+      });
+    }
     res.json({
       success: true,
       message: "지정 견적 요청이 성공적으로 생성되었습니다.",
@@ -123,11 +148,66 @@ export const postDesignatedQuoteRequestController = async (
   }
 };
 
-const moverController = {
+/**
+ * 지정 견적 요청 여부 조회
+ */
+export const getDesignatedQuoteRequestCheckController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { moverId } = req.params;
+    const { quoteId } = req.query;
+    const user = req.user as {
+      userId: string;
+      name: string;
+      userType: string | string[];
+    };
+
+    // userType이 문자열이거나 배열일 수 있으므로 둘 다 처리
+    const userTypes = Array.isArray(user.userType)
+      ? user.userType
+      : [user.userType];
+
+    if (!user || !userTypes.includes("CUSTOMER")) {
+      return res.status(401).json({
+        success: false,
+        message: "회원만 지정 견적 요청 조회가 가능합니다.",
+      });
+    }
+
+    if (!quoteId) {
+      return res.status(400).json({
+        success: false,
+        message: "quoteId가 필요합니다.",
+      });
+    }
+
+    const request = await moverService.checkDesignatedQuoteRequest({
+      quoteId: String(quoteId),
+      moverId: String(moverId),
+    });
+
+    res.json({
+      success: true,
+      message: "지정 견적 요청 여부 조회 성공",
+      data: {
+        hasRequested: !!request,
+        requestId: request?.id || null,
+        message: request?.message || null,
+        expiresAt: request?.expiresAt || null,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export default {
   getMoverListController,
   getFavoriteMoversController,
   getMoverDetailController,
   postDesignatedQuoteRequestController,
+  getDesignatedQuoteRequestCheckController,
 };
-
-export default moverController;
