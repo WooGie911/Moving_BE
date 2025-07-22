@@ -4,6 +4,7 @@ import {
   postProfile,
   patchMoverBasicInfo,
   getProfile,
+  patchCustomerProfile,
 } from "../controllers/user.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 import generatePresignedUrls from "../middlewares/presignedUrl";
@@ -178,6 +179,23 @@ userRouter.get("/profile", verifyAccessToken, getProfile);
  * }
  */
 userRouter.post("/profile", verifyAccessToken, postProfile);
+
+/**
+ * PATCH /users/profile/customer
+ * @summary 일반 유저 프로필 수정
+ * @description 일반 유저의 프로필을 수정합니다.
+ * @tags Users
+ * @security BearerAuth
+ * @param {CustomerProfileRequest} request.body.required - 수정할 프로필 정보
+ * @return {SuccessResponse} 200 - 프로필 수정 성공
+ * @return {ErrorResponse} 401 - 인증 실패 (유효하지 않은 토큰)
+ * @return {ErrorResponse} 404 - 사용자를 찾을 수 없음
+ * @return {ErrorResponse} 422 - 유효성 검사 실패 (필수 필드 누락, 닉네임 중복, 입력값 형식 오류)
+ * @return {ErrorResponse} 500 - 서버 내부 오류
+ * @example request - 일반 유저 프로필 수정 요청 예시
+ *
+ */
+userRouter.patch("/profile/customer", verifyAccessToken, patchCustomerProfile);
 
 /**
  * PATCH /users/profile/mover/basic
