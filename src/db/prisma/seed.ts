@@ -22,7 +22,7 @@ function getRandom<T>(arr: T[]): T {
 async function main() {
   console.log("🌱 Starting seed...");
 
-  // 기존 데이터 삭제
+  // DB 초기화 (모든 데이터 삭제)
   await prisma.notification.deleteMany();
   await prisma.action.deleteMany();
   await prisma.favorite.deleteMany();
@@ -35,8 +35,8 @@ async function main() {
   await prisma.address.deleteMany();
   await prisma.user.deleteMany();
 
-  // 주소 데이터 생성 (10개)
-  const addressData = Array.from({ length: 10 }).map((_, i) => ({
+  // 주소 데이터 생성 (20개)
+  const addressData = Array.from({ length: 20 }).map((_, i) => ({
     postalCode: `1000${i}`,
     city: i % 2 === 0 ? "강남구" : "서초구",
     district: i % 2 === 0 ? `역삼동${i}` : `서초동${i}`,
@@ -45,74 +45,69 @@ async function main() {
   }));
   const addresses = await Promise.all(addressData.map((data) => prisma.address.create({ data })));
 
-  // 유저 20명 생성 (고객 15, 기사 5, 하이브리드 2)
+  // 유저 30명 생성 (모두 고객+기사)
+  const allNames = [
+    "김민수",
+    "이서연",
+    "박지훈",
+    "최유진",
+    "정우성",
+    "한지민",
+    "오세훈",
+    "윤아름",
+    "장동건",
+    "신민아",
+    "강호동",
+    "이수근",
+    "서장훈",
+    "김영철",
+    "이광수",
+    "송지효",
+    "유재석",
+    "박명수",
+    "정형돈",
+    "노홍철",
+    "이기사",
+    "박기사",
+    "최기사",
+    "정기사",
+    "박민규",
+    "김수빈",
+    "윤세준",
+    "김승준",
+    "김재욱",
+    "백지연",
+  ];
   const userArr = [];
-  for (let i = 1; i <= 15; i++) {
+  for (let i = 0; i < 30; i++) {
     userArr.push({
-      email: `customer${i}@test.com`,
-      encryptedPassword: await bcrypt.hash(`Test!Pass${i}@2024`, 10),
-      encryptedPhoneNumber: encryptPhoneNumber(`010-1${i.toString().padStart(3, "0")}-0000`),
-      name: `고객${i}`,
-      userType: [UserType.CUSTOMER],
-      provider: AuthProvider.LOCAL,
-      customerImage: `https://example.com/customer${i}.jpg`,
-      nickname: `고객닉${i}`,
-      currentArea: getRandom([RegionType.SEOUL, RegionType.GYEONGGI]),
-      preferredServices: [getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE])],
-      totalFavoriteCount: 0,
-    });
-  }
-  for (let i = 1; i <= 5; i++) {
-    userArr.push({
-      email: `mover${i}@test.com`,
-      encryptedPassword: await bcrypt.hash(`Mover!Pass${i}@2024`, 10),
-      encryptedPhoneNumber: encryptPhoneNumber(`010-2${i.toString().padStart(3, "0")}-0000`),
-      name: `기사${i}`,
-      userType: [UserType.MOVER],
-      provider: AuthProvider.LOCAL,
-      moverImage: `https://example.com/mover${i}.jpg`,
-      nickname: `기사닉${i}`,
-      currentAreas: [getRandom([RegionType.SEOUL, RegionType.GYEONGGI])],
-      isVeteran: i % 2 === 0,
-      shortIntro: `경력 ${i}년의 기사`,
-      detailIntro: `이사 전문 기사${i}입니다`,
-      career: i,
-      workedCount: i * 10,
-      averageRating: 4 + (i % 2) * 0.5,
-      totalReviewCount: i * 5,
-      serviceTypes: [getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE])],
-      totalFavoriteCount: 0,
-    });
-  }
-  // 하이브리드 2명
-  for (let i = 1; i <= 2; i++) {
-    userArr.push({
-      email: `hybrid${i}@test.com`,
-      encryptedPassword: await bcrypt.hash(`Hybrid!Pass${i}@2024`, 10),
-      encryptedPhoneNumber: encryptPhoneNumber(`010-3${i.toString().padStart(3, "0")}-0000`),
-      name: `하이브리드${i}`,
+      email: `user${i + 1}@test.com`,
+      encryptedPassword: await bcrypt.hash(`Test!Pass${i + 1}@2024`, 10),
+      encryptedPhoneNumber: encryptPhoneNumber(`010-${1000 + i}`),
+      name: allNames[i],
       userType: [UserType.CUSTOMER, UserType.MOVER],
       provider: AuthProvider.LOCAL,
-      customerImage: `https://example.com/hybrid${i}_customer.jpg`,
-      moverImage: `https://example.com/hybrid${i}_mover.jpg`,
-      nickname: `하이브리드닉${i}`,
-      currentAreas: [RegionType.SEOUL, RegionType.GYEONGGI],
-      preferredServices: [MoveType.HOME, MoveType.SMALL],
-      isVeteran: true,
-      shortIntro: `고객+기사 하이브리드${i}`,
-      detailIntro: `고객과 기사 모두 경험한 하이브리드${i}`,
-      career: 3 + i,
-      workedCount: 20 * i,
-      averageRating: 4.7,
-      totalReviewCount: 10 * i,
-      serviceTypes: [MoveType.HOME, MoveType.SMALL],
+      nickname: allNames[i] + "닉네임",
+      customerImage: "",
+      moverImage: "",
+      currentArea: getRandom([RegionType.SEOUL, RegionType.GYEONGGI]),
+      preferredServices: [getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE])],
+      shortIntro: `${allNames[i]}은(는) 친절하고 꼼꼼한 기사입니다!`,
+      detailIntro: `${allNames[i]}은(는) 다양한 이사 경험을 바탕으로 최고의 서비스를 제공합니다.`,
+      career: 5 + (i % 10),
+      isVeteran: i % 2 === 0,
+      workedCount: 10 + i * 2,
+      averageRating: 4.2 + (i % 3) * 0.2,
+      totalReviewCount: 5 + i,
+      currentAreas: [getRandom([RegionType.SEOUL, RegionType.GYEONGGI])],
+      serviceTypes: [getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE])],
       totalFavoriteCount: 0,
     });
   }
   const users = await Promise.all(userArr.map((data) => prisma.user.create({ data })));
 
-  // 기사님 서비스 지역 (기사/하이브리드)
-  const moverUsers = users.filter((u) => u.userType.includes("MOVER"));
+  // 기사님 서비스 지역 (모든 유저)
+  const moverUsers = users; // 모든 유저가 기사 역할
   await Promise.all(
     moverUsers.map((u, idx) =>
       prisma.moverServiceArea.create({
@@ -149,12 +144,12 @@ async function main() {
     ),
   );
 
-  // 견적 요청 30개 생성
+  // 견적 요청 60개 생성 (고객 역할 유저 랜덤)
   const estimateRequests = await Promise.all(
-    Array.from({ length: 30 }).map((_, i) =>
+    Array.from({ length: 60 }).map((_, i) =>
       prisma.estimateRequest.create({
         data: {
-          customerId: users[i % 15].id, // 고객 15명 중에서
+          customerId: users[getRandom([...Array(users.length).keys()])].id,
           moveType: getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE]),
           moveDate: new Date(Date.now() + i * 86400000),
           fromAddressId: addresses[i % addresses.length].id,
@@ -173,13 +168,25 @@ async function main() {
     ),
   );
 
-  // 견적 30개 생성 (기사/하이브리드가 랜덤하게 제출)
-  const estimates = await Promise.all(
-    Array.from({ length: 30 }).map((_, i) =>
+  // 견적 80개 생성 (기사 역할 유저 랜덤, 중복 방지)
+  const usedPairs = new Set();
+  const estimatesArr = [];
+  for (let i = 0; i < 80; i++) {
+    let estimateRequestIdx, moverIdx, pairKey;
+    let tryCount = 0;
+    do {
+      estimateRequestIdx = getRandom([...Array(estimateRequests.length).keys()]);
+      moverIdx = getRandom([...Array(users.length).keys()]);
+      pairKey = `${estimateRequestIdx}_${moverIdx}`;
+      tryCount++;
+      if (tryCount > 100) break; // 무한루프 방지
+    } while (usedPairs.has(pairKey));
+    usedPairs.add(pairKey);
+    estimatesArr.push(
       prisma.estimate.create({
         data: {
-          moverId: moverUsers[i % moverUsers.length].id,
-          estimateRequestId: estimateRequests[i % estimateRequests.length].id,
+          moverId: users[moverIdx].id,
+          estimateRequestId: estimateRequests[estimateRequestIdx].id,
           price: 100000 + i * 10000,
           comment: `테스트 견적 코멘트 ${i + 1}`,
           status: getRandom([
@@ -193,48 +200,75 @@ async function main() {
           insuranceAmount: 1000000 + i * 100000,
         },
       }),
-    ),
-  );
+    );
+  }
+  const estimates = await Promise.all(estimatesArr);
 
-  // 찜 40개 생성
+  // 찜 100개 생성 (고객이 기사/하이브리드 찜, 모든 유저 랜덤, 중복 방지)
+  const favoritePairs = new Set();
   const favoriteArr = [];
-  for (let i = 0; i < 40; i++) {
-    const customer = users[i % 15];
-    const mover = moverUsers[i % moverUsers.length];
+  let favoriteCount = 0;
+  while (favoriteCount < 100) {
+    const customerIdx = getRandom([...Array(users.length).keys()]);
+    let moverIdx;
+    do {
+      moverIdx = getRandom([...Array(users.length).keys()]);
+    } while (customerIdx === moverIdx);
+    const pairKey = `${customerIdx}_${moverIdx}`;
+    if (favoritePairs.has(pairKey)) continue;
+    favoritePairs.add(pairKey);
     favoriteArr.push(
       prisma.favorite.create({
         data: {
-          customerId: customer.id,
-          moverId: mover.id,
+          customerId: users[customerIdx].id,
+          moverId: users[moverIdx].id,
         },
       }),
     );
-    // 기사/하이브리드의 totalFavoriteCount 증가
+    // totalFavoriteCount 증가도 반영
     await prisma.user.update({
-      where: { id: mover.id },
+      where: { id: users[moverIdx].id },
       data: { totalFavoriteCount: { increment: 1 } },
     });
+    favoriteCount++;
   }
   await Promise.all(favoriteArr);
 
-  // 리뷰 10개 생성
-  await Promise.all(
-    Array.from({ length: 10 }).map((_, i) =>
+  // 리뷰 30개 생성 (모든 유저 랜덤, estimateRequestId 중복 방지)
+  const usedEstimateRequestIds = new Set();
+  const reviewArr = [];
+  let reviewCount = 0;
+  while (reviewCount < 30 && usedEstimateRequestIds.size < estimateRequests.length) {
+    let estimateRequestIdx;
+    do {
+      estimateRequestIdx = getRandom([...Array(estimateRequests.length).keys()]);
+    } while (usedEstimateRequestIds.has(estimateRequestIdx));
+    usedEstimateRequestIds.add(estimateRequestIdx);
+
+    let customer, mover;
+    do {
+      customer = users[getRandom([...Array(users.length).keys()])];
+      mover = users[getRandom([...Array(users.length).keys()])];
+    } while (customer.id === mover.id);
+
+    reviewArr.push(
       prisma.review.create({
         data: {
-          customerId: users[i % 15].id,
-          moverId: moverUsers[i % moverUsers.length].id,
-          estimateRequestId: estimateRequests[i % estimateRequests.length].id,
-          rating: 3 + (i % 3),
-          content: `테스트 리뷰 내용 ${i + 1}`,
+          customerId: customer.id,
+          moverId: mover.id,
+          estimateRequestId: estimateRequests[estimateRequestIdx].id,
+          rating: 3 + (reviewCount % 3),
+          content: `테스트 리뷰 내용 ${reviewCount + 1}`,
         },
       }),
-    ),
-  );
+    );
+    reviewCount++;
+  }
+  await Promise.all(reviewArr);
 
-  // 사용자 활동 15개 생성
+  // 사용자 활동 30개 생성
   const actions = await Promise.all(
-    Array.from({ length: 15 }).map((_, i) =>
+    Array.from({ length: 30 }).map((_, i) =>
       prisma.action.create({
         data: {
           userId: users[i].id,
@@ -253,9 +287,9 @@ async function main() {
     ),
   );
 
-  // 알림 15개 생성
+  // 알림 30개 생성
   await Promise.all(
-    Array.from({ length: 15 }).map((_, i) =>
+    Array.from({ length: 30 }).map((_, i) =>
       prisma.notification.create({
         data: {
           actionId: actions[i].id,
@@ -284,9 +318,9 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error("❌ Seed failed:", e);
+    console.error(e);
     process.exit(1);
   })
-  .finally(async () => {
-    await prisma.$disconnect();
+  .finally(() => {
+    prisma.$disconnect();
   });
