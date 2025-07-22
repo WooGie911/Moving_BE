@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcrypt";
 import {
   getUserById,
@@ -6,9 +5,14 @@ import {
   createCustomerProfile as createCustomerProfileRepository,
   createMoverProfileRepository,
   updateUserProfile,
-  checkNicknameExists,
+  getCustomerProfile,
+  getMoverProfile,
+  updateCustomerProfile,
 } from "../repositories/user.repository";
-import { encryptPhoneNumber, decryptPhoneNumber } from "../utils/phoneEncryption";
+import {
+  encryptPhoneNumber,
+  decryptPhoneNumber,
+} from "../utils/phoneEncryption";
 import { NotFoundError, ValidationError } from "../types/commonError.types";
 import {
   TCustomerProfileInput,
@@ -17,6 +21,8 @@ import {
   TCreateMoverProfile,
   TCreateCustomerProfile,
   TUserRole,
+  TCustomerProfileUpdateInput,
+  TCustomerProfileUpdate,
 } from "../types/user.types";
 import { PROFILE_ERROR_MESSAGES } from "../constants/profile.constants";
 import {
@@ -38,7 +44,9 @@ const userInfo = async (userId: string, userType: TUserRole) => {
       id: user.id,
       name: user.name,
       email: user.email,
-      phoneNumber: user.encryptedPhoneNumber ? decryptPhoneNumber(user.encryptedPhoneNumber) : null,
+      phoneNumber: user.encryptedPhoneNumber
+        ? decryptPhoneNumber(user.encryptedPhoneNumber)
+        : null,
       nickname: user.nickname,
       customerImage: user.customerImage || "",
       userType,
@@ -48,7 +56,9 @@ const userInfo = async (userId: string, userType: TUserRole) => {
       id: user.id,
       name: user.name,
       email: user.email,
-      phoneNumber: user.encryptedPhoneNumber ? decryptPhoneNumber(user.encryptedPhoneNumber) : null,
+      phoneNumber: user.encryptedPhoneNumber
+        ? decryptPhoneNumber(user.encryptedPhoneNumber)
+        : null,
       nickname: user.nickname,
       moverImage: user.moverImage || "",
       userType,
@@ -56,7 +66,28 @@ const userInfo = async (userId: string, userType: TUserRole) => {
   }
 };
 
-// 일반 유저(CUSTOMER) 프로필 등록 및 업데이트
+// 프로필 정보 조회
+const getProfileData = async (userId: string, userType: TUserRole) => {
+  if (userType === "CUSTOMER") {
+    const profile = await getCustomerProfile(userId);
+
+    if (!profile) {
+      throw new NotFoundError(PROFILE_ERROR_MESSAGES.PROFILE_NOT_FOUND);
+    }
+
+    const { encryptedPhoneNumber, ...rest } = profile;
+    const phoneNumber = encryptedPhoneNumber
+      ? decryptPhoneNumber(encryptedPhoneNumber)
+      : null;
+
+    return { ...rest, phoneNumber };
+  } else if (userType === "MOVER") {
+    const profile = await getMoverProfile(userId);
+    return profile;
+  }
+};
+
+// 일반 유저(CUSTOMER) 프로필 등록
 const createCustomerProfile = async (
   userId: string,
   profileData: TCustomerProfileInput
@@ -92,6 +123,53 @@ const createCustomerProfile = async (
     accessToken: newAccessToken,
     refreshToken: newRefreshToken,
   };
+};
+
+// 일반 유저(CUSTOMER) 프로필 수정
+const updateCustomerProfileCheck = async (
+  userId: string,
+  updateData: TCustomerProfileUpdateInput
+) => {
+  const user = await getUserWithPassword(userId);
+  if (!user) {
+    throw new NotFoundError(PROFILE_ERROR_MESSAGES.USER_NOT_FOUND);
+  }
+
+  // 비밀번호 변경 요청 시 현재 비밀번호 검증
+  if (updateData.password) {
+    const isCurrentPasswordValid = await bcrypt.compare(
+      updateData.password,
+      user.encryptedPassword!
+    );
+    if (!isCurrentPasswordValid) {
+      throw new ValidationError("현재 비밀번호가 일치하지 않습니다");
+    }
+  }
+
+  // 업데이트 데이터 준비
+  const encryptedPhoneNumber = encryptPhoneNumber(updateData.phoneNumber!);
+
+  // 비밀 번호 변경 요청 시 새로운 비밀 번호 암호화 및 업데이트
+  let newEncryptedPassword: string | undefined;
+  if (updateData.newPassword) {
+    newEncryptedPassword = await bcrypt.hash(updateData.newPassword, 10);
+  } else {
+    // 아니라면 원래 비밀번호 다시 저장
+    newEncryptedPassword = user.encryptedPassword || undefined;
+  }
+
+  const newUpdateData: TCustomerProfileUpdate = {
+    name: updateData.name,
+    nickname: updateData.nickname,
+    email: updateData.email,
+    encryptedPhoneNumber,
+    encryptedPassword: newEncryptedPassword,
+    customerImage: updateData.customerImage,
+    currentArea: updateData.currentArea,
+    preferredServices: updateData.preferredServices,
+  };
+
+  await updateCustomerProfile(userId, newUpdateData);
 };
 
 // 기사님(MOVER) 프로필 등록
@@ -190,7 +268,9 @@ const updateMoverBasicInfo = async (
 
 export {
   userInfo,
+  getProfileData,
   createCustomerProfile,
+  updateCustomerProfileCheck,
   createMoverProfile,
   updateMoverBasicInfo,
 };

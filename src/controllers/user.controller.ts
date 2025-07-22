@@ -4,6 +4,8 @@ import {
   createCustomerProfile,
   createMoverProfile,
   updateMoverBasicInfo,
+  getProfileData,
+  updateCustomerProfileCheck,
 } from "../services/user.service";
 import { handleError } from "../utils/handleError";
 import {
@@ -28,6 +30,18 @@ const getUser = async (req: Request, res: Response) => {
   const user = await userInfo(userId, userType);
 
   res.json({ success: true, data: user });
+};
+
+// 프로필 조회
+const getProfile = async (req: Request, res: Response) => {
+  const { userId, userType } = req.user as {
+    userId: string;
+    userType: TUserRole;
+  };
+
+  const profile = await getProfileData(userId, userType);
+
+  res.json({ success: true, data: profile });
 };
 
 // 프로필 등록 및 수정 -> 수정은 따로 빼기?
@@ -105,6 +119,34 @@ const postProfile = async (req: Request, res: Response) => {
   }
 };
 
+// 일반 유저 프로필 수정
+const patchCustomerProfile = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.user as { userId: string };
+
+    const updateData = {
+      name: req.body.name,
+      nickname: req.body.nickname,
+      email: req.body.email,
+      phoneNumber: req.body.phoneNumber,
+      password: req.body.password,
+      newPassword: req.body.newPassword,
+      customerImage: req.body.customerImage,
+      currentArea: req.body.currentArea,
+      preferredServices: req.body.preferredServices,
+    };
+
+    await updateCustomerProfileCheck(userId, updateData);
+    res.json({
+      success: true,
+      message: PROFILE_SUCCESS_MESSAGES.CUSTOMER_PROFILE_UPDATED,
+      data: updateData,
+    });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
 // 기사님 기본정보 수정
 const patchMoverBasicInfo = async (req: Request, res: Response) => {
   try {
@@ -126,4 +168,10 @@ const patchMoverBasicInfo = async (req: Request, res: Response) => {
   }
 };
 
-export { getUser, postProfile, patchMoverBasicInfo };
+export {
+  getUser,
+  postProfile,
+  getProfile,
+  patchCustomerProfile,
+  patchMoverBasicInfo,
+};

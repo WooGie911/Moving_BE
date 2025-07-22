@@ -129,6 +129,7 @@ model User {
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
   deletedAt            DateTime? // 소프트 삭제
+  totalFavoriteCount   Int          @default(0) // 받은 찜 개수
 
   // Customer 전용 필드
   currentArea       RegionType? // 현재 거주 지역
