@@ -82,7 +82,7 @@ const createCustomerProfile = async (
   const { newAccessToken, newRefreshToken } = generateToken({
     id: user.id,
     name: user.name,
-    nickname: user.nickname || "",
+    nickname: profileData.nickname || "",
     userType: user.userType[0],
   });
 
@@ -123,7 +123,7 @@ const createMoverProfile = async (
   const { newAccessToken, newRefreshToken } = generateToken({
     id: user.id,
     name: user.name,
-    nickname: user.nickname || "",
+    nickname: profileData.nickname || "",
     userType: user.userType[0],
   });
 

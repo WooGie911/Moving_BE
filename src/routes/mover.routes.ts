@@ -227,4 +227,44 @@ moverRouter.post(
   moverController.postDesignatedQuoteRequestController
 );
 
+/**
+ * GET /movers/:moverId/quote-request/check
+ * @summary 지정 견적 요청 여부 조회 (회원만 가능)
+ * @tags Mover
+ * @description 특정 견적(quoteId)에 대해 특정 기사님에게 지정 견적을 요청했는지 확인합니다.
+ * @security bearerAuth
+ * @param {number} moverId.path.required - 기사님 ID
+ * @param {string} quoteId.query.required - 견적 ID
+ * @returns {object} 200 - 지정 견적 요청 여부 조회 성공
+ * @returns {object} 400 - 잘못된 요청
+ * @returns {object} 401 - 인증 실패
+ * @example response - 200 - 성공 예시 (요청한 경우)
+ * {
+ *   "success": true,
+ *   "message": "지정 견적 요청 여부 조회 성공",
+ *   "data": {
+ *     "hasRequested": true,
+ *     "requestId": "uuid",
+ *     "message": "이사 일정 조율이 필요합니다.",
+ *     "expiresAt": "2025-07-31T23:59:59.000Z"
+ *   }
+ * }
+ * @example response - 200 - 성공 예시 (요청하지 않은 경우)
+ * {
+ *   "success": true,
+ *   "message": "지정 견적 요청 여부 조회 성공",
+ *   "data": {
+ *     "hasRequested": false,
+ *     "requestId": null,
+ *     "message": null,
+ *     "expiresAt": null
+ *   }
+ * }
+ */
+moverRouter.get(
+  "/:moverId/quote-request/check",
+  verifyAccessToken,
+  moverController.getDesignatedQuoteRequestCheckController
+);
+
 export default moverRouter;
