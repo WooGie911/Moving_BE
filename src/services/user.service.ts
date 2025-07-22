@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcrypt";
 import {
   getUserById,
@@ -6,9 +5,13 @@ import {
   createCustomerProfile as createCustomerProfileRepository,
   createMoverProfileRepository,
   updateUserProfile,
-  checkNicknameExists,
+  getCustomerProfile,
+  getMoverProfile,
 } from "../repositories/user.repository";
-import { encryptPhoneNumber, decryptPhoneNumber } from "../utils/phoneEncryption";
+import {
+  encryptPhoneNumber,
+  decryptPhoneNumber,
+} from "../utils/phoneEncryption";
 import { NotFoundError, ValidationError } from "../types/commonError.types";
 import {
   TCustomerProfileInput,
@@ -38,7 +41,9 @@ const userInfo = async (userId: string, userType: TUserRole) => {
       id: user.id,
       name: user.name,
       email: user.email,
-      phoneNumber: user.encryptedPhoneNumber ? decryptPhoneNumber(user.encryptedPhoneNumber) : null,
+      phoneNumber: user.encryptedPhoneNumber
+        ? decryptPhoneNumber(user.encryptedPhoneNumber)
+        : null,
       nickname: user.nickname,
       customerImage: user.customerImage || "",
       userType,
@@ -48,11 +53,34 @@ const userInfo = async (userId: string, userType: TUserRole) => {
       id: user.id,
       name: user.name,
       email: user.email,
-      phoneNumber: user.encryptedPhoneNumber ? decryptPhoneNumber(user.encryptedPhoneNumber) : null,
+      phoneNumber: user.encryptedPhoneNumber
+        ? decryptPhoneNumber(user.encryptedPhoneNumber)
+        : null,
       nickname: user.nickname,
       moverImage: user.moverImage || "",
       userType,
     };
+  }
+};
+
+// 프로필 정보 조회
+const getProfileData = async (userId: string, userType: TUserRole) => {
+  if (userType === "CUSTOMER") {
+    const profile = await getCustomerProfile(userId);
+
+    if (!profile) {
+      throw new NotFoundError(PROFILE_ERROR_MESSAGES.PROFILE_NOT_FOUND);
+    }
+
+    const { encryptedPhoneNumber, ...rest } = profile;
+    const phoneNumber = encryptedPhoneNumber
+      ? decryptPhoneNumber(encryptedPhoneNumber)
+      : null;
+
+    return { ...rest, phoneNumber };
+  } else if (userType === "MOVER") {
+    const profile = await getMoverProfile(userId);
+    return profile;
   }
 };
 
@@ -190,6 +218,7 @@ const updateMoverBasicInfo = async (
 
 export {
   userInfo,
+  getProfileData,
   createCustomerProfile,
   createMoverProfile,
   updateMoverBasicInfo,

@@ -4,6 +4,7 @@ import {
   createCustomerProfile,
   createMoverProfile,
   updateMoverBasicInfo,
+  getProfileData,
 } from "../services/user.service";
 import { handleError } from "../utils/handleError";
 import {
@@ -28,6 +29,18 @@ const getUser = async (req: Request, res: Response) => {
   const user = await userInfo(userId, userType);
 
   res.json({ success: true, data: user });
+};
+
+// 프로필 조회
+const getProfile = async (req: Request, res: Response) => {
+  const { userId, userType } = req.user as {
+    userId: string;
+    userType: TUserRole;
+  };
+
+  const profile = await getProfileData(userId, userType);
+
+  res.json({ success: true, data: profile });
 };
 
 // 프로필 등록 및 수정 -> 수정은 따로 빼기?
@@ -126,4 +139,4 @@ const patchMoverBasicInfo = async (req: Request, res: Response) => {
   }
 };
 
-export { getUser, postProfile, patchMoverBasicInfo };
+export { getUser, postProfile, getProfile, patchMoverBasicInfo };

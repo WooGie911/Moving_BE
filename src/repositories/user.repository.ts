@@ -46,6 +46,40 @@ const getUserWithPassword = async (userId: string) => {
   return user;
 };
 
+// 일반유저 프로필 조회
+const getCustomerProfile = async (userId: string) => {
+  const profile = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      name: true,
+      nickname: true,
+      email: true,
+      encryptedPhoneNumber: true,
+      customerImage: true,
+      preferredServices: true,
+      currentArea: true,
+    },
+  });
+  return profile;
+};
+
+// 기사님 프로필 조회
+const getMoverProfile = async (userId: string) => {
+  const profile = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      name: true,
+      nickname: true,
+      moverImage: true,
+      career: true,
+      shortIntro: true,
+      detailIntro: true,
+      serviceTypes: true,
+      currentAreas: true,
+    },
+  });
+  return profile;
+};
 // 일반 유저(CUSTOMER) 프로필 생성 및 유저 정보 업데이트
 const createCustomerProfile = async (profileData: TCreateCustomerProfile) => {
   return await prisma.user.update({
@@ -196,6 +230,8 @@ const updateUserProfile = async (
 export {
   getUserById,
   getUserWithPassword,
+  getCustomerProfile,
+  getMoverProfile,
   createCustomerProfile,
   createMoverProfile as createMoverProfileRepository,
   updateUserProfile,
