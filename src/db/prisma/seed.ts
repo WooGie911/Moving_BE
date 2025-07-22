@@ -95,7 +95,9 @@ async function main() {
       moverImage: "",
       currentArea: getRandom([RegionType.SEOUL, RegionType.GYEONGGI]),
 
-      preferredServices: [getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE])],
+      preferredServices: [
+        getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE]),
+      ],
       shortIntro: `${allNames[i]}은(는) 친절하고 꼼꼼한 기사입니다!`,
       detailIntro: `${allNames[i]}은(는) 다양한 이사 경험을 바탕으로 최고의 서비스를 제공합니다.`,
       career: 5 + (i % 10),
@@ -104,12 +106,15 @@ async function main() {
       averageRating: 4.2 + (i % 3) * 0.2,
       totalReviewCount: 5 + i,
       currentAreas: [getRandom([RegionType.SEOUL, RegionType.GYEONGGI])],
-      serviceTypes: [getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE])],
+      serviceTypes: [
+        getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE]),
+      ],
       totalFavoriteCount: 0,
     });
   }
-  const users = await Promise.all(userArr.map((data) => prisma.user.create({ data })));
-
+  const users = await Promise.all(
+    userArr.map((data) => prisma.user.create({ data }))
+  );
 
   // 기사님 서비스 지역 (모든 유저)
   const moverUsers = users; // 모든 유저가 기사 역할
@@ -180,7 +185,9 @@ async function main() {
     let estimateRequestIdx, moverIdx, pairKey;
     let tryCount = 0;
     do {
-      estimateRequestIdx = getRandom([...Array(estimateRequests.length).keys()]);
+      estimateRequestIdx = getRandom([
+        ...Array(estimateRequests.length).keys(),
+      ]);
       moverIdx = getRandom([...Array(users.length).keys()]);
       pairKey = `${estimateRequestIdx}_${moverIdx}`;
       tryCount++;
@@ -204,12 +211,10 @@ async function main() {
           includesPackaging: i % 2 === 0,
           insuranceAmount: 1000000 + i * 100000,
         },
-
-      }),
+      })
     );
   }
   const estimates = await Promise.all(estimatesArr);
-
 
   // 찜 100개 생성 (고객이 기사/하이브리드 찜, 모든 유저 랜덤, 중복 방지)
   const favoritePairs = new Set();
@@ -245,10 +250,15 @@ async function main() {
   const usedEstimateRequestIds = new Set();
   const reviewArr = [];
   let reviewCount = 0;
-  while (reviewCount < 30 && usedEstimateRequestIds.size < estimateRequests.length) {
+  while (
+    reviewCount < 30 &&
+    usedEstimateRequestIds.size < estimateRequests.length
+  ) {
     let estimateRequestIdx;
     do {
-      estimateRequestIdx = getRandom([...Array(estimateRequests.length).keys()]);
+      estimateRequestIdx = getRandom([
+        ...Array(estimateRequests.length).keys(),
+      ]);
     } while (usedEstimateRequestIds.has(estimateRequestIdx));
     usedEstimateRequestIds.add(estimateRequestIdx);
 
@@ -266,14 +276,13 @@ async function main() {
           estimateRequestId: estimateRequests[estimateRequestIdx].id,
           rating: 3 + (reviewCount % 3),
           content: `테스트 리뷰 내용 ${reviewCount + 1}`,
+          status: "COMPLETED",
         },
-
-      }),
+      })
     );
     reviewCount++;
   }
   await Promise.all(reviewArr);
-
 
   // 사용자 활동 30개 생성
   const actions = await Promise.all(
