@@ -30,7 +30,7 @@ const getUser = async (req: Request, res: Response) => {
   res.json({ success: true, data: user });
 };
 
-// 프로필 등록 및 수정
+// 프로필 등록 및 수정 -> 수정은 따로 빼기?
 const postProfile = async (req: Request, res: Response) => {
   try {
     const { userId, userType } = req.user as {
