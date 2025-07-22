@@ -56,11 +56,11 @@ const postProfile = async (req: Request, res: Response) => {
       const profileData: TMoverProfileInput = {
         nickname: req.body.nickname,
         moverImage: req.body.moverImage,
+        career: req.body.career,
         shortIntro: req.body.shortIntro,
         detailIntro: req.body.detailIntro,
+        currentAreas: req.body.currentAreas,
         serviceTypes: req.body.serviceTypes,
-        currentArea: req.body.currentArea,
-        career: req.body.career,
       };
 
       const result = await createMoverProfile(userId, profileData);

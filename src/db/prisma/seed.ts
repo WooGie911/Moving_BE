@@ -139,11 +139,12 @@ async function main() {
         customerImage: "https://example.com/hybrid1_customer.jpg",
         moverImage: "https://example.com/hybrid1_mover.jpg",
         nickname: "하이브리드전문가",
-        currentArea: RegionType.GYEONGGI,
+        currentAreas: [RegionType.GYEONGGI, RegionType.SEOUL],
         preferredServices: [MoveType.SMALL, MoveType.HOME],
         isVeteran: true,
         shortIntro: "고객이면서 기사님도 하는 하이브리드 전문가",
-        detailIntro: "고객의 입장을 잘 아는 기사님입니다. 고객이 원하는 서비스를 정확히 제공해드립니다.",
+        detailIntro:
+          "고객의 입장을 잘 아는 기사님입니다. 고객이 원하는 서비스를 정확히 제공해드립니다.",
         career: 5,
         workedCount: 45,
         averageRating: 4.9,
@@ -163,7 +164,7 @@ async function main() {
         provider: AuthProvider.LOCAL,
         moverImage: "https://example.com/mover1.jpg",
         nickname: "베테랑기사",
-        currentArea: RegionType.SEOUL,
+        currentAreas: [RegionType.SEOUL],
         isVeteran: true,
         shortIntro: "10년 경력의 베테랑 기사입니다",
         detailIntro:
@@ -185,10 +186,11 @@ async function main() {
         provider: AuthProvider.LOCAL,
         moverImage: "https://example.com/mover2.jpg",
         nickname: "신입기사",
-        currentArea: RegionType.SEOUL,
+        currentAreas: [RegionType.SEOUL],
         isVeteran: false,
         shortIntro: "신입이지만 열정만큼은 누구보다 강합니다",
-        detailIntro: "신입 기사이지만 고객 만족을 위해 최선을 다하겠습니다. 합리적인 가격으로 서비스를 제공합니다.",
+        detailIntro:
+          "신입 기사이지만 고객 만족을 위해 최선을 다하겠습니다. 합리적인 가격으로 서비스를 제공합니다.",
         career: 1,
         workedCount: 5,
         averageRating: 4.2,
@@ -207,10 +209,11 @@ async function main() {
         providerId: "kakao123",
         moverImage: "https://example.com/mover3.jpg",
         nickname: "전문기사",
-        currentArea: RegionType.GYEONGGI,
+        currentAreas: [RegionType.GYEONGGI],
         isVeteran: true,
         shortIntro: "사무실 이사 전문 기사입니다",
-        detailIntro: "사무실 이사에 특화된 전문 기사입니다. 사무용품과 장비의 안전한 이전을 보장합니다.",
+        detailIntro:
+          "사무실 이사에 특화된 전문 기사입니다. 사무용품과 장비의 안전한 이전을 보장합니다.",
         career: 8,
         workedCount: 80,
         averageRating: 4.6,
@@ -220,7 +223,8 @@ async function main() {
     }),
   ]);
 
-  const [customer1, customer2, customer3, hybridUser, mover1, mover2, mover3] = users;
+  const [customer1, customer2, customer3, hybridUser, mover1, mover2, mover3] =
+    users;
 
   // 기사님 서비스 지역 설정
   await Promise.all([
@@ -315,7 +319,8 @@ async function main() {
         fromAddressId: addresses[0].id,
         toAddressId: addresses[1].id,
         status: RequestStatus.COMPLETED,
-        description: "1인 가구 소형 이사입니다. 가전제품과 옷장 정도만 있습니다.",
+        description:
+          "1인 가구 소형 이사입니다. 가전제품과 옷장 정도만 있습니다.",
       },
     }),
     prisma.estimateRequest.create({
@@ -326,7 +331,8 @@ async function main() {
         fromAddressId: addresses[2].id,
         toAddressId: addresses[3].id,
         status: RequestStatus.PENDING,
-        description: "소규모 사무실 이사입니다. 책상 5개와 서랍장 2개 정도입니다.",
+        description:
+          "소규모 사무실 이사입니다. 책상 5개와 서랍장 2개 정도입니다.",
       },
     }),
     prisma.estimateRequest.create({
@@ -349,7 +355,8 @@ async function main() {
         fromAddressId: addresses[3].id,
         toAddressId: addresses[0].id,
         status: RequestStatus.PENDING,
-        description: "하이브리드 사용자의 소형 이사 요청입니다. 고객이면서 기사님도 하는 사용자입니다.",
+        description:
+          "하이브리드 사용자의 소형 이사 요청입니다. 고객이면서 기사님도 하는 사용자입니다.",
       },
     }),
   ]);
@@ -400,7 +407,8 @@ async function main() {
         moverId: hybridUser.id,
         estimateRequestId: request4.id,
         price: 80000,
-        comment: "고객의 입장을 잘 아는 기사님입니다. 합리적인 가격으로 서비스 제공합니다.",
+        comment:
+          "고객의 입장을 잘 아는 기사님입니다. 합리적인 가격으로 서비스 제공합니다.",
         status: EstimateStatus.PROPOSED,
         workingHours: "2-3시간",
         includesPackaging: true,
@@ -429,7 +437,8 @@ async function main() {
       moverId: mover1.id,
       estimateRequestId: request1.id,
       rating: 5,
-      content: "정말 만족스러운 서비스였습니다. 기사님이 친절하고 안전하게 처리해주셨습니다.",
+      content:
+        "정말 만족스러운 서비스였습니다. 기사님이 친절하고 안전하게 처리해주셨습니다.",
     },
   });
 
@@ -529,7 +538,9 @@ async function main() {
   console.log(`🏠 Created ${addresses.length} addresses`);
   console.log(`📋 Created ${estimateRequests.length} estimate requests`);
   console.log(`💰 Created ${estimates.length} estimates`);
-  console.log(`🎭 Hybrid user: ${hybridUser.name} (Customer: ${hybridUser.email}, Mover: ${hybridUser.email})`);
+  console.log(
+    `🎭 Hybrid user: ${hybridUser.name} (Customer: ${hybridUser.email}, Mover: ${hybridUser.email})`
+  );
 }
 
 main()

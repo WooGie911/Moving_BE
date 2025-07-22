@@ -23,7 +23,7 @@ export const validateMoveTypes = (moveTypes: MoveType[]): boolean => {
 };
 
 // Region 유효성 검사 함수
-export const validateRegion = (region: RegionType): boolean => {
+export const validateRegion = (regions: RegionType[]): boolean => {
   const validRegions: RegionType[] = [
     "SEOUL",
     "BUSAN",
@@ -43,11 +43,14 @@ export const validateRegion = (region: RegionType): boolean => {
     "GYEONGNAM",
     "JEJU",
   ];
-  return validRegions.includes(region);
+  return regions.every((region) => validRegions.includes(region));
 };
 
 // 닉네임 중복 확인 및 에러 처리
-export const ensureNicknameUnique = async (nickname: string): Promise<void> => {
+export const ensureNicknameUnique = async (
+  nickname: string,
+  excludeUserId?: string
+): Promise<void> => {
   if (
     !nickname ||
     nickname.trim().length < VALIDATION_CONFIG.MIN_NICKNAME_LENGTH
@@ -55,7 +58,7 @@ export const ensureNicknameUnique = async (nickname: string): Promise<void> => {
     throw new ValidationError(PROFILE_ERROR_MESSAGES.NICKNAME_REQUIRED);
   }
 
-  const nicknameExists = await checkNicknameExists(nickname);
+  const nicknameExists = await checkNicknameExists(nickname, excludeUserId);
   if (nicknameExists) {
     throw new ValidationError(PROFILE_ERROR_MESSAGES.NICKNAME_ALREADY_EXISTS);
   }
@@ -63,11 +66,12 @@ export const ensureNicknameUnique = async (nickname: string): Promise<void> => {
 
 // Customer 프로필 데이터 유효성 검사
 export const validateCustomerProfileData = async (
-  profileData: TCustomerProfileInput
+  profileData: TCustomerProfileInput,
+  userId?: string
 ): Promise<void> => {
   // 닉네임 유효성 검사 (선택사항)
   if (profileData.nickname) {
-    await ensureNicknameUnique(profileData.nickname);
+    await ensureNicknameUnique(profileData.nickname, userId);
   }
 
   // 현재 지역 유효성 검사
@@ -75,7 +79,12 @@ export const validateCustomerProfileData = async (
     throw new ValidationError(PROFILE_ERROR_MESSAGES.CURRENT_REGION_REQUIRED);
   }
 
-  if (!validateRegion(profileData.currentArea)) {
+  // currentArea가 배열로 들어온 경우 체크
+  if (Array.isArray(profileData.currentArea)) {
+    throw new ValidationError("현재 거주 지역은 하나만 선택해주세요");
+  }
+
+  if (!validateRegion([profileData.currentArea])) {
     throw new ValidationError(PROFILE_ERROR_MESSAGES.INVALID_REGION);
   }
 
@@ -94,21 +103,19 @@ export const validateCustomerProfileData = async (
 
 // 기사님(MOVER) 프로필 데이터 유효성 검사
 export const validateMoverProfileData = async (
-  profileData: TMoverProfileInput
+  profileData: TMoverProfileInput,
+  userId?: string
 ): Promise<void> => {
-  console.log("profileData", profileData);
-
   // 1. 닉네임 검사 및 중복 확인 (필수)
-  await ensureNicknameUnique(profileData.nickname);
+  await ensureNicknameUnique(profileData.nickname, userId);
 
   // 2. 현재 활동 지역 유효성 검사 (필수)
-  if (!profileData.currentArea) {
+  if (!profileData.currentAreas) {
     throw new ValidationError(
       PROFILE_ERROR_MESSAGES.MOVER_CURRENT_REGION_REQUIRED
     );
   }
-
-  if (!validateRegion(profileData.currentArea)) {
+  if (!validateRegion(profileData.currentAreas)) {
     throw new ValidationError(PROFILE_ERROR_MESSAGES.INVALID_REGION);
   }
 
@@ -169,127 +176,6 @@ export const validateMoverProfileData = async (
       throw new ValidationError(
         "프로필 이미지는 유효한 URL 형식이어야 합니다 "
       );
-    }
-  }
-};
-
-// 고객 프로필 업데이트 데이터 유효성 검사
-export const validateUpdateCustomerProfile = async (
-  profileData: TUserProfileUpdateInput
-): Promise<void> => {
-  // 빈 객체 검사
-  const hasAnyField = Object.keys(profileData).some(
-    (key) => profileData[key as keyof TUserProfileUpdateInput] !== undefined
-  );
-
-  if (!hasAnyField) {
-    throw new ValidationError("수정할 데이터를 하나 이상 입력해주세요");
-  }
-
-  // 이름 유효성 검사
-  if (profileData.name !== undefined) {
-    if (!profileData.name || profileData.name.trim().length === 0) {
-      throw new ValidationError("이름을 입력해주세요");
-    }
-    if (profileData.name.trim().length < 2) {
-      throw new ValidationError("이름은 2글자 이상 입력해주세요");
-    }
-  }
-
-  // 전화번호 유효성 검사
-  if (profileData.phoneNumber !== undefined) {
-    if (!profileData.phoneNumber) {
-      throw new ValidationError("전화번호를 입력해주세요");
-    }
-    const phoneRegex = /^\d{10,11}$/;
-    if (!phoneRegex.test(profileData.phoneNumber)) {
-      throw new ValidationError("전화번호는 10-11자리 숫자로 입력해주세요");
-    }
-  }
-
-  // 비밀번호 변경 유효성 검사
-  const hasCurrentPassword = profileData.currentPassword !== undefined;
-  const hasNewPassword = profileData.newPassword !== undefined;
-
-  if (hasCurrentPassword || hasNewPassword) {
-    if (!hasCurrentPassword) {
-      throw new ValidationError("현재 비밀번호를 입력해주세요");
-    }
-    if (!hasNewPassword) {
-      throw new ValidationError("새 비밀번호를 입력해주세요");
-    }
-    if (
-      !profileData.currentPassword ||
-      profileData.currentPassword.trim().length === 0
-    ) {
-      throw new ValidationError("현재 비밀번호를 입력해주세요");
-    }
-    if (
-      !profileData.newPassword ||
-      profileData.newPassword.trim().length === 0
-    ) {
-      throw new ValidationError("새 비밀번호를 입력해주세요");
-    }
-    if (profileData.newPassword.length < 8) {
-      throw new ValidationError("새 비밀번호는 8자리 이상 입력해주세요");
-    }
-    if (profileData.currentPassword === profileData.newPassword) {
-      throw new ValidationError("새 비밀번호는 현재 비밀번호와 달라야 합니다");
-    }
-  }
-
-  // 프로필 이미지 유효성 검사 (null 허용 - 이미지 제거)
-  if (
-    profileData.profileImage !== undefined &&
-    profileData.profileImage !== null
-  ) {
-    if (profileData.profileImage.trim().length === 0) {
-      throw new ValidationError("프로필 이미지 URL이 유효하지 않습니다");
-    }
-    try {
-      new URL(profileData.profileImage);
-    } catch {
-      throw new ValidationError("프로필 이미지는 유효한 URL 형식이어야 합니다");
-    }
-  }
-
-  // 현재 지역 유효성 검사
-  if (profileData.currentRegion !== undefined) {
-    if (!profileData.currentRegion) {
-      throw new ValidationError(PROFILE_ERROR_MESSAGES.CURRENT_REGION_REQUIRED);
-    }
-    if (!validateRegion(profileData.currentRegion as RegionType)) {
-      throw new ValidationError(PROFILE_ERROR_MESSAGES.INVALID_REGION);
-    }
-  }
-
-  // 사용자 서비스 유효성 검사
-  if (profileData.userServices !== undefined) {
-    if (!Array.isArray(profileData.userServices)) {
-      throw new ValidationError("사용자 서비스는 배열 형태여야 합니다");
-    }
-
-    // 빈 배열 허용 (서비스 제거 가능)
-    if (profileData.userServices.length > 0) {
-      // userServices는 number[] 타입이므로 MoveType으로 변환 필요
-      const moveTypes = profileData.userServices.map((serviceId) => {
-        switch (serviceId) {
-          case 1:
-            return "SMALL" as MoveType;
-          case 2:
-            return "HOME" as MoveType;
-          case 3:
-            return "OFFICE" as MoveType;
-          default:
-            throw new ValidationError(
-              PROFILE_ERROR_MESSAGES.INVALID_SERVICE_ID
-            );
-        }
-      });
-
-      if (!validateMoveTypes(moveTypes)) {
-        throw new ValidationError(PROFILE_ERROR_MESSAGES.INVALID_SERVICE_ID);
-      }
     }
   }
 };
