@@ -51,7 +51,8 @@ const customerEstimateRequestRouter = Router();
  *           "averageRating": 4.8,
  *           "totalReviewCount": 50,
  *           "serviceTypes": [],
- *           "serviceAreas": []
+ *           "serviceAreas": [],
+ *           "isFavorite": true
  *         }
  *       }
  *     ]
@@ -147,7 +148,8 @@ customerEstimateRequestRouter.get(
  *       "averageRating": 4.8,
  *       "totalReviewCount": 50,
  *       "serviceTypes": [],
- *       "serviceAreas": []
+ *       "serviceAreas": [],
+ *       "isFavorite": true
  *     }
  *   }
  * }
@@ -195,7 +197,8 @@ customerEstimateRequestRouter.get(
  *       "averageRating": 4.8,
  *       "totalReviewCount": 50,
  *       "serviceTypes": [],
- *       "serviceAreas": []
+ *       "serviceAreas": [],
+ *       "isFavorite": false
  *     }
  *   }
  * }

@@ -54,7 +54,8 @@ const customerEstimateRequestRepository = {
 
   // 진행중인 이사 견적들 조회
   getPendingEstimateRequest: async (
-    activeEstimateRequestId: string
+    activeEstimateRequestId: string,
+    customerId: string
   ): Promise<Record<string, any> | null> => {
     const pendingEstimateRequest = await prisma.estimateRequest.findUnique({
       where: {
@@ -114,6 +115,16 @@ const customerEstimateRequestRepository = {
                 totalReviewCount: true,
                 serviceTypes: true,
                 serviceAreas: true,
+                // 찜 여부 확인을 위한 Favorite 관계 추가
+                Favorite: {
+                  where: {
+                    customerId: customerId,
+                    deletedAt: null,
+                  },
+                  select: {
+                    id: true,
+                  },
+                },
               },
             },
           },
@@ -121,7 +132,23 @@ const customerEstimateRequestRepository = {
       },
     });
     if (!pendingEstimateRequest) return null;
-    return pendingEstimateRequest;
+
+    // 각 견적의 무버에 대해 찜 여부를 boolean으로 변환
+    const estimatesWithFavoriteStatus = pendingEstimateRequest.estimates.map(
+      (estimate) => ({
+        ...estimate,
+        mover: {
+          ...estimate.mover,
+          isFavorite: estimate.mover.Favorite.length > 0,
+          Favorite: undefined, // Favorite 배열은 제거
+        },
+      })
+    );
+
+    return {
+      ...pendingEstimateRequest,
+      estimates: estimatesWithFavoriteStatus,
+    };
   },
 
   //완료된 이사 견적들 조회
@@ -187,19 +214,44 @@ const customerEstimateRequestRepository = {
                 totalReviewCount: true,
                 serviceTypes: true,
                 serviceAreas: true,
+                // 찜 여부 확인을 위한 Favorite 관계 추가
+                Favorite: {
+                  where: {
+                    customerId: userId,
+                    deletedAt: null,
+                  },
+                  select: {
+                    id: true,
+                  },
+                },
               },
             },
           },
         },
       },
     });
-    return receivedEstimateRequests;
+
+    // 각 견적 요청의 견적들에 대해 찜 여부를 boolean으로 변환
+    const processedRequests = receivedEstimateRequests.map((request) => ({
+      ...request,
+      estimates: request.estimates.map((estimate) => ({
+        ...estimate,
+        mover: {
+          ...estimate.mover,
+          isFavorite: estimate.mover.Favorite.length > 0,
+          Favorite: undefined, // Favorite 배열은 제거
+        },
+      })),
+    }));
+
+    return processedRequests;
   },
 
   //진행중인 이사 견적들 중 상세 견적 조회
   getPendingEstimateRequestDetail: async (
     activeEstimateRequestId: string,
-    estimateId: string
+    estimateId: string,
+    customerId: string
   ): Promise<Record<string, any> | null> => {
     const pendingDetailEstimate = await prisma.estimateRequest.findUnique({
       where: {
@@ -238,6 +290,16 @@ const customerEstimateRequestRepository = {
                 totalReviewCount: true,
                 serviceTypes: true,
                 serviceAreas: true,
+                // 찜 여부 확인을 위한 Favorite 관계 추가
+                Favorite: {
+                  where: {
+                    customerId: customerId,
+                    deletedAt: null,
+                  },
+                  select: {
+                    id: true,
+                  },
+                },
               },
             },
           },
@@ -245,7 +307,18 @@ const customerEstimateRequestRepository = {
       },
     });
     if (!pendingDetailEstimate) return null;
-    return pendingDetailEstimate.estimates[0];
+
+    const estimate = pendingDetailEstimate.estimates[0];
+    if (!estimate) return null;
+
+    return {
+      ...estimate,
+      mover: {
+        ...estimate.mover,
+        isFavorite: estimate.mover.Favorite.length > 0,
+        Favorite: undefined, // Favorite 배열은 제거
+      },
+    };
   },
 
   //완료된 이사 견적들 중 상세 견적 조회
@@ -292,6 +365,16 @@ const customerEstimateRequestRepository = {
                 totalReviewCount: true,
                 serviceTypes: true,
                 serviceAreas: true,
+                // 찜 여부 확인을 위한 Favorite 관계 추가
+                Favorite: {
+                  where: {
+                    customerId: userId,
+                    deletedAt: null,
+                  },
+                  select: {
+                    id: true,
+                  },
+                },
               },
             },
           },
@@ -299,7 +382,18 @@ const customerEstimateRequestRepository = {
       },
     });
     if (!receivedDetailEstimate) return null;
-    return receivedDetailEstimate.estimates[0];
+
+    const estimate = receivedDetailEstimate.estimates[0];
+    if (!estimate) return null;
+
+    return {
+      ...estimate,
+      mover: {
+        ...estimate.mover,
+        isFavorite: estimate.mover.Favorite.length > 0,
+        Favorite: undefined, // Favorite 배열은 제거
+      },
+    };
   },
 
   //견적 컨펌
