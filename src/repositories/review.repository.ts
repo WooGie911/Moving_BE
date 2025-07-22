@@ -9,8 +9,11 @@ const reviewRepository = {
     });
   },
 
-  // 2. 리뷰 작성 가능한 EstimateRequest 리스트 조회
-  getWritableEstimateRequests: async (customerId: string, pageQuery: { page: number; pageSize: number }) => {
+  // 2. 리뷰 작성 가능한 견적 요청 리스트 조회
+  getWritableEstimateRequests: async (
+    customerId: string,
+    pageQuery: { page: number; pageSize: number }
+  ) => {
     const { page, pageSize } = pageQuery;
     const skip = (page - 1) * pageSize;
     const [items, total] = await Promise.all([
@@ -18,17 +21,18 @@ const reviewRepository = {
         where: {
           customerId,
           status: "COMPLETED",
-          review: null, // 리뷰가 아직 작성되지 않은 견적 요청
+          review: { is: { status: "PENDING" } },
         },
         include: {
           estimates: {
             where: { status: "ACCEPTED" },
             include: {
-              mover: { include: { profile: true } },
+              mover: true,
             },
           },
           fromAddress: true,
           toAddress: true,
+          review: true,
         },
         skip,
         take: pageSize,
@@ -37,7 +41,7 @@ const reviewRepository = {
         where: {
           customerId,
           status: "COMPLETED",
-          review: null,
+          review: { is: { status: "PENDING" } },
         },
       }),
     ]);
@@ -45,21 +49,24 @@ const reviewRepository = {
   },
 
   // 3. 내가 쓴 리뷰 목록 조회
-  getWrittenReviews: async (customerId: string, pageQuery: { page: number; pageSize: number }) => {
+  getWrittenReviews: async (
+    customerId: string,
+    pageQuery: { page: number; pageSize: number }
+  ) => {
     const { page, pageSize } = pageQuery;
     const skip = (page - 1) * pageSize;
     const [items, total] = await Promise.all([
       prisma.review.findMany({
         where: { customerId },
         include: {
-          estimateRequest: {
+          request: {
             include: {
               fromAddress: true,
               toAddress: true,
+              estimates: true,
             },
           },
-          estimate: true,
-          mover: { include: { profile: true } },
+          mover: true,
         },
         skip,
         take: pageSize,
@@ -70,21 +77,24 @@ const reviewRepository = {
   },
 
   // 4. 내가 받은 리뷰 목록 조회
-  getReceivedReviews: async (moverId: string, pageQuery: { page: number; pageSize: number }) => {
+  getReceivedReviews: async (
+    moverId: string,
+    pageQuery: { page: number; pageSize: number }
+  ) => {
     const { page, pageSize } = pageQuery;
     const skip = (page - 1) * pageSize;
     const [items, total] = await Promise.all([
       prisma.review.findMany({
         where: { moverId },
         include: {
-          estimateRequest: {
+          request: {
             include: {
               fromAddress: true,
               toAddress: true,
+              estimates: true,
             },
           },
-          estimate: true,
-          writer: { include: { profile: true } },
+          writer: true,
         },
         skip,
         take: pageSize,
