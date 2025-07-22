@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { TUserSignup } from "../types/user.types";
+import { TUserRole, TUserSignup } from "../types/user.types";
 
 const prisma = new PrismaClient();
 
@@ -46,10 +46,14 @@ const findUserByEmail = async (email: string) => {
 };
 
 // 로그인에 따른 유저 토큰 업데이트
-const updateUserToken = async (userId: string, refreshToken: string | null) => {
+const updateUserToken = async (
+  userId: string,
+  refreshToken: string | null,
+  userType: TUserRole
+) => {
   return await prisma.user.update({
     where: { id: userId },
-    data: { refreshToken },
+    data: { refreshToken, userType: [userType] },
   });
 };
 

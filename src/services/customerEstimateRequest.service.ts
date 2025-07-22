@@ -6,7 +6,7 @@ import {
   TQuoteDetailResponse,
   TConfirmEstimateResponse,
   TDesignateEstimateRequest,
-} from "../types/EstimateRequest";
+} from "../types/customerEstimateRequest";
 
 const customerEstimateRequestService = {
   // 진행중인 견적요청 조회
@@ -21,7 +21,8 @@ const customerEstimateRequestService = {
 
     const data =
       await customerEstimateRequestRepository.getPendingEstimateRequest(
-        activeEstimateRequestId
+        activeEstimateRequestId,
+        userId
       );
     if (!data) {
       throw new NotFoundError("진행중인 견적요청이 없습니다.");
@@ -83,7 +84,8 @@ const customerEstimateRequestService = {
     const result =
       await customerEstimateRequestRepository.getPendingEstimateRequestDetail(
         activeEstimateRequestId,
-        estimateId
+        estimateId,
+        userId
       );
     if (!result) {
       throw new NotFoundError("견적 상세 정보를 찾을 수 없습니다.");

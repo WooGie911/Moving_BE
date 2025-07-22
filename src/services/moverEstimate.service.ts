@@ -5,10 +5,10 @@ import {
   TRejectEstimateRequest,
   TUpdateEstimateRequest,
   TUpdateEstimateStatusRequest,
-  TQuoteResponse,
+  TEstimateRequestResponse,
   TEstimateResponse,
   TMyEstimateResponse,
-  TMyRejectedQuoteResponse,
+  TMyRejectedEstimateResponse,
 } from "../types/moverEstimate";
 
 const moverEstimateService = {
@@ -18,10 +18,10 @@ const moverEstimateService = {
   ): Promise<TEstimateResponse | null> => {
     try {
       const estimate = await moverEstimateRepository.createEstimate(
-        data.quoteId,
-        data.userId,
+        data.estimateRequestId,
+        data.moverId,
         data.price,
-        data.description
+        data.comment
       );
       if (!estimate) {
         throw new NotFoundError("견적 생성에 실패했습니다.");
@@ -49,9 +49,9 @@ const moverEstimateService = {
   ): Promise<TEstimateResponse | null> => {
     try {
       const estimate = await moverEstimateRepository.rejectEstimate(
-        data.quoteId,
-        data.userId,
-        data.description
+        data.estimateRequestId,
+        data.moverId,
+        data.comment
       );
       if (!estimate) {
         throw new NotFoundError("견적 반려에 실패했습니다.");
@@ -74,112 +74,111 @@ const moverEstimateService = {
   },
 
   // 서비스 가능 지역 견적 조회
-  getRegionQuote: async (
-    availableRegion: string,
-    sortBy?: "movingDate" | "createdAt",
+  getRegionEstimateRequest: async (
+    moverId: string,
+    sortBy?: "moveDate" | "createdAt",
     customerName?: string,
     movingType?: "SMALL" | "HOME" | "OFFICE"
-  ): Promise<TQuoteResponse[] | null> => {
-    const quotes = await moverEstimateRepository.getRegionQuote(
-      availableRegion,
-      sortBy,
-      customerName,
-      movingType
-    );
+  ): Promise<TEstimateRequestResponse[] | null> => {
+    const estimateRequests =
+      await moverEstimateRepository.getRegionEstimateRequest(
+        moverId,
+        sortBy,
+        customerName,
+        movingType
+      );
 
-    if (!quotes || quotes.length === 0) {
+    if (!estimateRequests || estimateRequests.length === 0) {
       throw new NotFoundError("해당 지역의 견적이 없습니다.");
     }
 
-    return quotes;
+    return estimateRequests;
   },
 
   // 지정 견적 조회
-  getDesignatedQuote: async (
-    moverId: number,
-    sortBy?: "movingDate" | "createdAt",
+  getDesignatedEstimateRequest: async (
+    moverId: string,
+    sortBy?: "moveDate" | "createdAt",
     customerName?: string,
     movingType?: "SMALL" | "HOME" | "OFFICE"
-  ): Promise<TQuoteResponse[] | null> => {
-    const quotes = await moverEstimateRepository.getDesignatedQuote(
-      moverId,
-      sortBy,
-      customerName,
-      movingType
-    );
+  ): Promise<TEstimateRequestResponse[] | null> => {
+    const estimateRequests =
+      await moverEstimateRepository.getDesignatedEstimateRequest(
+        moverId,
+        sortBy,
+        customerName,
+        movingType
+      );
 
-    if (!quotes || quotes.length === 0) {
+    if (!estimateRequests || estimateRequests.length === 0) {
       throw new NotFoundError("지정 견적이 없습니다.");
     }
 
-    return quotes;
+    return estimateRequests;
   },
 
   // 지역/지정 견적 통합 조회
-  getAllQuotes: async (
-    userId: number,
+  getAllEstimateRequests: async (
+    moverId: string,
     options: {
       region: boolean;
       designated: boolean;
-      availableRegion?: string;
-      sortBy?: "movingDate" | "createdAt";
+      sortBy?: "moveDate" | "createdAt";
       customerName?: string;
       movingType?: "SMALL" | "HOME" | "OFFICE";
     }
   ): Promise<{
-    regionQuotes?: TQuoteResponse[];
-    designatedQuotes?: TQuoteResponse[];
+    regionEstimateRequests?: TEstimateRequestResponse[];
+    designatedEstimateRequests?: TEstimateRequestResponse[];
   }> => {
-    const {
-      region,
-      designated,
-      availableRegion,
-      sortBy,
-      customerName,
-      movingType,
-    } = options;
+    const { region, designated, sortBy, customerName, movingType } = options;
 
-    let regionQuotes: TQuoteResponse[] = [];
-    let designatedQuotes: TQuoteResponse[] = [];
+    let regionEstimateRequests: TEstimateRequestResponse[] = [];
+    let designatedEstimateRequests: TEstimateRequestResponse[] = [];
 
-    if (region && availableRegion) {
-      regionQuotes =
-        (await moverEstimateService.getRegionQuote(
-          availableRegion,
+    if (region) {
+      regionEstimateRequests =
+        (await moverEstimateService.getRegionEstimateRequest(
+          moverId,
           sortBy,
           customerName,
           movingType
         )) || [];
     }
     if (designated) {
-      designatedQuotes =
-        (await moverEstimateService.getDesignatedQuote(
-          userId,
+      designatedEstimateRequests =
+        (await moverEstimateService.getDesignatedEstimateRequest(
+          moverId,
           sortBy,
           customerName,
           movingType
         )) || [];
     }
     return {
-      regionQuotes: region ? regionQuotes : undefined,
-      designatedQuotes: designated ? designatedQuotes : undefined,
+      regionEstimateRequests: region ? regionEstimateRequests : undefined,
+      designatedEstimateRequests: designated
+        ? designatedEstimateRequests
+        : undefined,
     };
   },
 
-  // 견적 상세 조회
-  getQuoteById: async (quoteId: number): Promise<TQuoteResponse | null> => {
-    const quote = await moverEstimateRepository.getQuoteById(quoteId);
-    if (!quote) {
-      throw new NotFoundError("견적을 찾을 수 없습니다.");
+  // 견적 요청 상세 조회
+  getEstimateRequestById: async (
+    estimateRequestId: string
+  ): Promise<TEstimateRequestResponse | null> => {
+    const estimateRequest =
+      await moverEstimateRepository.getEstimateRequestById(estimateRequestId);
+    if (!estimateRequest) {
+      throw new NotFoundError("견적 요청을 찾을 수 없습니다.");
     }
-    return quote;
+    return estimateRequest;
   },
 
   // 내가 보낸 견적서 조회
   getMyEstimate: async (
-    userId: number
+    moverId: string
   ): Promise<TMyEstimateResponse[] | null> => {
-    const estimates = await moverEstimateRepository.getMyEstimate(userId);
+    const estimates = await moverEstimateRepository.getMyEstimate(moverId);
     if (!estimates || estimates.length === 0) {
       throw new NotFoundError("보낸 견적서가 없습니다.");
     }
@@ -187,15 +186,15 @@ const moverEstimateService = {
   },
 
   // 내가 반려한 견적 조회
-  getMyRejectedQuotes: async (
-    userId: number
-  ): Promise<TMyRejectedQuoteResponse[] | null> => {
-    const rejectedQuotes =
-      await moverEstimateRepository.getMyRejectedQuotes(userId);
-    if (!rejectedQuotes || rejectedQuotes.length === 0) {
+  getMyRejectedEstimates: async (
+    moverId: string
+  ): Promise<TMyRejectedEstimateResponse[] | null> => {
+    const rejectedEstimates =
+      await moverEstimateRepository.getMyRejectedEstimates(moverId);
+    if (!rejectedEstimates || rejectedEstimates.length === 0) {
       throw new NotFoundError("반려한 견적이 없습니다.");
     }
-    return rejectedQuotes;
+    return rejectedEstimates;
   },
 
   // 견적 상태 업데이트
@@ -205,7 +204,7 @@ const moverEstimateService = {
     try {
       const estimate = await moverEstimateRepository.updateEstimateStatus(
         data.estimateId,
-        data.userId, // userId를 moverId로 사용
+        data.moverId,
         data.status
       );
       if (!estimate) {
@@ -229,9 +228,9 @@ const moverEstimateService = {
     try {
       const estimate = await moverEstimateRepository.updateEstimatePrice(
         data.estimateId,
-        data.userId, // userId를 moverId로 사용
+        data.moverId,
         data.price,
-        data.description
+        data.comment
       );
       if (!estimate) {
         throw new NotFoundError("견적서 업데이트에 실패했습니다.");

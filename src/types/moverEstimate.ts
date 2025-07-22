@@ -1,149 +1,224 @@
 // 견적 생성 요청 타입
 export type TCreateEstimateRequest = {
-  quoteId: number;
-  userId: number;
+  estimateRequestId: string;
+  moverId: string;
   price: number;
-  description: string;
+  comment: string;
 };
 
 // 견적 반려 요청 타입
 export type TRejectEstimateRequest = {
-  quoteId: number;
-  userId: number;
-  description: string;
+  estimateRequestId: string;
+  moverId: string;
+  comment: string;
 };
 
 // 견적 조회 필터링 타입
-export type TQuoteFilterOptions = {
-  availableRegion: string;
-  sortBy?: "movingDate" | "createdAt";
+export type TEstimateRequestFilterOptions = {
+  sortBy?: "moveDate" | "createdAt";
   customerName?: string;
   movingType?: "SMALL" | "HOME" | "OFFICE";
 };
 
 // 지정 견적 조회 필터링 타입
-export type TDesignatedQuoteFilterOptions = {
-  moverId: number;
-  sortBy?: "movingDate" | "createdAt";
+export type TDesignatedEstimateRequestFilterOptions = {
+  moverId: string;
+  sortBy?: "moveDate" | "createdAt";
   customerName?: string;
   movingType?: "SMALL" | "HOME" | "OFFICE";
 };
 
 // 견적 상태 업데이트 타입
 export type TUpdateEstimateStatusRequest = {
-  estimateId: number;
-  userId: number;
-  status: "PENDING" | "ACCEPTED" | "REJECTED" | "EXPIRED";
+  estimateId: string;
+  moverId: string;
+  status: "PROPOSED" | "ACCEPTED" | "REJECTED" | "AUTO_REJECTED";
 };
 
 // 견적서 업데이트 타입
 export type TUpdateEstimateRequest = {
-  estimateId: number;
-  userId: number;
+  estimateId: string;
+  moverId: string;
   price: number;
-  description: string;
+  comment: string;
 };
 
-// 서비스 타입 정의
-export type TServiceType = {
-  id: number;
+// 주소 타입 정의
+export type TAddress = {
+  id: string;
+  postalCode: string;
+  city: string;
+  district: string;
+  detail: string | null;
+  region: string;
+};
+
+// 고객 타입 정의
+export type TCustomer = {
+  id: string;
   name: string;
-  description: string | null;
-  iconUrl: string | null;
+  currentArea: string | null;
+  customerImage: string | null;
+  nickname: string | null;
 };
 
-// 프로필 타입 정의
-export type TProfile = {
-  nickname: string;
-  profileImage: string | null;
-  introduction: string;
-  description: string;
-  experience: number;
-  completedCount: number;
-  avgRating: number;
-  reviewCount: number;
-  favoriteCount: number;
-  serviceTypes: {
-    service: TServiceType;
-  }[];
+// 기사님 타입 정의
+export type TMover = {
+  id: string;
+  name: string;
+  moverImage: string | null;
+  nickname: string | null;
+  shortIntro: string | null;
+  detailIntro: string | null;
+  career: number | null;
+  workedCount: number | null;
+  averageRating: number | null;
+  totalReviewCount: number | null;
+  serviceTypes: string[];
 };
 
-// 견적 응답 타입
-export type TQuoteResponse = {
-  id: number;
-  userId: number;
-  movingType: "SMALL" | "HOME" | "OFFICE";
-  movingDate: Date;
-  departureAddr: string;
-  arrivalAddr: string;
-  departureDetail: string | null;
-  arrivalDetail: string | null;
+// 견적 요청 응답 타입
+export type TEstimateRequestResponse = {
+  id: string;
+  customerId: string;
+  moveType: "SMALL" | "HOME" | "OFFICE";
+  moveDate: Date;
+  fromAddressId: string;
+  toAddressId: string;
   description: string | null;
   status: string;
   createdAt: Date;
   updatedAt: Date;
-  user: {
-    id: number;
-    name: string;
-    currentRole: string;
-    currentRegion: string | null;
-    profile: TProfile | null;
-  };
+  customer: TCustomer;
+  fromAddress: TAddress;
+  toAddress: TAddress;
 };
 
 // 견적서 응답 타입
 export type TEstimateResponse = {
-  id: number;
-  quoteId: number;
-  moverId: number;
-  price: number;
-  description: string;
-  status:
-    | "PENDING"
-    | "ACCEPTED"
-    | "REJECTED"
-    | "EXPIRED"
-    | "SENT"
-    | "MOVER_REJECTED";
+  id: string;
+  moverId: string;
+  estimateRequestId: string;
+  price: number | null;
+  comment: string | null;
+  status: "PROPOSED" | "ACCEPTED" | "REJECTED" | "AUTO_REJECTED";
+  rejectReason: string | null;
   isDesignated: boolean;
+  workingHours: string | null;
+  includesPackaging: boolean;
+  insuranceAmount: number | null;
+  validUntil: Date | null;
   createdAt: Date;
   updatedAt: Date;
-  quote?: TQuoteResponse;
+  deletedAt: Date | null;
+  mover: TMover;
+  estimateRequest: TEstimateRequestResponse;
 };
 
 // 내가 보낸 견적서 응답 타입
 export type TMyEstimateResponse = {
-  id: number;
-  quoteId: number;
-  moverId: number;
-  price: number;
-  description: string;
-  status: string;
+  id: string;
+  moverId: string;
+  estimateRequestId: string;
+  price: number | null;
+  comment: string | null;
+  status: "PROPOSED" | "ACCEPTED" | "AUTO_REJECTED";
+  rejectReason: string | null;
   isDesignated: boolean;
+  workingHours: string | null;
+  includesPackaging: boolean;
+  insuranceAmount: number | null;
+  validUntil: Date | null;
   createdAt: Date;
   updatedAt: Date;
-  quote: TQuoteResponse;
-  mover: {
-    id: number;
-    name: string;
-    currentRole: string;
-    profile: TProfile | null;
-  };
+  deletedAt: Date | null;
+  mover: TMover;
+  estimateRequest: TEstimateRequestResponse;
 };
 
 // 내가 반려한 견적 응답 타입
-export type TMyRejectedQuoteResponse = {
-  id: number;
-  quoteId: number;
-  price: number;
-  description: string;
-  status: string;
+export type TMyRejectedEstimateResponse = {
+  id: string;
+  moverId: string;
+  estimateRequestId: string;
+  price: number | null;
+  comment: string | null;
+  status: "REJECTED";
+  rejectReason: string | null;
+  isDesignated: boolean;
+  workingHours: string | null;
+  includesPackaging: boolean;
+  insuranceAmount: number | null;
+  validUntil: Date | null;
   createdAt: Date;
-  quote: TQuoteResponse;
+  updatedAt: Date;
+  deletedAt: Date | null;
+  mover: TMover;
+  estimateRequest: TEstimateRequestResponse;
+};
+
+export type EstimateWithRelations = {
+  id: string;
+  moverId: string;
+  estimateRequestId: string;
+  price: number | null;
+  comment: string | null;
+  status: "PROPOSED" | "ACCEPTED" | "REJECTED" | "AUTO_REJECTED";
+  rejectReason: string | null;
+  isDesignated: boolean;
+  workingHours: string | null;
+  includesPackaging: boolean;
+  insuranceAmount: number | null;
+  validUntil: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
   mover: {
-    id: number;
+    id: string;
     name: string;
-    currentRole: string;
-    profile: TProfile | null;
+    moverImage: string | null;
+    nickname: string | null;
+    shortIntro: string | null;
+    detailIntro: string | null;
+    career: number | null;
+    workedCount: number | null;
+    averageRating: number | null;
+    totalReviewCount: number | null;
+    serviceTypes: string[];
+  };
+  estimateRequest: {
+    id: string;
+    customerId: string;
+    moveType: "SMALL" | "HOME" | "OFFICE";
+    moveDate: Date;
+    fromAddressId: string;
+    toAddressId: string;
+    description: string | null;
+    status: string;
+    createdAt: Date;
+    updatedAt: Date;
+    customer: {
+      id: string;
+      name: string;
+      currentArea: string | null;
+      customerImage: string | null;
+      nickname: string | null;
+    };
+    fromAddress: {
+      id: string;
+      postalCode: string;
+      city: string;
+      district: string;
+      detail: string | null;
+      region: string;
+    };
+    toAddress: {
+      id: string;
+      postalCode: string;
+      city: string;
+      district: string;
+      detail: string | null;
+      region: string;
+    };
   };
 };
