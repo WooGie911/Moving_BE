@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { TUserRole } from "../types/user.types";
 
 export const verifyAccessToken = (
   req: Request,
@@ -16,7 +17,7 @@ export const verifyAccessToken = (
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY!) as {
       userId: string;
       name: string;
-      role: string;
+      userType: TUserRole;
     };
     req.user = decoded;
     next();

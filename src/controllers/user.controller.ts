@@ -20,7 +20,7 @@ import {
 const getUser = async (req: Request, res: Response) => {
   const { userId, userType } = req.user as {
     userId: string;
-    userType: "CUSTOMER" | "MOVER";
+    userType: TUserRole;
   };
 
   const user = await userInfo(userId, userType);
@@ -77,7 +77,7 @@ const postProfile = async (req: Request, res: Response) => {
     }
   } catch (error) {
     console.log(error);
-    handleError(res, error, PROFILE_ERROR_MESSAGES.PROFILE_CREATION_FALLBACK);
+    handleError(res, error);
   }
 };
 

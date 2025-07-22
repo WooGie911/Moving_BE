@@ -4,6 +4,8 @@ import {
   DatabaseError,
   ServerError,
   ValidationError,
+  ForbiddenError,
+  NotFoundError,
 } from "../types/commonError.types";
 
 /**
@@ -24,6 +26,16 @@ export const handleError = (
   switch (error.constructor) {
     case AuthenticationError:
       status = 401;
+      message = error.message;
+      break;
+
+    case ForbiddenError:
+      status = 403;
+      message = error.message;
+      break;
+
+    case NotFoundError:
+      status = 404;
       message = error.message;
       break;
 

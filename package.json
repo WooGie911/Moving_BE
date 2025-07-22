@@ -15,7 +15,8 @@
     "db:reset": "prisma migrate reset --schema=src/db/prisma/schema.prisma",
     "ssh": "dotenv -- bash -c 'ssh -i \"$SSH_KEY_PATH\" -L 5432:$DB_HOST:5432 $EC2_USER@$EC2_HOST'",
     "format": "prettier --write \"src/**/*.{ts,js,json}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,js,json}\""
+    "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
+    "test": "jest"
   },
   "keywords": [
     "nodejs",
@@ -57,7 +58,10 @@
     "rimraf": "^5.0.5",
     "ts-node": "^10.9.0",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "@types/jest": "^29.5.11"
   },
   "prisma": {
     "seed": "ts-node src/db/prisma/seed.ts",

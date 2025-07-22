@@ -6,6 +6,7 @@ export function generateAccessToken(user: TUserTokenCreate): string {
   const payload = {
     userId: user.id,
     name: user.name,
+    nickname: user.nickname,
     userType: user.userType,
   };
 
@@ -28,6 +29,7 @@ export function generateRefreshToken(user: TUserTokenCreate): string {
     userId: user.id,
     name: user.name,
     userType: user.userType,
+    nickname: user.nickname,
   };
 
   const refreshSecret = process.env.JWT_REFRESH_SECRET_KEY;

@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { postSignin, postSignup, postLogout, postRefresh } from "../controllers/auth.controller";
+import {
+  postSignin,
+  postSignup,
+  postLogout,
+  postRefresh,
+} from "../controllers/auth.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 
 const authRouter = Router();
@@ -11,7 +16,7 @@ const authRouter = Router();
  * @property {string} email.required - 이메일 주소
  * @property {string} phoneNumber.required - 전화번호
  * @property {string} password.required - 비밀번호
- * @property {string} currentRole.required - 사용자 역할 - enum:CUSTOMER,MOVER
+ * @property {string} userType.required - 사용자 역할 - enum:CUSTOMER,MOVER
  */
 
 /**
@@ -19,19 +24,20 @@ const authRouter = Router();
  * @typedef {object} SigninRequest
  * @property {string} email.required - 이메일 주소
  * @property {string} password.required - 비밀번호
+ * @property {string} userType.required - 사용자 역할 - enum:CUSTOMER,MOVER
  */
 
 /**
  * Success response
  * @typedef {object} SuccessResponse
- * @property {number} status - 상태 코드
+ * @property {boolean} success - 성공 여부
  * @property {string} message - 응답 메시지
  */
 
 /**
  * Error response
  * @typedef {object} ErrorResponse
- * @property {number} status - 상태 코드
+ * @property {boolean} success - 성공 여부
  * @property {string} message - 에러 메시지
  * @property {string} error - 에러 타입
  */
@@ -62,35 +68,40 @@ const authRouter = Router();
  * @return {ErrorResponse} 500 - 서버 내부 오류 (데이터베이스 오류, 비밀번호 검증 오류, 토큰 생성 오류)
  * @example request - 로그인 요청 예시
  * {
- *   "email": "test@test.com",
- *   "password": "1rhdiddl!"
+ *   "email": "gksktl111@naver.com",
+ *   "password": "1rhdiddl!",
+ *   "userType": "CUSTOMER"
  * }
  * @example response - 200 - 로그인 성공 응답 예시
  * {
- *   "status": 200,
+ *   "success": true,
  *   "message": "로그인 성공"
  * }
  * @example response - 400 - 입력값 누락 응답 예시
  * {
  *   "status": 400,
+ *   "success": false,
  *   "message": "이메일과 비밀번호를 모두 입력해주세요",
  *   "error": "ValidationError"
  * }
  * @example response - 401 - 인증 실패 응답 예시
  * {
  *   "status": 401,
+ *   "success": false,
  *   "message": "존재하지 않는 유저입니다",
  *   "error": "AuthenticationError"
  * }
  * @example response - 422 - 유효성 검사 실패 응답 예시
  * {
  *   "status": 422,
+ *   "success": false,
  *   "message": "로그인 정보가 올바르지 않습니다",
  *   "error": "ValidationError"
  * }
  * @example response - 500 - 서버 오류 응답 예시
  * {
  *   "status": 500,
+ *   "success": false,
  *   "message": "사용자 조회 중 오류가 발생했습니다",
  *   "error": "DatabaseError"
  * }
@@ -118,36 +129,41 @@ authRouter.post("/sign-in", postSignin);
  * }
  * @example response - 200 - 회원가입 성공 응답 예시
  * {
- *   "status": 200,
+ *   "success": true,
  *   "message": "회원가입 성공"
  * }
  * @example response - 400 - 입력값 누락 응답 예시
  * {
  *   "status": 400,
+ *   "success": false,
  *   "message": "필수 정보를 모두 입력해주세요",
  *   "error": "ValidationError"
  * }
  * @example response - 422 - 이메일 중복 응답 예시
  * {
  *   "status": 422,
+ *   "success": false,
  *   "message": "이미 존재하는 이메일입니다",
  *   "error": "ValidationError"
  * }
  * @example response - 422 - 유효성 검사 실패 응답 예시
  * {
  *   "status": 422,
+ *   "success": false,
  *   "message": "회원가입 정보가 올바르지 않습니다",
  *   "error": "ValidationError"
  * }
  * @example response - 500 - 데이터베이스 오류 응답 예시
  * {
  *   "status": 500,
+ *   "success": false,
  *   "message": "이메일 중복 확인 중 오류가 발생했습니다",
  *   "error": "DatabaseError"
  * }
  * @example response - 500 - 암호화 오류 응답 예시
  * {
  *   "status": 500,
+ *   "success": false,
  *   "message": "비밀번호 암호화 중 오류가 발생했습니다",
  *   "error": "ServerError"
  * }
@@ -170,7 +186,7 @@ authRouter.post("/sign-up", postSignup);
  * {}
  * @example response - 200 - 로그아웃 성공 응답 예시
  * {
- *   "status": 200,
+ *   "success": true,
  *   "message": "로그아웃 성공"
  * }
  */
@@ -193,7 +209,7 @@ authRouter.post("/logout", verifyAccessToken, postLogout);
  * }
  * @example response - 200 - 토큰 갱신 성공 응답 예시
  * {
- *   "status": 200,
+ *   "success": true,
  *   "message": "토큰 갱신 성공"
  * }
  */

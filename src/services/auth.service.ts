@@ -38,7 +38,8 @@ const signin = async (email: string, password: string, userType: TUserRole) => {
     const { newAccessToken, newRefreshToken } = generateToken({
       id: String(existingUser.id),
       name: existingUser.name,
-      userType: existingUser.userType[0],
+      userType,
+      nickname: existingUser.nickname || "",
     });
 
     accessToken = newAccessToken;
@@ -47,7 +48,8 @@ const signin = async (email: string, password: string, userType: TUserRole) => {
     const { newAccessToken, newRefreshToken } = generateToken({
       id: String(existingUser.id),
       name: existingUser.name,
-      userType: existingUser.userType[0],
+      userType,
+      nickname: existingUser.nickname || "",
     });
 
     accessToken = newAccessToken;
@@ -114,6 +116,7 @@ const signup = async ({
       id: String(user.id),
       name: user.name,
       userType: user.userType[0],
+      nickname: user.nickname || "",
     });
 
     accessToken = newAccessToken;
@@ -123,6 +126,7 @@ const signup = async ({
       id: String(user.id),
       name: user.name,
       userType: user.userType[0],
+      nickname: user.nickname || "",
     });
 
     accessToken = newAccessToken;
@@ -143,7 +147,7 @@ const signup = async ({
 };
 
 // 로그아웃
-const logout = async (userId: number) => {
+const logout = async (userId: string) => {
   if (!userId) {
     throw new AuthenticationError("토큰 인증 실패");
   }
