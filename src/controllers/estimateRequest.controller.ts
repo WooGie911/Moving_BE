@@ -30,6 +30,16 @@ class EstimateRequestController {
         moveDate,
         description,
       } = req.body;
+      // 출발지와 도착지 주소가 완전히 같은지 검사 (공백, null, undefined, 대소문자 등 모두 안전하게)
+      const safeEq = (a: any, b: any) => (a || "").toString().trim() === (b || "").toString().trim();
+      if (
+        safeEq(fromCity, toCity) &&
+        safeEq(fromDistrict, toDistrict) &&
+        safeEq(fromDetail, toDetail) &&
+        safeEq(fromRegion, toRegion)
+      ) {
+        return res.status(400).json({ success: false, message: "출발지와 도착지는 달라야 합니다." });
+      }
       const params: TCreateEstimateRequest = {
         userId,
         moveType,
@@ -58,7 +68,24 @@ class EstimateRequestController {
       }
       const active = await estimateRequestService.getActiveEstimateRequestByUserId(userId);
       const hasActive = !!active;
-      return res.status(200).json({ success: true, hasActive });
+      if (hasActive) {
+        // 주소 레이블 추가 (city, district, detail, region 조합)
+        let fromAddressLabel = undefined;
+        let toAddressLabel = undefined;
+        if (active.fromAddress) {
+          fromAddressLabel =
+            `${active.fromAddress.region} ${active.fromAddress.city} ${active.fromAddress.district} ${active.fromAddress.detail || ""}`.trim();
+        }
+        if (active.toAddress) {
+          toAddressLabel =
+            `${active.toAddress.region} ${active.toAddress.city} ${active.toAddress.district} ${active.toAddress.detail || ""}`.trim();
+        }
+        return res
+          .status(200)
+          .json({ success: true, hasActive, data: { ...active, fromAddressLabel, toAddressLabel } });
+      } else {
+        return res.status(200).json({ success: true, hasActive });
+      }
     } catch (error) {
       return res.status(500).json({ success: false, message: "서버 내부 오류가 발생했습니다." });
     }
