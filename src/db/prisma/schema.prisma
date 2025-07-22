@@ -138,9 +138,10 @@ model User {
   shortIntro       String? // 간단 소개
   detailIntro      String? // 상세 소개
   career           Int? // 경력 (년)
-  workedCount      Int?       @default(0) // 완료된 이사 건수
-  averageRating    Float?     @default(0) // 평균 평점
-  totalReviewCount Int?       @default(0) // 총 리뷰 수
+  workedCount      Int?         @default(0) // 완료된 이사 건수
+  averageRating    Float?       @default(0) // 평균 평점
+  totalReviewCount Int?         @default(0) // 총 리뷰 수
+  currentAreas     RegionType[] // 서비스 가능 지역들
   serviceTypes     MoveType[] // 제공 가능한 서비스 타입들
 
   // 관계

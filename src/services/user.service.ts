@@ -63,7 +63,7 @@ const createCustomerProfile = async (
   }
 
   // 프로필 데이터 유효성 검사
-  await validateCustomerProfileData(profileData);
+  await validateCustomerProfileData(profileData, userId);
 
   // 프로필 생성 데이터 준비
   const createProfileData: TCreateCustomerProfile = {
@@ -90,17 +90,17 @@ const createMoverProfile = async (
   }
 
   // 프로필 데이터 유효성 검사
-  await validateMoverProfileData(profileData);
+  await validateMoverProfileData(profileData, userId);
 
   // 프로필 생성 데이터 준비
   const createProfileData: TCreateMoverProfile = {
     userId,
     nickname: profileData.nickname,
-    profileImage: profileData.moverImage,
-    experience: profileData.career || 0,
-    introduction: profileData.shortIntro || "",
-    description: profileData.detailIntro || "",
-    currentArea: profileData.currentArea,
+    moverImage: profileData.moverImage,
+    career: profileData.career || 0,
+    shortIntro: profileData.shortIntro || "",
+    detailIntro: profileData.detailIntro || "",
+    currentAreas: profileData.currentAreas,
     serviceTypes: profileData.serviceTypes,
   };
 

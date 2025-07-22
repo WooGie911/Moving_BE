@@ -176,7 +176,7 @@ export type TMoverProfile = {
   nickname: string | null;
   email: string;
   moverImage: string | null;
-  currentArea: RegionType;
+  currentArea: RegionType[];
   serviceTypes: MoveType[];
   shortIntro: string | null;
   detailIntro: string | null;
@@ -192,7 +192,7 @@ export type TMoverProfile = {
 export type TCustomerProfileInput = {
   nickname: string;
   customerImage?: string;
-  currentArea: RegionType;
+  currentArea?: RegionType;
   preferredServices: MoveType[];
   isVeteran?: boolean;
 };
@@ -204,7 +204,7 @@ export type TMoverProfileInput = {
   career?: number;
   shortIntro?: string;
   detailIntro?: string;
-  currentArea: RegionType;
+  currentAreas: RegionType[];
   serviceTypes: MoveType[];
   isVeteran?: boolean;
 };
@@ -251,7 +251,7 @@ export type TUserUpdateData = {
   nickname?: string;
   customerImage?: string;
   moverImage?: string;
-  currentArea?: RegionType;
+  currentArea?: RegionType[];
   preferredServices?: MoveType[];
   serviceTypes?: MoveType[];
   shortIntro?: string;
@@ -278,11 +278,11 @@ export type TUserProfile = {
 export type TCreateMoverProfile = {
   userId: string;
   nickname: string;
-  profileImage?: string;
-  experience: number;
-  introduction: string;
-  description: string;
-  currentArea: RegionType;
+  moverImage?: string;
+  career: number;
+  shortIntro: string;
+  detailIntro: string;
+  currentAreas: RegionType[];
   serviceTypes: MoveType[];
 };
 
@@ -291,7 +291,7 @@ export type TCreateCustomerProfile = {
   userId: string;
   nickname: string;
   customerImage?: string;
-  currentArea: RegionType;
+  currentArea?: RegionType;
   preferredServices: MoveType[];
 };
 
@@ -306,9 +306,9 @@ export type TUserProfileUpdateInput = {
   phoneNumber?: string;
   currentPassword?: string;
   newPassword?: string;
-  profileImage?: string;
-  currentRegion?: RegionType;
-  userServices?: number[];
+  moverImage?: string;
+  currentArea?: RegionType[];
+  serviceTypes?: MoveType[];
 };
 
 // @deprecated - TUserUpdateData로 대체 예정

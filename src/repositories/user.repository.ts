@@ -1,7 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import {
   TCreateMoverProfile,
-  TUpdateCustomerUser,
   TCreateCustomerProfile,
   TUpdateUserProfile,
   TServiceId,
@@ -70,17 +69,19 @@ const createCustomerProfile = async (profileData: TCreateCustomerProfile) => {
 
 // 기사님(MOVER) 프로필 생성
 const createMoverProfile = async (profileData: TCreateMoverProfile) => {
-  return await prisma.user.update({
+  const updateData = {
+    nickname: profileData.nickname,
+    moverImage: profileData.moverImage,
+    career: profileData.career,
+    shortIntro: profileData.shortIntro,
+    detailIntro: profileData.detailIntro,
+    serviceTypes: profileData.serviceTypes,
+    currentAreas: profileData.currentAreas,
+  };
+
+  const result = await prisma.user.update({
     where: { id: profileData.userId },
-    data: {
-      nickname: profileData.nickname,
-      moverImage: profileData.profileImage,
-      career: profileData.experience,
-      shortIntro: profileData.introduction,
-      detailIntro: profileData.description,
-      serviceTypes: profileData.serviceTypes,
-      currentArea: profileData.currentArea,
-    },
+    data: updateData,
     select: {
       id: true,
       name: true,
@@ -90,14 +91,23 @@ const createMoverProfile = async (profileData: TCreateMoverProfile) => {
       shortIntro: true,
       detailIntro: true,
       serviceTypes: true,
+      currentAreas: true,
     },
   });
+
+  return result;
 };
 
 // 닉네임 중복 확인
-const checkNicknameExists = async (nickname: string) => {
+const checkNicknameExists = async (
+  nickname: string,
+  excludeUserId?: string
+) => {
   const user = await prisma.user.findUnique({
-    where: { nickname },
+    where: {
+      nickname,
+      ...(excludeUserId && { NOT: { id: excludeUserId } }),
+    },
   });
   return !!user;
 };
