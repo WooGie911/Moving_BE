@@ -18,14 +18,30 @@ export const getMoverList = async (filter: MoverListFilter) => {
     take = 4,
   } = filter;
 
+  const getServiceTypeEnum = (serviceTypeId: string | number) => {
+    const id = Number(serviceTypeId);
+    switch (id) {
+      case 1:
+        return "SMALL"; 
+      case 2:
+        return "HOME";
+      case 3:
+        return "OFFICE"; 
+      default:
+        return null;
+    }
+  };
+
+  const serviceTypeEnum = serviceType ? getServiceTypeEnum(serviceType) : null;
+
   const where: any = {
     deletedAt: null,
     userType: { has: "MOVER" },
     ...(search && {
       OR: [{ nickname: { contains: search } }, { name: { contains: search } }],
     }),
-    ...(serviceType && {
-      serviceTypes: { has: serviceType },
+    ...(serviceTypeEnum && {
+      serviceTypes: { has: serviceTypeEnum },
     }),
     ...(region && {
       serviceAreas: {
@@ -49,8 +65,18 @@ export const getMoverList = async (filter: MoverListFilter) => {
     skip: cursor ? 1 : 0,
     ...(cursor && { cursor: { id: cursor } }),
     take: take + 1,
-    include: {
+    select: {
+      id: true,
+      nickname: true,
+      name: true,
+      career: true,
+      shortIntro: true,
+      detailIntro: true,
+      workedCount: true,
+      averageRating: true,
+      totalReviewCount: true,
       serviceAreas: true,
+      serviceTypes: true,
       favorites: true,
     },
   });
@@ -66,8 +92,18 @@ export const getMoverList = async (filter: MoverListFilter) => {
 export const getMoverDetail = async (id: string) => {
   return prisma.user.findUnique({
     where: { id, deletedAt: null },
-    include: {
+    select: {
+      id: true,
+      nickname: true,
+      name: true,
+      career: true,
+      shortIntro: true,
+      detailIntro: true,
+      workedCount: true,
+      averageRating: true,
+      totalReviewCount: true,
       serviceAreas: true,
+      serviceTypes: true,
       favorites: true,
     },
   });

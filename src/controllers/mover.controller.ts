@@ -12,9 +12,9 @@ export const getMoverListController = async (
   next: NextFunction
 ) => {
   try {
-    let { region, serviceType, search, sort, cursor, take } = req.query;
+    let { region, serviceTypeId, search, sort, cursor, take } = req.query;
     region = region ? String(region) : undefined;
-    serviceType = serviceType ? String(serviceType) : undefined;
+    serviceTypeId = serviceTypeId ? String(serviceTypeId) : undefined;
     search = search ? String(search) : undefined;
     sort =
       sort && ALLOWED_SORT.includes(String(sort)) ? String(sort) : "rating";
@@ -26,7 +26,7 @@ export const getMoverListController = async (
     }
     const filter = {
       region,
-      serviceType,
+      serviceType: serviceTypeId, 
       search,
       sort,
       cursor,
@@ -37,9 +37,11 @@ export const getMoverListController = async (
     res.json({
       success: true,
       message: "기사님 목록을 성공적으로 조회했습니다.",
-      data: items,
-      nextCursor,
-      hasNext,
+      data: {
+        items,
+        nextCursor,
+        hasNext,
+      },
     });
   } catch (err) {
     next(err);
