@@ -43,22 +43,28 @@ async function main() {
     detail: `테스트로 ${i * 10}`,
     region: i % 2 === 0 ? RegionType.SEOUL : RegionType.GYEONGGI,
   }));
-  const addresses = await Promise.all(addressData.map((data) => prisma.address.create({ data })));
+  const addresses = await Promise.all(
+    addressData.map((data) => prisma.address.create({ data }))
+  );
 
   // 유저 20명 생성 (고객 15, 기사 5, 하이브리드 2)
-  const userArr = [];
+  const userArr: any[] = [];
   for (let i = 1; i <= 15; i++) {
     userArr.push({
       email: `customer${i}@test.com`,
       encryptedPassword: await bcrypt.hash(`Test!Pass${i}@2024`, 10),
-      encryptedPhoneNumber: encryptPhoneNumber(`010-1${i.toString().padStart(3, "0")}-0000`),
+      encryptedPhoneNumber: encryptPhoneNumber(
+        `010-1${i.toString().padStart(3, "0")}-0000`
+      ),
       name: `고객${i}`,
       userType: [UserType.CUSTOMER],
       provider: AuthProvider.LOCAL,
       customerImage: `https://example.com/customer${i}.jpg`,
       nickname: `고객닉${i}`,
       currentArea: getRandom([RegionType.SEOUL, RegionType.GYEONGGI]),
-      preferredServices: [getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE])],
+      preferredServices: [
+        getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE]),
+      ],
       totalFavoriteCount: 0,
     });
   }
@@ -66,7 +72,9 @@ async function main() {
     userArr.push({
       email: `mover${i}@test.com`,
       encryptedPassword: await bcrypt.hash(`Mover!Pass${i}@2024`, 10),
-      encryptedPhoneNumber: encryptPhoneNumber(`010-2${i.toString().padStart(3, "0")}-0000`),
+      encryptedPhoneNumber: encryptPhoneNumber(
+        `010-2${i.toString().padStart(3, "0")}-0000`
+      ),
       name: `기사${i}`,
       userType: [UserType.MOVER],
       provider: AuthProvider.LOCAL,
@@ -80,7 +88,9 @@ async function main() {
       workedCount: i * 10,
       averageRating: 4 + (i % 2) * 0.5,
       totalReviewCount: i * 5,
-      serviceTypes: [getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE])],
+      serviceTypes: [
+        getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE]),
+      ],
       totalFavoriteCount: 0,
     });
   }
@@ -89,7 +99,9 @@ async function main() {
     userArr.push({
       email: `hybrid${i}@test.com`,
       encryptedPassword: await bcrypt.hash(`Hybrid!Pass${i}@2024`, 10),
-      encryptedPhoneNumber: encryptPhoneNumber(`010-3${i.toString().padStart(3, "0")}-0000`),
+      encryptedPhoneNumber: encryptPhoneNumber(
+        `010-3${i.toString().padStart(3, "0")}-0000`
+      ),
       name: `하이브리드${i}`,
       userType: [UserType.CUSTOMER, UserType.MOVER],
       provider: AuthProvider.LOCAL,
@@ -97,7 +109,6 @@ async function main() {
       moverImage: `https://example.com/hybrid${i}_mover.jpg`,
       nickname: `하이브리드닉${i}`,
       currentAreas: [RegionType.SEOUL, RegionType.GYEONGGI],
-      preferredServices: [MoveType.HOME, MoveType.SMALL],
       isVeteran: true,
       shortIntro: `고객+기사 하이브리드${i}`,
       detailIntro: `고객과 기사 모두 경험한 하이브리드${i}`,
@@ -109,7 +120,9 @@ async function main() {
       totalFavoriteCount: 0,
     });
   }
-  const users = await Promise.all(userArr.map((data) => prisma.user.create({ data })));
+  const users = await Promise.all(
+    userArr.map((data) => prisma.user.create({ data }))
+  );
 
   // 기사님 서비스 지역 (기사/하이브리드)
   const moverUsers = users.filter((u) => u.userType.includes("MOVER"));
@@ -121,8 +134,8 @@ async function main() {
           region: getRandom([RegionType.SEOUL, RegionType.GYEONGGI]),
           district: idx % 2 === 0 ? "강남구" : "서초구",
         },
-      }),
-    ),
+      })
+    )
   );
 
   // 사용자별 주소 등록 (각 유저마다 2개씩)
@@ -145,8 +158,8 @@ async function main() {
             customLabel: "이사갈 곳",
           },
         }),
-      ]),
-    ),
+      ])
+    )
   );
 
   // 견적 요청 30개 생성
@@ -169,8 +182,8 @@ async function main() {
           ]),
           description: `테스트 견적 요청 ${i + 1}`,
         },
-      }),
-    ),
+      })
+    )
   );
 
   // 견적 30개 생성 (기사/하이브리드가 랜덤하게 제출)
@@ -192,8 +205,8 @@ async function main() {
           includesPackaging: i % 2 === 0,
           insuranceAmount: 1000000 + i * 100000,
         },
-      }),
-    ),
+      })
+    )
   );
 
   // 찜 40개 생성
@@ -207,7 +220,7 @@ async function main() {
           customerId: customer.id,
           moverId: mover.id,
         },
-      }),
+      })
     );
     // 기사/하이브리드의 totalFavoriteCount 증가
     await prisma.user.update({
@@ -228,8 +241,8 @@ async function main() {
           rating: 3 + (i % 3),
           content: `테스트 리뷰 내용 ${i + 1}`,
         },
-      }),
-    ),
+      })
+    )
   );
 
   // 사용자 활동 15개 생성
@@ -249,8 +262,8 @@ async function main() {
           entityType: "EstimateRequest",
           description: `테스트 활동 ${i + 1}`,
         },
-      }),
-    ),
+      })
+    )
   );
 
   // 알림 15개 생성
@@ -271,8 +284,8 @@ async function main() {
           content: `테스트 알림 내용 ${i + 1}`,
           path: `/test/${i + 1}`,
         },
-      }),
-    ),
+      })
+    )
   );
 
   console.log("✅ Seed completed successfully!");

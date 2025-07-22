@@ -5,7 +5,7 @@ import { verifyAccessToken } from "../middlewares/verifyToken";
 const customerEstimateRequestRouter = Router();
 
 /**
- * GET /user-quotes/pending
+ * GET /customer-quotes/pending
  * @summary 진행중인 견적요청 조회
  * @description 사용자의 진행중인 견적요청을 조회합니다.
  * @tags UserQuote
@@ -52,7 +52,9 @@ const customerEstimateRequestRouter = Router();
  *           "totalReviewCount": 50,
  *           "serviceTypes": [],
  *           "serviceAreas": [],
- *           "isFavorite": true
+ *           "isFavorite": true,
+ *           "totalFavoriteCount": 12,
+ *           "Favorite": []
  *         }
  *       }
  *     ]
@@ -76,7 +78,7 @@ customerEstimateRequestRouter.get(
 );
 
 /**
- * GET /user-quotes/received
+ * GET /customer-quotes/received
  * @summary 완료된 견적요청 목록 조회
  * @description 사용자의 완료된 견적요청 목록을 조회합니다.
  * @tags UserQuote
@@ -101,7 +103,35 @@ customerEstimateRequestRouter.get(
  *         "fromAddress": { ... },
  *         "toAddress": { ... }
  *       },
- *       "estimates": [ ... ]
+ *       "estimates": [
+ *         {
+ *           "id": "clx789...",
+ *           "price": 150000,
+ *           "comment": "안전하고 신속한 이사 서비스",
+ *           "status": "ACCEPTED",
+ *           "isDesignated": false,
+ *           "createdAt": "2025-07-10T01:00:00.000Z",
+ *           "mover": {
+ *             "id": "clx999...",
+ *             "name": "김기사",
+ *             "userType": ["MOVER"],
+ *             "moverImage": null,
+ *             "nickname": "믿을만한김기사",
+ *             "isVeteran": true,
+ *             "shortIntro": "5년 경력의 전문가",
+ *             "detailIntro": "안전하고 신속한 이사",
+ *             "career": 5,
+ *             "workedCount": 100,
+ *             "averageRating": 4.8,
+ *             "totalReviewCount": 50,
+ *             "serviceTypes": [],
+ *             "serviceAreas": [],
+ *             "isFavorite": true,
+ *             "totalFavoriteCount": 12,
+ *             "Favorite": []
+ *           }
+ *         }
+ *       ]
  *     }
  *   ]
  * }
@@ -113,7 +143,7 @@ customerEstimateRequestRouter.get(
 );
 
 /**
- * GET /user-quotes/pending/:estimateId
+ * GET /customer-quotes/pending/:estimateId
  * @summary 진행중인 견적요청의 특정 견적 상세 조회
  * @description 진행중인 견적요청의 특정 견적 상세 정보를 조회합니다.
  * @tags UserQuote
@@ -149,7 +179,9 @@ customerEstimateRequestRouter.get(
  *       "totalReviewCount": 50,
  *       "serviceTypes": [],
  *       "serviceAreas": [],
- *       "isFavorite": true
+ *       "isFavorite": true,
+ *       "totalFavoriteCount": 12,
+ *       "Favorite": []
  *     }
  *   }
  * }
@@ -161,7 +193,7 @@ customerEstimateRequestRouter.get(
 );
 
 /**
- * GET /user-quotes/received/:estimateRequestId/:estimateId
+ * GET /customer-quotes/received/:estimateRequestId/:estimateId
  * @summary 완료된 견적요청의 특정 견적 상세 조회
  * @description 완료된 견적요청의 특정 견적 상세 정보를 조회합니다.
  * @tags UserQuote
@@ -198,7 +230,9 @@ customerEstimateRequestRouter.get(
  *       "totalReviewCount": 50,
  *       "serviceTypes": [],
  *       "serviceAreas": [],
- *       "isFavorite": false
+ *       "isFavorite": true,
+ *       "totalFavoriteCount": 12,
+ *       "Favorite": []
  *     }
  *   }
  * }
@@ -210,7 +244,7 @@ customerEstimateRequestRouter.get(
 );
 
 /**
- * PATCH /user-quotes/confirm
+ * PATCH /customer-quotes/confirm
  * @summary 견적 확정
  * @description 특정 견적을 확정합니다.
  * @tags UserQuote
