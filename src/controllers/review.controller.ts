@@ -3,7 +3,11 @@ import reviewService from "../services/review.service";
 
 const reviewController = {
   // 1. 리뷰 작성 (PATCH)
-  postReview: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  postReview: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const reviewId = Number(req.params.reviewId);
       const { rating, content } = req.body;
@@ -23,7 +27,11 @@ const reviewController = {
   },
 
   // 2. 리뷰 작성 가능한 Quote 리스트 조회
-  getWritableQuotes: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getWritableQuotes: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const customerId = Number(req.user?.userId);
       if (!customerId) {
@@ -32,7 +40,10 @@ const reviewController = {
       }
       const page = Number(req.query.page) || 1;
       const pageSize = Number(req.query.pageSize) || 4;
-      const quotes = await reviewService.getWritableQuotes(customerId, { page, pageSize });
+      const quotes = await reviewService.getWritableQuotes(customerId, {
+        page,
+        pageSize,
+      });
       res.json({
         success: true,
         message: "리뷰 작성 가능한 견적 리스트입니다.",
@@ -44,7 +55,11 @@ const reviewController = {
   },
 
   // 3. 내가 쓴 리뷰 목록 조회
-  getWrittenReviews: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getWrittenReviews: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const customerId = Number(req.params.customerId);
       if (!customerId) {
@@ -53,7 +68,10 @@ const reviewController = {
       }
       const page = Number(req.query.page) || 1;
       const pageSize = Number(req.query.pageSize) || 4;
-      const reviews = await reviewService.getWrittenReviews(customerId, { page, pageSize });
+      const reviews = await reviewService.getWrittenReviews(customerId, {
+        page,
+        pageSize,
+      });
       res.json({
         success: true,
         message: "내가 쓴 리뷰 목록입니다.",
@@ -77,7 +95,10 @@ const reviewController = {
       }
       const page = Number(req.query.page) || 1;
       const pageSize = Number(req.query.pageSize) || 5;
-      const reviews = await reviewService.getReceivedReviews(moverId, { page, pageSize });
+      const reviews = await reviewService.getReceivedReviews(moverId, {
+        page,
+        pageSize,
+      });
       res.json({
         success: true,
         message: "내가 받은 리뷰 목록입니다.",

@@ -24,9 +24,14 @@ const reviewRepository = {
           },
         },
         include: {
-          confirmedEstimate: true,
-          reviews: {
-            where: { status: ReviewStatus.PENDING },
+          confirmedEstimate: {
+            include: {
+              mover: {
+                include: {
+                  profile: true,
+                },
+              },
+            },
           },
         },
         skip,
@@ -55,6 +60,11 @@ const reviewRepository = {
         include: {
           quote: true,
           estimate: true,
+          mover: {
+            include: {
+              profile: true,
+            },
+          },
         },
         skip,
         take: pageSize,
@@ -73,6 +83,11 @@ const reviewRepository = {
         include: {
           quote: true,
           estimate: true,
+          user: {
+            include: {
+              profile: true,
+            },
+          },
         },
         skip,
         take: pageSize,
