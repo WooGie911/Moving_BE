@@ -15,7 +15,7 @@ const createEstimateRequest = async (data: any, userId: string): Promise<Estimat
     },
   });
 };
-const getActiveEstimateRequestByUserId = async (userId: string): Promise<EstimateRequest | null> => {
+const getActiveEstimateRequestByUserId = async (userId: string): Promise<any | null> => {
   return await prisma.estimateRequest.findFirst({
     where: {
       customerId: userId,
@@ -23,6 +23,34 @@ const getActiveEstimateRequestByUserId = async (userId: string): Promise<Estimat
       deletedAt: null,
     },
     orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      customerId: true,
+      moveType: true,
+      moveDate: true,
+      fromAddressId: true,
+      toAddressId: true,
+      description: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+      fromAddress: {
+        select: {
+          city: true,
+          district: true,
+          detail: true,
+          region: true,
+        },
+      },
+      toAddress: {
+        select: {
+          city: true,
+          district: true,
+          detail: true,
+          region: true,
+        },
+      },
+    },
   });
 };
 const updateEstimateRequest = async (id: string, updateData: any): Promise<EstimateRequest> => {
