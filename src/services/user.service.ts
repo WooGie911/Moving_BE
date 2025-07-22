@@ -7,6 +7,7 @@ import {
   updateUserProfile,
   getCustomerProfile,
   getMoverProfile,
+  updateCustomerProfile,
 } from "../repositories/user.repository";
 import {
   encryptPhoneNumber,
@@ -20,6 +21,8 @@ import {
   TCreateMoverProfile,
   TCreateCustomerProfile,
   TUserRole,
+  TCustomerProfileUpdateInput,
+  TCustomerProfileUpdate,
 } from "../types/user.types";
 import { PROFILE_ERROR_MESSAGES } from "../constants/profile.constants";
 import {
@@ -84,7 +87,7 @@ const getProfileData = async (userId: string, userType: TUserRole) => {
   }
 };
 
-// 일반 유저(CUSTOMER) 프로필 등록 및 업데이트
+// 일반 유저(CUSTOMER) 프로필 등록
 const createCustomerProfile = async (
   userId: string,
   profileData: TCustomerProfileInput
@@ -120,6 +123,50 @@ const createCustomerProfile = async (
     accessToken: newAccessToken,
     refreshToken: newRefreshToken,
   };
+};
+
+// 일반 유저(CUSTOMER) 프로필 수정
+const updateCustomerProfileCheck = async (
+  userId: string,
+  updateData: TCustomerProfileUpdateInput
+) => {
+  const user = await getUserWithPassword(userId);
+  if (!user) {
+    throw new NotFoundError(PROFILE_ERROR_MESSAGES.USER_NOT_FOUND);
+  }
+
+  if (user.userType[0] !== "CUSTOMER") {
+    throw new ValidationError("유저 타입이 일반 유저가 아닙니다");
+  }
+
+  // 비밀번호 변경 요청 시 현재 비밀번호 검증
+  if (updateData.password) {
+    const isCurrentPasswordValid = await bcrypt.compare(
+      updateData.password,
+      user.encryptedPassword!
+    );
+    if (!isCurrentPasswordValid) {
+      throw new ValidationError("현재 비밀번호가 일치하지 않습니다");
+    }
+  }
+
+  // 업데이트 데이터 준비
+  const encryptedPhoneNumber = encryptPhoneNumber(updateData.phoneNumber!);
+
+  const newUpdateData: TCustomerProfileUpdate = {
+    name: updateData.name,
+    nickname: updateData.nickname,
+    email: updateData.email,
+    encryptedPhoneNumber,
+    encryptedPassword: updateData.password
+      ? await bcrypt.hash(updateData.password, 10)
+      : undefined,
+    customerImage: updateData.customerImage,
+    currentArea: updateData.currentArea,
+    preferredServices: updateData.preferredServices,
+  };
+
+  await updateCustomerProfile(userId, newUpdateData);
 };
 
 // 기사님(MOVER) 프로필 등록
@@ -220,6 +267,7 @@ export {
   userInfo,
   getProfileData,
   createCustomerProfile,
+  updateCustomerProfileCheck,
   createMoverProfile,
   updateMoverBasicInfo,
 };

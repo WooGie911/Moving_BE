@@ -5,6 +5,7 @@ import {
   createMoverProfile,
   updateMoverBasicInfo,
   getProfileData,
+  updateCustomerProfileCheck,
 } from "../services/user.service";
 import { handleError } from "../utils/handleError";
 import {
@@ -118,6 +119,33 @@ const postProfile = async (req: Request, res: Response) => {
   }
 };
 
+// 일반 유저 프로필 수정
+const patchCustomerProfile = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.user as { userId: string };
+
+    const updateData = {
+      name: req.body.name,
+      nickname: req.body.nickname,
+      email: req.body.email,
+      phoneNumber: req.body.phoneNumber,
+      password: req.body.password,
+      customerImage: req.body.customerImage,
+      currentArea: req.body.currentArea,
+      preferredServices: req.body.preferredServices,
+    };
+
+    await updateCustomerProfileCheck(userId, updateData);
+    res.json({
+      success: true,
+      message: PROFILE_SUCCESS_MESSAGES.CUSTOMER_PROFILE_UPDATED,
+      data: updateData,
+    });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
 // 기사님 기본정보 수정
 const patchMoverBasicInfo = async (req: Request, res: Response) => {
   try {
@@ -139,4 +167,10 @@ const patchMoverBasicInfo = async (req: Request, res: Response) => {
   }
 };
 
-export { getUser, postProfile, getProfile, patchMoverBasicInfo };
+export {
+  getUser,
+  postProfile,
+  getProfile,
+  patchCustomerProfile,
+  patchMoverBasicInfo,
+};

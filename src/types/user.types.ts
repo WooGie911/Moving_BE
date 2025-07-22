@@ -222,13 +222,28 @@ export type TUserUpdateInput = {
   currentArea?: RegionType;
 };
 
-// Customer 프로필 업데이트 타입
+// Customer 프로필 업데이트 인풋 타입
 export type TCustomerProfileUpdateInput = {
+  name?: string;
   nickname?: string;
+  email?: string;
+  phoneNumber?: string;
+  password?: string;
   customerImage?: string;
   currentArea?: RegionType;
   preferredServices?: MoveType[];
-  isVeteran?: boolean;
+};
+
+// Customer 프로필 업데이트 타입
+export type TCustomerProfileUpdate = {
+  name?: string;
+  nickname?: string;
+  email?: string;
+  encryptedPhoneNumber?: string;
+  encryptedPassword?: string;
+  customerImage?: string;
+  currentArea?: RegionType;
+  preferredServices?: MoveType[];
 };
 
 // Mover 프로필 업데이트 타입
