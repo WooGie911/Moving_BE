@@ -52,7 +52,9 @@ const customerEstimateRequestRouter = Router();
  *           "totalReviewCount": 50,
  *           "serviceTypes": [],
  *           "serviceAreas": [],
- *           "isFavorite": true
+ *           "isFavorite": true,
+ *           "totalFavoriteCount": 12,
+ *           "Favorite": []
  *         }
  *       }
  *     ]
@@ -101,7 +103,35 @@ customerEstimateRequestRouter.get(
  *         "fromAddress": { ... },
  *         "toAddress": { ... }
  *       },
- *       "estimates": [ ... ]
+ *       "estimates": [
+ *         {
+ *           "id": "clx789...",
+ *           "price": 150000,
+ *           "comment": "안전하고 신속한 이사 서비스",
+ *           "status": "ACCEPTED",
+ *           "isDesignated": false,
+ *           "createdAt": "2025-07-10T01:00:00.000Z",
+ *           "mover": {
+ *             "id": "clx999...",
+ *             "name": "김기사",
+ *             "userType": ["MOVER"],
+ *             "moverImage": null,
+ *             "nickname": "믿을만한김기사",
+ *             "isVeteran": true,
+ *             "shortIntro": "5년 경력의 전문가",
+ *             "detailIntro": "안전하고 신속한 이사",
+ *             "career": 5,
+ *             "workedCount": 100,
+ *             "averageRating": 4.8,
+ *             "totalReviewCount": 50,
+ *             "serviceTypes": [],
+ *             "serviceAreas": [],
+ *             "isFavorite": true,
+ *             "totalFavoriteCount": 12,
+ *             "Favorite": []
+ *           }
+ *         }
+ *       ]
  *     }
  *   ]
  * }
@@ -149,7 +179,9 @@ customerEstimateRequestRouter.get(
  *       "totalReviewCount": 50,
  *       "serviceTypes": [],
  *       "serviceAreas": [],
- *       "isFavorite": true
+ *       "isFavorite": true,
+ *       "totalFavoriteCount": 12,
+ *       "Favorite": []
  *     }
  *   }
  * }
@@ -198,7 +230,9 @@ customerEstimateRequestRouter.get(
  *       "totalReviewCount": 50,
  *       "serviceTypes": [],
  *       "serviceAreas": [],
- *       "isFavorite": false
+ *       "isFavorite": true,
+ *       "totalFavoriteCount": 12,
+ *       "Favorite": []
  *     }
  *   }
  * }

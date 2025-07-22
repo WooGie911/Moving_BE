@@ -6,6 +6,7 @@ import {
   TQuoteDetailResponse,
   TConfirmEstimateResponse,
   TDesignateEstimateRequest,
+  TEstimateResponse, // 추가
 } from "../types/customerEstimateRequest";
 
 const customerEstimateRequestService = {
@@ -40,7 +41,16 @@ const customerEstimateRequestService = {
         fromAddress: data.fromAddress,
         toAddress: data.toAddress,
       },
-      estimates: data.estimates ?? [],
+      estimates:
+        data.estimates.map((e: any) => ({
+          ...e,
+          mover: {
+            ...e.mover,
+            isFavorite: e.mover.isFavorite,
+            totalFavoriteCount: e.mover.totalFavoriteCount,
+            Favorite: e.mover.Favorite,
+          },
+        })) ?? [],
     };
   },
 
@@ -67,7 +77,16 @@ const customerEstimateRequestService = {
         fromAddress: data.fromAddress,
         toAddress: data.toAddress,
       },
-      estimates: data.estimates ?? [],
+      estimates:
+        data.estimates.map((e: any) => ({
+          ...e,
+          mover: {
+            ...e.mover,
+            isFavorite: e.mover.isFavorite,
+            totalFavoriteCount: e.mover.totalFavoriteCount,
+            Favorite: e.mover.Favorite,
+          },
+        })) ?? [],
     }));
   },
 
@@ -98,7 +117,12 @@ const customerEstimateRequestService = {
       status: result.status,
       isDesignated: result.isDesignated,
       createdAt: result.createdAt,
-      mover: result.mover,
+      mover: {
+        ...result.mover,
+        isFavorite: result.mover.isFavorite,
+        totalFavoriteCount: result.mover.totalFavoriteCount,
+        Favorite: result.mover.Favorite,
+      },
     };
   },
 
@@ -125,7 +149,12 @@ const customerEstimateRequestService = {
       status: result.status,
       isDesignated: result.isDesignated,
       createdAt: result.createdAt,
-      mover: result.mover,
+      mover: {
+        ...result.mover,
+        isFavorite: result.mover.isFavorite,
+        totalFavoriteCount: result.mover.totalFavoriteCount,
+        Favorite: result.mover.Favorite,
+      },
     };
   },
 

@@ -70,9 +70,11 @@ export type TMoverInfo = {
   workedCount: number | null;
   averageRating: number | null;
   totalReviewCount: number | null;
+  totalFavoriteCount: number; // 추가
   serviceTypes: any;
   serviceAreas: any;
   isFavorite: boolean; // 찜 여부 추가
+  Favorite?: any; // Favorite 배열도 select에 포함될 수 있으므로 옵셔널로 추가
 };
 
 // 견적 상세 조회 응답 타입

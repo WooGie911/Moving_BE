@@ -115,8 +115,7 @@ const customerEstimateRequestRepository = {
                 totalReviewCount: true,
                 serviceTypes: true,
                 serviceAreas: true,
-                //totalFavoriteCount   :true,
-                // 찜 여부 확인을 위한 Favorite 관계 추가
+                totalFavoriteCount: true, // 추가
                 Favorite: {
                   where: {
                     customerId: customerId,
@@ -215,6 +214,7 @@ const customerEstimateRequestRepository = {
                 totalReviewCount: true,
                 serviceTypes: true,
                 serviceAreas: true,
+                totalFavoriteCount: true, // 추가
                 // 찜 여부 확인을 위한 Favorite 관계 추가
                 Favorite: {
                   where: {
@@ -291,6 +291,7 @@ const customerEstimateRequestRepository = {
                 totalReviewCount: true,
                 serviceTypes: true,
                 serviceAreas: true,
+                totalFavoriteCount: true, // 추가
                 // 찜 여부 확인을 위한 Favorite 관계 추가
                 Favorite: {
                   where: {
@@ -366,6 +367,7 @@ const customerEstimateRequestRepository = {
                 totalReviewCount: true,
                 serviceTypes: true,
                 serviceAreas: true,
+                totalFavoriteCount: true, // 추가
                 // 찜 여부 확인을 위한 Favorite 관계 추가
                 Favorite: {
                   where: {

@@ -22,7 +22,7 @@ const customerEstimateRequestController = {
       res.status(200).json({
         success: true,
         message: "진행중인 견적요청 조회 성공",
-        data: result,
+        data: result, // 서비스 리턴값 그대로 전달 (mover의 totalFavoriteCount, isFavorite, Favorite 등 포함)
       });
     } catch (error) {
       next(error);
@@ -51,7 +51,7 @@ const customerEstimateRequestController = {
       res.status(200).json({
         success: true,
         message: "완료된 견적요청 목록 조회 성공",
-        data: result,
+        data: result, // 서비스 리턴값 그대로 전달
       });
     } catch (error) {
       next(error);
@@ -89,7 +89,7 @@ const customerEstimateRequestController = {
       res.status(200).json({
         success: true,
         message: "진행중인 견적 상세 조회 성공",
-        data: result,
+        data: result, // 서비스 리턴값 그대로 전달
       });
     } catch (error) {
       next(error);
@@ -136,7 +136,7 @@ const customerEstimateRequestController = {
       res.status(200).json({
         success: true,
         message: "완료된 견적 상세 조회 성공",
-        data: result,
+        data: result, // 서비스 리턴값 그대로 전달
       });
     } catch (error) {
       next(error);
