@@ -14,78 +14,101 @@ import {
 
 // 로그인 검증
 const signin = async (email: string, password: string, userType: TUserRole) => {
-  // 0. 유효성 검사
-  validateUserSignupInput({ email, password });
+  try {
+    console.log("인증 서비스 로그인 시도:", { email, userType });
 
-  // 1. 유저 존재 여부 확인
-  const existingUser = await authRepository.findUserByEmailAndPassword(email);
+    // 0. 유효성 검사
+    validateUserSignupInput({ email, password });
 
-  if (!existingUser) {
-    throw new AuthenticationError("존재하지 않는 유저입니다");
-  }
-  // 2. 비밀번호 검증
-  if (
-    !existingUser.encryptedPassword ||
-    !(await bcrypt.compare(password, existingUser.encryptedPassword))
-  ) {
-    throw new AuthenticationError("비밀번호가 일치하지 않습니다");
-  }
+    // 1. 유저 존재 여부 확인
+    const existingUser = await authRepository.findUserByEmailAndPassword(email);
 
-  let accessToken, refreshToken;
-  // 3. 유저 role에 따른 토큰 생성
-  if (userType === "CUSTOMER") {
-    const { newAccessToken, newRefreshToken } = generateToken({
-      id: String(existingUser.id),
-      name: existingUser.name,
+    console.log(
+      "조회된 사용자:",
+      existingUser
+        ? {
+            id: existingUser.id,
+            name: existingUser.name,
+            userType: existingUser.userType,
+          }
+        : null
+    );
+
+    if (!existingUser) {
+      throw new AuthenticationError("존재하지 않는 유저입니다");
+    }
+    // 2. 비밀번호 검증
+    if (
+      !existingUser.encryptedPassword ||
+      !(await bcrypt.compare(password, existingUser.encryptedPassword))
+    ) {
+      throw new AuthenticationError("비밀번호가 일치하지 않습니다");
+    }
+
+    let accessToken, refreshToken;
+    // 3. 유저 role에 따른 토큰 생성
+    if (userType === "CUSTOMER") {
+      const { newAccessToken, newRefreshToken } = generateToken({
+        id: String(existingUser.id),
+        name: existingUser.name,
+        userType,
+        hasProfile: existingUser.isCustomer || false,
+      });
+
+      accessToken = newAccessToken;
+      refreshToken = newRefreshToken;
+    } else if (userType === "MOVER") {
+      const { newAccessToken, newRefreshToken } = generateToken({
+        id: String(existingUser.id),
+        name: existingUser.name,
+        userType,
+        hasProfile: existingUser.isMover || false,
+      });
+
+      accessToken = newAccessToken;
+      refreshToken = newRefreshToken;
+    }
+
+    if (!accessToken || !refreshToken) {
+      throw new ServerError("토큰 생성 실패로 인한 로그인 실패");
+    }
+
+    // 현재 유저 타입이 1개이고, MOVER 이고 원본이 "CUSTOMER" 만 존재한다면 배열에 추가 "MOVER" 타입을 추가
+    let currentType = [];
+    if (
+      existingUser.userType?.[0] === "CUSTOMER" &&
+      existingUser.userType.length === 1 &&
+      userType === "MOVER"
+    ) {
+      currentType = [existingUser.userType[0], userType];
+    } else {
+      // 아니라면 원본 유저 타입 그대로 사용
+      // (첫 크로스 로그인 이후로는 아래만 실행됨)
+      currentType = existingUser.userType;
+    }
+
+    await authRepository.updateUserToken(
+      String(existingUser.id),
+      refreshToken,
+      currentType as TUserRole[]
+    );
+
+    return {
+      id: existingUser.id,
+      userName: existingUser.name,
       userType,
-      hasProfile: existingUser.isCustomer || false,
+      accessToken,
+      refreshToken,
+    };
+  } catch (error) {
+    console.error("인증 서비스 에러:", error);
+    console.error("에러 상세 정보:", {
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : "Unknown",
     });
-
-    accessToken = newAccessToken;
-    refreshToken = newRefreshToken;
-  } else if (userType === "MOVER") {
-    const { newAccessToken, newRefreshToken } = generateToken({
-      id: String(existingUser.id),
-      name: existingUser.name,
-      userType,
-      hasProfile: existingUser.isMover || false,
-    });
-
-    accessToken = newAccessToken;
-    refreshToken = newRefreshToken;
+    throw error;
   }
-
-  if (!accessToken || !refreshToken) {
-    throw new ServerError("토큰 생성 실패로 인한 로그인 실패");
-  }
-
-  // 현재 유저 타입이 1개이고, MOVER 이고 원본이 "CUSTOMER" 만 존재한다면 배열에 추가 "MOVER" 타입을 추가
-  let currentType = [];
-  if (
-    existingUser.userType?.[0] === "CUSTOMER" &&
-    existingUser.userType.length === 1 &&
-    userType === "MOVER"
-  ) {
-    currentType = [existingUser.userType[0], userType];
-  } else {
-    // 아니라면 원본 유저 타입 그대로 사용
-    // (첫 크로스 로그인 이후로는 아래만 실행됨)
-    currentType = existingUser.userType;
-  }
-
-  await authRepository.updateUserToken(
-    String(existingUser.id),
-    refreshToken,
-    currentType as TUserRole[]
-  );
-
-  return {
-    id: existingUser.id,
-    userName: existingUser.name,
-    userType,
-    accessToken,
-    refreshToken,
-  };
 };
 
 // 회원가입 검증

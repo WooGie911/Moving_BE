@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import customerEstimateRequestService from "../services/customerEstimateRequest.service";
+import { NotFoundError } from "../types/commonError.types";
 
 const customerEstimateRequestController = {
   // 1. 진행중인 견적요청 조회
@@ -10,6 +11,7 @@ const customerEstimateRequestController = {
   ): Promise<void> => {
     try {
       const userId = req.user?.userId;
+      console.log("[진행중 견적요청] API에서 추출한 userId:", userId); // 추가
       if (!userId || typeof userId !== "string") {
         res.status(401).json({
           success: false,
@@ -19,12 +21,15 @@ const customerEstimateRequestController = {
       }
       const result =
         await customerEstimateRequestService.getPendingEstimateRequest(userId);
+      console.log("[컨트롤러] 서비스에서 받은 result:", result); // 추가
+      // 항상 200 OK로 내려주고, 빈 객체도 success: true로 반환
       res.status(200).json({
         success: true,
         message: "진행중인 견적요청 조회 성공",
-        data: result, // 서비스 리턴값 그대로 전달 (mover의 totalFavoriteCount, isFavorite, Favorite 등 포함)
+        data: result,
       });
     } catch (error) {
+      console.error("getPendingEstimateRequest error:", error);
       next(error);
     }
   },
@@ -54,6 +59,14 @@ const customerEstimateRequestController = {
         data: result, // 서비스 리턴값 그대로 전달
       });
     } catch (error) {
+      console.error("getReceivedEstimateRequests controller error:", error);
+      if (error instanceof NotFoundError) {
+        res.status(404).json({
+          success: false,
+          message: error.message,
+        });
+        return;
+      }
       next(error);
     }
   },
@@ -86,10 +99,11 @@ const customerEstimateRequestController = {
           userId,
           estimateId
         );
+      // 항상 200 OK로 내려주고, 빈 객체도 success: true로 반환
       res.status(200).json({
         success: true,
         message: "진행중인 견적 상세 조회 성공",
-        data: result, // 서비스 리턴값 그대로 전달
+        data: result, // 빈 객체도 포함
       });
     } catch (error) {
       next(error);

@@ -131,35 +131,68 @@ const moverEstimateService = {
     regionEstimateRequests?: TEstimateRequestResponse[];
     designatedEstimateRequests?: TEstimateRequestResponse[];
   }> => {
-    const { region, designated, sortBy, customerName, movingType } = options;
+    try {
+      console.log("=== getAllEstimateRequests 서비스 시작 ===");
+      console.log("입력 파라미터:", { moverId, options });
 
-    let regionEstimateRequests: TEstimateRequestResponse[] = [];
-    let designatedEstimateRequests: TEstimateRequestResponse[] = [];
+      const { region, designated, sortBy, customerName, movingType } = options;
 
-    if (region) {
-      regionEstimateRequests =
-        (await moverEstimateService.getRegionEstimateRequest(
-          moverId,
-          sortBy,
-          customerName,
-          movingType
-        )) || [];
+      let regionEstimateRequests: TEstimateRequestResponse[] = [];
+      let designatedEstimateRequests: TEstimateRequestResponse[] = [];
+
+      if (region) {
+        console.log("지역 견적 조회 시작");
+        try {
+          regionEstimateRequests =
+            (await moverEstimateRepository.getRegionEstimateRequest(
+              moverId,
+              sortBy,
+              customerName,
+              movingType
+            )) || [];
+          console.log(
+            "지역 견적 조회 성공, 결과 수:",
+            regionEstimateRequests.length
+          );
+        } catch (error) {
+          console.error("지역 견적 조회 실패:", error);
+          regionEstimateRequests = [];
+        }
+      }
+
+      if (designated) {
+        console.log("지정 견적 조회 시작");
+        try {
+          designatedEstimateRequests =
+            (await moverEstimateRepository.getDesignatedEstimateRequest(
+              moverId,
+              sortBy,
+              customerName,
+              movingType
+            )) || [];
+          console.log(
+            "지정 견적 조회 성공, 결과 수:",
+            designatedEstimateRequests.length
+          );
+        } catch (error) {
+          console.error("지정 견적 조회 실패:", error);
+          designatedEstimateRequests = [];
+        }
+      }
+
+      const result = {
+        regionEstimateRequests: region ? regionEstimateRequests : undefined,
+        designatedEstimateRequests: designated
+          ? designatedEstimateRequests
+          : undefined,
+      };
+
+      console.log("서비스 결과:", result);
+      return result;
+    } catch (error) {
+      console.error("getAllEstimateRequests service error:", error);
+      throw error;
     }
-    if (designated) {
-      designatedEstimateRequests =
-        (await moverEstimateService.getDesignatedEstimateRequest(
-          moverId,
-          sortBy,
-          customerName,
-          movingType
-        )) || [];
-    }
-    return {
-      regionEstimateRequests: region ? regionEstimateRequests : undefined,
-      designatedEstimateRequests: designated
-        ? designatedEstimateRequests
-        : undefined,
-    };
   },
 
   // 견적 요청 상세 조회
@@ -175,26 +208,18 @@ const moverEstimateService = {
   },
 
   // 내가 보낸 견적서 조회
-  getMyEstimate: async (
-    moverId: string
-  ): Promise<TMyEstimateResponse[] | null> => {
+  getMyEstimate: async (moverId: string): Promise<TMyEstimateResponse[]> => {
     const estimates = await moverEstimateRepository.getMyEstimate(moverId);
-    if (!estimates || estimates.length === 0) {
-      throw new NotFoundError("보낸 견적서가 없습니다.");
-    }
-    return estimates;
+    return estimates || [];
   },
 
   // 내가 반려한 견적 조회
   getMyRejectedEstimates: async (
     moverId: string
-  ): Promise<TMyRejectedEstimateResponse[] | null> => {
+  ): Promise<TMyRejectedEstimateResponse[]> => {
     const rejectedEstimates =
       await moverEstimateRepository.getMyRejectedEstimates(moverId);
-    if (!rejectedEstimates || rejectedEstimates.length === 0) {
-      throw new NotFoundError("반려한 견적이 없습니다.");
-    }
-    return rejectedEstimates;
+    return rejectedEstimates || [];
   },
 
   // 견적 상태 업데이트

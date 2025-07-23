@@ -18,6 +18,8 @@ const postSignin = async (req: Request, res: Response) => {
   const { email, password, userType } = req.body;
 
   try {
+    console.log("로그인 시도:", { email, userType });
+
     const {
       id,
       userName,
@@ -43,6 +45,12 @@ const postSignin = async (req: Request, res: Response) => {
       accessToken,
     });
   } catch (error: any) {
+    console.error("로그인 에러:", error);
+    console.error("에러 상세 정보:", {
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : "Unknown",
+    });
     handleError(res, error);
   }
 };
