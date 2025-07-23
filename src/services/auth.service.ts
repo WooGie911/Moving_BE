@@ -32,14 +32,13 @@ const signin = async (email: string, password: string, userType: TUserRole) => {
   }
 
   let accessToken, refreshToken;
-
   // 3. 유저 role에 따른 토큰 생성
   if (userType === "CUSTOMER") {
     const { newAccessToken, newRefreshToken } = generateToken({
       id: String(existingUser.id),
       name: existingUser.name,
       userType,
-      nickname: existingUser.nickname || "",
+      hasProfile: existingUser.isCustomer || false,
     });
 
     accessToken = newAccessToken;
@@ -49,7 +48,7 @@ const signin = async (email: string, password: string, userType: TUserRole) => {
       id: String(existingUser.id),
       name: existingUser.name,
       userType,
-      nickname: existingUser.nickname || "",
+      hasProfile: existingUser.isMover || false,
     });
 
     accessToken = newAccessToken;
@@ -60,16 +59,30 @@ const signin = async (email: string, password: string, userType: TUserRole) => {
     throw new ServerError("토큰 생성 실패로 인한 로그인 실패");
   }
 
+  // 현재 유저 타입이 1개이고, MOVER 이고 원본이 "CUSTOMER" 만 존재한다면 배열에 추가 "MOVER" 타입을 추가
+  let currentType = [];
+  if (
+    existingUser.userType?.[0] === "CUSTOMER" &&
+    existingUser.userType.length === 1 &&
+    userType === "MOVER"
+  ) {
+    currentType = [existingUser.userType[0], userType];
+  } else {
+    // 아니라면 원본 유저 타입 그대로 사용
+    // (첫 크로스 로그인 이후로는 아래만 실행됨)
+    currentType = existingUser.userType;
+  }
+
   await authRepository.updateUserToken(
     String(existingUser.id),
     refreshToken,
-    userType
+    currentType as TUserRole[]
   );
 
   return {
     id: existingUser.id,
     userName: existingUser.name,
-    userType: userType === "CUSTOMER" ? "CUSTOMER" : "MOVER",
+    userType,
     accessToken,
     refreshToken,
   };
@@ -100,7 +113,7 @@ const signup = async ({
   const encryptedPhoneNumber = encryptPhoneNumber(phoneNumber);
 
   // 유저 생성
-  const user = await authRepository.saveUser({
+  const user = await authRepository.createUser({
     name,
     email,
     encryptedPassword,
@@ -114,13 +127,20 @@ const signup = async ({
 
   let accessToken, refreshToken;
 
-  // 3. 토큰 생성
+  // 유저 타입 배열에 CUSTOMER가 먼저 있는지 확인 없다면 현재 타입은 MOVER
+  // (저장 순서가  CUSTOMER, MOVER 이므로)
+  const userTypeResponse = user.userType.some((type) => type === "CUSTOMER")
+    ? "CUSTOMER"
+    : "MOVER";
+
+  // 3. 현재 유저 타입에 맞는 토큰 생성
+  // hasProfile은 프로필 등록 여부를 판단하기 위해 사용
   if (userType === "CUSTOMER") {
     const { newAccessToken, newRefreshToken } = generateToken({
       id: String(user.id),
       name: user.name,
-      userType: user.userType[0],
-      nickname: user.nickname || "",
+      userType: userTypeResponse,
+      hasProfile: false,
     });
 
     accessToken = newAccessToken;
@@ -129,8 +149,8 @@ const signup = async ({
     const { newAccessToken, newRefreshToken } = generateToken({
       id: String(user.id),
       name: user.name,
-      userType: user.userType[0],
-      nickname: user.nickname || "",
+      userType: userTypeResponse,
+      hasProfile: false,
     });
 
     accessToken = newAccessToken;
@@ -144,7 +164,7 @@ const signup = async ({
   return {
     id: user.id,
     userName: user.name,
-    userType: userType === "CUSTOMER" ? "CUSTOMER" : "MOVER",
+    userType: userTypeResponse,
     accessToken,
     refreshToken,
   };
@@ -166,7 +186,7 @@ const logout = async (userId: string) => {
     throw new AuthenticationError("이미 로그아웃된 상태입니다");
   }
 
-  await authRepository.updateUserToken(String(userId), null, user.userType[0]);
+  await authRepository.updateUserToken(String(userId), null, user.userType);
 };
 
 export default { signin, signup, logout };

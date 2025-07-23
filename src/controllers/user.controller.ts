@@ -44,13 +44,15 @@ const getProfile = async (req: Request, res: Response) => {
   res.json({ success: true, data: profile });
 };
 
-// 프로필 등록 및 수정 -> 수정은 따로 빼기?
+// 프로필 등록
 const postProfile = async (req: Request, res: Response) => {
   try {
     const { userId, userType } = req.user as {
       userId: string;
       userType: TUserRole;
     };
+
+    console.log(userId, userType);
 
     if (userType === "CUSTOMER") {
       // 일반 유저 프로필 등록

@@ -90,6 +90,7 @@ const createCustomerProfile = async (profileData: TCreateCustomerProfile) => {
       currentArea: profileData.currentArea,
       preferredServices: profileData.preferredServices,
       nickname: profileData.nickname,
+      isCustomer: true,
     },
     select: {
       id: true,
@@ -123,6 +124,7 @@ const createMoverProfile = async (profileData: TCreateMoverProfile) => {
     detailIntro: profileData.detailIntro,
     serviceTypes: profileData.serviceTypes,
     currentAreas: profileData.currentAreas,
+    isMover: true,
   };
 
   const result = await prisma.user.update({
