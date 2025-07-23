@@ -180,7 +180,7 @@ const patchMoverProfile = async (req: Request, res: Response) => {
     const updateData = {
       nickname: req.body.nickname,
       moverImage: req.body.moverImage,
-      currentArea: req.body.currentArea,
+      currentAreas: req.body.currentAreas,
       serviceTypes: req.body.serviceTypes,
       shortIntro: req.body.shortIntro,
       detailIntro: req.body.detailIntro,

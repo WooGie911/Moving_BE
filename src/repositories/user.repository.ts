@@ -152,36 +152,14 @@ const updateMoverProfile = async (
   userId: string,
   updateData: TMoverProfileUpdateInput
 ) => {
-  const updateFields: any = {};
-
-  if (updateData.nickname !== undefined) {
-    updateFields.nickname = updateData.nickname;
-  }
-  if (updateData.moverImage !== undefined) {
-    updateFields.moverImage = updateData.moverImage;
-  }
-  if (updateData.currentArea !== undefined) {
-    updateFields.currentAreas = [updateData.currentArea];
-  }
-  if (updateData.serviceTypes !== undefined) {
-    updateFields.serviceTypes = updateData.serviceTypes;
-  }
-  if (updateData.shortIntro !== undefined) {
-    updateFields.shortIntro = updateData.shortIntro;
-  }
-  if (updateData.detailIntro !== undefined) {
-    updateFields.detailIntro = updateData.detailIntro;
-  }
-  if (updateData.career !== undefined) {
-    updateFields.career = updateData.career;
-  }
-  if (updateData.isVeteran !== undefined) {
-    updateFields.isVeteran = updateData.isVeteran;
-  }
+  // currentAreas 배열을 그대로 사용
+  const data = {
+    ...updateData
+  };
 
   return await prisma.user.update({
     where: { id: userId },
-    data: updateFields,
+    data,
     select: {
       id: true,
       name: true,

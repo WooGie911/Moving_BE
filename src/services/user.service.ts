@@ -32,12 +32,7 @@ import {
   validateMoverProfileData,
 } from "../utils/validators/profileValidator";
 import { generateToken } from "../utils/generateToken";
-import {
-  ensureNicknameUnique,
-  validateRegion,
-  validateMoveTypes,
-} from "../utils/validators/profileValidator";
-import { VALIDATION_CONFIG } from "../constants/profile.constants";
+import { validateMoverProfileUpdate } from "../utils/validators/userValidator";
 
 // 유저 정보 조회
 const userInfo = async (userId: string, userType: TUserRole) => {
@@ -285,43 +280,10 @@ const updateMoverProfileCheck = async (
     throw new NotFoundError(PROFILE_ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
-  // 2. 닉네임 변경 시 중복 확인
-  if (updateData.nickname) {
-    await ensureNicknameUnique(updateData.nickname, userId);
-  }
+  // 2. 프로필 데이터 유효성 검사
+  await validateMoverProfileUpdate(updateData, userId);
 
-  // 3. 프로필 데이터 유효성 검사
-  if (updateData.currentArea) {
-    if (!validateRegion([updateData.currentArea])) {
-      throw new ValidationError(PROFILE_ERROR_MESSAGES.INVALID_REGION);
-    }
-  }
-
-  if (updateData.serviceTypes) {
-    if (!validateMoveTypes(updateData.serviceTypes)) {
-      throw new ValidationError(PROFILE_ERROR_MESSAGES.INVALID_SERVICE_ID);
-    }
-  }
-
-  if (updateData.career !== undefined) {
-    if (updateData.career < 0) {
-      throw new ValidationError("경력은 0년 이상이어야 합니다");
-    }
-  }
-
-  if (updateData.shortIntro !== undefined && updateData.shortIntro.trim().length > 0) {
-    if (updateData.shortIntro.trim().length < VALIDATION_CONFIG.MIN_INTRODUCTION_LENGTH) {
-      throw new ValidationError(PROFILE_ERROR_MESSAGES.INTRODUCTION_REQUIRED);
-    }
-  }
-
-  if (updateData.detailIntro !== undefined && updateData.detailIntro.trim().length > 0) {
-    if (updateData.detailIntro.trim().length < VALIDATION_CONFIG.MIN_DETAIL_INTRODUCTION_LENGTH) {
-      throw new ValidationError(PROFILE_ERROR_MESSAGES.DETAIL_INTRODUCTION_REQUIRED);
-    }
-  }
-
-  // 4. 프로필 업데이트 실행
+  // 3. 프로필 업데이트 실행
   const result = await updateMoverProfile(userId, updateData);
   return result;
 };
