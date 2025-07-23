@@ -17,7 +17,7 @@ export type TPendingQuoteResponse = {
     status: string;
     fromAddress: TAddress;
     toAddress: TAddress;
-  };
+  } | null;
   estimates: TEstimateResponse[];
 };
 

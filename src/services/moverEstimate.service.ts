@@ -79,7 +79,7 @@ const moverEstimateService = {
     sortBy?: "moveDate" | "createdAt",
     customerName?: string,
     movingType?: "SMALL" | "HOME" | "OFFICE"
-  ): Promise<TEstimateRequestResponse[] | null> => {
+  ): Promise<TEstimateRequestResponse[]> => {
     const estimateRequests =
       await moverEstimateRepository.getRegionEstimateRequest(
         moverId,
@@ -87,12 +87,8 @@ const moverEstimateService = {
         customerName,
         movingType
       );
-
-    if (!estimateRequests || estimateRequests.length === 0) {
-      throw new NotFoundError("해당 지역의 견적이 없습니다.");
-    }
-
-    return estimateRequests;
+    // NotFoundError를 던지지 않고, 빈 배열 반환
+    return estimateRequests || [];
   },
 
   // 지정 견적 조회
@@ -131,35 +127,54 @@ const moverEstimateService = {
     regionEstimateRequests?: TEstimateRequestResponse[];
     designatedEstimateRequests?: TEstimateRequestResponse[];
   }> => {
-    const { region, designated, sortBy, customerName, movingType } = options;
+    try {
+      const { region, designated, sortBy, customerName, movingType } = options;
 
-    let regionEstimateRequests: TEstimateRequestResponse[] = [];
-    let designatedEstimateRequests: TEstimateRequestResponse[] = [];
+      let regionEstimateRequests: TEstimateRequestResponse[] = [];
+      let designatedEstimateRequests: TEstimateRequestResponse[] = [];
 
-    if (region) {
-      regionEstimateRequests =
-        (await moverEstimateService.getRegionEstimateRequest(
-          moverId,
-          sortBy,
-          customerName,
-          movingType
-        )) || [];
+      if (region) {
+        try {
+          regionEstimateRequests =
+            (await moverEstimateRepository.getRegionEstimateRequest(
+              moverId,
+              sortBy,
+              customerName,
+              movingType
+            )) || [];
+        } catch (error) {
+          console.error("지역 견적 조회 실패:", error);
+          regionEstimateRequests = [];
+        }
+      }
+
+      if (designated) {
+        try {
+          designatedEstimateRequests =
+            (await moverEstimateRepository.getDesignatedEstimateRequest(
+              moverId,
+              sortBy,
+              customerName,
+              movingType
+            )) || [];
+        } catch (error) {
+          console.error("지정 견적 조회 실패:", error);
+          designatedEstimateRequests = [];
+        }
+      }
+
+      const result = {
+        regionEstimateRequests: region ? regionEstimateRequests : undefined,
+        designatedEstimateRequests: designated
+          ? designatedEstimateRequests
+          : undefined,
+      };
+
+      return result;
+    } catch (error) {
+      console.error("getAllEstimateRequests service error:", error);
+      throw error;
     }
-    if (designated) {
-      designatedEstimateRequests =
-        (await moverEstimateService.getDesignatedEstimateRequest(
-          moverId,
-          sortBy,
-          customerName,
-          movingType
-        )) || [];
-    }
-    return {
-      regionEstimateRequests: region ? regionEstimateRequests : undefined,
-      designatedEstimateRequests: designated
-        ? designatedEstimateRequests
-        : undefined,
-    };
   },
 
   // 견적 요청 상세 조회
@@ -175,26 +190,18 @@ const moverEstimateService = {
   },
 
   // 내가 보낸 견적서 조회
-  getMyEstimate: async (
-    moverId: string
-  ): Promise<TMyEstimateResponse[] | null> => {
+  getMyEstimate: async (moverId: string): Promise<TMyEstimateResponse[]> => {
     const estimates = await moverEstimateRepository.getMyEstimate(moverId);
-    if (!estimates || estimates.length === 0) {
-      throw new NotFoundError("보낸 견적서가 없습니다.");
-    }
-    return estimates;
+    return estimates || [];
   },
 
   // 내가 반려한 견적 조회
   getMyRejectedEstimates: async (
     moverId: string
-  ): Promise<TMyRejectedEstimateResponse[] | null> => {
+  ): Promise<TMyRejectedEstimateResponse[]> => {
     const rejectedEstimates =
       await moverEstimateRepository.getMyRejectedEstimates(moverId);
-    if (!rejectedEstimates || rejectedEstimates.length === 0) {
-      throw new NotFoundError("반려한 견적이 없습니다.");
-    }
-    return rejectedEstimates;
+    return rejectedEstimates || [];
   },
 
   // 견적 상태 업데이트

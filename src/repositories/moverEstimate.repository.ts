@@ -205,56 +205,25 @@ const moverEstimateRepository = {
     customerName?: string,
     movingType?: "SMALL" | "HOME" | "OFFICE"
   ) => {
-    // 먼저 해당 기사님의 서비스 가능 지역을 조회
-    const moverServiceAreas = await prisma.moverServiceArea.findMany({
-      where: {
-        userId: moverId,
-        deletedAt: null,
-      },
-      select: {
-        region: true,
-        district: true,
-      },
+    const user = await prisma.user.findUnique({
+      where: { id: moverId },
+      select: { currentAreas: true },
     });
-
-    if (!moverServiceAreas || moverServiceAreas.length === 0) {
-      return []; // 서비스 가능 지역이 없으면 빈 배열 반환
-    }
+    const currentAreas = user?.currentAreas || [];
 
     let orderBy: any = {};
     let where: any = {
       status: "PENDING",
-      // 이사일이 지나지 않은 견적만 조회
       moveDate: {
         gte: new Date(),
       },
     };
 
-    // 서비스 가능 지역 필터링
-    const serviceRegions = moverServiceAreas.map((area) => area.region);
-    const serviceDistricts = moverServiceAreas
-      .filter((area) => area.district)
-      .map((area) => area.district);
-
-    where.OR = [
-      {
-        fromAddress: {
-          region: {
-            in: serviceRegions,
-          },
-        },
-      },
-    ];
-
-    // 구/동 레벨 필터링이 있는 경우 추가
-    if (serviceDistricts.length > 0) {
-      where.OR.push({
-        fromAddress: {
-          district: {
-            in: serviceDistricts,
-          },
-        },
-      });
+    // currentAreas가 있으면 해당 지역만 필터링
+    if (currentAreas.length > 0) {
+      where.OR = currentAreas.map((region: string) => ({
+        fromAddress: { region },
+      }));
     }
 
     // 고객 이름 필터링
@@ -279,7 +248,7 @@ const moverEstimateRepository = {
         orderBy = { createdAt: "desc" };
         break;
       default:
-        orderBy = { createdAt: "desc" }; // 기본값: 최신순
+        orderBy = { createdAt: "desc" };
     }
 
     const estimateRequests = await prisma.estimateRequest.findMany({
@@ -287,6 +256,7 @@ const moverEstimateRepository = {
       select: estimateRequestSelectOptions,
       orderBy: orderBy,
     });
+
     return estimateRequests;
   },
 
@@ -301,9 +271,20 @@ const moverEstimateRepository = {
     let where: any = {
       moverId: moverId,
       status: "PENDING",
+      deletedAt: null,
       // 만료되지 않은 지정 견적만 조회
       expiresAt: {
         gte: new Date(),
+      },
+      // 이미 견적을 작성한 항목은 제외
+      estimateRequest: {
+        NOT: {
+          estimates: {
+            some: {
+              moverId: moverId,
+            },
+          },
+        },
       },
     };
 
@@ -337,17 +318,27 @@ const moverEstimateRepository = {
         orderBy = { estimateRequest: { createdAt: "desc" } }; // 기본값: 최신순
     }
 
-    const designatedRequests = await prisma.designatedMover.findMany({
-      where: where,
-      select: {
-        estimateRequest: {
-          select: estimateRequestSelectOptions,
+    try {
+      const designatedRequests = await prisma.designatedMover.findMany({
+        where: where,
+        select: {
+          estimateRequest: {
+            select: estimateRequestSelectOptions,
+          },
         },
-      },
-      orderBy: orderBy,
-    });
+        orderBy: orderBy,
+      });
 
-    return designatedRequests.map((item) => item.estimateRequest);
+      return designatedRequests.map((item) => item.estimateRequest);
+    } catch (error) {
+      console.error("getDesignatedEstimateRequest repository error:", error);
+      console.error("에러 상세 정보:", {
+        message: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+        name: error instanceof Error ? error.name : "Unknown",
+      });
+      throw error;
+    }
   },
 
   // 견적 요청 상세 조회 - 1개
@@ -382,17 +373,23 @@ const moverEstimateRepository = {
   getMyRejectedEstimates: async (
     moverId: string
   ): Promise<TMyRejectedEstimateResponse[]> => {
-    const rejectedEstimates = await prisma.estimate.findMany({
-      where: {
-        moverId: moverId,
-        status: "REJECTED",
-      },
-      select: estimateSelectOptions,
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-    return rejectedEstimates as TMyRejectedEstimateResponse[];
+    try {
+      const rejectedEstimates = await prisma.estimate.findMany({
+        where: {
+          moverId: moverId,
+          status: "REJECTED",
+        },
+        select: estimateSelectOptions,
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      return rejectedEstimates as TMyRejectedEstimateResponse[];
+    } catch (error) {
+      console.error("getMyRejectedEstimates repository error:", error);
+      throw error;
+    }
   },
 
   // 견적 상태 업데이트 (권한 검증 포함)
