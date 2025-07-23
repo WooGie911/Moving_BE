@@ -27,9 +27,13 @@ const getUser = async (req: Request, res: Response) => {
     userType: TUserRole;
   };
 
-  const user = await userInfo(userId, userType);
+  try {
+    const user = await userInfo(userId, userType);
 
-  res.json({ success: true, data: user });
+    res.json({ success: true, data: user });
+  } catch (error) {
+    handleError(res, error);
+  }
 };
 
 // 프로필 조회

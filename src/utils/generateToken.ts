@@ -13,7 +13,6 @@ export function generateAccessToken(user: TUserTokenCreate): string {
   const accessSecret = process.env.JWT_SECRET_KEY;
 
   if (!accessSecret) {
-    console.error("SECRET_KEY가 .env 파일에 없습니다.");
     throw new Error("시크릿키를 확인하세요");
   }
 
@@ -35,7 +34,6 @@ export function generateRefreshToken(user: TUserTokenCreate): string {
   const refreshSecret = process.env.JWT_REFRESH_SECRET_KEY;
 
   if (!refreshSecret) {
-    console.error("SECRET_KEY가 .env 파일에 없습니다.");
     throw new Error("시크릿키를 확인하세요");
   }
 

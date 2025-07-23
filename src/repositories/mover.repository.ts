@@ -13,10 +13,26 @@ export const getMoverList = async (filter: MoverListFilter) => {
     region,
     serviceType,
     search,
-    sort = "rating",
+    sort = "review",
     cursor,
-    take = 4,
+    take = 2,
   } = filter;
+
+  const getServiceTypeEnum = (serviceTypeId: string | number) => {
+    const id = Number(serviceTypeId);
+    switch (id) {
+      case 1:
+        return "SMALL";
+      case 2:
+        return "HOME";
+      case 3:
+        return "OFFICE";
+      default:
+        return null;
+    }
+  };
+
+  const serviceTypeEnum = serviceType ? getServiceTypeEnum(serviceType) : null;
 
   const where: any = {
     deletedAt: null,
@@ -24,8 +40,8 @@ export const getMoverList = async (filter: MoverListFilter) => {
     ...(search && {
       OR: [{ nickname: { contains: search } }, { name: { contains: search } }],
     }),
-    ...(serviceType && {
-      serviceTypes: { has: serviceType },
+    ...(serviceTypeEnum && {
+      serviceTypes: { has: serviceTypeEnum },
     }),
     ...(region && {
       serviceAreas: {
@@ -40,37 +56,109 @@ export const getMoverList = async (filter: MoverListFilter) => {
     confirmed: "workedCount",
     review: "totalReviewCount",
   };
-  const orderByField = SORT_MAP[sort] || "averageRating";
-  const orderBy = { [orderByField]: "desc" };
+  const orderByField = SORT_MAP[sort] || "totalReviewCount";
 
   const movers = await prisma.user.findMany({
     where,
-    orderBy,
+    orderBy: { [orderByField]: "desc" },
     skip: cursor ? 1 : 0,
-    ...(cursor && { cursor: { id: cursor } }),
+    ...(cursor && { cursor: { id: String(cursor) } }),
     take: take + 1,
-    include: {
+    select: {
+      id: true,
+      nickname: true,
+      name: true,
+      career: true,
+      shortIntro: true,
+      detailIntro: true,
+      workedCount: true,
+      averageRating: true,
+      totalReviewCount: true,
       serviceAreas: true,
-      favorites: true,
+      serviceTypes: true,
+      Favorite: true,
+      moverImage: true,
     },
   });
+
   const hasNext = movers.length > take;
   const items = hasNext ? movers.slice(0, take) : movers;
-  const nextCursor = hasNext ? items[items.length - 1].id : null;
+  const nextCursor = hasNext ? items[items.length - 1]?.id : null;
+
+  if (items.length === 0 && cursor) {
+    const cursorRow = await prisma.user.findUnique({
+      where: { id: String(cursor), deletedAt: null },
+      select: {
+        id: true,
+        nickname: true,
+        name: true,
+        career: true,
+        shortIntro: true,
+        detailIntro: true,
+        workedCount: true,
+        averageRating: true,
+        totalReviewCount: true,
+        serviceAreas: true,
+        serviceTypes: true,
+        Favorite: true,
+        moverImage: true,
+      },
+    });
+    if (cursorRow) {
+      return { items: [cursorRow], nextCursor: null, hasNext: false };
+    }
+    return { items: [], nextCursor: null, hasNext: false };
+  }
+
   return { items, nextCursor, hasNext };
 };
 
 /**
  * 기사님 상세 조회
  */
-export const getMoverDetail = async (id: string) => {
-  return prisma.user.findUnique({
+export const getMoverDetail = async (id: string, userId?: string) => {
+  const mover = await prisma.user.findUnique({
     where: { id, deletedAt: null },
-    include: {
+    select: {
+      id: true,
+      nickname: true,
+      name: true,
+      career: true,
+      shortIntro: true,
+      detailIntro: true,
+      workedCount: true,
+      averageRating: true,
+      totalReviewCount: true,
       serviceAreas: true,
-      favorites: true,
+      serviceTypes: true,
+      moverImage: true,
+      Favorite: true,
     },
   });
+
+  if (!mover) return null;
+
+  const favoriteCount = mover.Favorite.filter(
+    (fav) => fav.deletedAt === null
+  ).length;
+
+  let isFavorited = false;
+  if (userId) {
+    const favorite = await prisma.favorite.findFirst({
+      where: {
+        customerId: userId,
+        moverId: id,
+        deletedAt: null,
+      },
+    });
+    isFavorited = !!favorite;
+  }
+
+  return {
+    ...mover,
+    favoriteCount,
+    isFavorited,
+  };
 };
 
 /**
@@ -79,15 +167,41 @@ export const getMoverDetail = async (id: string) => {
 export const getFavoriteMovers = async (customerId: string) => {
   const favorites = await prisma.favorite.findMany({
     where: { customerId, deletedAt: null },
+    orderBy: { createdAt: "desc" },
+    take: 3,
     include: {
       mover: {
-        include: {
+        select: {
+          id: true,
+          nickname: true,
+          name: true,
+          career: true,
+          shortIntro: true,
+          detailIntro: true,
+          workedCount: true,
+          averageRating: true,
+          totalReviewCount: true,
           serviceAreas: true,
+          serviceTypes: true,
+          moverImage: true,
+          Favorite: true, // 찜받은 관계 (moverId로 연결)
         },
       },
     },
   });
-  return favorites.map((fav) => fav.mover);
+
+  return favorites.map((fav) => {
+    const mover = fav.mover;
+    // 찜 개수 계산 (deletedAt이 null이 아닌 것 제외)
+    const favoriteCount = mover.Favorite.filter(
+      (fav) => fav.deletedAt === null
+    ).length;
+
+    return {
+      ...mover,
+      favoriteCount,
+    };
+  });
 };
 
 /**

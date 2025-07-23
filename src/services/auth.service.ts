@@ -1,6 +1,10 @@
 import authRepository from "../repositories/auth.repository";
 import bcrypt from "bcrypt";
-import { generateToken } from "../utils/generateToken";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  generateToken,
+} from "../utils/generateToken";
 import { TUserRole, TUserSignupInput } from "../types/user.types";
 import { encryptPhoneNumber } from "../utils/phoneEncryption";
 import { validateUserSignupInput } from "../utils/validators/userValidator";
@@ -11,6 +15,13 @@ import {
   ServerError,
   ValidationError,
 } from "../types/commonError.types";
+import { REFRESH_TOKEN_REISSUE_THRESHOLD_SECONDS } from "../constants/token.constants";
+
+type TDecodedToken = {
+  userId: string;
+  userType: TUserRole;
+  exp: number;
+};
 
 // 로그인 검증
 const signin = async (email: string, password: string, userType: TUserRole) => {
@@ -212,4 +223,40 @@ const logout = async (userId: string) => {
   await authRepository.updateUserToken(String(userId), null, user.userType);
 };
 
-export default { signin, signup, logout };
+// JWT 슬라이딩 세션 토큰 갱신
+const refresh = async (decoded: TDecodedToken) => {
+  const user = await authRepository.findUserById(decoded.userId);
+  if (!user) throw new NotFoundError("존재하지 않는 유저입니다");
+
+  const now = Date.now() / 1000;
+  const refreshExp = decoded.exp;
+
+  const accessToken = generateAccessToken({
+    id: user.id,
+    name: user.name,
+    userType: decoded.userType,
+    hasProfile: user.isCustomer || false,
+  });
+
+  let refreshToken = undefined;
+  // 만료 시간이 5일 이하라면 리프레쉬 토큰 재발급
+  if (refreshExp - now <= REFRESH_TOKEN_REISSUE_THRESHOLD_SECONDS) {
+    refreshToken = generateRefreshToken({
+      id: user.id,
+      name: user.name,
+      userType: decoded.userType,
+      hasProfile: user.isCustomer || false,
+    });
+
+    await authRepository.updateUserToken(
+      user.id,
+      refreshToken || null,
+      user.userType
+    );
+  }
+
+  // refreshToken은 optional
+  return { accessToken, refreshToken };
+};
+
+export default { signin, signup, logout, refresh };
