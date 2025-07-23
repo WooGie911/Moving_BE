@@ -4,6 +4,7 @@ import { TOKEN_EXPIRES } from "../constants/token.constants";
 
 import { handleError } from "../utils/handleError";
 import { TCookieOptions } from "../types/cookie.types";
+import { TUserRole } from "../types/user.types";
 
 export const authCookieOptions = (maxAgeSeconds: number): TCookieOptions => ({
   httpOnly: true,
@@ -104,9 +105,37 @@ const postLogout = async (req: Request, res: Response) => {
 };
 
 // 토큰 갱신
-const postRefresh = (req: Request, res: Response) => {
-  const { refreshToken } = req.body;
-  res.status(200).json({ message: "refresh" });
+const postRefresh = async (req: Request, res: Response) => {
+  const { userId, userType, exp } = req.refreshToken as {
+    userId: string;
+    userType: TUserRole;
+    exp: number;
+  };
+
+  try {
+    const { accessToken, refreshToken } = await authService.refresh({
+      exp,
+      userType,
+      userId,
+    });
+
+    // 리프레쉬 쿠키까지 재발급 된다면 저장
+    if (refreshToken) {
+      res.cookie(
+        "refreshToken",
+        refreshToken,
+        authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
+      );
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "토큰 갱신 성공",
+      accessToken,
+    });
+  } catch (error: any) {
+    handleError(res, error);
+  }
 };
 
 export { postSignin, postSignup, postLogout, postRefresh };
