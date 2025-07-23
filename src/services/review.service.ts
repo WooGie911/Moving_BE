@@ -66,6 +66,7 @@ const reviewService = {
   ) => {
     const { items, total, page, pageSize } =
       await reviewRepository.getReceivedReviews(moverId, pageQuery);
+
     const mappedItems = items.map((review: any) => {
       const acceptedEstimate = review.request?.estimates?.find(
         (e: any) => e.status === "ACCEPTED"
@@ -75,7 +76,7 @@ const reviewService = {
         estimateRequestId: review.request?.id ?? null,
         customerId: review.customerId,
         moverId: review.moverId,
-        profileImage: review.writer?.profileImage ?? null,
+        profileImage: review.writer?.customerImage ?? null,
         nickname: review.writer?.nickname ?? null,
         moveType: review.request?.moveType ?? null,
         isDesigned: acceptedEstimate?.isDesignated ?? false,
@@ -103,6 +104,7 @@ const reviewService = {
           : null,
       };
     });
+
     return { items: mappedItems, total, page, pageSize };
   },
 };

@@ -1,4 +1,6 @@
-import prisma from "../db/prisma/prisma";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 const reviewRepository = {
   // 1. 리뷰 작성 (PATCH)
@@ -83,24 +85,57 @@ const reviewRepository = {
   ) => {
     const { page, pageSize } = pageQuery;
     const skip = (page - 1) * pageSize;
+
     const [items, total] = await Promise.all([
       prisma.review.findMany({
-        where: { moverId },
-        include: {
-          request: {
-            include: {
-              fromAddress: true,
-              toAddress: true,
-              estimates: true,
+        where: {
+          moverId,
+          deletedAt: null,
+        },
+        select: {
+          id: true,
+          customerId: true,
+          moverId: true,
+          estimateRequestId: true,
+          rating: true,
+          content: true,
+          createdAt: true,
+          writer: {
+            select: {
+              id: true,
+              nickname: true,
+              customerImage: true,
             },
           },
-          writer: true,
+          request: {
+            select: {
+              id: true,
+              moveType: true,
+              moveDate: true,
+              fromAddress: true,
+              toAddress: true,
+              estimates: {
+                where: { status: "ACCEPTED" },
+                select: {
+                  id: true,
+                  price: true,
+                  isDesignated: true,
+                },
+              },
+            },
+          },
         },
         skip,
         take: pageSize,
       }),
-      prisma.review.count({ where: { moverId } }),
+      prisma.review.count({
+        where: {
+          moverId,
+          deletedAt: null,
+        },
+      }),
     ]);
+
     return { items, total, page, pageSize };
   },
 };

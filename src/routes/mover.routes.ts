@@ -1,6 +1,7 @@
 import { Router } from "express";
 import * as moverController from "../controllers/mover.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
+import { optionalAuth } from "../middlewares/optionalAuth";
 
 const moverRouter = Router();
 
@@ -178,7 +179,11 @@ moverRouter.get(
  *   "message": "기사님을 찾을 수 없습니다."
  * }
  */
-moverRouter.get("/:moverId", moverController.getMoverDetailController);
+moverRouter.get(
+  "/:moverId",
+  optionalAuth,
+  moverController.getMoverDetailController
+);
 
 /**
  * POST /movers/:moverId/quote-request
