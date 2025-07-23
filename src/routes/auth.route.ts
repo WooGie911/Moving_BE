@@ -5,7 +5,10 @@ import {
   postLogout,
   postRefresh,
 } from "../controllers/auth.controller";
-import { verifyAccessToken } from "../middlewares/verifyToken";
+import {
+  verifyAccessToken,
+  verifyRefreshToken,
+} from "../middlewares/verifyToken";
 
 const authRouter = Router();
 
@@ -196,12 +199,13 @@ authRouter.post("/logout", verifyAccessToken, postLogout);
 /**
  * POST /auth/refresh-token
  * @summary 액세스 토큰 갱신
- * @description 리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급합니다.
+ * @description 리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급합니다 (리프레쉬 토큰의 유효기간이 발급 만료 시간에 해당할 경우 리프레시 토큰도 갱신).
  * @tags Auth
  * @param {RefreshTokenRequest} request.body.required - 토큰 갱신 정보
  * @return {SuccessResponse} 200 - 토큰 갱신 성공
- * @return {ErrorResponse} 400 - 유효하지 않은 리프레시 토큰
+ * @return {ErrorResponse} 401 - 유효하지 않은 리프레시 토큰
  * @return {ErrorResponse} 401 - 만료된 리프레시 토큰
+ * @return {ErrorResponse} 401 - 토큰이 없을 경우
  * @return {ErrorResponse} 500 - 서버 내부 오류
  * @example request - 토큰 갱신 요청 예시
  * {
@@ -212,8 +216,27 @@ authRouter.post("/logout", verifyAccessToken, postLogout);
  *   "success": true,
  *   "message": "토큰 갱신 성공"
  * }
+ * @example response - 401 - 유효하지 않은 리프레시 토큰 응답 예시
+ * {
+ *   "status": 401,
+ *   "success": false,
+ *   "message": "Refresh token이 변조되었거나 잘못된 형식입니다. 다시 로그인해 주세요.",
+ *   "error": "JsonWebTokenError"
+ * }
+ * @example response - 401 - 만료된 리프레시 토큰 응답 예시
+ * {
+ *   "status": 401,
+ *   "success": false,
+ *   "message": "리프레시 토큰 만료 시간이 지났습니다. 다시 로그인해 주세요.",
+ *   "error": "TokenExpiredError"
+ * }
+ * @example response - 401 - 토큰이 없을 경우 응답 예시
+ * {
+ *   "status": 401,
+ *   "success": false,
+ *   "message": "로그인이 필요합니다.",
+ * }
  */
-// TODO: 토큰 검사 필요
-authRouter.post("/refresh-token", postRefresh);
+authRouter.post("/refresh-token", verifyRefreshToken, postRefresh);
 
 export default authRouter;

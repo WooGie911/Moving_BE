@@ -3,21 +3,21 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 // 찜하기 추가
-const addFavorite = async (userId: number, moverId: number) => {
+const addFavorite = async (customerId: string, moverId: string) => {
   return await prisma.favorite.create({
     data: {
-      userId,
+      customerId,
       moverId,
     },
   });
 };
 
 // 찜하기 제거
-const removeFavorite = async (userId: number, moverId: number) => {
+const removeFavorite = async (customerId: string, moverId: string) => {
   return await prisma.favorite.delete({
     where: {
-      userId_moverId: {
-        userId,
+      customerId_moverId: {
+        customerId,
         moverId,
       },
     },
@@ -25,11 +25,11 @@ const removeFavorite = async (userId: number, moverId: number) => {
 };
 
 // 찜하기 상태 확인
-const getFavoriteStatus = async (userId: number, moverId: number) => {
+const getFavoriteStatus = async (customerId: string, moverId: string) => {
   const favorite = await prisma.favorite.findUnique({
     where: {
-      userId_moverId: {
-        userId,
+      customerId_moverId: {
+        customerId,
         moverId,
       },
     },
@@ -38,6 +38,7 @@ const getFavoriteStatus = async (userId: number, moverId: number) => {
   const favoriteCount = await prisma.favorite.count({
     where: {
       moverId,
+      deletedAt: null,
     },
   });
 
@@ -48,28 +49,30 @@ const getFavoriteStatus = async (userId: number, moverId: number) => {
 };
 
 // 사용자의 찜한 기사님 목록 조회
-const getUserFavorites = async (userId: number) => {
+const getUserFavorites = async (customerId: string) => {
   return await prisma.favorite.findMany({
     where: {
-      userId,
+      customerId,
+      deletedAt: null,
       mover: {
-        currentRole: "MOVER",
-        hasProfile: true,
         deletedAt: null,
-        profile: {
-          deletedAt: null,
-        },
       },
     },
     include: {
       mover: {
-        include: {
-          profile: {
-            include: {
-              serviceRegions: true,
-              serviceTypes: { include: { service: true } },
-            },
-          },
+        select: {
+          id: true,
+          nickname: true,
+          name: true,
+          career: true,
+          shortIntro: true,
+          detailIntro: true,
+          workedCount: true,
+          averageRating: true,
+          totalReviewCount: true,
+          serviceAreas: true,
+          serviceTypes: true,
+          moverImage: true,
         },
       },
     },
@@ -80,10 +83,11 @@ const getUserFavorites = async (userId: number) => {
 };
 
 // 기사님의 찜한 사용자 수 조회
-const getMoverFavoriteCount = async (moverId: number) => {
+const getMoverFavoriteCount = async (moverId: string) => {
   return await prisma.favorite.count({
     where: {
       moverId,
+      deletedAt: null,
     },
   });
 };
@@ -94,4 +98,4 @@ export default {
   getFavoriteStatus,
   getUserFavorites,
   getMoverFavoriteCount,
-}; 
+};

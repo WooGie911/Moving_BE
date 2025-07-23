@@ -193,10 +193,6 @@ reviewRouter.get(
  *   }
  * }
  */
-reviewRouter.get(
-  "/mover/:moverId",
-  verifyAccessToken,
-  reviewController.getReceivedReviews
-);
+reviewRouter.get("/mover/:moverId", reviewController.getReceivedReviews);
 
 export default reviewRouter;
