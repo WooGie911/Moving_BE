@@ -109,6 +109,12 @@ enum ActionType {
   MOVE_DAY_REVIEW_REQUEST // 이사 다음날
 }
 
+enum ReviewStatus {
+  PENDING
+  COMPLETED
+  EXPIRED
+}
+
 //////////////////// MODELS ////////////////////
 
 // 통합 사용자 모델 (일반 고객과 기사님 모두)
@@ -319,14 +325,15 @@ model Estimate {
 
 // 리뷰 테이블 (1개의 견적 요청당 1개만)
 model Review {
-  id                String    @id @default(cuid())
+  id                String       @id @default(cuid())
   customerId        String // 작성자 ID
   moverId           String // 대상 기사님 ID
   estimateRequestId String // 견적 요청 ID
-  rating            Int // 평점 (1-5)
-  content           String // 리뷰 내용
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  rating            Int          @default(0)
+  content           String       @default("")
+  status            ReviewStatus @default(PENDING)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
   deletedAt         DateTime? // 소프트 삭제
 
   // 관계
