@@ -34,6 +34,7 @@ export const PROFILE_ERROR_MESSAGES = {
   NICKNAME_ALREADY_EXISTS: "이미 사용중인 닉네임입니다",
   EXPERIENCE_REQUIRED: "경력을 입력해주세요",
   INTRODUCTION_REQUIRED: "한줄 소개를 입력해주세요",
+  DETAIL_INTRODUCTION_REQUIRED: "상세 설명을 입력해주세요",
   DESCRIPTION_REQUIRED: "상세 설명을 입력해주세요",
   CURRENT_REGION_REQUIRED: "현재 거주 지역을 선택해주세요",
   MOVER_CURRENT_REGION_REQUIRED: "현재 활동 지역을 선택해주세요",

@@ -197,8 +197,8 @@ const patchMoverProfile = async (req: Request, res: Response) => {
       message: "기사님 프로필이 성공적으로 수정되었습니다.",
       data: result,
     });
-  } catch (error) {
-    handleError(error, res);
+  } catch (error: any) {
+    handleError(res, error);
   }
 };
 

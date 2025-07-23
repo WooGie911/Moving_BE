@@ -161,7 +161,7 @@ const updateMoverProfile = async (
     updateFields.moverImage = updateData.moverImage;
   }
   if (updateData.currentArea !== undefined) {
-    updateFields.currentAreas = updateData.currentArea;
+    updateFields.currentAreas = [updateData.currentArea];
   }
   if (updateData.serviceTypes !== undefined) {
     updateFields.serviceTypes = updateData.serviceTypes;

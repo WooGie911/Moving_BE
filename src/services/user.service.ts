@@ -36,8 +36,8 @@ import {
   ensureNicknameUnique,
   validateRegion,
   validateMoveTypes,
-  VALIDATION_CONFIG,
 } from "../utils/validators/profileValidator";
+import { VALIDATION_CONFIG } from "../constants/profile.constants";
 
 // 유저 정보 조회
 const userInfo = async (userId: string, userType: TUserRole) => {
@@ -291,16 +291,22 @@ const updateMoverProfileCheck = async (
   }
 
   // 3. 프로필 데이터 유효성 검사
-  if (updateData.currentArea && !validateRegion([updateData.currentArea])) {
-    throw new ValidationError(PROFILE_ERROR_MESSAGES.INVALID_REGION);
+  if (updateData.currentArea) {
+    if (!validateRegion([updateData.currentArea])) {
+      throw new ValidationError(PROFILE_ERROR_MESSAGES.INVALID_REGION);
+    }
   }
 
-  if (updateData.serviceTypes && !validateMoveTypes(updateData.serviceTypes)) {
-    throw new ValidationError(PROFILE_ERROR_MESSAGES.INVALID_SERVICE_ID);
+  if (updateData.serviceTypes) {
+    if (!validateMoveTypes(updateData.serviceTypes)) {
+      throw new ValidationError(PROFILE_ERROR_MESSAGES.INVALID_SERVICE_ID);
+    }
   }
 
-  if (updateData.career !== undefined && updateData.career < 0) {
-    throw new ValidationError("경력은 0년 이상이어야 합니다");
+  if (updateData.career !== undefined) {
+    if (updateData.career < 0) {
+      throw new ValidationError("경력은 0년 이상이어야 합니다");
+    }
   }
 
   if (updateData.shortIntro !== undefined && updateData.shortIntro.trim().length > 0) {
