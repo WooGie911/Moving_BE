@@ -5,9 +5,10 @@ import {
   createCustomerProfile as createCustomerProfileRepository,
   createMoverProfileRepository,
   updateUserProfile,
+  updateCustomerProfile,
+  updateMoverProfile,
   getCustomerProfile,
   getMoverProfile,
-  updateCustomerProfile,
 } from "../repositories/user.repository";
 import {
   encryptPhoneNumber,
@@ -23,6 +24,7 @@ import {
   TUserRole,
   TCustomerProfileUpdateInput,
   TCustomerProfileUpdate,
+  TMoverProfileUpdateInput,
 } from "../types/user.types";
 import { PROFILE_ERROR_MESSAGES } from "../constants/profile.constants";
 import {
@@ -30,6 +32,12 @@ import {
   validateMoverProfileData,
 } from "../utils/validators/profileValidator";
 import { generateToken } from "../utils/generateToken";
+import {
+  ensureNicknameUnique,
+  validateRegion,
+  validateMoveTypes,
+  VALIDATION_CONFIG,
+} from "../utils/validators/profileValidator";
 
 // 유저 정보 조회
 const userInfo = async (userId: string, userType: TUserRole) => {
@@ -266,6 +274,52 @@ const updateMoverBasicInfo = async (
   await updateUserProfile(userId, dbUpdateData);
 };
 
+// 기사님 프로필 수정
+const updateMoverProfileCheck = async (
+  userId: string,
+  updateData: TMoverProfileUpdateInput
+): Promise<any> => {
+  // 1. 사용자 존재 확인
+  const user = await getUserById(userId);
+  if (!user) {
+    throw new NotFoundError(PROFILE_ERROR_MESSAGES.USER_NOT_FOUND);
+  }
+
+  // 2. 닉네임 변경 시 중복 확인
+  if (updateData.nickname) {
+    await ensureNicknameUnique(updateData.nickname, userId);
+  }
+
+  // 3. 프로필 데이터 유효성 검사
+  if (updateData.currentArea && !validateRegion([updateData.currentArea])) {
+    throw new ValidationError(PROFILE_ERROR_MESSAGES.INVALID_REGION);
+  }
+
+  if (updateData.serviceTypes && !validateMoveTypes(updateData.serviceTypes)) {
+    throw new ValidationError(PROFILE_ERROR_MESSAGES.INVALID_SERVICE_ID);
+  }
+
+  if (updateData.career !== undefined && updateData.career < 0) {
+    throw new ValidationError("경력은 0년 이상이어야 합니다");
+  }
+
+  if (updateData.shortIntro !== undefined && updateData.shortIntro.trim().length > 0) {
+    if (updateData.shortIntro.trim().length < VALIDATION_CONFIG.MIN_INTRODUCTION_LENGTH) {
+      throw new ValidationError(PROFILE_ERROR_MESSAGES.INTRODUCTION_REQUIRED);
+    }
+  }
+
+  if (updateData.detailIntro !== undefined && updateData.detailIntro.trim().length > 0) {
+    if (updateData.detailIntro.trim().length < VALIDATION_CONFIG.MIN_DETAIL_INTRODUCTION_LENGTH) {
+      throw new ValidationError(PROFILE_ERROR_MESSAGES.DETAIL_INTRODUCTION_REQUIRED);
+    }
+  }
+
+  // 4. 프로필 업데이트 실행
+  const result = await updateMoverProfile(userId, updateData);
+  return result;
+};
+
 export {
   userInfo,
   getProfileData,
@@ -273,4 +327,5 @@ export {
   updateCustomerProfileCheck,
   createMoverProfile,
   updateMoverBasicInfo,
+  updateMoverProfileCheck,
 };
