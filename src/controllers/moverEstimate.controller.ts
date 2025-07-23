@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import moverEstimateService from "../services/moverEstimate.service";
+import { NotFoundError } from "../types/commonError.types";
 
 const moverEstimateController = {
   // 1. 견적 생성
@@ -346,6 +347,19 @@ const moverEstimateController = {
         data: result,
       });
     } catch (error) {
+      console.error("getAllEstimateRequests controller error:", error);
+      console.error("에러 상세 정보:", {
+        message: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+        name: error instanceof Error ? error.name : "Unknown",
+      });
+      if (error instanceof NotFoundError) {
+        res.status(404).json({
+          success: false,
+          message: (error as Error).message,
+        });
+        return;
+      }
       next(error);
     }
   },
@@ -464,12 +478,19 @@ const moverEstimateController = {
       }
 
       const result = await moverEstimateService.getMyRejectedEstimates(moverId);
+
       res.status(200).json({
         success: true,
         message: "내가 반려한 견적 조회 성공",
         data: result,
       });
     } catch (error) {
+      console.error("getMyRejectedEstimates controller error:", error);
+      console.error("에러 상세 정보:", {
+        message: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+        name: error instanceof Error ? error.name : "Unknown",
+      });
       next(error);
     }
   },

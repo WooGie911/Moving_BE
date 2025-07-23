@@ -6,7 +6,6 @@ import {
   TQuoteDetailResponse,
   TConfirmEstimateResponse,
   TDesignateEstimateRequest,
-  TEstimateResponse, // 추가
 } from "../types/customerEstimateRequest";
 
 const customerEstimateRequestService = {
@@ -17,7 +16,11 @@ const customerEstimateRequestService = {
     const activeEstimateRequestId =
       await customerEstimateRequestRepository.getActiveEstimateRequest(userId);
     if (!activeEstimateRequestId) {
-      throw new NotFoundError("진행중인 견적요청이 없습니다.");
+      // 404 대신 빈 객체 반환
+      return {
+        estimateRequest: null,
+        estimates: [],
+      };
     }
 
     const data =
@@ -26,10 +29,14 @@ const customerEstimateRequestService = {
         userId
       );
     if (!data) {
-      throw new NotFoundError("진행중인 견적요청이 없습니다.");
+      // 404 대신 빈 객체 반환
+      return {
+        estimateRequest: null,
+        estimates: [],
+      };
     }
 
-    return {
+    const result = {
       estimateRequest: {
         id: data.id,
         customerId: data.customerId,
@@ -52,53 +59,60 @@ const customerEstimateRequestService = {
           },
         })) ?? [],
     };
+    return result;
   },
 
   // 완료된 견적요청 목록 조회
   getReceivedEstimateRequests: async (
     userId: string
   ): Promise<TReceivedQuoteResponse[]> => {
-    const result =
-      await customerEstimateRequestRepository.getReceivedEstimateRequests(
-        userId
-      );
-    if (!result || result.length === 0) {
-      throw new NotFoundError("완료된 견적요청이 없습니다.");
+    try {
+      const result =
+        await customerEstimateRequestRepository.getReceivedEstimateRequests(
+          userId
+        );
+      if (!result || result.length === 0) {
+        throw new NotFoundError("완료된 견적요청이 없습니다.");
+      }
+      return result.map((data) => ({
+        estimateRequest: {
+          id: data.id,
+          customerId: data.customerId,
+          moveType: data.moveType,
+          moveDate: data.moveDate,
+          createdAt: data.createdAt,
+          description: data.description,
+          status: data.status,
+          fromAddress: data.fromAddress,
+          toAddress: data.toAddress,
+        },
+        estimates:
+          data.estimates.map((e: any) => ({
+            ...e,
+            mover: {
+              ...e.mover,
+              isFavorite: e.mover.isFavorite,
+              totalFavoriteCount: e.mover.totalFavoriteCount,
+              Favorite: e.mover.Favorite,
+            },
+          })) ?? [],
+      }));
+    } catch (error) {
+      console.error("getReceivedEstimateRequests service error:", error);
+      throw error;
     }
-    return result.map((data) => ({
-      estimateRequest: {
-        id: data.id,
-        customerId: data.customerId,
-        moveType: data.moveType,
-        moveDate: data.moveDate,
-        createdAt: data.createdAt,
-        description: data.description,
-        status: data.status,
-        fromAddress: data.fromAddress,
-        toAddress: data.toAddress,
-      },
-      estimates:
-        data.estimates.map((e: any) => ({
-          ...e,
-          mover: {
-            ...e.mover,
-            isFavorite: e.mover.isFavorite,
-            totalFavoriteCount: e.mover.totalFavoriteCount,
-            Favorite: e.mover.Favorite,
-          },
-        })) ?? [],
-    }));
   },
 
   // 진행중인 견적요청의 특정 견적 상세 조회
   getPendingEstimateRequestDetail: async (
     userId: string,
     estimateId: string
-  ): Promise<TQuoteDetailResponse> => {
+  ): Promise<TQuoteDetailResponse | Record<string, never>> => {
     const activeEstimateRequestId =
       await customerEstimateRequestRepository.getActiveEstimateRequest(userId);
     if (!activeEstimateRequestId) {
-      throw new NotFoundError("진행중인 견적요청이 없습니다.");
+      // throw new NotFoundError("진행중인 견적요청이 없습니다.");
+      return {};
     }
     const result =
       await customerEstimateRequestRepository.getPendingEstimateRequestDetail(
@@ -107,7 +121,8 @@ const customerEstimateRequestService = {
         userId
       );
     if (!result) {
-      throw new NotFoundError("견적 상세 정보를 찾을 수 없습니다.");
+      // throw new NotFoundError("견적 상세 정보를 찾을 수 없습니다.");
+      return {};
     }
     // Record<string, any> -> TQuoteDetailResponse 변환
     return {
