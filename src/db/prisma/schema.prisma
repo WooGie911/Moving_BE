@@ -109,6 +109,12 @@ enum ActionType {
   MOVE_DAY_REVIEW_REQUEST // 이사 다음날
 }
 
+enum ReviewStatus {
+  PENDING
+  COMPLETED
+  EXPIRED
+}
+
 //////////////////// MODELS ////////////////////
 
 // 통합 사용자 모델 (일반 고객과 기사님 모두)
@@ -125,19 +131,22 @@ model User {
   customerImage        String? // 고객 프로필 이미지
   moverImage           String? // 기사님 프로필 이미지
   nickname             String?      @unique // 닉네임 (모든 유저 사용 가능)
-  isVeteran            Boolean? // 베테랑 여부 (옵셔널)
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
   deletedAt            DateTime? // 소프트 삭제
+  totalFavoriteCount   Int          @default(0) // 받은 찜 개수
 
   // Customer 전용 필드
   currentArea       RegionType? // 현재 거주 지역
   preferredServices MoveType[] // 이용하고 싶은 서비스 타입들
+  isCustomer        Boolean? // 일반 유저 프로필 등록 여부 (옵셔널)
 
   // Mover 전용 필드
   shortIntro       String? // 간단 소개
   detailIntro      String? // 상세 소개
   career           Int? // 경력 (년)
+  isMover          Boolean? // 기사님 프로필 등록 여부 (옵셔널)
+  isVeteran        Boolean? // 베테랑 여부 (옵셔널)
   workedCount      Int?         @default(0) // 완료된 이사 건수
   averageRating    Float?       @default(0) // 평균 평점
   totalReviewCount Int?         @default(0) // 총 리뷰 수
@@ -316,14 +325,15 @@ model Estimate {
 
 // 리뷰 테이블 (1개의 견적 요청당 1개만)
 model Review {
-  id                String    @id @default(cuid())
+  id                String       @id @default(cuid())
   customerId        String // 작성자 ID
   moverId           String // 대상 기사님 ID
   estimateRequestId String // 견적 요청 ID
-  rating            Int // 평점 (1-5)
-  content           String // 리뷰 내용
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  rating            Int          @default(0)
+  content           String       @default("")
+  status            ReviewStatus @default(PENDING)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
   deletedAt         DateTime? // 소프트 삭제
 
   // 관계

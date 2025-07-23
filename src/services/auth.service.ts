@@ -166,7 +166,7 @@ const logout = async (userId: string) => {
     throw new AuthenticationError("이미 로그아웃된 상태입니다");
   }
 
-  await authRepository.updateUserToken(String(userId), null);
+  await authRepository.updateUserToken(String(userId), null, user.userType[0]);
 };
 
 export default { signin, signup, logout };
