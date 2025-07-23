@@ -11,7 +11,6 @@ const customerEstimateRequestController = {
   ): Promise<void> => {
     try {
       const userId = req.user?.userId;
-      console.log("[진행중 견적요청] API에서 추출한 userId:", userId); // 추가
       if (!userId || typeof userId !== "string") {
         res.status(401).json({
           success: false,
@@ -21,7 +20,7 @@ const customerEstimateRequestController = {
       }
       const result =
         await customerEstimateRequestService.getPendingEstimateRequest(userId);
-      console.log("[컨트롤러] 서비스에서 받은 result:", result); // 추가
+
       // 항상 200 OK로 내려주고, 빈 객체도 success: true로 반환
       res.status(200).json({
         success: true,

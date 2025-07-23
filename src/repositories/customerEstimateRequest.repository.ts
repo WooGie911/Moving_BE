@@ -135,10 +135,6 @@ const customerEstimateRequestRepository = {
         },
       },
     });
-    console.log(
-      "[레포지토리] 쿼리 결과 pendingEstimateRequest:",
-      pendingEstimateRequest
-    ); // 추가
     if (!pendingEstimateRequest) return null;
 
     // 각 견적의 무버에 대해 찜 여부를 boolean으로 변환

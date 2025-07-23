@@ -15,7 +15,6 @@ const customerEstimateRequestService = {
   ): Promise<TPendingQuoteResponse> => {
     const activeEstimateRequestId =
       await customerEstimateRequestRepository.getActiveEstimateRequest(userId);
-    console.log("[서비스] activeEstimateRequestId:", activeEstimateRequestId);
     if (!activeEstimateRequestId) {
       // 404 대신 빈 객체 반환
       return {
@@ -29,7 +28,6 @@ const customerEstimateRequestService = {
         activeEstimateRequestId,
         userId
       );
-    console.log("[서비스] 레포지토리에서 받은 data:", data);
     if (!data) {
       // 404 대신 빈 객체 반환
       return {
@@ -61,7 +59,6 @@ const customerEstimateRequestService = {
           },
         })) ?? [],
     };
-    console.log("[서비스] 최종 result:", result);
     return result;
   },
 

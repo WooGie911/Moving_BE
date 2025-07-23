@@ -79,7 +79,7 @@ const moverEstimateService = {
     sortBy?: "moveDate" | "createdAt",
     customerName?: string,
     movingType?: "SMALL" | "HOME" | "OFFICE"
-  ): Promise<TEstimateRequestResponse[] | null> => {
+  ): Promise<TEstimateRequestResponse[]> => {
     const estimateRequests =
       await moverEstimateRepository.getRegionEstimateRequest(
         moverId,
@@ -87,12 +87,8 @@ const moverEstimateService = {
         customerName,
         movingType
       );
-
-    if (!estimateRequests || estimateRequests.length === 0) {
-      throw new NotFoundError("해당 지역의 견적이 없습니다.");
-    }
-
-    return estimateRequests;
+    // NotFoundError를 던지지 않고, 빈 배열 반환
+    return estimateRequests || [];
   },
 
   // 지정 견적 조회
@@ -132,16 +128,12 @@ const moverEstimateService = {
     designatedEstimateRequests?: TEstimateRequestResponse[];
   }> => {
     try {
-      console.log("=== getAllEstimateRequests 서비스 시작 ===");
-      console.log("입력 파라미터:", { moverId, options });
-
       const { region, designated, sortBy, customerName, movingType } = options;
 
       let regionEstimateRequests: TEstimateRequestResponse[] = [];
       let designatedEstimateRequests: TEstimateRequestResponse[] = [];
 
       if (region) {
-        console.log("지역 견적 조회 시작");
         try {
           regionEstimateRequests =
             (await moverEstimateRepository.getRegionEstimateRequest(
@@ -150,10 +142,6 @@ const moverEstimateService = {
               customerName,
               movingType
             )) || [];
-          console.log(
-            "지역 견적 조회 성공, 결과 수:",
-            regionEstimateRequests.length
-          );
         } catch (error) {
           console.error("지역 견적 조회 실패:", error);
           regionEstimateRequests = [];
@@ -161,7 +149,6 @@ const moverEstimateService = {
       }
 
       if (designated) {
-        console.log("지정 견적 조회 시작");
         try {
           designatedEstimateRequests =
             (await moverEstimateRepository.getDesignatedEstimateRequest(
@@ -170,10 +157,6 @@ const moverEstimateService = {
               customerName,
               movingType
             )) || [];
-          console.log(
-            "지정 견적 조회 성공, 결과 수:",
-            designatedEstimateRequests.length
-          );
         } catch (error) {
           console.error("지정 견적 조회 실패:", error);
           designatedEstimateRequests = [];
@@ -187,7 +170,6 @@ const moverEstimateService = {
           : undefined,
       };
 
-      console.log("서비스 결과:", result);
       return result;
     } catch (error) {
       console.error("getAllEstimateRequests service error:", error);

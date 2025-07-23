@@ -297,19 +297,12 @@ const moverEstimateController = {
     next: NextFunction
   ): Promise<void> => {
     try {
-      console.log("=== getAllEstimateRequests 컨트롤러 시작 ===");
-      console.log("요청 헤더:", req.headers);
-      console.log("요청 쿼리:", req.query);
-
       const moverId = req.user?.userId;
       const userType = req.user?.userType;
       const { region, designated, sortBy, customerName, movingType } =
         req.query;
 
-      console.log("사용자 정보:", { moverId, userType });
-
       if (!moverId || typeof moverId !== "string") {
-        console.log("사용자 ID가 유효하지 않음:", moverId);
         res.status(401).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
@@ -317,7 +310,6 @@ const moverEstimateController = {
         return;
       }
       if (userType !== "MOVER") {
-        console.log("사용자 타입이 MOVER가 아님:", userType);
         res.status(403).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
@@ -329,18 +321,7 @@ const moverEstimateController = {
       const regionBool = region === "true";
       const designatedBool = designated === "true";
 
-      console.log("파싱된 파라미터:", {
-        region,
-        designated,
-        regionBool,
-        designatedBool,
-        sortBy,
-        customerName,
-        movingType,
-      });
-
       if (!regionBool && !designatedBool) {
-        console.log("region과 designated가 모두 false");
         res.status(200).json({
           success: true,
           message: "조회 결과 없음",
@@ -348,15 +329,6 @@ const moverEstimateController = {
         });
         return;
       }
-
-      console.log("서비스 호출 전 파라미터:", {
-        moverId,
-        regionBool,
-        designatedBool,
-        sortBy,
-        customerName,
-        movingType,
-      });
 
       const result = await moverEstimateService.getAllEstimateRequests(
         moverId,
@@ -368,8 +340,6 @@ const moverEstimateController = {
           movingType: movingType as "SMALL" | "HOME" | "OFFICE" | undefined,
         }
       );
-
-      console.log("서비스 결과:", result);
 
       res.status(200).json({
         success: true,
@@ -487,14 +457,10 @@ const moverEstimateController = {
     next: NextFunction
   ): Promise<void> => {
     try {
-      console.log("=== getMyRejectedEstimates 컨트롤러 시작 ===");
       const moverId = req.user?.userId;
       const userType = req.user?.userType;
 
-      console.log("사용자 정보:", { moverId, userType });
-
       if (!moverId || typeof moverId !== "string") {
-        console.log("사용자 ID가 유효하지 않음:", moverId);
         res.status(401).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
@@ -504,7 +470,6 @@ const moverEstimateController = {
 
       // 무버 권한 확인
       if (userType !== "MOVER") {
-        console.log("사용자 타입이 MOVER가 아님:", userType);
         res.status(403).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
@@ -512,9 +477,7 @@ const moverEstimateController = {
         return;
       }
 
-      console.log("서비스 호출 전 moverId:", moverId);
       const result = await moverEstimateService.getMyRejectedEstimates(moverId);
-      console.log("서비스 결과:", result);
 
       res.status(200).json({
         success: true,

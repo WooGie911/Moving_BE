@@ -56,8 +56,6 @@ const postProfile = async (req: Request, res: Response) => {
       userType: TUserRole;
     };
 
-    console.log(userId, userType);
-
     if (userType === "CUSTOMER") {
       // 일반 유저 프로필 등록
       const profileData: TCustomerProfileInput = {
@@ -120,7 +118,6 @@ const postProfile = async (req: Request, res: Response) => {
       });
     }
   } catch (error) {
-    console.log(error);
     handleError(res, error);
   }
 };

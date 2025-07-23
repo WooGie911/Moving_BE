@@ -19,8 +19,6 @@ const postSignin = async (req: Request, res: Response) => {
   const { email, password, userType } = req.body;
 
   try {
-    console.log("로그인 시도:", { email, userType });
-
     const {
       id,
       userName,
