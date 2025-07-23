@@ -7,8 +7,13 @@ export const TIME = {
 } as const;
 
 export const TOKEN_EXPIRES = {
-  ACCESS_TOKEN: "2w", // 2주 , 테스트용
+  // 토큰 만료 시간
+  ACCESS_TOKEN: "30m", // 30분
   REFRESH_TOKEN: "2w", // 2주
-  ACCESS_TOKEN_COOKIE: 2 * TIME.WEEK, // 1209600초 (2주)
-  REFRESH_TOKEN_COOKIE: 2 * TIME.WEEK, // 1209600초 (2주)
+
+  // 쿠키 만료 시간
+  ACCESS_TOKEN_COOKIE: 30 * TIME.MINUTE, //  30분
+  REFRESH_TOKEN_COOKIE: 2 * TIME.WEEK, //  2주
 } as const;
+
+export const REFRESH_TOKEN_REISSUE_THRESHOLD_SECONDS = 60 * 60 * 24 * 5;
