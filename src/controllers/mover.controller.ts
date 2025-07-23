@@ -17,16 +17,17 @@ export const getMoverListController = async (
     serviceTypeId = serviceTypeId ? String(serviceTypeId) : undefined;
     search = search ? String(search) : undefined;
     sort =
-      sort && ALLOWED_SORT.includes(String(sort)) ? String(sort) : "rating";
+      sort && ALLOWED_SORT.includes(String(sort)) ? String(sort) : "review";
     cursor = cursor ? String(cursor) : undefined;
     let takeNum: number | undefined = undefined;
     if (take !== undefined) {
       const parsed = Number(take);
       if (!isNaN(parsed)) takeNum = parsed;
     }
+
     const filter = {
       region,
-      serviceType: serviceTypeId, 
+      serviceType: serviceTypeId,
       search,
       sort,
       cursor,
@@ -81,15 +82,19 @@ export const getMoverDetailController = async (
 ) => {
   try {
     const id = String(req.params.moverId);
+    const userId = req.user?.userId;
+
     if (!id)
       return res
         .status(400)
         .json({ success: false, message: "id가 필요합니다.", data: null });
-    const mover = await moverService.fetchMoverDetail(id);
+
+    const mover = await moverService.fetchMoverDetail(id, userId);
     if (!mover)
       return res
         .status(404)
         .json({ success: false, message: "존재하지 않는 기사님", data: null });
+
     res.json({ success: true, message: "기사님 상세 조회 성공", data: mover });
   } catch (err) {
     next(err);
@@ -167,7 +172,6 @@ export const getDesignatedQuoteRequestCheckController = async (
       userType: string | string[];
     };
 
-    // userType이 문자열이거나 배열일 수 있으므로 둘 다 처리
     const userTypes = Array.isArray(user.userType)
       ? user.userType
       : [user.userType];

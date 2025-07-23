@@ -20,15 +20,17 @@ export const fetchMoverList = async (filter: MoverListFilter) => {
     id: mover.id,
     userId: 0,
     nickname: mover.nickname || "",
-    profileImage: null, 
+    profileImage: mover.moverImage || null,
     experience: mover.career || 0,
     introduction: mover.shortIntro || "",
     description: mover.detailIntro || "",
     completedCount: mover.workedCount || 0,
     avgRating: mover.averageRating || 0,
     reviewCount: mover.totalReviewCount || 0,
-    favoriteCount: mover.favorites?.length || 0,
-    lastActivityAt: null, 
+    favoriteCount: (mover.Favorite || []).filter(
+      (fav) => fav.deletedAt === null
+    ).length,
+    lastActivityAt: null,
     user: {
       id: 0,
       name: mover.name,
@@ -60,14 +62,46 @@ export const fetchMoverList = async (filter: MoverListFilter) => {
  * 찜한 기사님 리스트 조회
  */
 export const fetchFavoriteMovers = async (customerId: string) => {
-  return await getFavoriteMovers(customerId);
+  const movers = await getFavoriteMovers(customerId);
+  return (movers || []).map((mover) => ({
+    id: mover.id,
+    userId: 0,
+    nickname: mover.nickname || "",
+    profileImage: mover.moverImage || null,
+    experience: mover.career || 0,
+    introduction: mover.shortIntro || "",
+    description: mover.detailIntro || "",
+    completedCount: mover.workedCount || 0,
+    avgRating: mover.averageRating || 0,
+    reviewCount: mover.totalReviewCount || 0,
+    favoriteCount: mover.favoriteCount || 0,
+    lastActivityAt: null,
+    user: {
+      id: 0,
+      name: mover.name,
+      email: "",
+    },
+    serviceRegions: mover.serviceAreas || [],
+    serviceTypes: (mover.serviceTypes || []).map((serviceType) => ({
+      service: {
+        name:
+          serviceType === "SMALL"
+            ? "소형이사"
+            : serviceType === "HOME"
+              ? "가정이사"
+              : serviceType === "OFFICE"
+                ? "사무실이사"
+                : "기타",
+      },
+    })),
+  }));
 };
 
 /**
  * 기사님 상세 조회
  */
-export const fetchMoverDetail = async (id: string) => {
-  const mover = await getMoverDetail(id);
+export const fetchMoverDetail = async (id: string, userId?: string) => {
+  const mover = await getMoverDetail(id, userId);
 
   if (!mover) return null;
 
@@ -75,15 +109,16 @@ export const fetchMoverDetail = async (id: string) => {
     id: mover.id,
     userId: 0,
     nickname: mover.nickname || "",
-    profileImage: null, 
+    profileImage: mover.moverImage || null,
     experience: mover.career || 0,
     introduction: mover.shortIntro || "",
     description: mover.detailIntro || "",
     completedCount: mover.workedCount || 0,
     avgRating: mover.averageRating || 0,
     reviewCount: mover.totalReviewCount || 0,
-    favoriteCount: mover.favorites?.length || 0,
-    lastActivityAt: null, 
+    favoriteCount: mover.favoriteCount || 0,
+    isFavorited: mover.isFavorited || false,
+    lastActivityAt: null,
     user: {
       id: 0,
       name: mover.name,
