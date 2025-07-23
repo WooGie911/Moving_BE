@@ -26,24 +26,11 @@ type TDecodedToken = {
 // 로그인 검증
 const signin = async (email: string, password: string, userType: TUserRole) => {
   try {
-    console.log("인증 서비스 로그인 시도:", { email, userType });
-
     // 0. 유효성 검사
     validateUserSignupInput({ email, password });
 
     // 1. 유저 존재 여부 확인
     const existingUser = await authRepository.findUserByEmailAndPassword(email);
-
-    console.log(
-      "조회된 사용자:",
-      existingUser
-        ? {
-            id: existingUser.id,
-            name: existingUser.name,
-            userType: existingUser.userType,
-          }
-        : null
-    );
 
     if (!existingUser) {
       throw new AuthenticationError("존재하지 않는 유저입니다");
