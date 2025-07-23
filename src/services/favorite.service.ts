@@ -3,25 +3,33 @@ import { IFavoriteResponse } from "../types/favorite.types";
 
 const favoriteService = {
   // 찜하기 추가
-  async addFavorite(userId: number, moverId: number): Promise<IFavoriteResponse> {
+  async addFavorite(
+    customerId: string,
+    moverId: string
+  ): Promise<IFavoriteResponse> {
     try {
       // 현재 찜하기 상태 확인
-      const currentStatus = await favoriteRepository.getFavoriteStatus(userId, moverId);
+      const currentStatus = await favoriteRepository.getFavoriteStatus(
+        customerId,
+        moverId
+      );
 
-      // 이미 찜한 상태라면 에러 반환
       if (currentStatus.isFavorited) {
         return {
-          success: false,
+          success: true,
           message: "이미 찜한 기사님입니다.",
           data: currentStatus,
         };
       }
 
       // 찜하기 추가
-      await favoriteRepository.addFavorite(userId, moverId);
+      await favoriteRepository.addFavorite(customerId, moverId);
 
       // 새로운 상태 조회
-      const newStatus = await favoriteRepository.getFavoriteStatus(userId, moverId);
+      const newStatus = await favoriteRepository.getFavoriteStatus(
+        customerId,
+        moverId
+      );
 
       return {
         success: true,
@@ -39,25 +47,33 @@ const favoriteService = {
   },
 
   // 찜하기 제거
-  async removeFavorite(userId: number, moverId: number): Promise<IFavoriteResponse> {
+  async removeFavorite(
+    customerId: string,
+    moverId: string
+  ): Promise<IFavoriteResponse> {
     try {
       // 현재 찜하기 상태 확인
-      const currentStatus = await favoriteRepository.getFavoriteStatus(userId, moverId);
+      const currentStatus = await favoriteRepository.getFavoriteStatus(
+        customerId,
+        moverId
+      );
 
-      // 찜하지 않은 상태라면 에러 반환
       if (!currentStatus.isFavorited) {
         return {
-          success: false,
+          success: true,
           message: "찜하지 않은 기사님입니다.",
           data: currentStatus,
         };
       }
 
       // 찜하기 제거
-      await favoriteRepository.removeFavorite(userId, moverId);
+      await favoriteRepository.removeFavorite(customerId, moverId);
 
       // 새로운 상태 조회
-      const newStatus = await favoriteRepository.getFavoriteStatus(userId, moverId);
+      const newStatus = await favoriteRepository.getFavoriteStatus(
+        customerId,
+        moverId
+      );
 
       return {
         success: true,
@@ -75,4 +91,4 @@ const favoriteService = {
   },
 };
 
-export default favoriteService; 
+export default favoriteService;
