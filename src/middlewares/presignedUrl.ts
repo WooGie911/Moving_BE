@@ -13,7 +13,7 @@ const generatePresignedUrl = async (req: Request, res: Response) => {
       },
     });
 
-    const { role } = req.user as { role: TUserRole };
+    const { userType } = req.user as { userType: TUserRole };
     const { filename, contentType } = req.body;
 
     if (!filename || !contentType) {
@@ -23,7 +23,7 @@ const generatePresignedUrl = async (req: Request, res: Response) => {
     }
 
     // 역할 기반 폴더 설정
-    const folderPrefix = role === "MOVER" ? "mover" : "customer";
+    const folderPrefix = userType === "MOVER" ? "mover" : "customer";
     const key = `${folderPrefix}/${Date.now()}_${filename}`;
 
     const command = new PutObjectCommand({

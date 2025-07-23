@@ -113,8 +113,8 @@ const createCustomerProfile = async (
   const { newAccessToken, newRefreshToken } = generateToken({
     id: user.id,
     name: user.name,
-    nickname: profileData.nickname || "",
-    userType: user.userType[0],
+    userType: "CUSTOMER",
+    hasProfile: true,
   });
 
   const result = await createCustomerProfileRepository(createProfileData);
@@ -201,8 +201,8 @@ const createMoverProfile = async (
   const { newAccessToken, newRefreshToken } = generateToken({
     id: user.id,
     name: user.name,
-    nickname: profileData.nickname || "",
-    userType: user.userType[0],
+    userType: "MOVER",
+    hasProfile: true,
   });
 
   const result = await createMoverProfileRepository(createProfileData);
