@@ -13,6 +13,7 @@ export const authCookieOptions = (maxAgeSeconds: number): TCookieOptions => ({
   maxAge: maxAgeSeconds * 1000,
 });
 
+// 로그인
 const postSignin = async (req: Request, res: Response) => {
   const { email, password, userType } = req.body;
 
@@ -46,6 +47,7 @@ const postSignin = async (req: Request, res: Response) => {
   }
 };
 
+// 회원가입
 const postSignup = async (req: Request, res: Response) => {
   const { name, email, phoneNumber, password, userType } = req.body;
 
@@ -75,7 +77,7 @@ const postSignup = async (req: Request, res: Response) => {
       message: "회원가입 성공",
       user: {
         id,
-        userName,
+        name: userName,
         userType: userTypeResponse,
       },
       accessToken,
@@ -85,6 +87,7 @@ const postSignup = async (req: Request, res: Response) => {
   }
 };
 
+// 로그아웃
 const postLogout = async (req: Request, res: Response) => {
   const { userId } = req.user as { userId: string };
 
@@ -100,6 +103,7 @@ const postLogout = async (req: Request, res: Response) => {
   }
 };
 
+// 토큰 갱신
 const postRefresh = (req: Request, res: Response) => {
   const { refreshToken } = req.body;
   res.status(200).json({ message: "refresh" });

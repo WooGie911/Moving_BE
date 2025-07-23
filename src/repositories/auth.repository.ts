@@ -3,7 +3,8 @@ import { TUserRole, TUserSignup } from "../types/user.types";
 
 const prisma = new PrismaClient();
 
-const saveUser = async (user: TUserSignup) => {
+// 유저 생성
+const createUser = async (user: TUserSignup) => {
   return await prisma.user.create({
     data: {
       email: user.email,
@@ -11,6 +12,8 @@ const saveUser = async (user: TUserSignup) => {
       encryptedPassword: user.encryptedPassword,
       encryptedPhoneNumber: user.encryptedPhoneNumber,
       userType: [user.userType],
+      isCustomer: false,
+      isMover: false,
     },
     select: {
       id: true,
@@ -33,7 +36,8 @@ const findUserByEmailAndPassword = async (email: string) => {
       encryptedPassword: true,
       customerImage: true,
       moverImage: true,
-      nickname: true,
+      isCustomer: true,
+      isMover: true,
     },
   });
 };
@@ -49,11 +53,11 @@ const findUserByEmail = async (email: string) => {
 const updateUserToken = async (
   userId: string,
   refreshToken: string | null,
-  userType: TUserRole
+  userType: TUserRole[]
 ) => {
   return await prisma.user.update({
     where: { id: userId },
-    data: { refreshToken, userType: [userType] },
+    data: { refreshToken, userType },
   });
 };
 
@@ -65,7 +69,7 @@ const findUserById = async (userId: string) => {
 };
 
 export default {
-  saveUser,
+  createUser,
   findUserByEmailAndPassword,
   findUserByEmail,
   updateUserToken,
