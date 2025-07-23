@@ -31,7 +31,7 @@ export function generateRefreshToken(user: TUserTokenCreate): string {
     hasProfile: user.hasProfile,
   };
 
-  const refreshSecret = process.env.JWT_SECRET_KEY;
+  const refreshSecret = process.env.JWT_REFRESH_SECRET_KEY;
 
   if (!refreshSecret) {
     throw new Error("시크릿키를 확인하세요");
