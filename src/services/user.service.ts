@@ -5,9 +5,10 @@ import {
   createCustomerProfile as createCustomerProfileRepository,
   createMoverProfileRepository,
   updateUserProfile,
+  updateCustomerProfile,
+  updateMoverProfile,
   getCustomerProfile,
   getMoverProfile,
-  updateCustomerProfile,
 } from "../repositories/user.repository";
 import {
   encryptPhoneNumber,
@@ -23,6 +24,7 @@ import {
   TUserRole,
   TCustomerProfileUpdateInput,
   TCustomerProfileUpdate,
+  TMoverProfileUpdateInput,
 } from "../types/user.types";
 import { PROFILE_ERROR_MESSAGES } from "../constants/profile.constants";
 import {
@@ -30,6 +32,7 @@ import {
   validateMoverProfileData,
 } from "../utils/validators/profileValidator";
 import { generateToken } from "../utils/generateToken";
+import { validateMoverProfileUpdate } from "../utils/validators/userValidator";
 
 // 유저 정보 조회
 const userInfo = async (userId: string, userType: TUserRole) => {
@@ -266,6 +269,25 @@ const updateMoverBasicInfo = async (
   await updateUserProfile(userId, dbUpdateData);
 };
 
+// 기사님 프로필 수정
+const updateMoverProfileCheck = async (
+  userId: string,
+  updateData: TMoverProfileUpdateInput
+): Promise<any> => {
+  // 1. 사용자 존재 확인
+  const user = await getUserById(userId);
+  if (!user) {
+    throw new NotFoundError(PROFILE_ERROR_MESSAGES.USER_NOT_FOUND);
+  }
+
+  // 2. 프로필 데이터 유효성 검사
+  await validateMoverProfileUpdate(updateData, userId);
+
+  // 3. 프로필 업데이트 실행
+  const result = await updateMoverProfile(userId, updateData);
+  return result;
+};
+
 export {
   userInfo,
   getProfileData,
@@ -273,4 +295,5 @@ export {
   updateCustomerProfileCheck,
   createMoverProfile,
   updateMoverBasicInfo,
+  updateMoverProfileCheck,
 };
