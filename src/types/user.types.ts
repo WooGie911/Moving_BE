@@ -250,7 +250,7 @@ export type TCustomerProfileUpdate = {
 export type TMoverProfileUpdateInput = {
   nickname?: string;
   moverImage?: string;
-  currentArea?: RegionType;
+  currentAreas?: RegionType[];
   serviceTypes?: MoveType[];
   shortIntro?: string;
   detailIntro?: string;
