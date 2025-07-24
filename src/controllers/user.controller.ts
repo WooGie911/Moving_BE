@@ -4,6 +4,7 @@ import {
   createCustomerProfile,
   createMoverProfile,
   updateMoverBasicInfo,
+  updateMoverProfileCheck,
   getProfileData,
   updateCustomerProfileCheck,
 } from "../services/user.service";
@@ -171,10 +172,38 @@ const patchMoverBasicInfo = async (req: Request, res: Response) => {
   }
 };
 
+// 기사님 프로필 수정
+const patchMoverProfile = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.user as { userId: string };
+
+    const updateData = {
+      nickname: req.body.nickname,
+      moverImage: req.body.moverImage,
+      currentAreas: req.body.currentAreas,
+      serviceTypes: req.body.serviceTypes,
+      shortIntro: req.body.shortIntro,
+      detailIntro: req.body.detailIntro,
+      career: req.body.career,
+      isVeteran: req.body.isVeteran,
+    };
+
+    const result = await updateMoverProfileCheck(userId, updateData);
+    res.json({
+      success: true,
+      message: "기사님 프로필이 성공적으로 수정되었습니다.",
+      data: result,
+    });
+  } catch (error: any) {
+    handleError(res, error);
+  }
+};
+
 export {
   getUser,
   postProfile,
   getProfile,
   patchCustomerProfile,
   patchMoverBasicInfo,
+  patchMoverProfile,
 };

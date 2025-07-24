@@ -7,6 +7,7 @@ import {
   RegionType,
   MoveType,
   TCustomerProfileUpdate,
+  TMoverProfileUpdateInput,
 } from "../types/user.types";
 
 const prisma = new PrismaClient();
@@ -146,6 +147,34 @@ const createMoverProfile = async (profileData: TCreateMoverProfile) => {
   return result;
 };
 
+// 기사님 프로필 수정
+const updateMoverProfile = async (
+  userId: string,
+  updateData: TMoverProfileUpdateInput
+) => {
+  // currentAreas 배열을 그대로 사용
+  const data = {
+    ...updateData
+  };
+
+  return await prisma.user.update({
+    where: { id: userId },
+    data,
+    select: {
+      id: true,
+      name: true,
+      nickname: true,
+      moverImage: true,
+      career: true,
+      shortIntro: true,
+      detailIntro: true,
+      serviceTypes: true,
+      currentAreas: true,
+      isVeteran: true,
+    },
+  });
+};
+
 // 닉네임 중복 확인
 const checkNicknameExists = async (
   nickname: string,
@@ -250,5 +279,6 @@ export {
   createMoverProfile as createMoverProfileRepository,
   updateUserProfile,
   updateCustomerProfile,
+  updateMoverProfile,
   checkNicknameExists,
 };

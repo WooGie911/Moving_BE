@@ -3,6 +3,7 @@ import {
   getUser,
   postProfile,
   patchMoverBasicInfo,
+  patchMoverProfile,
   getProfile,
   patchCustomerProfile,
 } from "../controllers/user.controller";
@@ -196,6 +197,67 @@ userRouter.post("/profile", verifyAccessToken, postProfile);
  *
  */
 userRouter.patch("/profile/customer", verifyAccessToken, patchCustomerProfile);
+
+/**
+ * Mover profile update request
+ * @typedef {object} MoverProfileUpdateRequest
+ * @property {string} nickname - 닉네임
+ * @property {string} moverImage - 프로필 이미지 URL
+ * @property {string} currentArea - 현재 활동 지역 - enum:SEOUL,BUSAN,DAEGU,INCHEON,GWANGJU,DAEJEON,ULSAN,SEJONG,GYEONGGI,GANGWON,CHUNGBUK,CHUNGNAM,JEONBUK,JEONNAM,GYEONGBUK,GYEONGNAM,JEJU
+ * @property {array<string>} serviceTypes - 제공 서비스 타입 - enum:SMALL,HOME,OFFICE
+ * @property {string} shortIntro - 한줄 소개 (최소 8자)
+ * @property {string} detailIntro - 상세 설명 (최소 10자)
+ * @property {integer} career - 경력 (년)
+ * @property {boolean} isVeteran - 베테랑 여부
+ */
+
+/**
+ * PATCH /users/profile/mover
+ * @summary 기사님 프로필 수정
+ * @description 기사님의 프로필 정보(닉네임, 이미지, 활동지역, 서비스타입, 소개, 경력 등)를 수정합니다.
+ * @tags Users
+ * @security BearerAuth
+ * @param {MoverProfileUpdateRequest} request.body.required - 수정할 프로필 정보
+ * @return {SuccessResponse} 200 - 프로필 수정 성공
+ * @return {ErrorResponse} 401 - 인증 실패 (유효하지 않은 토큰)
+ * @return {ErrorResponse} 404 - 사용자를 찾을 수 없음
+ * @return {ErrorResponse} 422 - 유효성 검사 실패 (닉네임 중복, 입력값 형식 오류)
+ * @return {ErrorResponse} 500 - 서버 내부 오류
+ * @example request - 프로필 수정 요청 예시
+ * {
+ *   "nickname": "수정된닉네임",
+ *   "moverImage": "https://example.com/new-image.jpg",
+ *   "currentArea": "SEOUL",
+ *   "serviceTypes": ["SMALL", "HOME"],
+ *   "shortIntro": "수정된 한줄 소개입니다",
+ *   "detailIntro": "수정된 상세 설명입니다. 더 자세한 내용을 포함합니다.",
+ *   "career": 5,
+ *   "isVeteran": true
+ * }
+ * @example response - 200 - 프로필 수정 성공 응답 예시
+ * {
+ *   "success": true,
+ *   "message": "기사님 프로필이 성공적으로 수정되었습니다.",
+ *   "data": {
+ *     "id": "cmd456...",
+ *     "name": "김기사",
+ *     "nickname": "수정된닉네임",
+ *     "moverImage": "https://example.com/new-image.jpg",
+ *     "career": 5,
+ *     "shortIntro": "수정된 한줄 소개입니다",
+ *     "detailIntro": "수정된 상세 설명입니다. 더 자세한 내용을 포함합니다.",
+ *     "serviceTypes": ["SMALL", "HOME"],
+ *     "currentAreas": ["SEOUL"],
+ *     "isVeteran": true
+ *   }
+ * }
+ * @example response - 422 - 닉네임 중복 응답 예시
+ * {
+ *   "status": 422,
+ *   "message": "이미 사용 중인 닉네임입니다"
+ * }
+ */
+userRouter.patch("/profile/mover", verifyAccessToken, patchMoverProfile);
 
 /**
  * PATCH /users/profile/mover/basic
