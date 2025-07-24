@@ -3,6 +3,7 @@ import localStrategy from "../middlewares/passport/localStrategy";
 import googleStrategy from "../middlewares/passport/googleStrategy";
 import jwtStrategy from "../middlewares/passport/jwtStrategy";
 import authRepository from "../repositories/auth.repository";
+import kakaoStrategy from "../middlewares/passport/kakaoStrategy";
 
 passport.use(localStrategy);
 
@@ -10,6 +11,7 @@ passport.use("access-token", jwtStrategy.accessTokenStrategy);
 passport.use("refresh-token", jwtStrategy.refreshTokenStrategy);
 
 passport.use("google", googleStrategy);
+passport.use("kakao", kakaoStrategy);
 
 // 세션 저장 시 req.session 에 user.id 값을 할당합니다.
 passport.serializeUser((user: any, done: any) => {

@@ -5,6 +5,7 @@ import {
   postLogout,
   postRefresh,
   getGoogleCallback,
+  getKakaoCallback,
 } from "../controllers/auth.controller";
 import {
   verifyAccessToken,
@@ -263,16 +264,55 @@ authRouter.get(
 authRouter.get("/google", (req, res, next) => {
   const userType = req.query.userType as TUserRole;
 
-  // userType 유효성 검사
-  if (!userType || !["CUSTOMER", "MOVER"].includes(userType)) {
+  // userType이 없으면 에러 처리
+  if (!userType || (userType !== "CUSTOMER" && userType !== "MOVER")) {
     return res.status(400).json({
-      error: "userType 파라미터가 필요합니다. (CUSTOMER 또는 MOVER)",
+      success: false,
+      message: "유효한 userType 파라미터가 필요합니다. (CUSTOMER 또는 MOVER)",
     });
   }
 
   // state에 userType 포함해서 Google로 보내기
   passport.authenticate("google", {
     scope: ["profile", "email"],
+    state: JSON.stringify({ userType }), // 👈 여기서 state 설정
+    session: false,
+  })(req, res, next);
+});
+
+// 카카오 로그인 콜백 엔드포인트
+/**
+ * GET /auth/kakao/callback
+ * @summary 카카오 로그인
+ * @description 카카오 로그인을 처리합니다. 카카오 로그인 후 토큰을 발급합니다.
+ */
+authRouter.get(
+  "/kakao/callback",
+  passport.authenticate("kakao", { session: false }),
+  getKakaoCallback
+);
+
+//카카오 로그인 엔드 포인트
+
+/**
+ * GET /auth/kakao
+ * @summary 카카오 로그인
+ * @description 카카오 로그인을 처리합니다. 카카오 로그인 후 토큰을 발급합니다.
+ */
+authRouter.get("/kakao", (req, res, next) => {
+  const userType = req.query.userType as TUserRole;
+
+  // userType이 없으면 에러 처리
+  if (!userType || (userType !== "CUSTOMER" && userType !== "MOVER")) {
+    return res.status(400).json({
+      success: false,
+      message: "유효한 userType 파라미터가 필요합니다. (CUSTOMER 또는 MOVER)",
+    });
+  }
+
+  // state에 userType 포함해서 Kakao로 보내기
+  passport.authenticate("kakao", {
+    scope: ["profile_nickname", "account_email"],
     state: JSON.stringify({ userType }), // 👈 여기서 state 설정
     session: false,
   })(req, res, next);

@@ -18,9 +18,6 @@ async function verify(
   done: any
 ) {
   try {
-    console.log("🔍 Profile 객체:", profile);
-    console.log("🔍 Profile provider:", profile?.provider);
-
     const state = JSON.parse(req.query.state || "{}");
     const userType = state.userType;
 
