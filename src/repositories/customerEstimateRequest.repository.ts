@@ -57,11 +57,9 @@ const customerEstimateRequestRepository = {
     activeEstimateRequestId: string,
     userId: string
   ): Promise<Record<string, any> | null> => {
-    const today = new Date();
     const pendingEstimateRequest = await prisma.estimateRequest.findFirst({
       where: {
         id: activeEstimateRequestId,
-        moveDate: { gte: today },
         status: { in: ["PENDING", "APPROVED"] },
         deletedAt: null,
       },

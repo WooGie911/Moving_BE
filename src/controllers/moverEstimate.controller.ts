@@ -341,6 +341,37 @@ const moverEstimateController = {
         }
       );
 
+      // 디버깅을 위한 로그 추가
+      console.log("=== getAllEstimateRequests 디버깅 ===");
+      console.log("region:", regionBool, "designated:", designatedBool);
+      console.log(
+        "regionEstimateRequests:",
+        result.regionEstimateRequests?.length || 0
+      );
+      console.log(
+        "designatedEstimateRequests:",
+        result.designatedEstimateRequests?.length || 0
+      );
+
+      if (result.regionEstimateRequests) {
+        console.log(
+          "regionEstimateRequests status:",
+          result.regionEstimateRequests.map((r) => ({
+            id: r.id,
+            status: r.status,
+          }))
+        );
+      }
+      if (result.designatedEstimateRequests) {
+        console.log(
+          "designatedEstimateRequests status:",
+          result.designatedEstimateRequests.map((r) => ({
+            id: r.id,
+            status: r.status,
+          }))
+        );
+      }
+
       res.status(200).json({
         success: true,
         message: "견적 통합 조회 성공",
