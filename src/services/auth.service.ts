@@ -246,7 +246,8 @@ const oauthCrateOrUpdate = async (
       existingUser.id,
       provider,
       providerId,
-      currentType
+      currentType,
+      name // name도 업데이트
     );
 
     const { newAccessToken, newRefreshToken } = generateToken({
@@ -274,7 +275,6 @@ const oauthCrateOrUpdate = async (
       refreshToken: newRefreshToken,
     };
   } else {
-    // 유저 정보가 없으면 생성
     const createdUser = await authRepository.createSocialUser({
       email,
       name,

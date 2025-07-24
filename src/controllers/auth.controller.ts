@@ -6,6 +6,11 @@ import { handleError } from "../utils/handleError";
 import { TCookieOptions } from "../types/cookie.types";
 import { TUserRole } from "../types/user.types";
 
+const FRONTEND_URL =
+  process.env.NODE_ENV === "production"
+    ? process.env.FRONTEND_URL
+    : "http://localhost:3000";
+
 export const authCookieOptions = (maxAgeSeconds: number): TCookieOptions => ({
   httpOnly: true,
   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 개발환경에서는 lax 사용
@@ -140,11 +145,6 @@ const postRefresh = async (req: Request, res: Response) => {
   }
 };
 
-const FRONTEND_URL =
-  process.env.NODE_ENV === "production"
-    ? process.env.FRONTEND_URL
-    : "http://localhost:3000";
-
 // 구글 로그인 콜백
 const getGoogleCallback = async (req: Request, res: Response) => {
   const { accessToken, refreshToken, userType } = req.user as any;
@@ -155,12 +155,6 @@ const getGoogleCallback = async (req: Request, res: Response) => {
       refreshToken,
       authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
     );
-
-    const params = new URLSearchParams({
-      success: "true",
-      message: "구글 로그인 성공",
-      accessToken,
-    });
 
     // 보호되지 않는 콜백 페이지로 리디렉션
     res.redirect(
@@ -191,12 +185,6 @@ const getKakaoCallback = async (req: Request, res: Response) => {
       authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
     );
 
-    const params = new URLSearchParams({
-      success: "true",
-      message: "카카오 로그인 성공",
-      accessToken,
-    });
-
     // 보호되지 않는 콜백 페이지로 리디렉션
     res.redirect(
       `${FRONTEND_URL}/callback?success=true&accessToken=${accessToken}&userType=${userType}`
@@ -215,6 +203,35 @@ const getKakaoCallback = async (req: Request, res: Response) => {
   }
 };
 
+// 네이버 로그인 콜백
+const getNaverCallback = async (req: Request, res: Response) => {
+  const { accessToken, refreshToken, userType } = req.user as any;
+
+  try {
+    res.cookie(
+      "refreshToken",
+      refreshToken,
+      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
+    );
+
+    // 보호되지 않는 콜백 페이지로 리디렉션
+    res.redirect(
+      `${FRONTEND_URL}/callback?success=true&accessToken=${accessToken}&userType=${userType}`
+    );
+  } catch (error: any) {
+    const params = new URLSearchParams({
+      success: "false",
+      message: "네이버 로그인 실패",
+    });
+
+    if (userType === "CUSTOMER") {
+      res.redirect(`${FRONTEND_URL}/userSignin?${params}`);
+    } else {
+      res.redirect(`${FRONTEND_URL}/moverSignin?${params}`);
+    }
+  }
+};
+
 export {
   postSignin,
   postSignup,
@@ -222,4 +239,5 @@ export {
   postRefresh,
   getGoogleCallback,
   getKakaoCallback,
+  getNaverCallback,
 };

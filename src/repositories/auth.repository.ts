@@ -95,11 +95,17 @@ const updateUser = async (
   userId: string,
   provider: AuthProvider,
   providerId: string,
-  userType?: TUserRole[]
+  userType?: TUserRole[],
+  name?: string
 ) => {
   return await prisma.user.update({
     where: { id: userId },
-    data: { provider, providerId, userType },
+    data: {
+      provider,
+      providerId,
+      userType,
+      ...(name && { name }), // name이 있으면 업데이트
+    },
     select: {
       id: true,
       name: true,

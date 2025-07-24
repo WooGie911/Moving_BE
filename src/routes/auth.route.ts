@@ -6,6 +6,7 @@ import {
   postRefresh,
   getGoogleCallback,
   getKakaoCallback,
+  getNaverCallback,
 } from "../controllers/auth.controller";
 import {
   verifyAccessToken,
@@ -317,5 +318,55 @@ authRouter.get("/kakao", (req, res, next) => {
     session: false,
   })(req, res, next);
 });
+
+// ✅ 네이버 로그인 시작 엔드포인트
+/**
+ * GET /auth/naver
+ * @summary 네이버 로그인
+ * @description userType을 쿼리로 받아 네이버 로그인 리디렉션을 시작합니다.
+ * @param {string} userType.query - CUSTOMER 또는 MOVER
+ * @example response - 400 - 잘못된 요청
+ * {
+ *   "success": false,
+ *   "message": "유효한 userType 파라미터가 필요합니다. (CUSTOMER 또는 MOVER)"
+ * }
+ */
+authRouter.get("/naver", (req, res, next) => {
+  const userType = req.query.userType as TUserRole;
+
+  if (!userType || (userType !== "CUSTOMER" && userType !== "MOVER")) {
+    return res.status(400).json({
+      success: false,
+      message: "유효한 userType 파라미터가 필요합니다. (CUSTOMER 또는 MOVER)",
+    });
+  }
+
+  // ✅ state에 userType을 JSON으로 인코딩하여 포함
+  const encodedState = encodeURIComponent(JSON.stringify({ userType }));
+
+  passport.authenticate("naver", {
+    scope: ["profile", "email"], // 네이버는 "nickname" 아닌 "profile"
+    state: encodedState, // 👈 핵심
+    session: false,
+  })(req, res, next);
+});
+
+// ✅ 네이버 로그인 콜백 엔드포인트
+/**
+ * GET /auth/naver/callback
+ * @summary 네이버 로그인 콜백
+ * @description 네이버 로그인 완료 후 콜백을 처리합니다. 토큰을 발급합니다.
+ * @example response - 200 - 성공
+ * {
+ *   "success": true,
+ *   "accessToken": "eyJhbGci...",
+ *   "refreshToken": "eyJhbGci..."
+ * }
+ */
+authRouter.get(
+  "/naver/callback",
+  passport.authenticate("naver", { session: false }), // ✅ JWT 기반이므로 session: false
+  getNaverCallback // 👈 이 핸들러 안에서 JWT 발급 처리
+);
 
 export default authRouter;
