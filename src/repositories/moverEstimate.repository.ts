@@ -198,7 +198,7 @@ const moverEstimateRepository = {
     return estimate;
   },
 
-  // 서비스 가능 지역 견적 모두 조회 (정렬 및 필터링 옵션 포함)
+  // 서비스 가능 지역 견적 조회 (정렬 및 필터링 옵션 포함)
   getRegionEstimateRequest: async (
     moverId: string,
     sortBy?: "moveDate" | "createdAt",
@@ -213,14 +213,23 @@ const moverEstimateRepository = {
 
     let orderBy: any = {};
     let where: any = {
-      status: "PENDING",
+      status: "PENDING", // PENDING 상태만 조회
       moveDate: {
-        gte: new Date(),
+        gt: new Date(), // 오늘보다 미래인 이사일만 조회
+      },
+      customerId: {
+        not: moverId, // 내가 고객으로서 생성한 견적 요청은 제외
       },
       estimates: {
         none: {
           moverId: moverId,
           status: { in: ["PROPOSED", "REJECTED"] },
+        },
+      },
+      // 지정 견적 요청이 아닌 것만 조회
+      designatedMovers: {
+        none: {
+          moverId: moverId,
         },
       },
     };
@@ -285,14 +294,15 @@ const moverEstimateRepository = {
     let orderBy: any = {};
     let where: any = {
       moverId: moverId,
-      status: "PENDING",
       deletedAt: null,
-      // 만료되지 않은 지정 견적만 조회
-      expiresAt: {
-        gte: new Date(),
-      },
-      // 이미 견적을 작성(보냄/반려)한 항목은 제외
       estimateRequest: {
+        status: "PENDING", // estimateRequest의 상태를 PENDING으로 필터링
+        moveDate: {
+          gt: new Date(), // 오늘보다 미래인 이사일만 조회
+        },
+        customerId: {
+          not: moverId, // 내가 고객으로서 생성한 견적 요청은 제외
+        },
         estimates: {
           none: {
             moverId: moverId,
@@ -374,13 +384,37 @@ const moverEstimateRepository = {
         status: {
           in: ["PROPOSED", "ACCEPTED", "AUTO_REJECTED"],
         },
+        estimateRequest: {
+          customerId: {
+            not: moverId, // 내가 고객으로서 생성한 견적 요청은 제외
+          },
+        },
       },
       select: estimateSelectOptions,
       orderBy: {
         createdAt: "desc",
       },
     });
-    return estimates as TMyEstimateResponse[];
+
+    // 각 견적에 대해 지정 견적 여부 확인
+    const estimatesWithDesignatedFlag = await Promise.all(
+      estimates.map(async (estimate) => {
+        const designatedRequest = await prisma.designatedMover.findFirst({
+          where: {
+            estimateRequestId: estimate.estimateRequestId,
+            moverId: moverId,
+            deletedAt: null,
+          },
+        });
+
+        return {
+          ...estimate,
+          isDesignated: !!designatedRequest,
+        };
+      })
+    );
+
+    return estimatesWithDesignatedFlag as TMyEstimateResponse[];
   },
 
   // 내가 반려한 견적들 조회
@@ -399,7 +433,25 @@ const moverEstimateRepository = {
         },
       });
 
-      return rejectedEstimates as TMyRejectedEstimateResponse[];
+      // 각 견적에 대해 지정 견적 여부 확인
+      const estimatesWithDesignatedFlag = await Promise.all(
+        rejectedEstimates.map(async (estimate) => {
+          const designatedRequest = await prisma.designatedMover.findFirst({
+            where: {
+              estimateRequestId: estimate.estimateRequestId,
+              moverId: moverId,
+              deletedAt: null,
+            },
+          });
+
+          return {
+            ...estimate,
+            isDesignated: !!designatedRequest,
+          };
+        })
+      );
+
+      return estimatesWithDesignatedFlag as TMyRejectedEstimateResponse[];
     } catch (error) {
       console.error("getMyRejectedEstimates repository error:", error);
       throw error;
