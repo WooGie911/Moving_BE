@@ -9,6 +9,7 @@ import cookieParser from "cookie-parser";
 import authIndexRoutes from "./routes/authIndex.routes";
 import notificationIndexRoutes from "./routes/notificationIndex.routes";
 import businessRoutes from "./routes/index.routes";
+import passport from "./config/passport";
 
 // 환경변수 로드
 dotenv.config();
@@ -43,6 +44,8 @@ app.use(
 app.use(cookieParser());
 app.use(express.json()); // JSON 파싱
 app.use(express.urlencoded({ extended: true })); // URL 인코딩 파싱
+
+app.use(passport.initialize());
 
 // Swagger 자동 설정 (API 라우트들을 자동으로 스캔)
 setupAutoSwagger(app);

@@ -4,11 +4,14 @@ import {
   postSignup,
   postLogout,
   postRefresh,
+  getGoogleCallback,
 } from "../controllers/auth.controller";
 import {
   verifyAccessToken,
   verifyRefreshToken,
 } from "../middlewares/verifyToken";
+import passport from "passport";
+import { TUserRole } from "../types/user.types";
 
 const authRouter = Router();
 
@@ -238,5 +241,41 @@ authRouter.post("/logout", verifyAccessToken, postLogout);
  * }
  */
 authRouter.post("/refresh-token", verifyRefreshToken, postRefresh);
+
+// 구글 로그인 콜백 엔드포인트
+/**
+ * GET /auth/google/callback
+ * @summary 구글 로그인
+ * @description 구글 로그인을 처리합니다. 구글 로그인 후 토큰을 발급합니다.
+ */
+authRouter.get(
+  "/google/callback",
+  passport.authenticate("google", { session: false }),
+  getGoogleCallback
+);
+
+// 구글 로그인 엔드포인트
+/**
+ * GET /auth/google
+ * @summary 구글 로그인
+ * @description 구글 로그인을 처리합니다. 구글 로그인 후 토큰을 발급합니다.
+ */
+authRouter.get("/google", (req, res, next) => {
+  const userType = req.query.userType as TUserRole;
+
+  // userType 유효성 검사
+  if (!userType || !["CUSTOMER", "MOVER"].includes(userType)) {
+    return res.status(400).json({
+      error: "userType 파라미터가 필요합니다. (CUSTOMER 또는 MOVER)",
+    });
+  }
+
+  // state에 userType 포함해서 Google로 보내기
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    state: JSON.stringify({ userType }), // 👈 여기서 state 설정
+    session: false,
+  })(req, res, next);
+});
 
 export default authRouter;

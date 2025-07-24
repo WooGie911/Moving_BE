@@ -16,6 +16,8 @@ import {
   ValidationError,
 } from "../types/commonError.types";
 import { REFRESH_TOKEN_REISSUE_THRESHOLD_SECONDS } from "../constants/token.constants";
+import { AuthProvider } from "@prisma/client";
+import { mergeUserTypes } from "../utils/authUtils";
 
 type TDecodedToken = {
   userId: string;
@@ -70,19 +72,8 @@ const signin = async (email: string, password: string, userType: TUserRole) => {
     throw new ServerError("토큰 생성 실패로 인한 로그인 실패");
   }
 
-  // 현재 유저 타입이 1개이고, MOVER 이고 원본이 "CUSTOMER" 만 존재한다면 배열에 추가 "MOVER" 타입을 추가
-  let currentType = [];
-  if (
-    existingUser.userType?.[0] === "CUSTOMER" &&
-    existingUser.userType.length === 1 &&
-    userType === "MOVER"
-  ) {
-    currentType = [existingUser.userType[0], userType];
-  } else {
-    // 아니라면 원본 유저 타입 그대로 사용
-    // (첫 크로스 로그인 이후로는 아래만 실행됨)
-    currentType = existingUser.userType;
-  }
+  // 현재 유저 타입 배열과 받아온 유저 타입을 병합
+  const currentType = mergeUserTypes(existingUser.userType, userType);
 
   await authRepository.updateUserToken(
     String(existingUser.id),
@@ -236,4 +227,79 @@ const refresh = async (decoded: TDecodedToken) => {
   return { accessToken, refreshToken };
 };
 
-export default { signin, signup, logout, refresh };
+// 소셜 로그인
+const oauthCrateOrUpdate = async (
+  provider: AuthProvider,
+  providerId: string,
+  email: string,
+  name: string,
+  userType: TUserRole
+) => {
+  const existingUser = await authRepository.findUserByEmail(email);
+
+  // 유저 정보가 있으면 업데이트
+  if (existingUser) {
+    // 현재 유저 타입 배열과 받아온 유저 타입을 병합
+    const currentType = mergeUserTypes(existingUser.userType, userType);
+
+    const updatedUser = await authRepository.updateUser(
+      existingUser.id,
+      provider,
+      providerId,
+      currentType
+    );
+
+    const { newAccessToken, newRefreshToken } = generateToken({
+      id: String(updatedUser.id),
+      name: updatedUser.name,
+      userType,
+      hasProfile:
+        userType === "CUSTOMER"
+          ? updatedUser.isCustomer || false
+          : updatedUser.isMover || false,
+    });
+
+    await authRepository.updateUserToken(
+      String(updatedUser.id),
+      newRefreshToken
+    );
+
+    return {
+      id: updatedUser.id,
+      name: updatedUser.name,
+      userType: updatedUser.userType,
+      nickname: updatedUser.nickname,
+      provider: updatedUser.provider,
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
+  } else {
+    // 유저 정보가 없으면 생성
+    const createdUser = await authRepository.createSocialUser({
+      email,
+      name,
+      provider,
+      providerId,
+      userType,
+    });
+
+    const { newAccessToken, newRefreshToken } = generateToken({
+      id: String(createdUser.id),
+      name: createdUser.name,
+      userType,
+      hasProfile: false,
+    });
+
+    return {
+      id: createdUser.id,
+      name: createdUser.name,
+      userType: createdUser.userType,
+      nickname: createdUser.nickname,
+      provider: createdUser.provider,
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
+  }
+};
+
+export default { signin, signup, logout, refresh, oauthCrateOrUpdate };
