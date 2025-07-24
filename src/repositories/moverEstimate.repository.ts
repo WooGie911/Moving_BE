@@ -217,6 +217,12 @@ const moverEstimateRepository = {
       moveDate: {
         gte: new Date(),
       },
+      estimates: {
+        none: {
+          moverId: moverId,
+          status: { in: ["PROPOSED", "REJECTED"] },
+        },
+      },
     };
 
     // currentAreas가 있으면 해당 지역만 필터링
@@ -239,6 +245,15 @@ const moverEstimateRepository = {
     if (movingType) {
       where.moveType = movingType;
     }
+
+    where.NOT = {
+      estimates: {
+        some: {
+          moverId: moverId,
+          status: { in: ["PROPOSED", "REJECTED"] },
+        },
+      },
+    };
 
     switch (sortBy) {
       case "moveDate":
@@ -276,13 +291,12 @@ const moverEstimateRepository = {
       expiresAt: {
         gte: new Date(),
       },
-      // 이미 견적을 작성한 항목은 제외
+      // 이미 견적을 작성(보냄/반려)한 항목은 제외
       estimateRequest: {
-        NOT: {
-          estimates: {
-            some: {
-              moverId: moverId,
-            },
+        estimates: {
+          none: {
+            moverId: moverId,
+            status: { in: ["PROPOSED", "REJECTED"] }, // 견적을 보냈거나 반려한 경우
           },
         },
       },
