@@ -1,9 +1,18 @@
-import { PrismaClient, MoveType, RequestStatus, EstimateRequest, UserType } from "@prisma/client";
+import {
+  PrismaClient,
+  MoveType,
+  RequestStatus,
+  EstimateRequest,
+  UserType,
+} from "@prisma/client";
 import { getKoreaToday } from "../utils/dateUtils";
 
 const prisma = new PrismaClient();
 
-const createEstimateRequest = async (data: any, userId: string): Promise<EstimateRequest> => {
+const createEstimateRequest = async (
+  data: any,
+  userId: string
+): Promise<EstimateRequest> => {
   return await prisma.estimateRequest.create({
     data: {
       customerId: userId,
@@ -16,7 +25,9 @@ const createEstimateRequest = async (data: any, userId: string): Promise<Estimat
     },
   });
 };
-const getActiveEstimateRequestByUserId = async (userId: string): Promise<any | null> => {
+const getActiveEstimateRequestByUserId = async (
+  userId: string
+): Promise<any | null> => {
   return await prisma.estimateRequest.findFirst({
     where: {
       customerId: userId,
@@ -74,7 +85,10 @@ const getEstimateRequestById = async (id: string): Promise<any | null> => {
     },
   });
 };
-const updateEstimateRequest = async (id: string, updateData: any): Promise<EstimateRequest> => {
+const updateEstimateRequest = async (
+  id: string,
+  updateData: any
+): Promise<EstimateRequest> => {
   return await prisma.estimateRequest.update({
     where: { id },
     data: updateData,
@@ -91,19 +105,31 @@ const cancelEstimateRequest = async (id: string): Promise<EstimateRequest> => {
 };
 const hasPendingRequest = async (userId: string): Promise<boolean> => {
   const req = await prisma.estimateRequest.findFirst({
-    where: { customerId: userId, status: RequestStatus.PENDING, deletedAt: null },
+    where: {
+      customerId: userId,
+      status: RequestStatus.PENDING,
+      deletedAt: null,
+    },
   });
   return !!req;
 };
 const isActiveRequestPending = async (userId: string): Promise<boolean> => {
   const req = await prisma.estimateRequest.findFirst({
-    where: { customerId: userId, status: RequestStatus.PENDING, deletedAt: null },
+    where: {
+      customerId: userId,
+      status: RequestStatus.PENDING,
+      deletedAt: null,
+    },
   });
   return !!req;
 };
 const hasEstimateFromMover = async (userId: string): Promise<boolean> => {
   const req = await prisma.estimateRequest.findFirst({
-    where: { customerId: userId, status: RequestStatus.PENDING, deletedAt: null },
+    where: {
+      customerId: userId,
+      status: RequestStatus.PENDING,
+      deletedAt: null,
+    },
     select: { id: true },
   });
   if (!req) return false;
@@ -138,7 +164,9 @@ const findOrCreateAddress = async ({
 };
 
 // 유저의 유형을 확인하는 메서드
-const checkUserType = async (userId: string): Promise<{ isCustomer: boolean; isMover: boolean }> => {
+const checkUserType = async (
+  userId: string
+): Promise<{ isCustomer: boolean; isMover: boolean }> => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { userType: true, isCustomer: true, isMover: true },
@@ -148,8 +176,10 @@ const checkUserType = async (userId: string): Promise<{ isCustomer: boolean; isM
     throw new Error("사용자를 찾을 수 없습니다.");
   }
 
-  const isCustomer = user.userType.includes(UserType.CUSTOMER) || user.isCustomer === true;
-  const isMover = user.userType.includes(UserType.MOVER) || user.isMover === true;
+  const isCustomer =
+    user.userType.includes(UserType.CUSTOMER) || user.isCustomer === true;
+  const isMover =
+    user.userType.includes(UserType.MOVER) || user.isMover === true;
 
   return { isCustomer, isMover };
 };
@@ -172,7 +202,9 @@ const expireOverdueRequests = async (today: Date): Promise<void> => {
 };
 
 // 견적 요청이 만료되었는지 확인하는 메서드
-const isRequestExpired = async (estimateRequestId: string): Promise<boolean> => {
+const isRequestExpired = async (
+  estimateRequestId: string
+): Promise<boolean> => {
   const request = await prisma.estimateRequest.findUnique({
     where: { id: estimateRequestId },
     select: { moveDate: true, status: true },
@@ -183,7 +215,9 @@ const isRequestExpired = async (estimateRequestId: string): Promise<boolean> => 
   }
 
   const koreaToday = getKoreaToday();
-  return request.moveDate < koreaToday || request.status === RequestStatus.EXPIRED;
+  return (
+    request.moveDate < koreaToday || request.status === RequestStatus.EXPIRED
+  );
 };
 
 export default {

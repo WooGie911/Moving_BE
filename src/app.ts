@@ -4,6 +4,7 @@ import cors from "cors";
 import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware";
 import { setupAutoSwagger } from "./utils/swagger-auto";
 import cookieParser from "cookie-parser";
+import { initializeScheduler } from "./utils/scheduler";
 
 // 라우터 import
 import authIndexRoutes from "./routes/authIndex.routes";
@@ -60,6 +61,9 @@ app.use(notFoundHandler);
 
 // 전역 에러 핸들링
 app.use(errorHandler);
+
+// 스케줄러 초기화
+initializeScheduler();
 
 // 서버 시작
 app.listen(PORT, () => {

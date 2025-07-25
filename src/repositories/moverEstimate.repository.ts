@@ -130,6 +130,43 @@ const moverEstimateRepository = {
       throw new Error("이미 견적을 작성했습니다.");
     }
 
+    // 현재 기사님이 지정 견적 요청을 받았는지 확인
+    const designatedRequest = await prisma.designatedMover.findFirst({
+      where: {
+        estimateRequestId: estimateRequestId,
+        moverId: moverId,
+        deletedAt: null,
+      },
+    });
+
+    const isDesignated = !!designatedRequest;
+
+    // 기존 견적 개수 확인 (PROPOSED, ACCEPTED 상태만)
+    const existingEstimates = await prisma.estimate.findMany({
+      where: {
+        estimateRequestId: estimateRequestId,
+        status: { in: ["PROPOSED", "ACCEPTED"] },
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        isDesignated: true,
+      },
+    });
+
+    // 일반 견적과 지정 견적 개수 분리
+    const regularEstimates = existingEstimates.filter((e) => !e.isDesignated);
+    const designatedEstimates = existingEstimates.filter((e) => e.isDesignated);
+
+    // 견적 개수 제한 확인
+    if (!isDesignated && regularEstimates.length >= 5) {
+      throw new Error("해당 견적에대한 일반견적 허용량을 초과했습니다");
+    }
+
+    if (isDesignated && designatedEstimates.length >= 3) {
+      throw new Error("해당 견적에대한 지정견적 허용량을 초과했습니다");
+    }
+
     const estimate = await prisma.estimate.create({
       data: {
         estimateRequestId: estimateRequestId,
@@ -137,7 +174,7 @@ const moverEstimateRepository = {
         price: price,
         comment: comment,
         status: "PROPOSED",
-        isDesignated: false,
+        isDesignated: isDesignated,
       },
       select: estimateSelectOptions,
     });
@@ -184,13 +221,24 @@ const moverEstimateRepository = {
       throw new Error("이미 견적을 작성했습니다.");
     }
 
+    // 현재 기사님이 지정 견적 요청을 받았는지 확인
+    const designatedRequest = await prisma.designatedMover.findFirst({
+      where: {
+        estimateRequestId: estimateRequestId,
+        moverId: moverId,
+        deletedAt: null,
+      },
+    });
+
+    const isDesignated = !!designatedRequest;
+
     const estimate = await prisma.estimate.create({
       data: {
         estimateRequestId: estimateRequestId,
         moverId: moverId,
         comment: comment,
         status: "REJECTED",
-        isDesignated: false,
+        isDesignated: isDesignated,
       },
       select: estimateSelectOptions,
     });

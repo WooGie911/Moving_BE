@@ -34,7 +34,9 @@ const moverEstimateService = {
           error.message === "이미 견적을 작성했습니다." ||
           error.message === "견적 요청을 찾을 수 없습니다." ||
           error.message === "활성 상태가 아닌 견적 요청입니다." ||
-          error.message === "이사일이 지난 견적 요청입니다."
+          error.message === "이사일이 지난 견적 요청입니다." ||
+          error.message === "해당 견적에대한 일반견적 허용량을 초과했습니다" ||
+          error.message === "해당 견적에대한 지정견적 허용량을 초과했습니다"
         ) {
           throw error;
         }
