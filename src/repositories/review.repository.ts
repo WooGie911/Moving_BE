@@ -7,7 +7,7 @@ const reviewRepository = {
   postReview: async (reviewId: string, rating: number, content: string) => {
     return prisma.review.update({
       where: { id: reviewId },
-      data: { rating, content },
+      data: { rating, content, status: "COMPLETED" },
     });
   },
 
