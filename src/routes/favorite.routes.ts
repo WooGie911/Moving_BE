@@ -33,6 +33,29 @@ const router = Router();
 router.post("/", verifyAccessToken, favoriteController.addFavorite);
 
 /**
+ * GET /favorites/:moverId/status
+ * @summary 찜하기 상태 확인
+ * @tags Favorites
+ * @security BearerAuth
+ * @param {string} moverId.path.required - 기사님 ID
+ * @return {object} 200 - 찜하기 상태 조회 성공
+ * @return {object} 400 - 잘못된 요청
+ * @return {object} 401 - 인증 실패
+ * @return {object} 403 - 권한 없음
+ * @return {object} 500 - 서버 오류
+ * @example response - 200 - 찜하기 상태 조회 성공
+ * {
+ *   "success": true,
+ *   "message": "찜하기 상태를 성공적으로 조회했습니다.",
+ *   "data": {
+ *     "isFavorited": true,
+ *     "favoriteCount": 5
+ *   }
+ * }
+ */
+router.get("/:moverId/status", verifyAccessToken, favoriteController.getFavoriteStatus);
+
+/**
  * DELETE /favorites/:moverId
  * @summary 찜하기 제거
  * @tags Favorites

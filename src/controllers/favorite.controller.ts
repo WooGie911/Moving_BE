@@ -105,6 +105,45 @@ class FavoriteController {
       });
     }
   }
+
+  // 찜하기 상태 확인
+  async getFavoriteStatus(req: IUserRequest, res: Response) {
+    try {
+      const customerId = req.user?.userId;
+      const moverId = req.params.moverId;
+
+      // 입력 검증
+      if (!moverId || typeof moverId !== "string") {
+        return res.status(400).json({
+          success: false,
+          message: "유효하지 않은 기사님 ID입니다.",
+        });
+      }
+
+      // 사용자 역할 검증 (일반 유저만 찜하기 가능)
+      const userType = req.user?.userType;
+      if (userType !== "CUSTOMER") {
+        return res.status(403).json({
+          success: false,
+          message: "일반 유저만 찜하기를 사용할 수 있습니다.",
+        });
+      }
+
+      const status = await favoriteRepository.getFavoriteStatus(customerId!, moverId);
+
+      return res.status(200).json({
+        success: true,
+        message: "찜하기 상태를 성공적으로 조회했습니다.",
+        data: status,
+      });
+    } catch (error) {
+      console.error("찜하기 상태 확인 컨트롤러 오류:", error);
+      return res.status(500).json({
+        success: false,
+        message: "서버 내부 오류가 발생했습니다.",
+      });
+    }
+  }
 }
 
 export default new FavoriteController();
