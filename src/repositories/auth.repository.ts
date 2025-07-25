@@ -1,5 +1,9 @@
-import { PrismaClient } from "@prisma/client";
-import { TUserRole, TUserSignup } from "../types/user.types";
+import { AuthProvider, PrismaClient } from "@prisma/client";
+import {
+  TSocialSignupInput,
+  TUserRole,
+  TUserSignup,
+} from "../types/user.types";
 
 const prisma = new PrismaClient();
 
@@ -12,14 +16,32 @@ const createUser = async (user: TUserSignup) => {
       encryptedPassword: user.encryptedPassword,
       encryptedPhoneNumber: user.encryptedPhoneNumber,
       userType: [user.userType],
-      isCustomer: false,
-      isMover: false,
     },
     select: {
       id: true,
       name: true,
       userType: true,
       nickname: true,
+    },
+  });
+};
+
+// 소셜 로그인 유저 생성
+const createSocialUser = async (user: TSocialSignupInput) => {
+  return await prisma.user.create({
+    data: {
+      email: user.email,
+      name: user.name,
+      userType: [user.userType],
+      provider: user.provider,
+      providerId: user.providerId,
+    },
+    select: {
+      id: true,
+      name: true,
+      userType: true,
+      nickname: true,
+      provider: true,
     },
   });
 };
@@ -53,7 +75,7 @@ const findUserByEmail = async (email: string) => {
 const updateUserToken = async (
   userId: string,
   refreshToken: string | null,
-  userType: TUserRole[]
+  userType?: TUserRole[]
 ) => {
   return await prisma.user.update({
     where: { id: userId },
@@ -68,10 +90,40 @@ const findUserById = async (userId: string) => {
   });
 };
 
+// 유저 업데이트
+const updateUser = async (
+  userId: string,
+  provider: AuthProvider,
+  providerId: string,
+  userType?: TUserRole[],
+  name?: string
+) => {
+  return await prisma.user.update({
+    where: { id: userId },
+    data: {
+      provider,
+      providerId,
+      userType,
+      ...(name && { name }), // name이 있으면 업데이트
+    },
+    select: {
+      id: true,
+      name: true,
+      userType: true,
+      nickname: true,
+      provider: true,
+      isCustomer: true,
+      isMover: true,
+    },
+  });
+};
+
 export default {
   createUser,
   findUserByEmailAndPassword,
   findUserByEmail,
   updateUserToken,
   findUserById,
+  updateUser,
+  createSocialUser,
 };
