@@ -1,14 +1,40 @@
 export type TCreateEstimateRequest = {
   userId: string;
-  moveType: string;
-  fromCity: string;
-  fromDistrict: string;
-  fromDetail?: string;
-  fromRegion: string;
-  toCity: string;
-  toDistrict: string;
-  toDetail?: string;
-  toRegion: string;
-  moveDate: string;
+  movingType: string;
+  movingDate: string;
+  departure: {
+    roadAddress: string;
+    detailAddress?: string;
+    zonecode: string;
+    jibunAddress: string;
+    extraAddress: string;
+  };
+  arrival: {
+    roadAddress: string;
+    detailAddress?: string;
+    zonecode: string;
+    jibunAddress: string;
+    extraAddress: string;
+  };
+  description?: string;
+};
+
+export type TUpdateEstimateRequest = {
+  movingType?: string;
+  movingDate?: string;
+  departure?: {
+    roadAddress: string;
+    detailAddress?: string;
+    zonecode: string;
+    jibunAddress: string;
+    extraAddress: string;
+  };
+  arrival?: {
+    roadAddress: string;
+    detailAddress?: string;
+    zonecode: string;
+    jibunAddress: string;
+    extraAddress: string;
+  };
   description?: string;
 };
