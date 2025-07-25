@@ -11,23 +11,29 @@ const reviewService = {
   ) => {
     const { items, total, page, pageSize } =
       await reviewRepository.getWritableEstimateRequests(customerId, pageQuery);
-    const mappedItems = items.map((req: any) => {
-      const acceptedEstimate = req.estimates?.find(
-        (e: any) => e.status === "ACCEPTED"
-      );
-      return {
-        id: req.id,
-        profileImage: acceptedEstimate?.mover?.profileImage ?? null,
-        nickname: acceptedEstimate?.mover?.nickname ?? null,
-        moveType: req.moveType,
-        isDesigned: acceptedEstimate?.isDesignated ?? false,
-        moverIntroduction: acceptedEstimate?.mover?.introduction ?? null,
-        fromAddress: req.fromAddress ?? null,
-        toAddress: req.toAddress ?? null,
-        moveDate: req.moveDate,
-        price: acceptedEstimate?.price ?? null,
-      };
-    });
+    // 각 견적 요청에 연결된 리뷰의 id를 추가
+    const mappedItems = await Promise.all(
+      items.map(async (req: any) => {
+        const acceptedEstimate = req.estimates?.find(
+          (e: any) => e.status === "ACCEPTED"
+        );
+        // 리뷰 id 추출 (있으면 id, 없으면 null)
+        const reviewId = req.review?.id ?? null;
+        return {
+          id: req.id,
+          reviewId,
+          profileImage: acceptedEstimate?.mover?.profileImage ?? null,
+          nickname: acceptedEstimate?.mover?.nickname ?? null,
+          moveType: req.moveType,
+          isDesigned: acceptedEstimate?.isDesignated ?? false,
+          moverIntroduction: acceptedEstimate?.mover?.introduction ?? null,
+          fromAddress: req.fromAddress ?? null,
+          toAddress: req.toAddress ?? null,
+          moveDate: req.moveDate,
+          price: acceptedEstimate?.price ?? null,
+        };
+      })
+    );
     return { items: mappedItems, total, page, pageSize };
   },
 

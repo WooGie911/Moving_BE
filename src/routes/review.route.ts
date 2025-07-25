@@ -20,19 +20,20 @@ const reviewRouter = Router();
  *   "rating": 5,
  *   "content": "정말 친절하고 만족스러운 서비스였습니다!"
  * }
+ *
  * @example response - 200 - 성공 예시
  * {
  *   "success": true,
  *   "message": "리뷰가 작성되었습니다.",
  *   "data": {
- *     "id": "clx...", // 리뷰 ID (cuid)
- *     "customerId": "clx...", // 리뷰 작성자(고객) ID (cuid)
- *     "moverId": "clx...", // 기사님 ID (cuid)
- *     "estimateRequestId": "clx...", // 견적 요청 ID (cuid)
- *     "rating": 5, // 평점
- *     "content": "정말 친절하고 만족스러운 서비스였습니다!", // 리뷰 내용
- *     "status": "COMPLETED", // 리뷰 상태
- *     "createdAt": "2025-07-10T00:33:16.456Z" // 리뷰 작성일시(ISO 8601)
+ *     "id": "clx...",
+ *     "customerId": "clx...",
+ *     "moverId": "clx...",
+ *     "estimateRequestId": "clx...",
+ *     "rating": 5,
+ *     "content": "정말 친절하고 만족스러운 서비스였습니다!",
+ *     "status": "COMPLETED",
+ *     "createdAt": "2025-07-10T00:33:16.456Z"
  *   }
  * }
  */
@@ -58,12 +59,13 @@ reviewRouter.patch(
  *   "data": {
  *     "items": [
  *       {
- *         "id": "clx...", // 견적 요청 ID (cuid)
- *         "profileImage": "https://.../profile.png", // 기사 프로필 이미지 URL
- *         "nickname": "김코드 기사님", // 기사 닉네임
- *         "moveType": "SMALL", // 이사 유형
- *         "isDesigned": true, // 지정 견적 여부
- *         "moverIntroduction": "이사부터 정리까지 꼼꼼한 마무리!", // 기사 소개
+ *         "id": "clx...",
+ *         "reviewId": "clxReview...",
+ *         "profileImage": "https://.../profile.png",
+ *         "nickname": "김코드 기사님",
+ *         "moveType": "SMALL",
+ *         "isDesigned": true,
+ *         "moverIntroduction": "이사부터 정리까지 꼼꼼한 마무리!",
  *         "fromAddress": {
  *           "city": "서울시 중구",
  *           "district": "을지로동",
@@ -76,8 +78,8 @@ reviewRouter.patch(
  *           "detail": "301동 404호",
  *           "region": "GYEONGGI"
  *         },
- *         "moveDate": "2024-07-01T00:00:00.000Z", // 이사 예정일(ISO 8601)
- *         "price": 180000 // 이사 비용(견적가)
+ *         "moveDate": "2024-07-01T00:00:00.000Z",
+ *         "price": 180000
  *       }
  *     ],
  *     "total": 3,
@@ -108,13 +110,13 @@ reviewRouter.get(
  *   "data": {
  *     "items": [
  *       {
- *         "id": "clx...", // 리뷰 ID (cuid)
- *         "moverId": "clx...", // 기사님 ID (cuid)
- *         "profileImage": "https://.../profile.png", // 기사 프로필 이미지 URL
- *         "nickname": "김코드 기사님", // 기사 닉네임
- *         "moverIntroduction": "이사부터 정리까지 꼼꼼한 마무리!", // 기사 소개
- *         "moveType": "SMALL", // 이사 유형
- *         "isDesigned": true, // 지정 견적 여부
+ *         "id": "clx...",
+ *         "moverId": "clx...",
+ *         "profileImage": "https://.../profile.png",
+ *         "nickname": "김코드 기사님",
+ *         "moverIntroduction": "이사부터 정리까지 꼼꼼한 마무리!",
+ *         "moveType": "SMALL",
+ *         "isDesigned": true,
  *         "fromAddress": {
  *           "city": "서울시 중구",
  *           "district": "을지로동",
@@ -127,10 +129,10 @@ reviewRouter.get(
  *           "detail": "301동 404호",
  *           "region": "GYEONGGI"
  *         },
- *         "moveDate": "2024-07-01T00:00:00.000Z", // 이사 날짜(ISO 8601)
- *         "rating": 5, // 별점
- *         "content": "아주 만족스러웠어요!", // 리뷰 내용
- *         "createdAt": "2024-07-18T12:34:56.000Z" // 리뷰 작성일시(ISO 8601)
+ *         "moveDate": "2024-07-01T00:00:00.000Z",
+ *         "rating": 5,
+ *         "content": "아주 만족스러웠어요!",
+ *         "createdAt": "2024-07-18T12:34:56.000Z"
  *       }
  *     ],
  *     "total": 12,
@@ -161,14 +163,14 @@ reviewRouter.get(
  *   "data": {
  *     "items": [
  *       {
- *         "id": "clx...", // 리뷰 ID (cuid)
- *         "estimateRequestId": "clx...", // 견적 요청 ID (cuid)
- *         "customerId": "clx...", // 리뷰 작성자(고객) ID (cuid)
- *         "moverId": "clx...", // 기사님 ID (cuid)
- *         "profileImage": "https://.../profile.png", // 고객 프로필 이미지 URL
- *         "nickname": "홍길동", // 고객 닉네임
- *         "moveType": "SMALL", // 이사 유형
- *         "isDesigned": true, // 지정 견적 여부
+ *         "id": "clx...",
+ *         "estimateRequestId": "clx...",
+ *         "customerId": "clx...",
+ *         "moverId": "clx...",
+ *         "profileImage": "https://.../profile.png",
+ *         "nickname": "홍길동",
+ *         "moveType": "SMALL",
+ *         "isDesigned": true,
  *         "fromAddress": {
  *           "city": "서울시 강남구",
  *           "district": "역삼동",
@@ -181,10 +183,10 @@ reviewRouter.get(
  *           "detail": "301동 404호",
  *           "region": "GYEONGGI"
  *         },
- *         "moveDate": "2024-07-10T00:00:00.000Z", // 이사 날짜(ISO 8601)
- *         "rating": 4, // 별점
- *         "content": "기사님이 친절하게 잘 해주셨어요!", // 리뷰 내용
- *         "createdAt": "2024-07-11T09:12:34.000Z" // 리뷰 작성일시(ISO 8601)
+ *         "moveDate": "2024-07-10T00:00:00.000Z",
+ *         "rating": 4,
+ *         "content": "기사님이 친절하게 잘 해주셨어요!",
+ *         "createdAt": "2024-07-11T09:12:34.000Z"
  *       }
  *     ],
  *     "total": 7,
