@@ -2,9 +2,9 @@ import prisma from "../db/prisma/prisma";
 import { ActionType } from "@prisma/client";
 
 interface CreateActionParams {
-  userId: number;
+  userId: string;
   type: ActionType;
-  entityId: number;
+  entityId: string;
   entityType: string;
   metadata: object;
 }

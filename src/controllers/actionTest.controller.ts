@@ -7,7 +7,7 @@ const actionTestController = {
   createTestAction: async (req: Request, res: Response) => {
     try {
       // 테스트용 임의 값 (userId, entityId 등은 실제 존재하는 값으로 대체 필요)
-      const userId = Number(req.user?.userId);
+      const userId = req.user?.userId;
       if (!userId) {
         return res
           .status(400)
@@ -15,9 +15,9 @@ const actionTestController = {
       }
       const testAction = await actionService.createAction(
         userId, // userId
-        ActionType.QUOTE_CREATE, // type
-        7, // entityId (예: quoteId)
-        "QUOTE", // entityType
+        ActionType.ESTIMATE_REQUEST_CREATE, // type
+        "cmdgsc8cx00ft4wv3u8v53uhk", // entityId (예: quoteId)
+        "EstimateRequest", // entityType
         { memo: "테스트용 액션 생성" } // metadata
       );
       res.status(201).json({ success: true, data: testAction });

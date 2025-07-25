@@ -3,9 +3,9 @@ import actionRepository from "../repositories/action.repository";
 
 const actionService = {
   createAction: async (
-    userId: number,
+    userId: string,
     type: ActionType,
-    entityId: number,
+    entityId: string,
     entityType: string,
     metadata: object
   ) => {
@@ -19,4 +19,4 @@ const actionService = {
   },
 };
 
-export default actionService; 
+export default actionService;
