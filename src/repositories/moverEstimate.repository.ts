@@ -50,6 +50,24 @@ const estimateRequestSelectOptions = {
       region: true,
     },
   },
+  estimates: {
+    select: {
+      id: true,
+      moverId: true,
+      price: true,
+      comment: true,
+      status: true,
+      rejectReason: true,
+      isDesignated: true,
+      workingHours: true,
+      includesPackaging: true,
+      insuranceAmount: true,
+      validUntil: true,
+      createdAt: true,
+      updatedAt: true,
+      deletedAt: true,
+    },
+  },
 };
 
 // 공통 select 옵션 - Estimate용

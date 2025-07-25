@@ -92,6 +92,22 @@ export type TEstimateRequestResponse = {
   customer: TCustomer;
   fromAddress: TAddress;
   toAddress: TAddress;
+  estimates?: {
+    id: string;
+    moverId: string;
+    price: number | null;
+    comment: string | null;
+    status: "PROPOSED" | "ACCEPTED" | "REJECTED" | "AUTO_REJECTED";
+    rejectReason: string | null;
+    isDesignated: boolean;
+    workingHours: string | null;
+    includesPackaging: boolean;
+    insuranceAmount: number | null;
+    validUntil: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+    deletedAt: Date | null;
+  }[];
 };
 
 // 견적서 응답 타입
