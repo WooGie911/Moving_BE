@@ -17,6 +17,7 @@ export const authCookieOptions = (maxAgeSeconds: number): TCookieOptions => ({
   secure: process.env.NODE_ENV === "production", // 개발환경에서는 false
   path: "/",
   maxAge: maxAgeSeconds * 1000,
+  domain: process.env.NODE_ENV === "production" ? ".gomoving.site" : undefined, // 모든 서브도메인 공유
 });
 
 // 로그인
@@ -106,12 +107,12 @@ const postLogout = async (req: Request, res: Response) => {
   try {
     await authService.logout(userId);
 
-    res.clearCookie(
-      "refreshToken",
-      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
-    );
+    res.clearCookie("refreshToken", authCookieOptions(0));
 
-    res.status(200).json({ message: "로그아웃 성공" });
+    res.status(200).json({
+      success: true,
+      message: "로그아웃 성공",
+    });
   } catch (error: any) {
     handleError(res, error);
   }
