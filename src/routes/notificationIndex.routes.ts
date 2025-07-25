@@ -7,7 +7,7 @@ const notificationIndexRoutes = Router();
 
 // 알림 관련 라우터
 notificationIndexRoutes.use("/notifications", notificationRouter);
-notificationIndexRoutes.use("/sse/notification", sseRouter);
+notificationIndexRoutes.use("/sse/notifications", sseRouter);
 notificationIndexRoutes.use("/actions", actionTestRouter);
 
 export default notificationIndexRoutes;

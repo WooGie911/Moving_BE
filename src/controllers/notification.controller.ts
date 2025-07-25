@@ -5,16 +5,16 @@ const notificationController = {
   // 알림 목록 조회
   getNotifications: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = Number(req.user?.userId);
+      const userId = req.user?.userId;
       if (!userId) {
         return res
           .status(400)
           .json({ success: false, message: "해당 유저를 찾을수 없습니다." });
       }
-      const limit = Number(req.query.limit) || 20;
+      const limit = Number(req.query.limit) || 5;
       const offset = Number(req.query.offset) || 0;
       const notifications = await notificationService.getNotifications(
-        userId,
+        userId as string,
         limit,
         offset
       );
@@ -30,14 +30,14 @@ const notificationController = {
   // 알림 읽음 처리
   readNotification: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const notificationId = Number(req.params.notificationId);
+      const notificationId = req.params.notificationId;
       if (!notificationId) {
         return res
           .status(400)
           .json({ success: false, message: "해당 알림을 찾을수 없습니다." });
       }
       const notification =
-        await notificationService.readNotification(notificationId);
+        await notificationService.readNotification(notificationId as string);
       res.json({
         success: true,
         message: "알림이 읽음 처리되었습니다.",
@@ -54,13 +54,13 @@ const notificationController = {
     next: NextFunction
   ) => {
     try {
-      const userId = Number(req.user?.userId);
+      const userId = req.user?.userId;
       if (!userId) {
         return res
           .status(400)
           .json({ success: false, message: "해당 유저를 찾을수 없습니다." });
       }
-      const count = await notificationService.readAllNotifications(userId);
+      const count = await notificationService.readAllNotifications(userId as string);
       res.json({
         success: true,
         message: "모든 알림이 읽음 처리되었습니다.",
