@@ -78,6 +78,11 @@ const getMoverProfile = async (userId: string) => {
       detailIntro: true,
       serviceTypes: true,
       currentAreas: true,
+      isVeteran: true,
+      workedCount: true,
+      averageRating: true,
+      totalReviewCount: true,
+      totalFavoriteCount: true,
     },
   });
   return profile;
@@ -141,6 +146,11 @@ const createMoverProfile = async (profileData: TCreateMoverProfile) => {
       detailIntro: true,
       serviceTypes: true,
       currentAreas: true,
+      isVeteran: true,
+      workedCount: true,
+      averageRating: true,
+      totalReviewCount: true,
+      totalFavoriteCount: true,
     },
   });
 
@@ -171,6 +181,10 @@ const updateMoverProfile = async (
       serviceTypes: true,
       currentAreas: true,
       isVeteran: true,
+      workedCount: true,
+      averageRating: true,
+      totalReviewCount: true,
+      totalFavoriteCount: true,
     },
   });
 };
