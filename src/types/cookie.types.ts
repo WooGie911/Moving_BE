@@ -4,4 +4,5 @@ export type TCookieOptions = {
   secure: boolean;
   path: string;
   maxAge: number;
+  domain: string | undefined;
 };
