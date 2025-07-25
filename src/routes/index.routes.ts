@@ -6,6 +6,7 @@ import customerEstimateRequestRouter from "./customerEstimateRequest.route";
 import estimateRequestRouter from "./estimateRequest.routes";
 import moverEstimateRouter from "./moverEstimate.routes";
 import favoriteRouter from "./favorite.routes";
+import expirationRouter from "./expiration.routes";
 
 const businessRoutes = Router();
 
@@ -32,5 +33,6 @@ businessRoutes.use("/estimate-requests", estimateRequestRouter);
 businessRoutes.use("/customer-quotes", customerEstimateRequestRouter);
 businessRoutes.use("/mover-estimates", moverEstimateRouter);
 businessRoutes.use("/favorites", favoriteRouter);
+businessRoutes.use("/expiration", expirationRouter);
 
 export default businessRoutes;

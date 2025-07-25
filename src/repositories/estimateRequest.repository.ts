@@ -1,8 +1,16 @@
-import { PrismaClient, MoveType, RequestStatus, EstimateRequest } from "@prisma/client";
+import {
+  PrismaClient,
+  MoveType,
+  RequestStatus,
+  EstimateRequest,
+} from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const createEstimateRequest = async (data: any, userId: string): Promise<EstimateRequest> => {
+const createEstimateRequest = async (
+  data: any,
+  userId: string
+): Promise<EstimateRequest> => {
   return await prisma.estimateRequest.create({
     data: {
       customerId: userId,
@@ -15,7 +23,9 @@ const createEstimateRequest = async (data: any, userId: string): Promise<Estimat
     },
   });
 };
-const getActiveEstimateRequestByUserId = async (userId: string): Promise<any | null> => {
+const getActiveEstimateRequestByUserId = async (
+  userId: string
+): Promise<any | null> => {
   return await prisma.estimateRequest.findFirst({
     where: {
       customerId: userId,
@@ -53,7 +63,10 @@ const getActiveEstimateRequestByUserId = async (userId: string): Promise<any | n
     },
   });
 };
-const updateEstimateRequest = async (id: string, updateData: any): Promise<EstimateRequest> => {
+const updateEstimateRequest = async (
+  id: string,
+  updateData: any
+): Promise<EstimateRequest> => {
   return await prisma.estimateRequest.update({
     where: { id },
     data: updateData,
@@ -67,19 +80,31 @@ const cancelEstimateRequest = async (id: string): Promise<EstimateRequest> => {
 };
 const hasPendingRequest = async (userId: string): Promise<boolean> => {
   const req = await prisma.estimateRequest.findFirst({
-    where: { customerId: userId, status: RequestStatus.PENDING, deletedAt: null },
+    where: {
+      customerId: userId,
+      status: RequestStatus.PENDING,
+      deletedAt: null,
+    },
   });
   return !!req;
 };
 const isActiveRequestPending = async (userId: string): Promise<boolean> => {
   const req = await prisma.estimateRequest.findFirst({
-    where: { customerId: userId, status: RequestStatus.PENDING, deletedAt: null },
+    where: {
+      customerId: userId,
+      status: RequestStatus.PENDING,
+      deletedAt: null,
+    },
   });
   return !!req;
 };
 const hasEstimateFromMover = async (userId: string): Promise<boolean> => {
   const req = await prisma.estimateRequest.findFirst({
-    where: { customerId: userId, status: RequestStatus.PENDING, deletedAt: null },
+    where: {
+      customerId: userId,
+      status: RequestStatus.PENDING,
+      deletedAt: null,
+    },
     select: { id: true },
   });
   if (!req) return false;

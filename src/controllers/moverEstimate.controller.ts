@@ -81,6 +81,23 @@ const moverEstimateController = {
         data: result,
       });
     } catch (error) {
+      if (error instanceof Error) {
+        // 비즈니스 로직 에러는 400 Bad Request로 처리
+        if (
+          error.message === "이미 견적을 작성했습니다." ||
+          error.message === "견적 요청을 찾을 수 없습니다." ||
+          error.message === "활성 상태가 아닌 견적 요청입니다." ||
+          error.message === "이사일이 지난 견적 요청입니다." ||
+          error.message === "해당 견적에대한 일반견적 허용량을 초과했습니다" ||
+          error.message === "해당 견적에대한 지정견적 허용량을 초과했습니다"
+        ) {
+          res.status(400).json({
+            success: false,
+            message: error.message,
+          });
+          return;
+        }
+      }
       next(error);
     }
   },
@@ -154,6 +171,21 @@ const moverEstimateController = {
         data: result,
       });
     } catch (error) {
+      if (error instanceof Error) {
+        // 비즈니스 로직 에러는 400 Bad Request로 처리
+        if (
+          error.message === "이미 견적을 작성했습니다." ||
+          error.message === "견적 요청을 찾을 수 없습니다." ||
+          error.message === "활성 상태가 아닌 견적 요청입니다." ||
+          error.message === "이사일이 지난 견적 요청입니다."
+        ) {
+          res.status(400).json({
+            success: false,
+            message: error.message,
+          });
+          return;
+        }
+      }
       next(error);
     }
   },
@@ -340,37 +372,6 @@ const moverEstimateController = {
           movingType: movingType as "SMALL" | "HOME" | "OFFICE" | undefined,
         }
       );
-
-      // 디버깅을 위한 로그 추가
-      console.log("=== getAllEstimateRequests 디버깅 ===");
-      console.log("region:", regionBool, "designated:", designatedBool);
-      console.log(
-        "regionEstimateRequests:",
-        result.regionEstimateRequests?.length || 0
-      );
-      console.log(
-        "designatedEstimateRequests:",
-        result.designatedEstimateRequests?.length || 0
-      );
-
-      if (result.regionEstimateRequests) {
-        console.log(
-          "regionEstimateRequests status:",
-          result.regionEstimateRequests.map((r) => ({
-            id: r.id,
-            status: r.status,
-          }))
-        );
-      }
-      if (result.designatedEstimateRequests) {
-        console.log(
-          "designatedEstimateRequests status:",
-          result.designatedEstimateRequests.map((r) => ({
-            id: r.id,
-            status: r.status,
-          }))
-        );
-      }
 
       res.status(200).json({
         success: true,
