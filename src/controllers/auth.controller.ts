@@ -6,6 +6,11 @@ import { handleError } from "../utils/handleError";
 import { TCookieOptions } from "../types/cookie.types";
 import { TUserRole } from "../types/user.types";
 
+const FRONTEND_URL =
+  process.env.NODE_ENV === "production"
+    ? process.env.FRONTEND_URL
+    : "http://localhost:3000";
+
 export const authCookieOptions = (maxAgeSeconds: number): TCookieOptions => ({
   httpOnly: true,
   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 개발환경에서는 lax 사용
@@ -101,8 +106,10 @@ const postLogout = async (req: Request, res: Response) => {
   try {
     await authService.logout(userId);
 
-    res.clearCookie("accessToken", authCookieOptions(0));
-    res.clearCookie("refreshToken", authCookieOptions(0));
+    res.clearCookie(
+      "refreshToken",
+      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
+    );
 
     res.status(200).json({ message: "로그아웃 성공" });
   } catch (error: any) {
@@ -144,4 +151,99 @@ const postRefresh = async (req: Request, res: Response) => {
   }
 };
 
-export { postSignin, postSignup, postLogout, postRefresh };
+// 구글 로그인 콜백
+const getGoogleCallback = async (req: Request, res: Response) => {
+  const { accessToken, refreshToken, userType } = req.user as any;
+
+  try {
+    res.cookie(
+      "refreshToken",
+      refreshToken,
+      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
+    );
+
+    // 보호되지 않는 콜백 페이지로 리디렉션
+    res.redirect(
+      `${FRONTEND_URL}/callback?success=true&accessToken=${accessToken}&userType=${userType}`
+    );
+  } catch (error: any) {
+    const params = new URLSearchParams({
+      success: "false",
+      message: "구글 로그인 실패",
+    });
+
+    if (userType === "CUSTOMER") {
+      res.redirect(`${FRONTEND_URL}/userSignin?${params}`);
+    } else {
+      res.redirect(`${FRONTEND_URL}/moverSignin?${params}`);
+    }
+  }
+};
+
+// 카카오 로그인 콜백
+const getKakaoCallback = async (req: Request, res: Response) => {
+  const { accessToken, refreshToken, userType } = req.user as any;
+
+  try {
+    res.cookie(
+      "refreshToken",
+      refreshToken,
+      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
+    );
+
+    // 보호되지 않는 콜백 페이지로 리디렉션
+    res.redirect(
+      `${FRONTEND_URL}/callback?success=true&accessToken=${accessToken}&userType=${userType}`
+    );
+  } catch (error: any) {
+    const params = new URLSearchParams({
+      success: "false",
+      message: "카카오 로그인 실패",
+    });
+
+    if (userType === "CUSTOMER") {
+      res.redirect(`${FRONTEND_URL}/userSignin?${params}`);
+    } else {
+      res.redirect(`${FRONTEND_URL}/moverSignin?${params}`);
+    }
+  }
+};
+
+// 네이버 로그인 콜백
+const getNaverCallback = async (req: Request, res: Response) => {
+  const { accessToken, refreshToken, userType } = req.user as any;
+
+  try {
+    res.cookie(
+      "refreshToken",
+      refreshToken,
+      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
+    );
+
+    // 보호되지 않는 콜백 페이지로 리디렉션
+    res.redirect(
+      `${FRONTEND_URL}/callback?success=true&accessToken=${accessToken}&userType=${userType}`
+    );
+  } catch (error: any) {
+    const params = new URLSearchParams({
+      success: "false",
+      message: "네이버 로그인 실패",
+    });
+
+    if (userType === "CUSTOMER") {
+      res.redirect(`${FRONTEND_URL}/userSignin?${params}`);
+    } else {
+      res.redirect(`${FRONTEND_URL}/moverSignin?${params}`);
+    }
+  }
+};
+
+export {
+  postSignin,
+  postSignup,
+  postLogout,
+  postRefresh,
+  getGoogleCallback,
+  getKakaoCallback,
+  getNaverCallback,
+};

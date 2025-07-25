@@ -3,7 +3,9 @@ import {
   MoveType,
   RequestStatus,
   EstimateRequest,
+  UserType,
 } from "@prisma/client";
+import { getKoreaToday } from "../utils/dateUtils";
 
 const prisma = new PrismaClient();
 
@@ -46,6 +48,7 @@ const getActiveEstimateRequestByUserId = async (
       updatedAt: true,
       fromAddress: {
         select: {
+          postalCode: true,
           city: true,
           district: true,
           detail: true,
@@ -54,12 +57,31 @@ const getActiveEstimateRequestByUserId = async (
       },
       toAddress: {
         select: {
+          postalCode: true,
           city: true,
           district: true,
           detail: true,
           region: true,
         },
       },
+    },
+  });
+};
+
+const getEstimateRequestById = async (id: string): Promise<any | null> => {
+  return await prisma.estimateRequest.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      customerId: true,
+      moveType: true,
+      moveDate: true,
+      fromAddressId: true,
+      toAddressId: true,
+      description: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
     },
   });
 };
@@ -73,9 +95,12 @@ const updateEstimateRequest = async (
   });
 };
 const cancelEstimateRequest = async (id: string): Promise<EstimateRequest> => {
+  // 한국 시간 기준으로 삭제한 날짜만 저장 (시간은 00:00:00)
+  const koreaToday = getKoreaToday();
+
   return await prisma.estimateRequest.update({
     where: { id },
-    data: { status: RequestStatus.CANCELLED, deletedAt: new Date() },
+    data: { status: RequestStatus.CANCELLED, deletedAt: koreaToday },
   });
 };
 const hasPendingRequest = async (userId: string): Promise<boolean> => {
@@ -130,19 +155,82 @@ const findOrCreateAddress = async ({
     where: { city, district, detail, region: region as any },
   });
   if (!address) {
+    // 우편번호는 나중에 업데이트하거나 빈 문자열로 설정
     address = await prisma.address.create({
       data: { city, district, detail, region: region as any, postalCode: "" },
     });
   }
   return address;
 };
+
+// 유저의 유형을 확인하는 메서드
+const checkUserType = async (
+  userId: string
+): Promise<{ isCustomer: boolean; isMover: boolean }> => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { userType: true, isCustomer: true, isMover: true },
+  });
+
+  if (!user) {
+    throw new Error("사용자를 찾을 수 없습니다.");
+  }
+
+  const isCustomer =
+    user.userType.includes(UserType.CUSTOMER) || user.isCustomer === true;
+  const isMover =
+    user.userType.includes(UserType.MOVER) || user.isMover === true;
+
+  return { isCustomer, isMover };
+};
+
+// 이사일이 지난 견적 요청을 만료 처리하는 메서드
+const expireOverdueRequests = async (today: Date): Promise<void> => {
+  await prisma.estimateRequest.updateMany({
+    where: {
+      moveDate: {
+        lt: today, // 이사일이 오늘보다 이전
+      },
+      status: RequestStatus.PENDING, // PENDING 상태인 것만
+      deletedAt: null,
+    },
+    data: {
+      status: RequestStatus.EXPIRED,
+      updatedAt: new Date(),
+    },
+  });
+};
+
+// 견적 요청이 만료되었는지 확인하는 메서드
+const isRequestExpired = async (
+  estimateRequestId: string
+): Promise<boolean> => {
+  const request = await prisma.estimateRequest.findUnique({
+    where: { id: estimateRequestId },
+    select: { moveDate: true, status: true },
+  });
+
+  if (!request) {
+    return false;
+  }
+
+  const koreaToday = getKoreaToday();
+  return (
+    request.moveDate < koreaToday || request.status === RequestStatus.EXPIRED
+  );
+};
+
 export default {
   createEstimateRequest,
   getActiveEstimateRequestByUserId,
+  getEstimateRequestById,
   updateEstimateRequest,
   cancelEstimateRequest,
   hasPendingRequest,
   isActiveRequestPending,
   hasEstimateFromMover,
   findOrCreateAddress,
+  checkUserType,
+  expireOverdueRequests,
+  isRequestExpired,
 };

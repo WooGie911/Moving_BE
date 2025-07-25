@@ -35,17 +35,152 @@ async function main() {
   await prisma.address.deleteMany();
   await prisma.user.deleteMany();
 
-  // 주소 데이터 생성 (20개)
-  const addressData = Array.from({ length: 20 }).map((_, i) => ({
-    postalCode: `1000${i}`,
-    city: i % 2 === 0 ? "강남구" : "서초구",
-    district: i % 2 === 0 ? `역삼동${i}` : `서초동${i}`,
-    detail: `테스트로 ${i * 10}`,
-    region: i % 2 === 0 ? RegionType.SEOUL : RegionType.GYEONGGI,
-  }));
-  const addresses = await Promise.all(
-    addressData.map((data) => prisma.address.create({ data }))
-  );
+  // 주소 데이터 생성 (실제 대한민국 주소들)
+  const addressData = [
+    // 서울특별시 주소들
+    {
+      postalCode: "06123",
+      city: "강남구",
+      district: "역삼동",
+      detail: "테헤란로 123",
+      region: RegionType.SEOUL,
+    },
+    {
+      postalCode: "06124",
+      city: "강남구",
+      district: "삼성동",
+      detail: "영동대로 456",
+      region: RegionType.SEOUL,
+    },
+    {
+      postalCode: "06125",
+      city: "서초구",
+      district: "서초동",
+      detail: "강남대로 789",
+      region: RegionType.SEOUL,
+    },
+    {
+      postalCode: "06126",
+      city: "서초구",
+      district: "반포동",
+      detail: "신반포로 321",
+      region: RegionType.SEOUL,
+    },
+    {
+      postalCode: "06127",
+      city: "마포구",
+      district: "합정동",
+      detail: "양화로 654",
+      region: RegionType.SEOUL,
+    },
+    {
+      postalCode: "06128",
+      city: "마포구",
+      district: "상암동",
+      detail: "월드컵북로 987",
+      region: RegionType.SEOUL,
+    },
+    {
+      postalCode: "06129",
+      city: "송파구",
+      district: "잠실동",
+      detail: "올림픽로 135",
+      region: RegionType.SEOUL,
+    },
+    {
+      postalCode: "06130",
+      city: "송파구",
+      district: "문정동",
+      detail: "송파대로 246",
+      region: RegionType.SEOUL,
+    },
+    {
+      postalCode: "06131",
+      city: "영등포구",
+      district: "여의도동",
+      detail: "여의대로 357",
+      region: RegionType.SEOUL,
+    },
+    {
+      postalCode: "06132",
+      city: "영등포구",
+      district: "당산동",
+      detail: "당산로 468",
+      region: RegionType.SEOUL,
+    },
+    // 경기도 주소들
+    {
+      postalCode: "16489",
+      city: "수원시",
+      district: "정자동",
+      detail: "정자로 123",
+      region: RegionType.GYEONGGI,
+    },
+    {
+      postalCode: "16490",
+      city: "수원시",
+      district: "영통동",
+      detail: "영통로 456",
+      region: RegionType.GYEONGGI,
+    },
+    {
+      postalCode: "16491",
+      city: "성남시",
+      district: "분당동",
+      detail: "분당로 789",
+      region: RegionType.GYEONGGI,
+    },
+    {
+      postalCode: "16492",
+      city: "성남시",
+      district: "수정동",
+      detail: "수정로 321",
+      region: RegionType.GYEONGGI,
+    },
+    {
+      postalCode: "16493",
+      city: "용인시",
+      district: "기흥동",
+      detail: "기흥로 654",
+      region: RegionType.GYEONGGI,
+    },
+    {
+      postalCode: "16494",
+      city: "용인시",
+      district: "수지동",
+      detail: "수지로 987",
+      region: RegionType.GYEONGGI,
+    },
+    {
+      postalCode: "16495",
+      city: "고양시",
+      district: "일산동",
+      detail: "일산로 135",
+      region: RegionType.GYEONGGI,
+    },
+    {
+      postalCode: "16496",
+      city: "고양시",
+      district: "덕양동",
+      detail: "덕양로 246",
+      region: RegionType.GYEONGGI,
+    },
+    {
+      postalCode: "16497",
+      city: "부천시",
+      district: "상동",
+      detail: "상동로 357",
+      region: RegionType.GYEONGGI,
+    },
+    {
+      postalCode: "16498",
+      city: "부천시",
+      district: "중동",
+      detail: "중동로 468",
+      region: RegionType.GYEONGGI,
+    },
+  ];
+  const addresses = await Promise.all(addressData.map((data) => prisma.address.create({ data })));
 
   // 유저 30명 생성 (모두 고객+기사)
   const allNames = [
@@ -95,9 +230,7 @@ async function main() {
       moverImage: "",
       currentArea: getRandom([RegionType.SEOUL, RegionType.GYEONGGI]),
 
-      preferredServices: [
-        getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE]),
-      ],
+      preferredServices: [getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE])],
       shortIntro: `${allNames[i]}은(는) 친절하고 꼼꼼한 기사입니다!`,
       detailIntro: `${allNames[i]}은(는) 다양한 이사 경험을 바탕으로 최고의 서비스를 제공합니다.`,
       career: 5 + (i % 10),
@@ -106,15 +239,11 @@ async function main() {
       averageRating: 0, // 실제 리뷰 평점에 따라 업데이트
       totalReviewCount: 0, // 실제 리뷰 생성 후 업데이트
       currentAreas: [getRandom([RegionType.SEOUL, RegionType.GYEONGGI])],
-      serviceTypes: [
-        getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE]),
-      ],
+      serviceTypes: [getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE])],
       totalFavoriteCount: 0, // 실제 찜 생성 후 업데이트
     });
   }
-  const users = await Promise.all(
-    userArr.map((data) => prisma.user.create({ data }))
-  );
+  const users = await Promise.all(userArr.map((data) => prisma.user.create({ data })));
 
   // 기사님 서비스 지역 (모든 유저)
   const moverUsers = users; // 모든 유저가 기사 역할
@@ -126,8 +255,8 @@ async function main() {
           region: getRandom([RegionType.SEOUL, RegionType.GYEONGGI]),
           district: idx % 2 === 0 ? "강남구" : "서초구",
         },
-      })
-    )
+      }),
+    ),
   );
 
   // 사용자별 주소 등록 (각 유저마다 2개씩)
@@ -150,8 +279,8 @@ async function main() {
             customLabel: "이사갈 곳",
           },
         }),
-      ])
-    )
+      ]),
+    ),
   );
 
   // 견적 요청 180개 생성 (고객마다 진행중 1개 + 완료 5개씩)
@@ -161,11 +290,7 @@ async function main() {
     const user = users[userIdx];
 
     // 진행중인 견적 1개 (이사일: 2025년 7월 28일 ~ 9월 15일)
-    const pendingMoveDate = new Date(
-      2025,
-      6,
-      28 + Math.floor(Math.random() * 50)
-    ); // 2025년 7월 28일 ~ 9월 15일
+    const pendingMoveDate = new Date(2025, 6, 28 + Math.floor(Math.random() * 50)); // 2025년 7월 28일 ~ 9월 15일
     estimateRequests.push(
       prisma.estimateRequest.create({
         data: {
@@ -177,32 +302,24 @@ async function main() {
           status: RequestStatus.PENDING,
           description: `${user.name}님의 진행중인 견적 요청`,
         },
-      })
+      }),
     );
 
     // 완료된 견적 5개 (이사일: 5월 22일 ~ 7월 22일)
     for (let j = 0; j < 5; j++) {
-      const completedMoveDate = new Date(
-        2024,
-        4,
-        22 + Math.floor(Math.random() * 62)
-      ); // 5월 22일 ~ 7월 22일
+      const completedMoveDate = new Date(2024, 4, 22 + Math.floor(Math.random() * 62)); // 5월 22일 ~ 7월 22일
       estimateRequests.push(
         prisma.estimateRequest.create({
           data: {
             customerId: user.id,
-            moveType: getRandom([
-              MoveType.HOME,
-              MoveType.SMALL,
-              MoveType.OFFICE,
-            ]),
+            moveType: getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE]),
             moveDate: completedMoveDate,
             fromAddressId: addresses[(userIdx + j) % addresses.length].id,
             toAddressId: addresses[(userIdx + j + 1) % addresses.length].id,
             status: RequestStatus.COMPLETED,
             description: `${user.name}님의 완료된 견적 요청 ${j + 1}`,
           },
-        })
+        }),
       );
     }
   }
@@ -228,24 +345,21 @@ async function main() {
           data: {
             moverId: mover.id,
             estimateRequestId: pendingEstimateRequest.id,
-            price:
-              Math.floor((150000 + Math.floor(Math.random() * 450000)) / 5000) *
-              5000, // 15만원 ~ 60만원 (5000원 단위)
+            price: Math.floor((150000 + Math.floor(Math.random() * 450000)) / 5000) * 5000, // 15만원 ~ 60만원 (5000원 단위)
             comment: `${mover.name}님의 견적 코멘트`,
             status: EstimateStatus.PROPOSED,
             workingHours: `${2 + (estimateCount % 5)}- ${4 + (estimateCount % 5)}시간`,
             includesPackaging: estimateCount % 2 === 0,
             insuranceAmount: 1000000 + estimateCount * 100000,
           },
-        })
+        }),
       );
       estimateCount++;
     }
 
     // 완료된 견적들에 대한 견적들 (3~6명의 기사가 견적 제출)
     for (let k = 0; k < 5; k++) {
-      const completedEstimateRequest =
-        estimateRequestsResult[userIdx * 6 + 1 + k]; // 완료된 견적들
+      const completedEstimateRequest = estimateRequestsResult[userIdx * 6 + 1 + k]; // 완료된 견적들
       const moverCount = 3 + Math.floor(Math.random() * 4); // 3~6명 랜덤
 
       for (let l = 0; l < moverCount; l++) {
@@ -257,19 +371,14 @@ async function main() {
             data: {
               moverId: mover.id,
               estimateRequestId: completedEstimateRequest.id,
-              price:
-                Math.floor(
-                  (150000 + Math.floor(Math.random() * 450000)) / 5000
-                ) * 5000, // 15만원 ~ 60만원 (5000원 단위)
+              price: Math.floor((150000 + Math.floor(Math.random() * 450000)) / 5000) * 5000, // 15만원 ~ 60만원 (5000원 단위)
               comment: `${mover.name}님의 견적 코멘트`,
-              status: isFirstEstimate
-                ? EstimateStatus.ACCEPTED
-                : EstimateStatus.AUTO_REJECTED,
+              status: isFirstEstimate ? EstimateStatus.ACCEPTED : EstimateStatus.AUTO_REJECTED,
               workingHours: `${2 + (estimateCount % 5)}- ${4 + (estimateCount % 5)}시간`,
               includesPackaging: estimateCount % 2 === 0,
               insuranceAmount: 1000000 + estimateCount * 100000,
             },
-          })
+          }),
         );
         estimateCount++;
       }
@@ -288,27 +397,18 @@ async function main() {
 
     // 이미 견적서를 보낸 기사들의 ID 수집
     const moversWhoSentEstimates = estimates
-      .filter(
-        (estimate) => estimate.estimateRequestId === pendingEstimateRequest.id
-      )
+      .filter((estimate) => estimate.estimateRequestId === pendingEstimateRequest.id)
       .map((estimate) => estimate.moverId);
 
     // 견적서를 보내지 않은 기사들만 필터링
-    const moversWhoDidNotSendEstimates = availableMovers.filter(
-      (mover) => !moversWhoSentEstimates.includes(mover.id)
-    );
+    const moversWhoDidNotSendEstimates = availableMovers.filter((mover) => !moversWhoSentEstimates.includes(mover.id));
 
     // 진행중인 견적에 대해 2-3명의 기사에게 지정 견적 요청 (견적서를 보내지 않은 기사들만)
-    const designatedCount = Math.min(
-      2 + Math.floor(Math.random() * 2),
-      moversWhoDidNotSendEstimates.length
-    ); // 2-3명
+    const designatedCount = Math.min(2 + Math.floor(Math.random() * 2), moversWhoDidNotSendEstimates.length); // 2-3명
 
     for (let j = 0; j < designatedCount; j++) {
       const mover = moversWhoDidNotSendEstimates[j];
-      const expiresAt = new Date(
-        pendingEstimateRequest.moveDate.getTime() - 24 * 60 * 60 * 1000
-      ); // 이사일 하루 전
+      const expiresAt = new Date(pendingEstimateRequest.moveDate.getTime() - 24 * 60 * 60 * 1000); // 이사일 하루 전
 
       designatedRequests.push(
         prisma.designatedMover.create({
@@ -319,7 +419,7 @@ async function main() {
             status: "PENDING",
             expiresAt: expiresAt,
           },
-        })
+        }),
       );
     }
   }
@@ -338,10 +438,7 @@ async function main() {
     const selectedMovers = [];
     const usedIndices = new Set();
 
-    while (
-      selectedMovers.length < favoriteCount &&
-      selectedMovers.length < availableMovers.length
-    ) {
+    while (selectedMovers.length < favoriteCount && selectedMovers.length < availableMovers.length) {
       const randomIdx = Math.floor(Math.random() * availableMovers.length);
       if (!usedIndices.has(randomIdx)) {
         usedIndices.add(randomIdx);
@@ -357,7 +454,7 @@ async function main() {
             customerId: user.id,
             moverId: mover.id,
           },
-        })
+        }),
       );
     }
   }
@@ -380,8 +477,8 @@ async function main() {
       prisma.user.update({
         where: { id: moverId },
         data: { totalFavoriteCount: count },
-      })
-    )
+      }),
+    ),
   );
 
   // 리뷰 생성 (완료된 견적에서 확정된 것들에 대해)
@@ -392,14 +489,12 @@ async function main() {
 
     // 완료된 견적들에 대해 리뷰 생성
     for (let k = 0; k < 5; k++) {
-      const completedEstimateRequest =
-        estimateRequestsResult[userIdx * 6 + 1 + k];
+      const completedEstimateRequest = estimateRequestsResult[userIdx * 6 + 1 + k];
 
       // 해당 견적 요청에서 수락된 견적을 찾기
       const acceptedEstimate = estimates.find(
         (estimate) =>
-          estimate.estimateRequestId === completedEstimateRequest.id &&
-          estimate.status === EstimateStatus.ACCEPTED
+          estimate.estimateRequestId === completedEstimateRequest.id && estimate.status === EstimateStatus.ACCEPTED,
       );
 
       if (acceptedEstimate) {
@@ -412,9 +507,8 @@ async function main() {
               estimateRequestId: completedEstimateRequest.id,
               rating: 3 + Math.floor(Math.random() * 3), // 3~5점 랜덤
               content: `${user.name}님의 리뷰 - ${acceptedEstimate.comment}`,
-              status: "COMPLETED",
             },
-          })
+          }),
         );
       }
     }
@@ -463,12 +557,11 @@ async function main() {
         where: { id: moverId },
         data: {
           totalReviewCount: stats.reviewCount,
-          averageRating:
-            stats.reviewCount > 0 ? stats.totalRating / stats.reviewCount : 0,
+          averageRating: stats.reviewCount > 0 ? stats.totalRating / stats.reviewCount : 0,
           workedCount: stats.workedCount,
         },
-      })
-    )
+      }),
+    ),
   );
 
   // 견적 요청 생성 활동 및 알림
@@ -505,7 +598,7 @@ async function main() {
             content: `${user.name}님이 견적을 요청했습니다.`,
             path: `/estimateRequest/${pendingEstimateRequest.id}`,
           },
-        })
+        }),
       );
     }
   }
@@ -544,14 +637,13 @@ async function main() {
             content: `${mover.name}님이 견적을 제출했습니다.`,
             path: `/estimateRequest/${pendingEstimateRequest.id}`,
           },
-        })
+        }),
       );
     }
 
     // 완료된 견적들에 대한 견적 제출 활동
     for (let k = 0; k < 5; k++) {
-      const completedEstimateRequest =
-        estimateRequestsResult[userIdx * 6 + 1 + k];
+      const completedEstimateRequest = estimateRequestsResult[userIdx * 6 + 1 + k];
       const moverCount = 3 + Math.floor(Math.random() * 4); // 3~6명
 
       for (let l = 0; l < moverCount; l++) {
@@ -579,7 +671,7 @@ async function main() {
               title: "새로운 견적이 도착했습니다",
               content: `${mover.name}님이 견적을 제출했습니다.`,
             },
-          })
+          }),
         );
 
         // 견적 수락/거절 알림 (기사에게)
@@ -604,7 +696,7 @@ async function main() {
                 content: `${user.name}님이 견적을 수락했습니다.`,
                 path: `/estimateRequest/${completedEstimateRequest.id}`,
               },
-            })
+            }),
           );
         } else {
           const rejectAction = await prisma.action.create({
@@ -627,7 +719,7 @@ async function main() {
                 content: `${user.name}님이 다른 견적을 선택했습니다.`,
                 path: `/estimateRequest/${completedEstimateRequest.id}`,
               },
-            })
+            }),
           );
         }
       }
@@ -635,10 +727,7 @@ async function main() {
   }
 
   // 모든 알림 생성
-  await Promise.all([
-    ...estimateRequestNotifications,
-    ...estimateNotifications,
-  ]);
+  await Promise.all([...estimateRequestNotifications, ...estimateNotifications]);
 
   console.log("✅ Seed completed successfully!");
   console.log(`👤 Created ${users.length} users (고객/기사/하이브리드)`);

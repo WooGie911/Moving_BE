@@ -124,7 +124,6 @@ export type TSocialSignupInput = {
   provider: AuthProvider;
   providerId: string;
   userType: TUserRole;
-  phoneNumber?: string;
 };
 
 // =============================================================================
