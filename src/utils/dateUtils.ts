@@ -1,11 +1,13 @@
+// 한국 시간대 상수
+const KOREA_TIMEZONE = "Asia/Seoul";
+
 /**
- * 한국 시간(KST) 기준으로 오늘 날짜의 시작(00:00:00)을 반환합니다.
- * @returns 한국 시간 기준 오늘 날짜의 시작
+ * 한국 시간 기준으로 오늘 날짜를 가져옵니다.
+ * @returns 한국 시간 기준 오늘 날짜 (시간은 00:00:00으로 설정)
  */
-export const getKoreaToday = (): Date => {
+const getKoreaToday = (): Date => {
   const today = new Date();
-  // 한국 시간(KST) 기준으로 오늘 날짜 계산
-  const koreaTime = new Date(today.toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
+  const koreaTime = new Date(today.toLocaleString("en-US", { timeZone: KOREA_TIMEZONE }));
   koreaTime.setHours(0, 0, 0, 0);
   return koreaTime;
 };

@@ -6,288 +6,389 @@ const router = Router();
 const estimateRequestController = new EstimateRequestController();
 
 /**
- * POST / (이사 견적 요청 생성)
- * @summary 이사 견적 요청 생성
- * @description 한 사용자는 PENDING 상태의 견적 요청이 1개만 존재할 수 있습니다. 기존 요청이 CANCELLED, EXPIRED, COMPLETED 상태일 때만 새로 생성할 수 있습니다. 기사님은 견적 요청을 생성할 수 없습니다.
+ * Address information
+ * @typedef {object} AddressInfo
+ * @property {string} roadAddress.required - 도로명주소
+ * @property {string} detailAddress - 상세주소
+ * @property {string} zonecode - 우편번호 (카카오 API 응답용)
+ * @property {string} jibunAddress - 지번주소
+ * @property {string} extraAddress - 참고항목
+ */
+
+/**
+ * Create estimate request
+ * @typedef {object} CreateEstimateRequest
+ * @property {string} movingType.required - 이사 종류 - enum:small,home,office
+ * @property {string} movingDate.required - 이사 날짜 (YYYY-MM-DD)
+ * @property {boolean} isDateConfirmed - 날짜 확정 여부
+ * @property {AddressInfo} departure.required - 출발지 주소
+ * @property {AddressInfo} arrival.required - 도착지 주소
+ * @property {string} description - 추가 설명
+ */
+
+/**
+ * Update estimate request
+ * @typedef {object} UpdateEstimateRequest
+ * @property {string} movingType - 이사 종류 - enum:small,home,office
+ * @property {string} movingDate - 이사 날짜 (YYYY-MM-DD)
+ * @property {AddressInfo} departure - 출발지 주소
+ * @property {AddressInfo} arrival - 도착지 주소
+ * @property {string} description - 추가 설명
+ */
+
+/**
+ * Estimate request response
+ * @typedef {object} EstimateRequestResponse
+ * @property {string} id - 견적 요청 ID
+ * @property {string} userId - 사용자 ID
+ * @property {string} movingType - 이사 종류 - enum:SMALL,HOME,OFFICE
+ * @property {string} departureAddress - 출발지 주소 (한글 지역명 포함)
+ * @property {string} arrivalAddress - 도착지 주소 (한글 지역명 포함)
+ * @property {string} departureDetailAddress - 출발지 상세주소
+ * @property {string} arrivalDetailAddress - 도착지 상세주소
+ * @property {string} departurePostalCode - 출발지 우편번호
+ * @property {string} arrivalPostalCode - 도착지 우편번호
+ * @property {string} movingDate - 이사 날짜
+ * @property {string} status - 견적 요청 상태 - enum:PENDING,CANCELLED,COMPLETED
+ * @property {string} createdAt - 생성일시
+ * @property {string} updatedAt - 수정일시
+ */
+
+/**
+ * Success response with data
+ * @typedef {object} SuccessResponse
+ * @property {boolean} success - 성공 여부
+ * @property {string} message - 응답 메시지
+ * @property {EstimateRequestResponse} data - 견적 요청 데이터
+ */
+
+/**
+ * Active response
+ * @typedef {object} ActiveResponse
+ * @property {boolean} success - 성공 여부
+ * @property {boolean} hasActive - 활성 견적 요청 존재 여부
+ * @property {EstimateRequestResponse} data - 견적 요청 데이터 (hasActive가 true인 경우)
+ */
+
+/**
+ * Error response
+ * @typedef {object} ErrorResponse
+ * @property {boolean} success - 성공 여부
+ * @property {string} message - 에러 메시지
+ */
+
+/**
+ * Cancel response
+ * @typedef {object} CancelResponse
+ * @property {boolean} success - 성공 여부
+ * @property {string} message - 응답 메시지
+ */
+
+// 견적 요청 생성
+/**
+ * POST /estimateRequests/create
+ * @summary 견적 요청 생성
+ * @description 고객이 이사 견적을 요청합니다. 한 사용자는 PENDING 상태의 견적 요청이 1개만 존재할 수 있습니다. 기사님은 견적 요청을 생성할 수 없습니다. 주소는 자동으로 파싱되어 데이터베이스에 저장되며, zonecode 필드는 postalCode로 자동 변환됩니다.
  * @tags EstimateRequest
- * @security BearerAuth
- * @param {object} request.body.required - 견적 요청 정보
- * @param {string} request.body.movingType.required - 이사 종류 (small, home, office)
- * @param {string} request.body.movingDate.required - 이사 날짜 (YYYY-MM-DD 형식, 오늘 이후만 가능)
- * @param {object} request.body.departure.required - 출발지 주소 정보
- * @param {string} request.body.departure.roadAddress.required - 출발지 도로명주소 (예: "서울특별시 강남구 테헤란로 123")
- * @param {string} request.body.departure.detailAddress - 출발지 상세주소 (예: "456호")
- * @param {object} request.body.arrival.required - 도착지 주소 정보
- * @param {string} request.body.arrival.roadAddress.required - 도착지 도로명주소 (예: "경기도 성남시 분당구 판교로 456")
- * @param {string} request.body.arrival.detailAddress - 도착지 상세주소 (예: "789호")
- * @param {string} request.body.description - 추가 설명
- * @returns {object} 201 - 견적 요청 생성 성공
- * @returns {object} 400 - 잘못된 요청 (이사일이 과거, 출발지/도착지 동일 등)
- * @returns {object} 403 - 기사님은 견적 요청을 생성할 수 없음
- * @returns {object} 409 - 이미 진행중인 견적 요청 존재
- * @returns {object} 401 - 인증 실패
- * @returns {object} 500 - 서버 내부 오류
- * @example request - 요청 예시
+ * @param {CreateEstimateRequest} request.body.required - 견적 요청 정보
+ * @return {SuccessResponse} 201 - 견적 요청 생성 성공
+ * @return {ErrorResponse} 400 - 잘못된 요청 (이사일이 과거, 출발지와 도착지 동일, 잘못된 이사 종류, 주소 누락)
+ * @return {ErrorResponse} 401 - 인증 실패
+ * @return {ErrorResponse} 403 - 기사님은 견적 요청을 생성할 수 없음
+ * @return {ErrorResponse} 409 - 이미 진행중인 견적 요청 존재
+ * @return {ErrorResponse} 500 - 서버 내부 오류
+ * @example request - 가정 이사 견적 요청 예시
  * {
  *   "movingType": "home",
- *   "movingDate": "2024-07-01",
+ *   "movingDate": "2025-07-28",
+ *   "isDateConfirmed": true,
  *   "departure": {
- *     "roadAddress": "서울특별시 강남구 테헤란로 123",
- *     "detailAddress": "456호"
+ *     "roadAddress": "부산 연제구 월드컵대로91번가길 15",
+ *     "detailAddress": "501호",
+ *     "zonecode": "47597",
+ *     "jibunAddress": "부산 연제구 연산동 715-1",
+ *     "extraAddress": "연산동"
  *   },
  *   "arrival": {
- *     "roadAddress": "경기도 성남시 분당구 판교로 456",
- *     "detailAddress": "789호"
+ *     "roadAddress": "경남 고성군 고성읍 송학로 206",
+ *     "detailAddress": "402호",
+ *     "zonecode": "52940",
+ *     "jibunAddress": "경남 고성군 고성읍 송학리 235-2",
+ *     "extraAddress": "송학리"
  *   },
- *   "description": "엘리베이터 있음, 반려동물 동반"
+ *   "description": "가정 이사입니다. 신중하게 견적 부탁드립니다."
  * }
- * @example response - 201 - 성공 예시
+ * @example response - 201 - 견적 요청 생성 성공 응답 예시
  * {
  *   "success": true,
  *   "message": "견적 요청이 성공적으로 생성되었습니다.",
  *   "data": {
- *     "id": "abc123",
+ *     "id": "cmdjyt7ei0004irvgm050kzxz",
+ *     "userId": "cmdjvqbym0000a4whmdgza4i0",
  *     "movingType": "HOME",
- *     "movingDate": "2024-07-01",
- *     "departureAddress": "서울특별시 강남구 테헤란로 123",
- *     "arrivalAddress": "경기도 성남시 분당구 판교로 456",
- *     "departureDetailAddress": "456호",
- *     "arrivalDetailAddress": "789호",
- *     "description": "엘리베이터 있음, 반려동물 동반"
+ *     "departureAddress": "부산 연제구 월드컵대로91번가길",
+ *     "arrivalAddress": "경남 고성군 고성읍",
+ *     "departureDetailAddress": "15 501호",
+ *     "arrivalDetailAddress": "송학로 206 402호",
+ *     "departurePostalCode": "47597",
+ *     "arrivalPostalCode": "52940",
+ *     "movingDate": "2025-07-28",
+ *     "status": "PENDING",
+ *     "createdAt": "2025-07-26T08:05:07.387Z",
+ *     "updatedAt": "2025-07-26T08:05:07.387Z"
  *   }
  * }
- * @example response - 400 - 이사일이 과거
+ * @example response - 400 - 이사일이 과거인 경우 응답 예시
  * {
  *   "success": false,
  *   "message": "이사일은 오늘 이후로 설정해주세요."
  * }
- * @example response - 400 - 출발지와 도착지 동일
+ * @example response - 400 - 출발지와 도착지 동일한 경우 응답 예시
  * {
  *   "success": false,
  *   "message": "출발지와 도착지는 달라야 합니다."
  * }
- * @example response - 403 - 기사님은 생성 불가
+ * @example response - 400 - 잘못된 이사 종류인 경우 응답 예시
+ * {
+ *   "success": false,
+ *   "message": "이사 종류는 small, home, office 중 하나여야 합니다."
+ * }
+ * @example response - 400 - 주소 누락인 경우 응답 예시
+ * {
+ *   "success": false,
+ *   "message": "출발지 주소는 필수입니다."
+ * }
+ * @example response - 401 - 인증 실패 응답 예시
+ * {
+ *   "success": false,
+ *   "message": "인증이 필요합니다."
+ * }
+ * @example response - 403 - 기사님 접근 제한 응답 예시
  * {
  *   "success": false,
  *   "message": "기사님은 견적 요청을 생성할 수 없습니다. 일반 고객으로 로그인해주세요."
  * }
- * @example response - 409 - 이미 진행중인 견적 요청이 있습니다.
+ * @example response - 409 - 이미 진행중인 견적 요청 존재 응답 예시
  * {
  *   "success": false,
  *   "message": "이미 진행중인 견적 요청이 있습니다."
  * }
- * @example response - 401 - 인증 실패
- * {
- *   "success": false,
- *   "message": "인증이 필요합니다."
- * }
- * @example response - 500 - 서버 내부 오류
+ * @example response - 500 - 서버 내부 오류 응답 예시
  * {
  *   "success": false,
  *   "message": "서버 내부 오류가 발생했습니다."
  * }
  */
-router.post("/", verifyAccessToken, estimateRequestController.createEstimateRequest);
+router.post("/create", verifyAccessToken, (req, res) => estimateRequestController.createEstimateRequest(req, res));
 
+// 활성 견적 요청 조회
 /**
- * GET /active (활성 견적 요청 조회)
+ * GET /estimateRequests/active
  * @summary 활성 견적 요청 조회
- * @description 현재 사용자의 활성 상태(PENDING) 견적 요청이 있는지 확인하고, 만료된 요청은 자동으로 EXPIRED로 변경합니다. 기사님은 견적 요청을 조회할 수 없습니다.
+ * @description 현재 사용자의 활성 상태(PENDING) 견적 요청을 조회합니다. 기사님은 견적 요청을 조회할 수 없습니다. 지역명은 한글로 표시되며, 주소가 soft delete된 경우 undefined로 처리됩니다.
  * @tags EstimateRequest
- * @security BearerAuth
- * @returns {object} 200 - 활성 견적 요청 조회 성공
- * @returns {object} 403 - 기사님은 견적 요청을 조회할 수 없음
- * @returns {object} 401 - 인증 실패
- * @returns {object} 500 - 서버 내부 오류
- * @example response - 200 - 활성 견적 요청 있음
+ * @return {ActiveResponse} 200 - 활성 견적 요청 조회 성공
+ * @return {ErrorResponse} 401 - 인증 실패
+ * @return {ErrorResponse} 403 - 기사님은 견적 요청을 조회할 수 없음
+ * @return {ErrorResponse} 500 - 서버 내부 오류
+ * @example response - 200 - 활성 견적 요청 있음 응답 예시
  * {
  *   "success": true,
  *   "hasActive": true,
  *   "data": {
- *     "id": "abc123",
- *     "userId": "user123",
+ *     "id": "cmdjyt7ei0004irvgm050kzxz",
+ *     "userId": "cmdjvqbym0000a4whmdgza4i0",
  *     "movingType": "HOME",
- *     "departureAddress": "서울특별시 강남구 테헤란로 123",
- *     "arrivalAddress": "경기도 성남시 분당구 판교로 456",
- *     "departureDetailAddress": "456호",
- *     "arrivalDetailAddress": "789호",
- *     "movingDate": "2024-07-01",
+ *     "departureAddress": "부산 연제구 월드컵대로91번가길",
+ *     "arrivalAddress": "경남 고성군 고성읍",
+ *     "departureDetailAddress": "15 501호",
+ *     "arrivalDetailAddress": "송학로 206 402호",
+ *     "departurePostalCode": "47597",
+ *     "arrivalPostalCode": "52940",
+ *     "movingDate": "2025-07-28",
  *     "status": "PENDING",
- *     "createdAt": "2024-01-15T10:30:00.000Z",
- *     "updatedAt": "2024-01-15T10:30:00.000Z"
+ *     "createdAt": "2025-07-26T08:05:07.387Z",
+ *     "updatedAt": "2025-07-26T08:05:07.387Z"
  *   }
  * }
- * @example response - 200 - 활성 견적 요청 없음
+ * @example response - 200 - 활성 견적 요청 없음 응답 예시
  * {
  *   "success": true,
  *   "hasActive": false
  * }
- * @example response - 403 - 기사님은 조회 불가
+ * @example response - 401 - 인증 실패 응답 예시
+ * {
+ *   "success": false,
+ *   "message": "인증이 필요합니다."
+ * }
+ * @example response - 403 - 기사님 접근 제한 응답 예시
  * {
  *   "success": false,
  *   "message": "기사님은 견적 요청을 조회할 수 없습니다. 일반 고객으로 로그인해주세요."
  * }
- * @example response - 401 - 인증 실패
- * {
- *   "success": false,
- *   "message": "인증이 필요합니다."
- * }
- * @example response - 500 - 서버 내부 오류
+ * @example response - 500 - 서버 내부 오류 응답 예시
  * {
  *   "success": false,
  *   "message": "서버 내부 오류가 발생했습니다."
  * }
  */
-router.get("/active", verifyAccessToken, estimateRequestController.getActiveEstimateRequest);
+router.get("/active", verifyAccessToken, (req, res) => estimateRequestController.getActiveEstimateRequest(req, res));
 
+// 견적 요청 수정
 /**
- * PATCH /active (활성 견적 요청 수정)
- * @summary 활성 견적 요청 수정
- * @description PENDING 상태이면서 만료되지 않은 견적 요청만 수정 가능. 기사님은 수정할 수 없음.
+ * PATCH /estimateRequests/active
+ * @summary 견적 요청 수정
+ * @description PENDING 상태의 견적 요청을 수정합니다. 기사님은 견적 요청을 수정할 수 없습니다. 주소 수정 시 기존 주소는 soft delete되고 새 주소가 생성됩니다. 부분 수정이 가능하며, 필요한 필드만 전송하면 됩니다.
  * @tags EstimateRequest
- * @security BearerAuth
- * @param {object} request.body.required - 수정할 견적 요청 정보
- * @param {string} request.body.movingType.required - 이사 종류 (small, home, office)
- * @param {string} request.body.movingDate.required - 이사 날짜 (YYYY-MM-DD 형식, 오늘 이후만 가능)
- * @param {object} request.body.departure.required - 출발지 주소 정보
- * @param {string} request.body.departure.roadAddress.required - 출발지 도로명주소 (예: "서울특별시 강남구 테헤란로 123")
- * @param {string} request.body.departure.detailAddress - 출발지 상세주소 (예: "456호")
- * @param {object} request.body.arrival.required - 도착지 주소 정보
- * @param {string} request.body.arrival.roadAddress.required - 도착지 도로명주소 (예: "경기도 성남시 분당구 판교로 456")
- * @param {string} request.body.arrival.detailAddress - 도착지 상세주소 (예: "789호")
- * @param {string} request.body.description - 추가 설명
- * @returns {object} 200 - 견적 요청 수정 성공
- * @returns {object} 400 - 잘못된 요청 (이사일이 과거, 출발지/도착지 동일 등)
- * @returns {object} 403 - 기사님은 견적 요청을 수정할 수 없음
- * @returns {object} 404 - 활성 견적 요청 없음
- * @returns {object} 409 - 진행중(PENDING) 상태가 아님/만료된 요청 등
- * @returns {object} 401 - 인증 실패
- * @returns {object} 500 - 서버 내부 오류
- * @example request - 요청 예시
+ * @param {UpdateEstimateRequest} request.body.required - 수정할 견적 요청 정보
+ * @return {SuccessResponse} 200 - 견적 요청 수정 성공
+ * @return {ErrorResponse} 400 - 잘못된 요청 (이사일이 과거, 출발지와 도착지 동일, 잘못된 이사 종류)
+ * @return {ErrorResponse} 401 - 인증 실패
+ * @return {ErrorResponse} 403 - 기사님은 견적 요청을 수정할 수 없음
+ * @return {ErrorResponse} 404 - 활성 견적 요청 없음
+ * @return {ErrorResponse} 409 - 진행중(PENDING) 상태가 아님
+ * @return {ErrorResponse} 500 - 서버 내부 오류
+ * @example request - 이사 종류 변경 예시
  * {
- *   "movingType": "office",
- *   "movingDate": "2024-07-10",
+ *   "movingType": "home",
+ *   "description": "가정 이사로 변경했습니다."
+ * }
+ * @example request - 이사일 변경 예시
+ * {
+ *   "movingDate": "2026-10-20"
+ * }
+ * @example request - 주소 변경 예시
+ * {
  *   "departure": {
- *     "roadAddress": "서울특별시 강남구 테헤란로 123",
- *     "detailAddress": "456호"
+ *     "roadAddress": "서울 강남구 테헤란로 123",
+ *     "detailAddress": "456호",
+ *     "zonecode": "06123",
+ *     "jibunAddress": "서울 강남구 역삼동 123-45",
+ *     "extraAddress": "역삼동"
  *   },
  *   "arrival": {
- *     "roadAddress": "경기도 성남시 분당구 판교로 456",
- *     "detailAddress": "789호"
- *   },
- *   "description": "짐이 많음, 사다리차 필요"
+ *     "roadAddress": "경기 성남시 분당구 판교로 456",
+ *     "detailAddress": "789호",
+ *     "zonecode": "13561",
+ *     "jibunAddress": "경기 성남시 분당구 정자동 456-78",
+ *     "extraAddress": "정자동"
+ *   }
  * }
- * @example response - 200 - 성공 예시
+ * @example response - 200 - 견적 요청 수정 성공 응답 예시
  * {
  *   "success": true,
  *   "message": "견적 요청이 성공적으로 수정되었습니다.",
  *   "data": {
- *     "id": "abc123",
+ *     "id": "cmdjyt7ei0004irvgm050kzxz",
+ *     "userId": "cmdjvqbym0000a4whmdgza4i0",
  *     "movingType": "OFFICE",
- *     "movingDate": "2024-07-10",
- *     "departureAddress": "서울특별시 강남구 테헤란로 123",
- *     "arrivalAddress": "경기도 성남시 분당구 판교로 456",
- *     "departureDetailAddress": "456호",
- *     "arrivalDetailAddress": "789호",
- *     "description": "짐이 많음, 사다리차 필요"
+ *     "departureAddress": "서울 강남구 테헤란로",
+ *     "arrivalAddress": "경기 성남시 분당구 판교로",
+ *     "departureDetailAddress": "123 456호",
+ *     "arrivalDetailAddress": "456 789호",
+ *     "departurePostalCode": "06123",
+ *     "arrivalPostalCode": "13561",
+ *     "movingDate": "2026-10-20",
+ *     "status": "PENDING",
+ *     "createdAt": "2025-07-26T08:05:07.387Z",
+ *     "updatedAt": "2025-07-26T11:30:00.000Z"
  *   }
  * }
- * @example response - 400 - 이사일이 과거
+ * @example response - 400 - 이사일이 과거인 경우 응답 예시
  * {
  *   "success": false,
  *   "message": "이사일은 오늘 이후로 설정해주세요."
  * }
- * @example response - 400 - 출발지와 도착지 동일
+ * @example response - 400 - 출발지와 도착지 동일한 경우 응답 예시
  * {
  *   "success": false,
  *   "message": "출발지와 도착지는 달라야 합니다."
  * }
- * @example response - 403 - 기사님은 수정 불가
+ * @example response - 400 - 잘못된 이사 종류인 경우 응답 예시
+ * {
+ *   "success": false,
+ *   "message": "이사 종류는 small, home, office 중 하나여야 합니다."
+ * }
+ * @example response - 401 - 인증 실패 응답 예시
+ * {
+ *   "success": false,
+ *   "message": "인증이 필요합니다."
+ * }
+ * @example response - 403 - 기사님 접근 제한 응답 예시
  * {
  *   "success": false,
  *   "message": "기사님은 견적 요청을 수정할 수 없습니다. 일반 고객으로 로그인해주세요."
  * }
- * @example response - 409 - 진행중(PENDING) 상태가 아님
+ * @example response - 404 - 활성 견적 요청 없음 응답 예시
+ * {
+ *   "success": false,
+ *   "message": "활성 견적 요청이 없습니다."
+ * }
+ * @example response - 409 - 진행중(PENDING) 상태가 아님 응답 예시
  * {
  *   "success": false,
  *   "message": "진행중(PENDING) 상태에서만 수정할 수 있습니다."
  * }
- * @example response - 409 - 만료된 요청
- * {
- *   "success": false,
- *   "message": "이사일이 지나 만료된 견적 요청은 수정할 수 없습니다."
- * }
- * @example response - 404 - 활성 견적 요청 없음
- * {
- *   "success": false,
- *   "message": "활성 견적 요청이 없습니다."
- * }
- * @example response - 401 - 인증 실패
- * {
- *   "success": false,
- *   "message": "인증이 필요합니다."
- * }
- * @example response - 500 - 서버 내부 오류
+ * @example response - 500 - 서버 내부 오류 응답 예시
  * {
  *   "success": false,
  *   "message": "서버 내부 오류가 발생했습니다."
  * }
  */
-router.patch("/active", verifyAccessToken, estimateRequestController.updateActiveEstimateRequest);
+router.patch("/active", verifyAccessToken, (req, res) =>
+  estimateRequestController.updateActiveEstimateRequest(req, res),
+);
 
+// 견적 요청 취소
 /**
- * DELETE /active (활성 견적 요청 취소)
- * @summary 활성 견적 요청 취소
- * @description PENDING 상태이면서 만료되지 않은 견적 요청만 취소 가능. 기사님이 견적을 제출한 경우 취소할 수 없습니다. 기사님은 견적 요청을 취소할 수 없습니다. 취소 시 상태는 CANCELLED로 변경됩니다.
+ * DELETE /estimateRequests/active
+ * @summary 견적 요청 취소
+ * @description PENDING 상태의 견적 요청을 취소합니다. 기사님이 견적을 제출한 경우 취소할 수 없습니다. 기사님은 견적 요청을 취소할 수 없습니다. 취소 시 견적 요청과 관련 주소들의 deletedAt에 오늘 날짜가 기록됩니다.
  * @tags EstimateRequest
- * @security BearerAuth
- * @returns {object} 200 - 견적 요청 취소 성공
- * @returns {object} 403 - 기사님은 견적 요청을 취소할 수 없음
- * @returns {object} 404 - 활성 견적 요청 없음
- * @returns {object} 409 - 진행중(PENDING) 상태가 아님/기사 견적 제출됨/만료된 요청 등
- * @returns {object} 401 - 인증 실패
- * @returns {object} 500 - 서버 내부 오류
- * @example response - 200 - 취소 성공
+ * @return {CancelResponse} 200 - 견적 요청 취소 성공
+ * @return {ErrorResponse} 401 - 인증 실패
+ * @return {ErrorResponse} 403 - 기사님은 견적 요청을 취소할 수 없음
+ * @return {ErrorResponse} 404 - 활성 견적 요청 없음
+ * @return {ErrorResponse} 409 - 진행중(PENDING) 상태가 아님 또는 기사 견적 제출됨
+ * @return {ErrorResponse} 500 - 서버 내부 오류
+ * @example response - 200 - 견적 요청 취소 성공 응답 예시
  * {
  *   "success": true,
  *   "message": "견적 요청이 취소되었습니다."
  * }
- * @example response - 403 - 기사님은 취소 불가
- * {
- *   "success": false,
- *   "message": "기사님은 견적 요청을 취소할 수 없습니다. 일반 고객으로 로그인해주세요."
- * }
- * @example response - 409 - 진행중(PENDING) 상태가 아님
- * {
- *   "success": false,
- *   "message": "진행중(PENDING) 상태에서만 취소할 수 있습니다."
- * }
- * @example response - 409 - 기사 견적 제출됨
- * {
- *   "success": false,
- *   "message": "기사님이 견적을 제출한 경우 취소할 수 없습니다. 견적을 확인한 후 결정해주세요."
- * }
- * @example response - 409 - 만료된 요청
- * {
- *   "success": false,
- *   "message": "이사일이 지나 만료된 견적 요청은 취소할 수 없습니다."
- * }
- * @example response - 404 - 활성 견적 요청 없음
- * {
- *   "success": false,
- *   "message": "활성 견적 요청이 없습니다."
- * }
- * @example response - 401 - 인증 실패
+ * @example response - 401 - 인증 실패 응답 예시
  * {
  *   "success": false,
  *   "message": "인증이 필요합니다."
  * }
- * @example response - 500 - 서버 내부 오류
+ * @example response - 403 - 기사님 접근 제한 응답 예시
+ * {
+ *   "success": false,
+ *   "message": "기사님은 견적 요청을 취소할 수 없습니다. 일반 고객으로 로그인해주세요."
+ * }
+ * @example response - 404 - 활성 견적 요청 없음 응답 예시
+ * {
+ *   "success": false,
+ *   "message": "활성 견적 요청이 없습니다."
+ * }
+ * @example response - 409 - 진행중(PENDING) 상태가 아님 응답 예시
+ * {
+ *   "success": false,
+ *   "message": "진행중(PENDING) 상태에서만 취소할 수 있습니다."
+ * }
+ * @example response - 409 - 기사 견적 제출됨 응답 예시
+ * {
+ *   "success": false,
+ *   "message": "기사님이 견적을 제출한 경우 취소할 수 없습니다. 견적을 확인한 후 결정해주세요."
+ * }
+ * @example response - 500 - 서버 내부 오류 응답 예시
  * {
  *   "success": false,
  *   "message": "서버 내부 오류가 발생했습니다."
  * }
  */
-router.delete("/active", verifyAccessToken, estimateRequestController.cancelActiveEstimateRequest);
+router.delete("/active", verifyAccessToken, (req, res) =>
+  estimateRequestController.cancelActiveEstimateRequest(req, res),
+);
 
 export default router;

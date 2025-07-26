@@ -1,22 +1,19 @@
+import { PrismaClient, RequestStatus, EstimateRequest, UserType, MoveType, RegionType } from "@prisma/client";
 import {
-  PrismaClient,
-  MoveType,
-  RequestStatus,
-  EstimateRequest,
-  UserType,
-} from "@prisma/client";
-import { getKoreaToday } from "../utils/dateUtils";
+  IParsedAddressData,
+  IDatabaseEstimateRequest,
+  TCreateEstimateRequestData,
+  TUpdateEstimateRequestData,
+  IUserTypeResult,
+} from "../types/estimateRequest.types";
 
 const prisma = new PrismaClient();
 
-const createEstimateRequest = async (
-  data: any,
-  userId: string
-): Promise<EstimateRequest> => {
+const createEstimateRequest = async (data: TCreateEstimateRequestData, userId: string): Promise<EstimateRequest> => {
   return await prisma.estimateRequest.create({
     data: {
       customerId: userId,
-      moveType: data.moveType,
+      moveType: data.moveType as MoveType,
       moveDate: new Date(data.moveDate),
       fromAddressId: data.fromAddressId,
       toAddressId: data.toAddressId,
@@ -25,10 +22,9 @@ const createEstimateRequest = async (
     },
   });
 };
-const getActiveEstimateRequestByUserId = async (
-  userId: string
-): Promise<any | null> => {
-  return await prisma.estimateRequest.findFirst({
+
+const getActiveEstimateRequestByUserId = async (userId: string): Promise<IDatabaseEstimateRequest | null> => {
+  const request = await prisma.estimateRequest.findFirst({
     where: {
       customerId: userId,
       status: RequestStatus.PENDING,
@@ -46,6 +42,7 @@ const getActiveEstimateRequestByUserId = async (
       status: true,
       createdAt: true,
       updatedAt: true,
+      deletedAt: true,
       fromAddress: {
         select: {
           postalCode: true,
@@ -53,6 +50,7 @@ const getActiveEstimateRequestByUserId = async (
           district: true,
           detail: true,
           region: true,
+          deletedAt: true,
         },
       },
       toAddress: {
@@ -62,15 +60,30 @@ const getActiveEstimateRequestByUserId = async (
           district: true,
           detail: true,
           region: true,
+          deletedAt: true,
         },
       },
     },
   });
+
+  if (request) {
+    if (request.fromAddress && request.fromAddress.deletedAt) {
+      (request as any).fromAddress = undefined;
+    }
+    if (request.toAddress && request.toAddress.deletedAt) {
+      (request as any).toAddress = undefined;
+    }
+  }
+
+  return request;
 };
 
-const getEstimateRequestById = async (id: string): Promise<any | null> => {
+const getEstimateRequestById = async (id: string): Promise<IDatabaseEstimateRequest | null> => {
   return await prisma.estimateRequest.findUnique({
-    where: { id },
+    where: {
+      id,
+      deletedAt: null,
+    },
     select: {
       id: true,
       customerId: true,
@@ -82,49 +95,112 @@ const getEstimateRequestById = async (id: string): Promise<any | null> => {
       status: true,
       createdAt: true,
       updatedAt: true,
+      deletedAt: true,
+      fromAddress: {
+        select: {
+          postalCode: true,
+          city: true,
+          district: true,
+          detail: true,
+          region: true,
+          deletedAt: true,
+        },
+      },
+      toAddress: {
+        select: {
+          postalCode: true,
+          city: true,
+          district: true,
+          detail: true,
+          region: true,
+          deletedAt: true,
+        },
+      },
     },
   });
 };
-const updateEstimateRequest = async (
-  id: string,
-  updateData: any
-): Promise<EstimateRequest> => {
-  return await prisma.estimateRequest.update({
-    where: { id },
-    data: updateData,
-  });
-};
-const cancelEstimateRequest = async (id: string): Promise<EstimateRequest> => {
-  // 한국 시간 기준으로 삭제한 날짜만 저장 (시간은 00:00:00)
-  const koreaToday = getKoreaToday();
+
+const updateEstimateRequest = async (id: string, updateData: TUpdateEstimateRequestData): Promise<EstimateRequest> => {
+  const prismaUpdateData: {
+    moveType?: MoveType;
+    moveDate?: Date;
+    fromAddressId?: string;
+    toAddressId?: string;
+    description?: string;
+  } = {};
+
+  if (updateData.moveType) {
+    prismaUpdateData.moveType = updateData.moveType as MoveType;
+  }
+  if (updateData.moveDate) {
+    prismaUpdateData.moveDate = updateData.moveDate;
+  }
+  if (updateData.fromAddressId) {
+    prismaUpdateData.fromAddressId = updateData.fromAddressId;
+  }
+  if (updateData.toAddressId) {
+    prismaUpdateData.toAddressId = updateData.toAddressId;
+  }
+  if (updateData.description !== undefined) {
+    prismaUpdateData.description = updateData.description;
+  }
 
   return await prisma.estimateRequest.update({
     where: { id },
-    data: { status: RequestStatus.CANCELLED, deletedAt: koreaToday },
+    data: prismaUpdateData,
   });
 };
+
+const cancelEstimateRequest = async (id: string): Promise<EstimateRequest> => {
+  const today = new Date();
+  const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  return await prisma.$transaction(async (tx) => {
+    const request = await tx.estimateRequest.findUnique({
+      where: { id },
+      select: { fromAddressId: true, toAddressId: true },
+    });
+
+    if (!request) {
+      throw new Error("견적 요청을 찾을 수 없습니다.");
+    }
+
+    const cancelledRequest = await tx.estimateRequest.update({
+      where: { id },
+      data: {
+        status: RequestStatus.CANCELLED,
+        deletedAt: todayDateOnly,
+      },
+    });
+
+    await Promise.all([
+      tx.address.update({
+        where: { id: request.fromAddressId },
+        data: { deletedAt: todayDateOnly },
+      }),
+      tx.address.update({
+        where: { id: request.toAddressId },
+        data: { deletedAt: todayDateOnly },
+      }),
+    ]);
+
+    return cancelledRequest;
+  });
+};
+
 const hasPendingRequest = async (userId: string): Promise<boolean> => {
-  const req = await prisma.estimateRequest.findFirst({
+  const request = await prisma.estimateRequest.findFirst({
     where: {
       customerId: userId,
       status: RequestStatus.PENDING,
       deletedAt: null,
     },
   });
-  return !!req;
+  return !!request;
 };
-const isActiveRequestPending = async (userId: string): Promise<boolean> => {
-  const req = await prisma.estimateRequest.findFirst({
-    where: {
-      customerId: userId,
-      status: RequestStatus.PENDING,
-      deletedAt: null,
-    },
-  });
-  return !!req;
-};
+
 const hasEstimateFromMover = async (userId: string): Promise<boolean> => {
-  const req = await prisma.estimateRequest.findFirst({
+  const request = await prisma.estimateRequest.findFirst({
     where: {
       customerId: userId,
       status: RequestStatus.PENDING,
@@ -132,41 +208,48 @@ const hasEstimateFromMover = async (userId: string): Promise<boolean> => {
     },
     select: { id: true },
   });
-  if (!req) return false;
+
+  if (!request) return false;
+
   const estimate = await prisma.estimate.findFirst({
-    where: { estimateRequestId: req.id, deletedAt: null },
+    where: {
+      estimateRequestId: request.id,
+      deletedAt: null,
+    },
   });
   return !!estimate;
 };
-const findOrCreateAddress = async ({
-  city,
-  district,
-  detail,
-  region,
-}: {
-  city: string;
-  district: string;
-  detail?: string;
-  region: string;
-}) => {
-  // region enum 변환
-  // Prisma의 $Enums.RegionType을 import하지 않고, prisma.address의 타입 추론을 활용
-  let address = await prisma.address.findFirst({
-    where: { city, district, detail, region: region as any },
+
+const findOrCreateAddress = async (addressData: IParsedAddressData): Promise<{ id: string }> => {
+  const createData = {
+    postalCode: addressData.postalCode,
+    city: addressData.city,
+    district: addressData.district,
+    region: addressData.region as RegionType,
+    detail:
+      addressData.detail === null || addressData.detail === undefined || addressData.detail === ""
+        ? null
+        : addressData.detail,
+  };
+
+  const address = await prisma.address.create({
+    data: createData,
   });
-  if (!address) {
-    // 우편번호는 나중에 업데이트하거나 빈 문자열로 설정
-    address = await prisma.address.create({
-      data: { city, district, detail, region: region as any, postalCode: "" },
-    });
-  }
-  return address;
+
+  return { id: address.id };
 };
 
-// 유저의 유형을 확인하는 메서드
-const checkUserType = async (
-  userId: string
-): Promise<{ isCustomer: boolean; isMover: boolean }> => {
+const softDeleteAddress = async (addressId: string): Promise<void> => {
+  const today = new Date();
+  const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  await prisma.address.update({
+    where: { id: addressId },
+    data: { deletedAt: todayDateOnly },
+  });
+};
+
+const checkUserType = async (userId: string): Promise<IUserTypeResult> => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { userType: true, isCustomer: true, isMover: true },
@@ -176,48 +259,10 @@ const checkUserType = async (
     throw new Error("사용자를 찾을 수 없습니다.");
   }
 
-  const isCustomer =
-    user.userType.includes(UserType.CUSTOMER) || user.isCustomer === true;
-  const isMover =
-    user.userType.includes(UserType.MOVER) || user.isMover === true;
+  const isCustomer = user.userType.includes(UserType.CUSTOMER) || user.isCustomer === true;
+  const isMover = user.userType.includes(UserType.MOVER) || user.isMover === true;
 
   return { isCustomer, isMover };
-};
-
-// 이사일이 지난 견적 요청을 만료 처리하는 메서드
-const expireOverdueRequests = async (today: Date): Promise<void> => {
-  await prisma.estimateRequest.updateMany({
-    where: {
-      moveDate: {
-        lt: today, // 이사일이 오늘보다 이전
-      },
-      status: RequestStatus.PENDING, // PENDING 상태인 것만
-      deletedAt: null,
-    },
-    data: {
-      status: RequestStatus.EXPIRED,
-      updatedAt: new Date(),
-    },
-  });
-};
-
-// 견적 요청이 만료되었는지 확인하는 메서드
-const isRequestExpired = async (
-  estimateRequestId: string
-): Promise<boolean> => {
-  const request = await prisma.estimateRequest.findUnique({
-    where: { id: estimateRequestId },
-    select: { moveDate: true, status: true },
-  });
-
-  if (!request) {
-    return false;
-  }
-
-  const koreaToday = getKoreaToday();
-  return (
-    request.moveDate < koreaToday || request.status === RequestStatus.EXPIRED
-  );
 };
 
 export default {
@@ -227,10 +272,8 @@ export default {
   updateEstimateRequest,
   cancelEstimateRequest,
   hasPendingRequest,
-  isActiveRequestPending,
   hasEstimateFromMover,
   findOrCreateAddress,
+  softDeleteAddress,
   checkUserType,
-  expireOverdueRequests,
-  isRequestExpired,
 };

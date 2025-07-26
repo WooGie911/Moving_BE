@@ -29,7 +29,7 @@ businessRoutes.get("/health", (req, res) => {
 // 일반 비즈니스 로직 라우터
 businessRoutes.use("/movers", moverRouter);
 businessRoutes.use("/reviews", reviewRouter);
-businessRoutes.use("/estimate-requests", estimateRequestRouter);
+businessRoutes.use("/estimateRequests", estimateRequestRouter);
 businessRoutes.use("/customer-quotes", customerEstimateRequestRouter);
 businessRoutes.use("/mover-estimates", moverEstimateRouter);
 businessRoutes.use("/favorites", favoriteRouter);
