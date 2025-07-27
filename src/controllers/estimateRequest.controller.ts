@@ -244,6 +244,14 @@ class EstimateRequestController {
         });
       }
 
+      const hasEstimateFromMover = await estimateRequestService.hasEstimateFromMover(userId);
+      if (hasEstimateFromMover) {
+        return res.status(409).json({
+          success: false,
+          message: "기사님이 견적을 제출한 경우 수정할 수 없습니다. 견적을 확인한 후 결정해주세요.",
+        });
+      }
+
       const active = await estimateRequestService.getActiveEstimateRequestByUserId(userId);
       if (!active) {
         return res.status(404).json({ success: false, message: "활성 견적 요청이 없습니다." });

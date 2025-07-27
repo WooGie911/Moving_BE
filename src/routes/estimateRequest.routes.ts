@@ -246,7 +246,7 @@ router.get("/active", verifyAccessToken, (req, res) => estimateRequestController
  * @return {ErrorResponse} 401 - 인증 실패
  * @return {ErrorResponse} 403 - 기사님은 견적 요청을 수정할 수 없음
  * @return {ErrorResponse} 404 - 활성 견적 요청 없음
- * @return {ErrorResponse} 409 - 진행중(PENDING) 상태가 아님
+ * @return {ErrorResponse} 409 - 진행중(PENDING) 상태가 아님 또는 기사 견적 제출됨
  * @return {ErrorResponse} 500 - 서버 내부 오류
  * @example request - 이사 종류 변경 예시
  * {
@@ -328,6 +328,11 @@ router.get("/active", verifyAccessToken, (req, res) => estimateRequestController
  * {
  *   "success": false,
  *   "message": "진행중(PENDING) 상태에서만 수정할 수 있습니다."
+ * }
+ * @example response - 409 - 기사 견적 제출됨 응답 예시
+ * {
+ *   "success": false,
+ *   "message": "기사님이 견적을 제출한 경우 수정할 수 없습니다. 견적을 확인한 후 결정해주세요."
  * }
  * @example response - 500 - 서버 내부 오류 응답 예시
  * {
