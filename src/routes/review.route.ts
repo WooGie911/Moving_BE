@@ -197,4 +197,30 @@ reviewRouter.get(
  */
 reviewRouter.get("/mover/:moverId", reviewController.getReceivedReviews);
 
+/**
+ * GET /reviews/mover/:moverId/stats
+ * @summary 기사님 리뷰 통계 조회
+ * @description 기사님이 받은 모든 리뷰의 평균 평점과 평점 분포를 조회합니다.
+ * @tags Review
+ * @param {string} moverId.path.required - 기사님 ID
+ * @returns {object} 200 - 기사님 리뷰 통계 조회 성공
+ * @example response - 200 - 성공 예시
+ * {
+ *   "success": true,
+ *   "message": "기사님 리뷰 통계입니다.",
+ *   "data": {
+ *     "averageRating": 4.2,
+ *     "totalReviewCount": 145,
+ *     "ratingDistribution": {
+ *       "5": 80,
+ *       "4": 45,
+ *       "3": 15,
+ *       "2": 3,
+ *       "1": 2
+ *     }
+ *   }
+ * }
+ */
+reviewRouter.get("/mover/:moverId/stats", reviewController.getMoverReviewStats);
+
 export default reviewRouter;

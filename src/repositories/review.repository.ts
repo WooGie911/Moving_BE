@@ -138,6 +138,44 @@ const reviewRepository = {
 
     return { items, total, page, pageSize };
   },
+
+  // 5. 기사님 리뷰 통계 조회
+  getMoverReviewStats: async (moverId: string) => {
+    // 모든 리뷰 조회
+    const reviews = await prisma.review.findMany({
+      where: {
+        moverId,
+        deletedAt: null,
+      },
+      select: {
+        rating: true,
+      },
+    });
+
+    if (reviews.length === 0) {
+      return {
+        averageRating: 0,
+        totalReviewCount: 0,
+        ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+      };
+    }
+
+    // 평균 평점 계산
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const averageRating = totalRating / reviews.length;
+
+    // 평점 분포 계산
+    const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    reviews.forEach((review) => {
+      ratingDistribution[review.rating as keyof typeof ratingDistribution]++;
+    });
+
+    return {
+      averageRating,
+      totalReviewCount: reviews.length,
+      ratingDistribution,
+    };
+  },
 };
 
 export default reviewRepository;

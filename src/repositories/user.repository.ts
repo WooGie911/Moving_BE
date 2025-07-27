@@ -70,6 +70,7 @@ const getMoverProfile = async (userId: string) => {
   const profile = await prisma.user.findUnique({
     where: { id: userId },
     select: {
+      id: true,
       name: true,
       nickname: true,
       moverImage: true,

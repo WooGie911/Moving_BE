@@ -113,6 +113,10 @@ const reviewService = {
 
     return { items: mappedItems, total, page, pageSize };
   },
+
+  getMoverReviewStats: async (moverId: string) => {
+    return reviewRepository.getMoverReviewStats(moverId);
+  },
 };
 
 export default reviewService;

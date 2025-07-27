@@ -94,7 +94,7 @@ const reviewController = {
         return;
       }
       const page = Number(req.query.page) || 1;
-      const pageSize = Number(req.query.pageSize) || 5;
+      const pageSize = Number(req.query.pageSize) || 10;
 
       const reviews = await reviewService.getReceivedReviews(moverId, {
         page,
@@ -105,6 +105,31 @@ const reviewController = {
         success: true,
         message: "기사님 리뷰 목록입니다.",
         data: reviews,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // 5. 기사님 리뷰 통계 조회
+  getMoverReviewStats: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const moverId = req.params.moverId;
+      if (!moverId) {
+        res.status(400).json({ message: "기사님 ID가 필요합니다." });
+        return;
+      }
+
+      const stats = await reviewService.getMoverReviewStats(moverId);
+
+      res.json({
+        success: true,
+        message: "기사님 리뷰 통계입니다.",
+        data: stats,
       });
     } catch (error) {
       next(error);
