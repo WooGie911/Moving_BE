@@ -188,7 +188,7 @@ model Address {
   requestsTo    EstimateRequest[] @relation("RequestTo") // 도착지로 사용된 견적 요청들
   userAddresses UserAddress[] // 사용자별 주소 연결
 
-  @@unique([postalCode, city, district, detail]) // 중복 주소 등록 방지
+  // @@unique([postalCode, city, district, detail]) // 중복 주소 등록 방지 - 제거: 같은 주소라도 다른 사용자 요청일 수 있음
   @@index([region])
   @@index([city])
   @@index([district])
