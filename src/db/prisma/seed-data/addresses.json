@@ -1,0 +1,359 @@
+[
+  {
+    "zoneCode": "06123",
+    "city": "강남구",
+    "district": "역삼동",
+    "detail": "테헤란로 123",
+    "region": "서울"
+  },
+  {
+    "zoneCode": "06124",
+    "city": "강남구",
+    "district": "삼성동",
+    "detail": "영동대로 456",
+    "region": "서울"
+  },
+  {
+    "zoneCode": "06125",
+    "city": "서초구",
+    "district": "서초동",
+    "detail": "강남대로 789",
+    "region": "서울"
+  },
+  {
+    "zoneCode": "06126",
+    "city": "서초구",
+    "district": "반포동",
+    "detail": "신반포로 321",
+    "region": "서울"
+  },
+  {
+    "zoneCode": "06127",
+    "city": "마포구",
+    "district": "합정동",
+    "detail": "양화로 654",
+    "region": "서울"
+  },
+  {
+    "zoneCode": "06128",
+    "city": "마포구",
+    "district": "상암동",
+    "detail": "월드컵북로 987",
+    "region": "서울"
+  },
+  {
+    "zoneCode": "06129",
+    "city": "송파구",
+    "district": "잠실동",
+    "detail": "올림픽로 135",
+    "region": "서울"
+  },
+  {
+    "zoneCode": "06130",
+    "city": "송파구",
+    "district": "문정동",
+    "detail": "송파대로 246",
+    "region": "서울"
+  },
+  {
+    "zoneCode": "06131",
+    "city": "영등포구",
+    "district": "여의도동",
+    "detail": "여의대로 357",
+    "region": "서울"
+  },
+  {
+    "zoneCode": "06132",
+    "city": "영등포구",
+    "district": "당산동",
+    "detail": "당산로 468",
+    "region": "서울"
+  },
+  {
+    "zoneCode": "16489",
+    "city": "수원시",
+    "district": "정자동",
+    "detail": "정자로 123",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16490",
+    "city": "수원시",
+    "district": "영통동",
+    "detail": "영통로 456",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16491",
+    "city": "성남시",
+    "district": "분당동",
+    "detail": "분당로 789",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16492",
+    "city": "성남시",
+    "district": "수정동",
+    "detail": "수정로 321",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16493",
+    "city": "용인시",
+    "district": "기흥동",
+    "detail": "기흥로 654",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16494",
+    "city": "용인시",
+    "district": "수지동",
+    "detail": "수지로 987",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16495",
+    "city": "고양시",
+    "district": "일산동",
+    "detail": "일산로 135",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16496",
+    "city": "고양시",
+    "district": "덕양동",
+    "detail": "덕양로 246",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16497",
+    "city": "부천시",
+    "district": "상동",
+    "detail": "상동로 357",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16498",
+    "city": "부천시",
+    "district": "중동",
+    "detail": "중동로 468",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "47597",
+    "city": "연제구",
+    "district": "연산동",
+    "detail": "월드컵대로91번가길 15",
+    "region": "부산"
+  },
+  {
+    "zoneCode": "47598",
+    "city": "해운대구",
+    "district": "우동",
+    "detail": "해운대로 123",
+    "region": "부산"
+  },
+  {
+    "zoneCode": "47599",
+    "city": "동래구",
+    "district": "온천동",
+    "detail": "온천로 456",
+    "region": "부산"
+  },
+  {
+    "zoneCode": "41931",
+    "city": "중구",
+    "district": "동인동",
+    "detail": "동성로 789",
+    "region": "대구"
+  },
+  {
+    "zoneCode": "41932",
+    "city": "수성구",
+    "district": "범어동",
+    "detail": "범어로 321",
+    "region": "대구"
+  },
+  {
+    "zoneCode": "22001",
+    "city": "중구",
+    "district": "운서동",
+    "detail": "공항로 654",
+    "region": "인천"
+  },
+  {
+    "zoneCode": "22002",
+    "city": "연수구",
+    "district": "송도동",
+    "detail": "송도문화로 987",
+    "region": "인천"
+  },
+  {
+    "zoneCode": "61452",
+    "city": "서구",
+    "district": "치평동",
+    "detail": "상무대로 135",
+    "region": "광주"
+  },
+  {
+    "zoneCode": "61453",
+    "city": "동구",
+    "district": "지산동",
+    "detail": "지산로 246",
+    "region": "광주"
+  },
+  {
+    "zoneCode": "35242",
+    "city": "유성구",
+    "district": "도안동",
+    "detail": "도안대로 357",
+    "region": "대전"
+  },
+  {
+    "zoneCode": "35243",
+    "city": "서구",
+    "district": "둔산동",
+    "detail": "둔산로 468",
+    "region": "대전"
+  },
+  {
+    "zoneCode": "44714",
+    "city": "남구",
+    "district": "삼산동",
+    "detail": "삼산로 579",
+    "region": "울산"
+  },
+  {
+    "zoneCode": "44715",
+    "city": "동구",
+    "district": "화정동",
+    "detail": "화정로 680",
+    "region": "울산"
+  },
+  {
+    "zoneCode": "30123",
+    "city": "세종시",
+    "district": "한솔동",
+    "detail": "한솔로 791",
+    "region": "세종"
+  },
+  {
+    "zoneCode": "30124",
+    "city": "세종시",
+    "district": "도담동",
+    "detail": "도담로 802",
+    "region": "세종"
+  },
+  {
+    "zoneCode": "24207",
+    "city": "춘천시",
+    "district": "효자동",
+    "detail": "효자로 913",
+    "region": "강원"
+  },
+  {
+    "zoneCode": "24208",
+    "city": "강릉시",
+    "district": "경포동",
+    "detail": "경포로 024",
+    "region": "강원"
+  },
+  {
+    "zoneCode": "28509",
+    "city": "청주시",
+    "district": "상당동",
+    "detail": "상당로 135",
+    "region": "충북"
+  },
+  {
+    "zoneCode": "28510",
+    "city": "충주시",
+    "district": "성내동",
+    "detail": "성내로 246",
+    "region": "충북"
+  },
+  {
+    "zoneCode": "33111",
+    "city": "천안시",
+    "district": "동남동",
+    "detail": "동남로 357",
+    "region": "충남"
+  },
+  {
+    "zoneCode": "33112",
+    "city": "아산시",
+    "district": "온양동",
+    "detail": "온양로 468",
+    "region": "충남"
+  },
+  {
+    "zoneCode": "54825",
+    "city": "전주시",
+    "district": "완산동",
+    "detail": "완산로 579",
+    "region": "전북"
+  },
+  {
+    "zoneCode": "54826",
+    "city": "군산시",
+    "district": "수송동",
+    "detail": "수송로 680",
+    "region": "전북"
+  },
+  {
+    "zoneCode": "58001",
+    "city": "목포시",
+    "district": "용당동",
+    "detail": "용당로 791",
+    "region": "전남"
+  },
+  {
+    "zoneCode": "58002",
+    "city": "여수시",
+    "district": "여천동",
+    "detail": "여천로 802",
+    "region": "전남"
+  },
+  {
+    "zoneCode": "41566",
+    "city": "포항시",
+    "district": "남구",
+    "detail": "포항로 913",
+    "region": "경북"
+  },
+  {
+    "zoneCode": "41567",
+    "city": "경주시",
+    "district": "황오동",
+    "detail": "경주로 024",
+    "region": "경북"
+  },
+  {
+    "zoneCode": "48434",
+    "city": "창원시",
+    "district": "의창구",
+    "detail": "창원로 135",
+    "region": "경남"
+  },
+  {
+    "zoneCode": "48435",
+    "city": "진주시",
+    "district": "가좌동",
+    "detail": "진주로 246",
+    "region": "경남"
+  },
+  {
+    "zoneCode": "63108",
+    "city": "제주시",
+    "district": "이도동",
+    "detail": "이도로 357",
+    "region": "제주"
+  },
+  {
+    "zoneCode": "63109",
+    "city": "서귀포시",
+    "district": "서귀동",
+    "detail": "서귀로 468",
+    "region": "제주"
+  }
+]

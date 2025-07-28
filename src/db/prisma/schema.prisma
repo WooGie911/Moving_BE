@@ -133,7 +133,7 @@ model User {
   nickname             String?      @unique // 닉네임 (모든 유저 사용 가능)
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
-  deletedAt            DateTime? // 소프트 삭제
+  deletedAt            DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
   totalFavoriteCount   Int          @default(0) // 받은 찜 개수
 
   // Customer 전용 필드
@@ -173,22 +173,21 @@ model User {
 
 // 주소 정보 테이블
 model Address {
-  id         String     @id @default(cuid())
-  postalCode String // 우편번호
-  city       String // 도시 (시/군)
-  district   String // 구/동
-  detail     String? // 상세주소 (동, 호 등)
-  region     RegionType // 광역시/도
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  deletedAt  DateTime? // 소프트 삭제
+  id        String     @id @default(cuid())
+  zoneCode  String // 우편번호
+  city      String // 도시 (시/군)
+  district  String // 구/동
+  detail    String? // 상세주소 (동, 호 등)
+  region    RegionType // 광역시/도
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deletedAt DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
 
   // 관계
   requestsFrom  EstimateRequest[] @relation("RequestFrom") // 출발지로 사용된 견적 요청들
   requestsTo    EstimateRequest[] @relation("RequestTo") // 도착지로 사용된 견적 요청들
   userAddresses UserAddress[] // 사용자별 주소 연결
 
-  // @@unique([postalCode, city, district, detail]) // 중복 주소 등록 방지 - 제거: 같은 주소라도 다른 사용자 요청일 수 있음
   @@index([region])
   @@index([city])
   @@index([district])
@@ -205,7 +204,7 @@ model UserAddress {
   customLabel String? // 사용자 정의 라벨 (예: "회사", "창고")
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
-  deletedAt   DateTime? // 소프트 삭제
+  deletedAt   DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
 
   // 관계
   user    User    @relation(fields: [userId], references: [id])
@@ -226,7 +225,7 @@ model MoverServiceArea {
   district  String? // 구/동 (선택사항)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  deletedAt DateTime? // 소프트 삭제
+  deletedAt DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
 
   // 관계
   user User @relation(fields: [userId], references: [id])
@@ -250,7 +249,7 @@ model EstimateRequest {
   description   String? // 추가 설명
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
-  deletedAt     DateTime? // 소프트 삭제
+  deletedAt     DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
 
   // 관계
   customer         User              @relation(fields: [customerId], references: [id])
@@ -278,7 +277,7 @@ model DesignatedMover {
   expiresAt         DateTime // 만료일
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
-  deletedAt         DateTime? // 소프트 삭제
+  deletedAt         DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
 
   // 관계
   estimateRequest EstimateRequest @relation(fields: [estimateRequestId], references: [id])
@@ -308,7 +307,7 @@ model Estimate {
   validUntil        DateTime? // 견적 유효기간
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
-  deletedAt         DateTime? // 소프트 삭제
+  deletedAt         DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
 
   // 관계
   mover           User            @relation(fields: [moverId], references: [id])
@@ -334,7 +333,7 @@ model Review {
   status            ReviewStatus @default(PENDING)
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
-  deletedAt         DateTime? // 소프트 삭제
+  deletedAt         DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
 
   // 관계
   writer  User            @relation("ReviewWriter", fields: [customerId], references: [id])
@@ -355,7 +354,7 @@ model Favorite {
   moverId    String // 찜받은 기사님 ID
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
-  deletedAt  DateTime? // 소프트 삭제
+  deletedAt  DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
 
   // 관계
   customer User @relation("UserFavorites", fields: [customerId], references: [id])
@@ -378,7 +377,7 @@ model Action {
   description String? // 활동 설명
   metadata    Json? // 추가 데이터
   createdAt   DateTime   @default(now())
-  deletedAt   DateTime? // 소프트 삭제
+  deletedAt   DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
 
   // 관계
   user          User           @relation(fields: [userId], references: [id])
@@ -404,7 +403,7 @@ model Notification {
   isRead    Boolean          @default(false) // 읽음 여부
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
-  deletedAt DateTime? // 소프트 삭제
+  deletedAt DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
 
   // 관계
   action Action @relation(fields: [actionId], references: [id])
