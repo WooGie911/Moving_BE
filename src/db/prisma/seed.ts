@@ -160,83 +160,186 @@ async function main() {
   }));
   await prisma.userAddress.createMany({ data: userAddressData });
 
-  // 견적 요청 30개 생성 (고객 30명)
-  const estimateRequestData = users
-    .filter((u) => u.userType.includes(UserType.CUSTOMER))
-    .slice(0, 30)
-    .map((u, idx) => ({
-      customerId: u.id,
-      moveType: getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE]),
-      moveDate: new Date(2025, 6, 28 + (idx % 10)),
-      fromAddressId: addresses[idx % addresses.length].id,
-      toAddressId: addresses[(idx + 1) % addresses.length].id,
-      status: RequestStatus.PENDING,
-      description: `${u.name}님의 견적 요청`,
-    }));
-  await prisma.estimateRequest.createMany({ data: estimateRequestData });
-  const estimateRequests = await prisma.estimateRequest.findMany();
+  // 견적 요청 생성 (고객 30명)
+  const customerUsers = users.filter((u) => u.userType.includes(UserType.CUSTOMER)).slice(0, 30);
+  const estimateRequests = [];
 
-  // 견적 30개 생성 (기사 30명)
-  const estimateData = moverUsers.map((mover, idx) => ({
-    moverId: mover.id,
-    estimateRequestId: estimateRequests[idx % estimateRequests.length].id,
-    price: 150000 + (idx % 10) * 5000,
-    comment: `${mover.name}님의 견적 코멘트`,
-    status: EstimateStatus.PROPOSED,
-    workingHours: `${2 + (idx % 5)}- ${4 + (idx % 5)}시간`,
-    includesPackaging: idx % 2 === 0,
-    insuranceAmount: 1000000 + idx * 100000,
-  }));
-  await prisma.estimate.createMany({ data: estimateData });
-  const estimates = await prisma.estimate.findMany();
+  for (let i = 0; i < 30; i++) {
+    const customer = customerUsers[i];
 
-  // 리뷰 30개 생성 (고객 30명)
-  const reviewData = users
-    .filter((u) => u.userType.includes(UserType.CUSTOMER))
-    .slice(0, 30)
-    .map((u, idx) => ({
-      customerId: u.id,
-      moverId: moverUsers[idx % moverUsers.length].id,
-      estimateRequestId: estimateRequests[idx % estimateRequests.length].id,
-      rating: 3 + (idx % 3),
-      content: getRandom(reviewTemplates.positive) as string,
-      status: ReviewStatus.COMPLETED,
-    }));
-  await prisma.review.createMany({ data: reviewData });
+    // 진행중인 견적 요청 1개 (PENDING 상태)
+    const pendingMoveDate = new Date(2025, 6, 28 + (i % 10)); // 2025년 7월 28일 ~ 8월 7일
+    estimateRequests.push(
+      prisma.estimateRequest.create({
+        data: {
+          customerId: customer.id,
+          moveType: getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE]),
+          moveDate: pendingMoveDate,
+          fromAddressId: addresses[i % addresses.length].id,
+          toAddressId: addresses[(i + 1) % addresses.length].id,
+          status: RequestStatus.PENDING,
+          description: `${customer.name}님의 진행중인 견적 요청`,
+        },
+      }),
+    );
+
+    // 완료된 견적 요청 4개씩 (COMPLETED 상태)
+    for (let j = 0; j < 4; j++) {
+      const completedMoveDate = new Date(2024, 4, 22 + ((i * 4 + j) % 62)); // 5월 22일 ~ 7월 22일
+      estimateRequests.push(
+        prisma.estimateRequest.create({
+          data: {
+            customerId: customer.id,
+            moveType: getRandom([MoveType.HOME, MoveType.SMALL, MoveType.OFFICE]),
+            moveDate: completedMoveDate,
+            fromAddressId: addresses[(i + j) % addresses.length].id,
+            toAddressId: addresses[(i + j + 1) % addresses.length].id,
+            status: RequestStatus.COMPLETED,
+            description: `${customer.name}님의 완료된 견적 요청 ${j + 1}`,
+          },
+        }),
+      );
+    }
+  }
+
+  const estimateRequestsResult = await Promise.all(estimateRequests);
+
+  // 견적 생성
+  const estimates = [];
+  let estimateCount = 0;
+
+  for (let i = 0; i < 30; i++) {
+    const customer = customerUsers[i];
+    const availableMovers = moverUsers.filter((_, idx) => idx !== i); // 본인 제외한 기사들
+
+    // 진행중인 견적 요청에 대한 견적들 (4개씩, PROPOSED 상태)
+    const pendingEstimateRequest = estimateRequestsResult[i * 5]; // 각 고객의 첫 번째 견적 요청 (진행중)
+
+    for (let j = 0; j < 4; j++) {
+      const mover = availableMovers[j % availableMovers.length];
+      estimates.push(
+        prisma.estimate.create({
+          data: {
+            moverId: mover.id,
+            estimateRequestId: pendingEstimateRequest.id,
+            price: Math.floor((150000 + Math.floor(Math.random() * 450000)) / 5000) * 5000, // 15만원 ~ 60만원 (5000원 단위)
+            comment: `${mover.name}님의 견적 코멘트`,
+            status: EstimateStatus.PROPOSED,
+            workingHours: `${2 + (estimateCount % 5)}- ${4 + (estimateCount % 5)}시간`,
+            includesPackaging: estimateCount % 2 === 0,
+            insuranceAmount: 1000000 + estimateCount * 100000,
+          },
+        }),
+      );
+      estimateCount++;
+    }
+
+    // 완료된 견적 요청들에 대한 견적들 (4개씩, 하나는 ACCEPTED, 나머지는 AUTO_REJECTED)
+    for (let k = 0; k < 4; k++) {
+      const completedEstimateRequest = estimateRequestsResult[i * 5 + 1 + k]; // 완료된 견적들
+
+      for (let l = 0; l < 4; l++) {
+        const mover = availableMovers[l % availableMovers.length];
+        const isFirstEstimate = l === 0; // 첫 번째 견적인지 확인
+
+        estimates.push(
+          prisma.estimate.create({
+            data: {
+              moverId: mover.id,
+              estimateRequestId: completedEstimateRequest.id,
+              price: Math.floor((150000 + Math.floor(Math.random() * 450000)) / 5000) * 5000, // 15만원 ~ 60만원 (5000원 단위)
+              comment: `${mover.name}님의 견적 코멘트`,
+              status: isFirstEstimate ? EstimateStatus.ACCEPTED : EstimateStatus.AUTO_REJECTED,
+              workingHours: `${2 + (estimateCount % 5)}- ${4 + (estimateCount % 5)}시간`,
+              includesPackaging: estimateCount % 2 === 0,
+              insuranceAmount: 1000000 + estimateCount * 100000,
+            },
+          }),
+        );
+        estimateCount++;
+      }
+    }
+  }
+
+  const estimatesResult = await Promise.all(estimates);
+
+  // 리뷰 생성 (완료된 견적에서 확정된 것들에 대해)
+  const reviews = [];
+
+  for (let i = 0; i < 30; i++) {
+    const customer = customerUsers[i];
+
+    // 완료된 견적들에 대해 리뷰 생성
+    for (let k = 0; k < 4; k++) {
+      const completedEstimateRequest = estimateRequestsResult[i * 5 + 1 + k];
+
+      // 해당 견적 요청에서 수락된 견적을 찾기
+      const acceptedEstimate = estimatesResult.find(
+        (estimate) =>
+          estimate.estimateRequestId === completedEstimateRequest.id && estimate.status === EstimateStatus.ACCEPTED,
+      );
+
+      if (acceptedEstimate) {
+        // 수락된 견적의 기사에게 리뷰 작성
+        reviews.push(
+          prisma.review.create({
+            data: {
+              customerId: customer.id,
+              moverId: acceptedEstimate.moverId,
+              estimateRequestId: completedEstimateRequest.id,
+              rating: 3 + Math.floor(Math.random() * 3), // 3~5점 랜덤
+              content: getRandom(reviewTemplates.positive) as string,
+              status: ReviewStatus.COMPLETED,
+            },
+          }),
+        );
+      }
+    }
+  }
+
+  const reviewsResult = await Promise.all(reviews);
 
   // 리뷰 통계 업데이트
-  const reviews = await prisma.review.findMany();
-  const moverStats: { [key: string]: { reviewCount: number; totalRating: number } } = {};
+  const moverStats: { [key: string]: { reviewCount: number; totalRating: number; workedCount: number } } = {};
 
   // 리뷰 데이터로 통계 계산
-  for (const review of reviews) {
+  for (const review of reviewsResult) {
     const moverId = review.moverId;
     if (!moverStats[moverId]) {
-      moverStats[moverId] = { reviewCount: 0, totalRating: 0 };
+      moverStats[moverId] = { reviewCount: 0, totalRating: 0, workedCount: 0 };
     }
     moverStats[moverId].reviewCount++;
     moverStats[moverId].totalRating += review.rating;
   }
 
-  // 각 기사의 통계 업데이트 (순차적으로 처리)
+  // 확정된 견적 수 계산 (ACCEPTED 상태인 견적들)
+  for (const estimate of estimatesResult) {
+    if (estimate.status === EstimateStatus.ACCEPTED) {
+      const moverId = estimate.moverId;
+      if (!moverStats[moverId]) {
+        moverStats[moverId] = { reviewCount: 0, totalRating: 0, workedCount: 0 };
+      }
+      moverStats[moverId].workedCount++;
+    }
+  }
+
+  // 각 기사의 통계 업데이트
   for (const [moverId, stats] of Object.entries(moverStats)) {
     await prisma.user.update({
       where: { id: moverId },
       data: {
         totalReviewCount: stats.reviewCount,
         averageRating: stats.reviewCount > 0 ? stats.totalRating / stats.reviewCount : 0,
+        workedCount: stats.workedCount,
       },
     });
   }
 
-  // 찜 30개 생성 (고객 30명 -> 기사 30명)
-  const favoriteData = users
-    .filter((u) => u.userType.includes(UserType.CUSTOMER))
-    .slice(0, 30)
-    .map((u, idx) => ({
-      customerId: u.id,
-      moverId: moverUsers[idx % moverUsers.length].id,
-    }));
+  // 찜 생성 (고객 30명 -> 기사 30명)
+  const favoriteData = customerUsers.map((u, idx) => ({
+    customerId: u.id,
+    moverId: moverUsers[idx % moverUsers.length].id,
+  }));
   await prisma.favorite.createMany({ data: favoriteData });
 
   // 찜 통계 업데이트
@@ -251,7 +354,7 @@ async function main() {
     favoriteCounts[moverId]++;
   }
 
-  // 각 기사의 찜 카운트 업데이트 (순차적으로 처리)
+  // 각 기사의 찜 카운트 업데이트
   for (const [moverId, count] of Object.entries(favoriteCounts)) {
     await prisma.user.update({
       where: { id: moverId },
@@ -260,6 +363,11 @@ async function main() {
   }
 
   console.log("✅ Seed completed successfully! (30명 단위)");
+  console.log(`👤 Created ${users.length} users (고객 30명, 기사 30명)`);
+  console.log(`🏠 Created ${addresses.length} addresses`);
+  console.log(`📋 Created ${estimateRequestsResult.length} estimate requests`);
+  console.log(`💰 Created ${estimatesResult.length} estimates`);
+  console.log(`⭐ Created ${reviewsResult.length} reviews`);
 }
 
 main()

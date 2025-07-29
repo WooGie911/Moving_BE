@@ -5,49 +5,34 @@ import expirationService from "../services/expiration.service";
 const initializeScheduler = () => {
   console.log("🕒 스케줄러 초기화 중...");
 
-  // 매 10분마다 만료된 견적 요청 처리
+  // 매일 00시에 만료된 견적 요청 처리 (PENDING → EXPIRED)
   cron.schedule(
-    "*/30 * * * *",
+    "0 0 * * *",
     async () => {
-      console.log("⏰ [30분 스케줄러] 만료된 견적 요청 처리 시작");
+      console.log("⏰ [일일 스케줄러] 만료된 견적 요청 처리 시작");
+      console.log("📋 PENDING 상태인 견적 요청의 이사일과 서버 시간을 비교하여 만료 처리");
       try {
-        await expirationService.processExpiredEstimateRequests();
+        const result = await expirationService.processExpiredEstimateRequests();
+        if (result) {
+          console.log(
+            `✅ [일일 스케줄러] 처리 완료: ${result.processedRequests}개 견적 요청 만료, ${result.orphanedEstimates}개 orphaned 견적 정리`,
+          );
+        } else {
+          console.log("ℹ️ [일일 스케줄러] 처리할 만료된 견적 요청이 없습니다.");
+        }
       } catch (error) {
-        console.error("❌ [30분 스케줄러] 만료된 견적 요청 처리 실패:", error);
+        console.error("❌ [일일 스케줄러] 만료된 견적 요청 처리 실패:", error);
       }
     },
     {
       timezone: "Asia/Seoul", // 한국 시간 기준
-    }
+    },
   );
 
-  // 개발 환경에서는 매 5분마다 실행 (테스트용)
-  if (process.env.NODE_ENV === "development") {
-    console.log("🔧 개발 환경: 5분마다 만료 처리 스케줄러 실행");
-    cron.schedule(
-      "*/2 * * * *",
-      async () => {
-        console.log("⏰ [개발 스케줄러] 만료된 견적 요청 처리 시작");
-        try {
-          await expirationService.processExpiredEstimateRequests();
-        } catch (error) {
-          console.error(
-            "❌ [개발 스케줄러] 만료된 견적 요청 처리 실패:",
-            error
-          );
-        }
-      },
-      {
-        timezone: "Asia/Seoul",
-      }
-    );
-  }
-
   console.log("✅ 스케줄러 초기화 완료");
-  console.log("📅 매 30분마다 만료된 견적 요청 처리가 실행됩니다.");
-  if (process.env.NODE_ENV === "development") {
-    console.log("🔧 개발 환경: 2분마다 추가 실행됩니다.");
-  }
+  console.log("📅 매일 00시에 만료된 견적 요청 처리가 실행됩니다.");
+  console.log("🔄 PENDING → EXPIRED: 이사일이 지난 견적 요청을 만료 처리");
+  console.log("🔄 PROPOSED → AUTO_REJECTED: 만료된 견적 요청의 제안 견적들을 자동 거절");
 };
 
 export { initializeScheduler };
