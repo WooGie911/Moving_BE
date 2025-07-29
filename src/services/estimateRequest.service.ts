@@ -31,7 +31,7 @@ class EstimateRequestService {
     const addressData: IParsedAddressData = parseAddress({
       roadAddress: addressInfo.roadAddress,
       detailAddress: addressInfo.detailAddress,
-      postalCode: addressInfo.zonecode || addressInfo.postalCode,
+      zoneCode: addressInfo.zoneCode,
     });
     return await estimateRequestRepository.findOrCreateAddress(addressData);
   }
