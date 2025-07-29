@@ -10,12 +10,47 @@ import expirationRouter from "./expiration.routes";
 
 const businessRoutes = Router();
 
-// Health Check 엔드포인트
 /**
- * GET /health
- * @summary 서버 상태 확인
- * @tags Health
- * @return {object} 200 - 서버 정상 작동
+ * @swagger
+ * components:
+ *   schemas:
+ *     HealthResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           description: 성공 여부
+ *         message:
+ *           type: string
+ *           description: 응답 메시지
+ *         timestamp:
+ *           type: string
+ *           description: 현재 시간
+ *           format: date-time
+ *         uptime:
+ *           type: number
+ *           description: 서버 가동 시간 (초)
+ */
+
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: 서버 상태 확인
+ *     description: 서버의 현재 상태와 가동 시간을 확인합니다.
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: 서버 정상 작동
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthResponse'
+ *             example:
+ *               success: true
+ *               message: ""
+ *               timestamp: "2025-07-10T00:33:16.456Z"
+ *               uptime: 3600.5
  */
 businessRoutes.get("/health", (req, res) => {
   res.status(200).json({
