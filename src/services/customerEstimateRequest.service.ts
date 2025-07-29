@@ -1,6 +1,16 @@
 import customerEstimateRequestRepository from "../repositories/customerEstimateRequest.repository";
 import { NotFoundError } from "../types/commonError.types";
 import {
+  ServiceError,
+  ServiceValidationError,
+  ServiceDataProcessingError,
+  RepositoryError,
+} from "../types/errors.types";
+import {
+  EstimateRequestWithRelations,
+  MultipleEstimateRequestWithRelations,
+} from "../types/repository.types";
+import {
   TPendingQuoteResponse,
   TReceivedQuoteResponse,
   TQuoteDetailResponse,
@@ -13,53 +23,132 @@ const customerEstimateRequestService = {
   getPendingEstimateRequest: async (
     userId: string
   ): Promise<TPendingQuoteResponse> => {
-    const activeEstimateRequestId =
-      await customerEstimateRequestRepository.getActiveEstimateRequest(userId);
-    if (!activeEstimateRequestId) {
-      // 404 대신 빈 객체 반환
-      return {
-        estimateRequest: null,
-        estimates: [],
-      };
-    }
+    try {
+      // 입력 검증
+      if (!userId || typeof userId !== "string") {
+        throw new ServiceValidationError("잘못된 사용자 ID입니다");
+      }
 
-    const data =
-      await customerEstimateRequestRepository.getPendingEstimateRequest(
-        activeEstimateRequestId,
-        userId
+      const activeEstimateRequestId =
+        await customerEstimateRequestRepository.getActiveEstimateRequest(
+          userId
+        );
+
+      if (!activeEstimateRequestId) {
+        // 비즈니스 로직: 활성 견적요청이 없을 때의 처리
+        return {
+          estimateRequest: null,
+          estimates: [],
+        };
+      }
+
+      const rawData =
+        await customerEstimateRequestRepository.getPendingEstimateRequest(
+          activeEstimateRequestId,
+          userId
+        );
+
+      if (!rawData) {
+        // 비즈니스 로직: 데이터가 없을 때의 처리
+        return {
+          estimateRequest: null,
+          estimates: [],
+        };
+      }
+
+      // 비즈니스 로직: 데이터 변환 및 가공
+      const result = {
+        estimateRequest: {
+          id: rawData.id,
+          customerId: rawData.customerId,
+          moveType: rawData.moveType,
+          moveDate: rawData.moveDate,
+          createdAt: rawData.createdAt,
+          description: rawData.description,
+          status: rawData.status,
+          fromAddress: rawData.fromAddress,
+          toAddress: rawData.toAddress,
+        },
+        estimates:
+          rawData.estimates?.map((estimate) => ({
+            id: estimate.id,
+            price: estimate.price ?? 0,
+            comment: estimate.comment,
+            status: estimate.status,
+            isDesignated: estimate.isDesignated,
+            createdAt: estimate.createdAt,
+            mover: {
+              ...estimate.mover,
+              // 비즈니스 로직: 찜 여부 계산
+              isFavorite:
+                estimate.mover.Favorite && estimate.mover.Favorite.length > 0,
+              totalFavoriteCount: estimate.mover.totalFavoriteCount,
+              Favorite: estimate.mover.Favorite,
+            },
+          })) ?? [],
+      };
+      return result;
+    } catch (error) {
+      if (error instanceof RepositoryError) {
+        // Repository 에러를 Service 에러로 래핑
+        throw new ServiceError(
+          `진행중인 견적요청 조회 실패: ${error.message}`,
+          undefined,
+          error
+        );
+      }
+      throw error;
+    }
+  },
+
+  // 비즈니스 로직: 진행중인 견적 데이터 변환
+  transformPendingEstimateData: (
+    rawData: EstimateRequestWithRelations
+  ): TPendingQuoteResponse => {
+    try {
+      if (!rawData) {
+        return {
+          estimateRequest: null,
+          estimates: [],
+        };
+      }
+
+      return {
+        estimateRequest: {
+          id: rawData.id,
+          customerId: rawData.customerId,
+          moveType: rawData.moveType,
+          moveDate: rawData.moveDate,
+          createdAt: rawData.createdAt,
+          description: rawData.description,
+          status: rawData.status,
+          fromAddress: rawData.fromAddress,
+          toAddress: rawData.toAddress,
+        },
+        estimates:
+          rawData.estimates?.map((estimate) => ({
+            id: estimate.id,
+            price: estimate.price ?? 0,
+            comment: estimate.comment,
+            status: estimate.status,
+            isDesignated: estimate.isDesignated,
+            createdAt: estimate.createdAt,
+            mover: {
+              ...estimate.mover,
+              // 비즈니스 로직: 찜 여부 계산
+              isFavorite:
+                estimate.mover.Favorite && estimate.mover.Favorite.length > 0,
+              totalFavoriteCount: estimate.mover.totalFavoriteCount,
+              Favorite: estimate.mover.Favorite,
+            },
+          })) ?? [],
+      };
+    } catch (error) {
+      throw new ServiceDataProcessingError(
+        "진행중인 견적 데이터 변환 실패",
+        error
       );
-    if (!data) {
-      // 404 대신 빈 객체 반환
-      return {
-        estimateRequest: null,
-        estimates: [],
-      };
     }
-
-    const result = {
-      estimateRequest: {
-        id: data.id,
-        customerId: data.customerId,
-        moveType: data.moveType,
-        moveDate: data.moveDate,
-        createdAt: data.createdAt,
-        description: data.description,
-        status: data.status,
-        fromAddress: data.fromAddress,
-        toAddress: data.toAddress,
-      },
-      estimates:
-        data.estimates.map((e: any) => ({
-          ...e,
-          mover: {
-            ...e.mover,
-            isFavorite: e.mover.isFavorite,
-            totalFavoriteCount: e.mover.totalFavoriteCount,
-            Favorite: e.mover.Favorite,
-          },
-        })) ?? [],
-    };
-    return result;
   },
 
   // 완료된 견적요청 목록 조회
@@ -67,39 +156,82 @@ const customerEstimateRequestService = {
     userId: string
   ): Promise<TReceivedQuoteResponse[]> => {
     try {
-      const result =
+      // 입력 검증
+      if (!userId || typeof userId !== "string") {
+        throw new ServiceValidationError("잘못된 사용자 ID입니다");
+      }
+
+      const rawResult =
         await customerEstimateRequestRepository.getReceivedEstimateRequests(
           userId
         );
-      if (!result || result.length === 0) {
+
+      if (!rawResult || rawResult.length === 0) {
+        // 비즈니스 로직: 완료된 견적요청이 없을 때의 처리
         throw new NotFoundError("완료된 견적요청이 없습니다.");
       }
-      return result.map((data) => ({
+
+      // 비즈니스 로직: 데이터 변환 및 가공
+      const mappedResult =
+        customerEstimateRequestService.transformReceivedEstimateData(
+          rawResult || []
+        );
+
+      return mappedResult;
+    } catch (error) {
+      if (error instanceof RepositoryError) {
+        // Repository 에러를 Service 에러로 래핑
+        throw new ServiceError(
+          `완료된 견적요청 조회 실패: ${error.message}`,
+          undefined,
+          error
+        );
+      }
+      throw error;
+    }
+  },
+
+  // 비즈니스 로직: 완료된 견적 데이터 변환
+  transformReceivedEstimateData: (
+    rawData: MultipleEstimateRequestWithRelations
+  ): TReceivedQuoteResponse[] => {
+    try {
+      if (!rawData) return [];
+
+      return rawData.map((request) => ({
         estimateRequest: {
-          id: data.id,
-          customerId: data.customerId,
-          moveType: data.moveType,
-          moveDate: data.moveDate,
-          createdAt: data.createdAt,
-          description: data.description,
-          status: data.status,
-          fromAddress: data.fromAddress,
-          toAddress: data.toAddress,
+          id: request.id,
+          customerId: request.customerId,
+          moveType: request.moveType,
+          moveDate: request.moveDate,
+          createdAt: request.createdAt,
+          description: request.description,
+          status: request.status,
+          fromAddress: request.fromAddress,
+          toAddress: request.toAddress,
         },
-        estimates:
-          data.estimates.map((e: any) => ({
-            ...e,
-            mover: {
-              ...e.mover,
-              isFavorite: e.mover.isFavorite,
-              totalFavoriteCount: e.mover.totalFavoriteCount,
-              Favorite: e.mover.Favorite,
-            },
-          })) ?? [],
+        estimates: request.estimates.map((estimate) => ({
+          id: estimate.id,
+          price: estimate.price ?? 0,
+          comment: estimate.comment,
+          status: estimate.status,
+          isDesignated: estimate.isDesignated,
+          createdAt: estimate.createdAt || new Date(),
+          mover: {
+            ...estimate.mover,
+            // 비즈니스 로직: 찜 여부 계산
+            isFavorite:
+              estimate.mover.Favorite && estimate.mover.Favorite.length > 0,
+            totalFavoriteCount: estimate.mover.totalFavoriteCount,
+            Favorite: estimate.mover.Favorite,
+          },
+        })),
       }));
     } catch (error) {
-      console.error("getReceivedEstimateRequests service error:", error);
-      throw error;
+      throw new ServiceDataProcessingError(
+        "완료된 견적 데이터 변환 실패",
+        error
+      );
     }
   },
 

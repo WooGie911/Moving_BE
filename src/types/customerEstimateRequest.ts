@@ -39,7 +39,7 @@ export type TReceivedQuoteResponse = {
 
 // 주소 타입
 export type TAddress = {
-  postalCode: string;
+  zoneCode: string;
   city: string;
   district: string;
   detail: string | null;
