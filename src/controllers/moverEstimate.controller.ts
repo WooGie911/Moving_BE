@@ -1,6 +1,22 @@
 import { NextFunction, Request, Response } from "express";
 import moverEstimateService from "../services/moverEstimate.service";
 import { NotFoundError } from "../types/commonError.types";
+import {
+  HTTP_STATUS,
+  MoverEstimateDuplicateError,
+  MoverEstimateQuotaExceededError,
+  MoverInvalidEstimateRequestError,
+  MoverExpiredEstimateRequestError,
+  MoverUnauthorizedAccessError,
+  MoverInvalidEstimateStatusError,
+  MoverNoServiceAreaError,
+  MoverNoDesignatedRequestError,
+  ServiceError,
+  ServiceValidationError,
+  ControllerAuthError,
+  ControllerValidationError,
+  RepositoryError,
+} from "../types/errors.types";
 
 const moverEstimateController = {
   // 1. 견적 생성
@@ -14,90 +30,77 @@ const moverEstimateController = {
       const userType = req.user?.userType;
       const { estimateRequestId, price, comment } = req.body;
 
+      // 기본 인증 확인
       if (!moverId || typeof moverId !== "string") {
-        res.status(401).json({
-          success: false,
-          message: "유효하지 않은 사용자 정보입니다.",
-        });
-        return;
+        throw new ControllerAuthError("유효하지 않은 사용자 정보입니다");
       }
 
       // 무버 권한 확인
       if (userType !== "MOVER") {
-        res.status(403).json({
-          success: false,
-          message: "현재 유저타입이 기사가 아닙니다.",
-        });
-        return;
-      }
-
-      if (!estimateRequestId || typeof estimateRequestId !== "string") {
-        res.status(400).json({
-          success: false,
-          message: "유효하지 않은 견적 요청 ID입니다.",
-        });
-        return;
-      }
-
-      if (!price || typeof price !== "number" || price < 0) {
-        res.status(400).json({
-          success: false,
-          message: "유효하지 않은 가격입니다.",
-        });
-        return;
-      }
-
-      if (
-        !comment ||
-        typeof comment !== "string" ||
-        comment.trim().length === 0
-      ) {
-        res.status(400).json({
-          success: false,
-          message: "견적 코멘트를 입력해주세요.",
-        });
-        return;
-      }
-
-      // 코멘트 길이 제한 (예: 1000자)
-      if (comment.length > 1000) {
-        res.status(400).json({
-          success: false,
-          message: "견적 코멘트는 1000자 이내로 입력해주세요.",
-        });
-        return;
+        throw new MoverUnauthorizedAccessError();
       }
 
       const result = await moverEstimateService.createEstimate({
         estimateRequestId,
         moverId,
         price,
-        comment: comment.trim(),
+        comment,
       });
 
-      res.status(201).json({
+      res.status(HTTP_STATUS.CREATED).json({
         success: true,
         message: "견적 생성 성공",
         data: result,
       });
     } catch (error) {
-      if (error instanceof Error) {
-        // 비즈니스 로직 에러는 400 Bad Request로 처리
-        if (
-          error.message === "이미 견적을 작성했습니다." ||
-          error.message === "견적 요청을 찾을 수 없습니다." ||
-          error.message === "활성 상태가 아닌 견적 요청입니다." ||
-          error.message === "이사일이 지난 견적 요청입니다." ||
-          error.message === "해당 견적에대한 일반견적 허용량을 초과했습니다" ||
-          error.message === "해당 견적에대한 지정견적 허용량을 초과했습니다"
-        ) {
-          res.status(400).json({
-            success: false,
-            message: error.message,
-          });
-          return;
-        }
+      // 구조화된 에러 처리
+      if (
+        error instanceof ControllerAuthError ||
+        error instanceof MoverUnauthorizedAccessError
+      ) {
+        res.status(error.statusCode).json({
+          success: false,
+          message: error.message,
+          code: error.code,
+        });
+        return;
       }
+
+      if (
+        error instanceof ServiceValidationError ||
+        error instanceof MoverEstimateDuplicateError ||
+        error instanceof MoverEstimateQuotaExceededError ||
+        error instanceof MoverInvalidEstimateRequestError ||
+        error instanceof MoverExpiredEstimateRequestError ||
+        error instanceof MoverInvalidEstimateStatusError ||
+        error instanceof MoverNoServiceAreaError ||
+        error instanceof MoverNoDesignatedRequestError
+      ) {
+        res.status(error.statusCode).json({
+          success: false,
+          message: error.message,
+          code: error.code,
+        });
+        return;
+      }
+
+      if (error instanceof ServiceError || error instanceof RepositoryError) {
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+          success: false,
+          message: error.message,
+          code: error.code,
+        });
+        return;
+      }
+
+      if (error instanceof NotFoundError) {
+        res.status(HTTP_STATUS.NOT_FOUND).json({
+          success: false,
+          message: error.message,
+        });
+        return;
+      }
+
       next(error);
     }
   },
@@ -114,7 +117,7 @@ const moverEstimateController = {
       const { estimateRequestId, comment } = req.body;
 
       if (!moverId || typeof moverId !== "string") {
-        res.status(401).json({
+        res.status(HTTP_STATUS.UNAUTHORIZED).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
         });
@@ -123,7 +126,7 @@ const moverEstimateController = {
 
       // 무버 권한 확인
       if (userType !== "MOVER") {
-        res.status(403).json({
+        res.status(HTTP_STATUS.FORBIDDEN).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
         });
@@ -131,7 +134,7 @@ const moverEstimateController = {
       }
 
       if (!estimateRequestId || typeof estimateRequestId !== "string") {
-        res.status(400).json({
+        res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 견적 요청 ID입니다.",
         });
@@ -143,7 +146,7 @@ const moverEstimateController = {
         typeof comment !== "string" ||
         comment.trim().length === 0
       ) {
-        res.status(400).json({
+        res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "반려 사유를 입력해주세요.",
         });
@@ -152,7 +155,7 @@ const moverEstimateController = {
 
       // 코멘트 길이 제한 (예: 500자)
       if (comment.length > 500) {
-        res.status(400).json({
+        res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "반려 사유는 500자 이내로 입력해주세요.",
         });
@@ -165,7 +168,7 @@ const moverEstimateController = {
         comment: comment.trim(),
       });
 
-      res.status(201).json({
+      res.status(HTTP_STATUS.CREATED).json({
         success: true,
         message: "견적 반려 성공",
         data: result,
@@ -179,7 +182,7 @@ const moverEstimateController = {
           error.message === "활성 상태가 아닌 견적 요청입니다." ||
           error.message === "이사일이 지난 견적 요청입니다."
         ) {
-          res.status(400).json({
+          res.status(HTTP_STATUS.BAD_REQUEST).json({
             success: false,
             message: error.message,
           });
@@ -202,7 +205,7 @@ const moverEstimateController = {
       const { sortBy, customerName, movingType } = req.query;
 
       if (!moverId || typeof moverId !== "string") {
-        res.status(401).json({
+        res.status(HTTP_STATUS.UNAUTHORIZED).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
         });
@@ -211,7 +214,7 @@ const moverEstimateController = {
 
       // 무버 권한 확인
       if (userType !== "MOVER") {
-        res.status(403).json({
+        res.status(HTTP_STATUS.FORBIDDEN).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
         });
@@ -220,7 +223,7 @@ const moverEstimateController = {
 
       // 정렬 옵션 검증
       if (sortBy && !["moveDate", "createdAt"].includes(sortBy as string)) {
-        res.status(400).json({
+        res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 정렬 옵션입니다.",
         });
@@ -232,7 +235,7 @@ const moverEstimateController = {
         movingType &&
         !["SMALL", "HOME", "OFFICE"].includes(movingType as string)
       ) {
-        res.status(400).json({
+        res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 이사 타입입니다.",
         });
@@ -246,7 +249,7 @@ const moverEstimateController = {
         movingType as "SMALL" | "HOME" | "OFFICE" | undefined
       );
 
-      res.status(200).json({
+      res.status(HTTP_STATUS.OK).json({
         success: true,
         message: "서비스 가능 지역 견적 조회 성공",
         data: result,
@@ -268,7 +271,7 @@ const moverEstimateController = {
       const { sortBy, customerName, movingType } = req.query;
 
       if (!moverId || typeof moverId !== "string") {
-        res.status(401).json({
+        res.status(HTTP_STATUS.UNAUTHORIZED).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
         });
@@ -277,7 +280,7 @@ const moverEstimateController = {
 
       // 무버 권한 확인
       if (userType !== "MOVER") {
-        res.status(403).json({
+        res.status(HTTP_STATUS.FORBIDDEN).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
         });
@@ -286,7 +289,7 @@ const moverEstimateController = {
 
       // 정렬 옵션 검증
       if (sortBy && !["moveDate", "createdAt"].includes(sortBy as string)) {
-        res.status(400).json({
+        res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 정렬 옵션입니다.",
         });
@@ -298,7 +301,7 @@ const moverEstimateController = {
         movingType &&
         !["SMALL", "HOME", "OFFICE"].includes(movingType as string)
       ) {
-        res.status(400).json({
+        res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 이사 타입입니다.",
         });
@@ -312,7 +315,7 @@ const moverEstimateController = {
         movingType as "SMALL" | "HOME" | "OFFICE" | undefined
       );
 
-      res.status(200).json({
+      res.status(HTTP_STATUS.OK).json({
         success: true,
         message: "지정 견적 조회 성공",
         data: result,
@@ -335,14 +338,14 @@ const moverEstimateController = {
         req.query;
 
       if (!moverId || typeof moverId !== "string") {
-        res.status(401).json({
+        res.status(HTTP_STATUS.UNAUTHORIZED).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
         });
         return;
       }
       if (userType !== "MOVER") {
-        res.status(403).json({
+        res.status(HTTP_STATUS.FORBIDDEN).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
         });
@@ -354,7 +357,7 @@ const moverEstimateController = {
       const designatedBool = designated === "true";
 
       if (!regionBool && !designatedBool) {
-        res.status(200).json({
+        res.status(HTTP_STATUS.OK).json({
           success: true,
           message: "조회 결과 없음",
           data: { regionEstimateRequests: [], designatedEstimateRequests: [] },
@@ -373,20 +376,14 @@ const moverEstimateController = {
         }
       );
 
-      res.status(200).json({
+      res.status(HTTP_STATUS.OK).json({
         success: true,
         message: "견적 통합 조회 성공",
         data: result,
       });
     } catch (error) {
-      console.error("getAllEstimateRequests controller error:", error);
-      console.error("에러 상세 정보:", {
-        message: error instanceof Error ? error.message : "Unknown error",
-        stack: error instanceof Error ? error.stack : undefined,
-        name: error instanceof Error ? error.name : "Unknown",
-      });
       if (error instanceof NotFoundError) {
-        res.status(404).json({
+        res.status(HTTP_STATUS.NOT_FOUND).json({
           success: false,
           message: (error as Error).message,
         });
@@ -408,7 +405,7 @@ const moverEstimateController = {
       const estimateRequestId = req.params.estimateRequestId;
 
       if (!moverId || typeof moverId !== "string") {
-        res.status(401).json({
+        res.status(HTTP_STATUS.UNAUTHORIZED).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
         });
@@ -417,7 +414,7 @@ const moverEstimateController = {
 
       // 무버 권한 확인
       if (userType !== "MOVER") {
-        res.status(403).json({
+        res.status(HTTP_STATUS.FORBIDDEN).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
         });
@@ -425,7 +422,7 @@ const moverEstimateController = {
       }
 
       if (!estimateRequestId || typeof estimateRequestId !== "string") {
-        res.status(400).json({
+        res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 견적 요청 ID입니다.",
         });
@@ -434,7 +431,7 @@ const moverEstimateController = {
 
       const result =
         await moverEstimateService.getEstimateRequestById(estimateRequestId);
-      res.status(200).json({
+      res.status(HTTP_STATUS.OK).json({
         success: true,
         message: "견적 요청 상세 조회 성공",
         data: result,
@@ -455,7 +452,7 @@ const moverEstimateController = {
       const userType = req.user?.userType;
 
       if (!moverId || typeof moverId !== "string") {
-        res.status(401).json({
+        res.status(HTTP_STATUS.UNAUTHORIZED).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
         });
@@ -464,7 +461,7 @@ const moverEstimateController = {
 
       // 무버 권한 확인
       if (userType !== "MOVER") {
-        res.status(403).json({
+        res.status(HTTP_STATUS.FORBIDDEN).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
         });
@@ -472,7 +469,7 @@ const moverEstimateController = {
       }
 
       const result = await moverEstimateService.getMyEstimate(moverId);
-      res.status(200).json({
+      res.status(HTTP_STATUS.OK).json({
         success: true,
         message: "내가 보낸 견적서 조회 성공",
         data: result,
@@ -493,7 +490,7 @@ const moverEstimateController = {
       const userType = req.user?.userType;
 
       if (!moverId || typeof moverId !== "string") {
-        res.status(401).json({
+        res.status(HTTP_STATUS.UNAUTHORIZED).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
         });
@@ -502,7 +499,7 @@ const moverEstimateController = {
 
       // 무버 권한 확인
       if (userType !== "MOVER") {
-        res.status(403).json({
+        res.status(HTTP_STATUS.FORBIDDEN).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
         });
@@ -511,18 +508,12 @@ const moverEstimateController = {
 
       const result = await moverEstimateService.getMyRejectedEstimates(moverId);
 
-      res.status(200).json({
+      res.status(HTTP_STATUS.OK).json({
         success: true,
         message: "내가 반려한 견적 조회 성공",
         data: result,
       });
     } catch (error) {
-      console.error("getMyRejectedEstimates controller error:", error);
-      console.error("에러 상세 정보:", {
-        message: error instanceof Error ? error.message : "Unknown error",
-        stack: error instanceof Error ? error.stack : undefined,
-        name: error instanceof Error ? error.name : "Unknown",
-      });
       next(error);
     }
   },
@@ -540,7 +531,7 @@ const moverEstimateController = {
       const { status } = req.body;
 
       if (!moverId || typeof moverId !== "string") {
-        res.status(401).json({
+        res.status(HTTP_STATUS.UNAUTHORIZED).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
         });
@@ -549,7 +540,7 @@ const moverEstimateController = {
 
       // 무버 권한 확인
       if (userType !== "MOVER") {
-        res.status(403).json({
+        res.status(HTTP_STATUS.FORBIDDEN).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
         });
@@ -557,7 +548,7 @@ const moverEstimateController = {
       }
 
       if (!estimateId || typeof estimateId !== "string") {
-        res.status(400).json({
+        res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 견적서 ID입니다.",
         });
@@ -568,7 +559,7 @@ const moverEstimateController = {
         !status ||
         !["PROPOSED", "ACCEPTED", "REJECTED", "AUTO_REJECTED"].includes(status)
       ) {
-        res.status(400).json({
+        res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 견적 상태입니다.",
         });
@@ -581,7 +572,7 @@ const moverEstimateController = {
         status,
       });
 
-      res.status(200).json({
+      res.status(HTTP_STATUS.OK).json({
         success: true,
         message: "견적 상태 업데이트 성공",
         data: result,
@@ -604,7 +595,7 @@ const moverEstimateController = {
       const { price, comment } = req.body;
 
       if (!moverId || typeof moverId !== "string") {
-        res.status(401).json({
+        res.status(HTTP_STATUS.UNAUTHORIZED).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
         });
@@ -613,7 +604,7 @@ const moverEstimateController = {
 
       // 무버 권한 확인
       if (userType !== "MOVER") {
-        res.status(403).json({
+        res.status(HTTP_STATUS.FORBIDDEN).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
         });
@@ -621,7 +612,7 @@ const moverEstimateController = {
       }
 
       if (!estimateId || typeof estimateId !== "string") {
-        res.status(400).json({
+        res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 견적서 ID입니다.",
         });
@@ -629,7 +620,7 @@ const moverEstimateController = {
       }
 
       if (!price || typeof price !== "number" || price < 0) {
-        res.status(400).json({
+        res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 가격입니다.",
         });
@@ -641,7 +632,7 @@ const moverEstimateController = {
         typeof comment !== "string" ||
         comment.trim().length === 0
       ) {
-        res.status(400).json({
+        res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "견적 코멘트를 입력해주세요.",
         });
@@ -650,7 +641,7 @@ const moverEstimateController = {
 
       // 코멘트 길이 제한 (예: 1000자)
       if (comment.length > 1000) {
-        res.status(400).json({
+        res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "견적 코멘트는 1000자 이내로 입력해주세요.",
         });
@@ -664,7 +655,7 @@ const moverEstimateController = {
         comment: comment.trim(),
       });
 
-      res.status(200).json({
+      res.status(HTTP_STATUS.OK).json({
         success: true,
         message: "견적서 업데이트 성공",
         data: result,

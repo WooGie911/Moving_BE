@@ -46,7 +46,7 @@ export type TUpdateEstimateRequest = {
 // 주소 타입 정의
 export type TAddress = {
   id: string;
-  postalCode: string;
+  zoneCode: string;
   city: string;
   district: string;
   detail: string | null;
@@ -222,7 +222,7 @@ export type EstimateWithRelations = {
     };
     fromAddress: {
       id: string;
-      postalCode: string;
+      zoneCode: string;
       city: string;
       district: string;
       detail: string | null;
@@ -230,7 +230,7 @@ export type EstimateWithRelations = {
     };
     toAddress: {
       id: string;
-      postalCode: string;
+      zoneCode: string;
       city: string;
       district: string;
       detail: string | null;
