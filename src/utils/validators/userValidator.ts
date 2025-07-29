@@ -2,8 +2,15 @@
 
 import { ValidationError } from "../../types/commonError.types";
 import { TMoverProfileUpdateInput } from "../../types/user.types";
-import { VALIDATION_CONFIG, PROFILE_ERROR_MESSAGES } from "../../constants/profile.constants";
-import { validateRegion, validateMoveTypes, ensureNicknameUnique } from "./profileValidator";
+import {
+  VALIDATION_CONFIG,
+  PROFILE_ERROR_MESSAGES,
+} from "../../constants/profile.constants";
+import {
+  validateRegion,
+  validateMoveTypes,
+  ensureNicknameUnique,
+} from "./profileValidator";
 
 /**
  * 허용 TLD 리스트
@@ -159,16 +166,30 @@ export const validateMoverProfileUpdate = async (
   }
 
   // 5. 한줄 소개 길이 검사
-  if (updateData.shortIntro !== undefined && updateData.shortIntro.trim().length > 0) {
-    if (updateData.shortIntro.trim().length < VALIDATION_CONFIG.MIN_INTRODUCTION_LENGTH) {
+  if (
+    updateData.shortIntro !== undefined &&
+    updateData.shortIntro.trim().length > 0
+  ) {
+    if (
+      updateData.shortIntro.trim().length <
+      VALIDATION_CONFIG.MIN_INTRODUCTION_LENGTH
+    ) {
       throw new ValidationError(PROFILE_ERROR_MESSAGES.INTRODUCTION_REQUIRED);
     }
   }
 
   // 6. 상세 설명 길이 검사
-  if (updateData.detailIntro !== undefined && updateData.detailIntro.trim().length > 0) {
-    if (updateData.detailIntro.trim().length < VALIDATION_CONFIG.MIN_DETAIL_INTRODUCTION_LENGTH) {
-      throw new ValidationError(PROFILE_ERROR_MESSAGES.DETAIL_INTRODUCTION_REQUIRED);
+  if (
+    updateData.detailIntro !== undefined &&
+    updateData.detailIntro.trim().length > 0
+  ) {
+    if (
+      updateData.detailIntro.trim().length <
+      VALIDATION_CONFIG.MIN_DETAIL_INTRODUCTION_LENGTH
+    ) {
+      throw new ValidationError(
+        PROFILE_ERROR_MESSAGES.DETAIL_INTRODUCTION_REQUIRED
+      );
     }
   }
 };
