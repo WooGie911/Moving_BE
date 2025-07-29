@@ -7,8 +7,6 @@ import {
   EstimateStatus,
   AddressRole,
   RegionType,
-  NotificationType,
-  ActionType,
   ReviewStatus,
 } from "@prisma/client";
 import { encryptPhoneNumber } from "../../utils/phoneEncryption";
@@ -209,14 +207,13 @@ async function main() {
   let estimateCount = 0;
 
   for (let i = 0; i < 30; i++) {
-    const customer = customerUsers[i];
     const availableMovers = moverUsers.filter((_, idx) => idx !== i); // 본인 제외한 기사들
 
-    // 진행중인 견적 요청에 대한 견적들 (4개씩, PROPOSED 상태)
-    const pendingEstimateRequest = estimateRequestsResult[i * 5]; // 각 고객의 첫 번째 견적 요청 (진행중)
+    // 대기중인 견적 요청들에 대한 견적들 (4개씩, 모두 PROPOSED 상태)
+    const pendingEstimateRequest = estimateRequestsResult[i * 5]; // 대기중인 견적 (첫 번째)
+    for (let l = 0; l < 4; l++) {
+      const mover = availableMovers[l % availableMovers.length];
 
-    for (let j = 0; j < 4; j++) {
-      const mover = availableMovers[j % availableMovers.length];
       estimates.push(
         prisma.estimate.create({
           data: {
