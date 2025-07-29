@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import EstimateRequestService from "../services/estimateRequest.service";
 import { convertRegionToKorean } from "../utils/addressUtils";
+import { isBeforeKoreaToday, formatDateForAPI } from "../utils/dateUtils";
 import {
   TCreateEstimateRequest,
   TUpdateEstimateRequest,
@@ -43,11 +44,7 @@ class EstimateRequestController {
         throw new Error("올바른 날짜 형식이 아닙니다. (YYYY-MM-DD 형식으로 입력해주세요)");
       }
 
-      const today = new Date();
-      const koreaTime = new Date(today.toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
-      koreaTime.setHours(0, 0, 0, 0);
-
-      if (moveDate < koreaTime) {
+      if (isBeforeKoreaToday(moveDate)) {
         throw new Error("이사일은 오늘 이후로 설정해주세요.");
       }
     } catch (error) {
@@ -144,12 +141,12 @@ class EstimateRequestController {
         : "",
       departureDetailAddress: request.fromAddress?.detail || undefined,
       arrivalDetailAddress: request.toAddress?.detail || undefined,
-      departurePostalCode: request.fromAddress?.postalCode || undefined,
-      arrivalPostalCode: request.toAddress?.postalCode || undefined,
-      movingDate: request.moveDate.toISOString().split("T")[0],
+      departureZoneCode: request.fromAddress?.zoneCode || undefined,
+      arrivalZoneCode: request.toAddress?.zoneCode || undefined,
+      movingDate: formatDateForAPI(request.moveDate) || "",
       status: request.status,
-      createdAt: request.createdAt.toISOString(),
-      updatedAt: request.updatedAt.toISOString(),
+      createdAt: formatDateForAPI(request.createdAt) || "",
+      updatedAt: formatDateForAPI(request.updatedAt) || "",
     };
   }
 
@@ -341,7 +338,7 @@ class EstimateRequestController {
       }
 
       await estimateRequestService.cancelActiveEstimateRequest(active.id);
-      return res.status(200).json({ success: true, message: "견적 요청이 취소되었습니다." });
+      return res.status(204).send();
     } catch (error) {
       console.error("견적 요청 취소 에러:", error);
       const message = error instanceof Error ? error.message : "서버 내부 오류가 발생했습니다.";

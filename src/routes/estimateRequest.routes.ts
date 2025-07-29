@@ -106,10 +106,10 @@ const estimateRequestController = new EstimateRequestController();
  *         arrivalDetailAddress:
  *           type: string
  *           description: 도착지 상세주소
- *         departurePostalCode:
+ *         departureZoneCode:
  *           type: string
  *           description: 출발지 우편번호
- *         arrivalPostalCode:
+ *         arrivalZoneCode:
  *           type: string
  *           description: 도착지 우편번호
  *         movingDate:
@@ -230,8 +230,8 @@ const estimateRequestController = new EstimateRequestController();
  *                 arrivalAddress: "경남 고성군 고성읍"
  *                 departureDetailAddress: "15 501호"
  *                 arrivalDetailAddress: "송학로 206 402호"
- *                 departurePostalCode: "47597"
- *                 arrivalPostalCode: "52940"
+ *                 departureZoneCode: "47597"
+ *                 arrivalZoneCode: "52940"
  *                 movingDate: "2025-07-28"
  *                 status: "PENDING"
  *                 createdAt: "2025-07-26T08:05:07.387Z"
@@ -333,8 +333,8 @@ router.post("/create", verifyAccessToken, (req, res) => estimateRequestControlle
  *                     arrivalAddress: "경남 고성군 고성읍"
  *                     departureDetailAddress: "15 501호"
  *                     arrivalDetailAddress: "송학로 206 402호"
- *                     departurePostalCode: "47597"
- *                     arrivalPostalCode: "52940"
+ *                     departureZoneCode: "47597"
+ *                     arrivalZoneCode: "52940"
  *                     movingDate: "2025-07-28"
  *                     status: "PENDING"
  *                     createdAt: "2025-07-26T08:05:07.387Z"
@@ -433,8 +433,8 @@ router.get("/active", verifyAccessToken, (req, res) => estimateRequestController
  *                 arrivalAddress: "경기 성남시 분당구 판교로"
  *                 departureDetailAddress: "123 456호"
  *                 arrivalDetailAddress: "456 789호"
- *                 departurePostalCode: "06123"
- *                 arrivalPostalCode: "13561"
+ *                 departureZoneCode: "06123"
+ *                 arrivalZoneCode: "13561"
  *                 movingDate: "2026-10-20"
  *                 status: "PENDING"
  *                 createdAt: "2025-07-26T08:05:07.387Z"
@@ -530,15 +530,8 @@ router.patch("/active", verifyAccessToken, (req, res) =>
  *     security:
  *       - BearerAuth: []
  *     responses:
- *       200:
+ *       204:
  *         description: 견적 요청 취소 성공
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/CancelResponse'
- *             example:
- *               success: true
- *               message: "견적 요청이 취소되었습니다."
  *       401:
  *         description: 인증 실패
  *         content:

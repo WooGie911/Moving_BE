@@ -2,7 +2,7 @@
 export interface IAddressInfo {
   roadAddress: string; // 도로명주소 (예: "서울특별시 강남구 테헤란로 123")
   detailAddress?: string; // 상세주소 (예: "456호")
-  postalCode?: string; // 우편번호 (예: "06123")
+  zoneCode?: string; // 우편번호 (예: "06123")
   zonecode?: string; // 우편번호 (카카오 API 응답용)
   jibunAddress?: string; // 지번주소 (예: "서울특별시 강남구 역삼동 123-45")
   extraAddress?: string; // 참고항목 (예: "역삼동")
@@ -29,7 +29,7 @@ export type TUpdateEstimateRequest = {
 
 // 파싱된 주소 데이터 (내부 처리용)
 export interface IParsedAddressData {
-  postalCode: string; // 우편번호
+  zoneCode: string; // 우편번호
   region: string; // 1단계: 광역시/도 (예: "서울특별시", "경기도")
   city: string; // 2단계: 시/군/구 (예: "강남구", "수원시", "창원시")
   district: string; // 3단계: 동/읍/면 (예: "역삼동", "삼척읍", "정자동")
@@ -45,8 +45,8 @@ export interface IEstimateRequestResponse {
   arrivalAddress: string;
   departureDetailAddress?: string;
   arrivalDetailAddress?: string;
-  departurePostalCode?: string;
-  arrivalPostalCode?: string;
+  departureZoneCode?: string;
+  arrivalZoneCode?: string;
   movingDate: string;
   status: string;
   createdAt: string;
@@ -55,7 +55,7 @@ export interface IEstimateRequestResponse {
 
 // 데이터베이스 주소 인터페이스
 export interface IDatabaseAddress {
-  postalCode: string;
+  zoneCode: string;
   city: string;
   district: string;
   detail: string | null;
@@ -108,7 +108,7 @@ export interface IUserTypeResult {
 export interface IAddressInfoForService {
   roadAddress: string;
   detailAddress?: string;
-  postalCode?: string;
+  zoneCode?: string;
   zonecode?: string;
   jibunAddress?: string;
   extraAddress?: string;

@@ -1,254 +1,339 @@
-// @ts-nocheck
-// @jest-environment node
-
+import { Request, Response } from "express";
 import EstimateRequestController from "./estimateRequest.controller";
-
-// Service 완전 모킹
-jest.mock("../services/estimateRequest.service", () => ({
-  createEstimateRequest: jest.fn(),
-  getActiveEstimateRequestByUserId: jest.fn(),
-  updateActiveEstimateRequest: jest.fn(),
-  cancelActiveEstimateRequest: jest.fn(),
-  hasPendingRequest: jest.fn(),
-}));
-
 import EstimateRequestService from "../services/estimateRequest.service";
 
-const mockService = EstimateRequestService as jest.Mocked<typeof EstimateRequestService>;
+// Mock the service
+jest.mock("../services/estimateRequest.service");
 
-describe("EstimateRequestController - 유닛 테스트", () => {
+const mockEstimateRequestService = EstimateRequestService as jest.MockedClass<typeof EstimateRequestService>;
+
+describe("EstimateRequestController", () => {
   let controller: EstimateRequestController;
-  let mockReq: any;
-  let mockRes: any;
+  let mockRequest: Partial<Request>;
+  let mockResponse: Partial<Response>;
+  let mockJson: jest.Mock;
+  let mockStatus: jest.Mock;
 
   beforeEach(() => {
     controller = new EstimateRequestController();
-    mockReq = {
-      user: { userId: "test-user-id" },
-      body: {},
-      params: {},
-      query: {},
+    mockJson = jest.fn();
+    mockStatus = jest.fn().mockReturnValue({ json: mockJson });
+
+    mockResponse = {
+      status: mockStatus,
+      json: mockJson,
     };
-    mockRes = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    };
+
+    // Reset all mocks
     jest.clearAllMocks();
   });
 
-  describe("createEstimateRequest", () => {
-    it("should create estimate request successfully", async () => {
-      // Mock 데이터 설정
-      const requestData = {
-        moveType: "HOME",
-        fromCity: "서울",
-        fromDistrict: "강남구",
-        fromDetail: "테헤란로 123",
-        fromRegion: "SEOUL",
-        toCity: "부산",
-        toDistrict: "해운대구",
-        toDetail: "해운대로 456",
-        toRegion: "BUSAN",
-        moveDate: "2024-08-15",
-        description: "테스트 이사",
-      };
+  describe("validateMoveDate", () => {
+    it("should throw error for past date", () => {
+      const pastDate = "2023-01-01";
 
-      const mockCreatedRequest = { id: "test-id", userId: "test-user-id" };
-
-      mockReq.body = requestData;
-      mockService.createEstimateRequest.mockResolvedValue(mockCreatedRequest);
-
-      await controller.createEstimateRequest(mockReq, mockRes);
-
-      // 검증
-      expect(mockService.createEstimateRequest).toHaveBeenCalledWith({
-        userId: "test-user-id",
-        ...requestData,
-      });
-      expect(mockRes.status).toHaveBeenCalledWith(201);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        success: true,
-        message: "견적 요청이 성공적으로 생성되었습니다.",
-        data: mockCreatedRequest,
-      });
+      expect(() => {
+        (controller as any).validateMoveDate(pastDate);
+      }).toThrow("이사일은 오늘 이후로 설정해주세요.");
     });
 
-    it("should return error for same from/to address", async () => {
-      const requestData = {
-        moveType: "HOME",
-        fromCity: "서울",
-        fromDistrict: "강남구",
-        fromDetail: "테헤란로 123",
-        fromRegion: "SEOUL",
-        toCity: "서울",
-        toDistrict: "강남구",
-        toDetail: "테헤란로 123",
-        toRegion: "SEOUL",
-        moveDate: "2024-08-15",
-        description: "동일 주소 테스트",
-      };
+    it("should throw error for invalid date format", () => {
+      const invalidDate = "invalid-date";
 
-      mockReq.body = requestData;
-
-      await controller.createEstimateRequest(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        success: false,
-        message: "출발지와 도착지는 달라야 합니다.",
-      });
+      expect(() => {
+        (controller as any).validateMoveDate(invalidDate);
+      }).toThrow("올바른 날짜 형식이 아닙니다. (YYYY-MM-DD 형식으로 입력해주세요)");
     });
 
-    it("should handle service error", async () => {
-      const requestData = {
-        moveType: "HOME",
-        fromCity: "서울",
-        fromDistrict: "강남구",
-        fromDetail: "테헤란로 123",
-        fromRegion: "SEOUL",
-        toCity: "부산",
-        toDistrict: "해운대구",
-        toDetail: "해운대로 456",
-        toRegion: "BUSAN",
-        moveDate: "2024-08-15",
-        description: "테스트 이사",
-      };
+    it("should not throw error for future date", () => {
+      const futureDate = "2025-12-31";
 
-      mockReq.body = requestData;
-      mockService.createEstimateRequest.mockRejectedValue(new Error("Service error"));
-
-      await controller.createEstimateRequest(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        success: false,
-        message: "견적 요청 생성 중 오류가 발생했습니다.",
-      });
+      expect(() => {
+        (controller as any).validateMoveDate(futureDate);
+      }).not.toThrow();
     });
   });
 
-  describe("getActiveEstimateRequest", () => {
-    it("should get active estimate request successfully", async () => {
-      const mockData = {
-        id: "test-id",
-        moveType: "HOME",
-        status: "PENDING",
-        fromAddress: { city: "서울", district: "강남구" },
-        toAddress: { city: "부산", district: "해운대구" },
+  describe("validateAddresses", () => {
+    it("should throw error when departure and arrival addresses are the same", () => {
+      const departure = {
+        roadAddress: "서울 강남구 테헤란로 123",
+        detailAddress: "456호",
+      };
+      const arrival = {
+        roadAddress: "서울 강남구 테헤란로 123",
+        detailAddress: "456호",
       };
 
-      mockService.getActiveEstimateRequestByUserId.mockResolvedValue(mockData);
-
-      await controller.getActiveEstimateRequest(mockReq, mockRes);
-
-      expect(mockService.getActiveEstimateRequestByUserId).toHaveBeenCalledWith("test-user-id");
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        success: true,
-        data: mockData,
-      });
+      expect(() => {
+        (controller as any).validateAddresses(departure, arrival);
+      }).toThrow("출발지와 도착지는 달라야 합니다.");
     });
 
-    it("should return null when no active request exists", async () => {
-      mockService.getActiveEstimateRequestByUserId.mockResolvedValue(null);
+    it("should not throw error when addresses are different", () => {
+      const departure = {
+        roadAddress: "서울 강남구 테헤란로 123",
+        detailAddress: "456호",
+      };
+      const arrival = {
+        roadAddress: "경기 성남시 분당구 판교로 456",
+        detailAddress: "789호",
+      };
 
-      await controller.getActiveEstimateRequest(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        success: true,
-        data: null,
-      });
+      expect(() => {
+        (controller as any).validateAddresses(departure, arrival);
+      }).not.toThrow();
     });
 
-    it("should handle service error", async () => {
-      mockService.getActiveEstimateRequestByUserId.mockRejectedValue(new Error("Service error"));
+    it("should not throw error when addresses are different even with same road address but different detail", () => {
+      const departure = {
+        roadAddress: "서울 강남구 테헤란로 123",
+        detailAddress: "456호",
+      };
+      const arrival = {
+        roadAddress: "서울 강남구 테헤란로 123",
+        detailAddress: "789호",
+      };
 
-      await controller.getActiveEstimateRequest(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        success: false,
-        message: "견적 요청 조회 중 오류가 발생했습니다.",
-      });
+      expect(() => {
+        (controller as any).validateAddresses(departure, arrival);
+      }).not.toThrow();
     });
   });
 
-  describe("updateEstimateRequest", () => {
-    it("should update estimate request successfully", async () => {
-      const updateData = {
-        description: "업데이트된 설명",
+  describe("validateCreateEstimateRequest", () => {
+    it("should return valid result for correct data", () => {
+      const data = {
+        movingType: "home",
+        movingDate: "2025-12-31",
+        departure: {
+          roadAddress: "서울 강남구 테헤란로 123",
+          detailAddress: "456호",
+        },
+        arrival: {
+          roadAddress: "경기 성남시 분당구 판교로 456",
+          detailAddress: "789호",
+        },
       };
 
-      const mockUpdatedRequest = {
-        id: "test-id",
-        description: "업데이트된 설명",
-        status: "PENDING",
-      };
-
-      mockReq.params = { id: "test-id" };
-      mockReq.body = updateData;
-      mockService.updateActiveEstimateRequest.mockResolvedValue(mockUpdatedRequest);
-
-      await controller.updateEstimateRequest(mockReq, mockRes);
-
-      expect(mockService.updateActiveEstimateRequest).toHaveBeenCalledWith("test-id", updateData);
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        success: true,
-        message: "견적 요청이 성공적으로 업데이트되었습니다.",
-        data: mockUpdatedRequest,
-      });
+      const result = (controller as any).validateCreateEstimateRequest(data);
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
     });
 
-    it("should handle service error", async () => {
-      const updateData = { description: "업데이트된 설명" };
-      mockReq.params = { id: "test-id" };
-      mockReq.body = updateData;
-      mockService.updateActiveEstimateRequest.mockRejectedValue(new Error("Service error"));
+    it("should return invalid result for invalid moving type", () => {
+      const data = {
+        movingType: "invalid",
+        movingDate: "2025-12-31",
+        departure: {
+          roadAddress: "서울 강남구 테헤란로 123",
+          detailAddress: "456호",
+        },
+        arrival: {
+          roadAddress: "경기 성남시 분당구 판교로 456",
+          detailAddress: "789호",
+        },
+      };
 
-      await controller.updateEstimateRequest(mockReq, mockRes);
+      const result = (controller as any).validateCreateEstimateRequest(data);
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain("이사 종류는 small, home, office 중 하나여야 합니다.");
+    });
 
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        success: false,
-        message: "견적 요청 업데이트 중 오류가 발생했습니다.",
-      });
+    it("should return invalid result for missing departure address", () => {
+      const data = {
+        movingType: "home",
+        movingDate: "2025-12-31",
+        departure: {
+          roadAddress: "",
+          detailAddress: "456호",
+        },
+        arrival: {
+          roadAddress: "경기 성남시 분당구 판교로 456",
+          detailAddress: "789호",
+        },
+      };
+
+      const result = (controller as any).validateCreateEstimateRequest(data);
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain("출발지 주소는 필수입니다.");
+    });
+
+    it("should return invalid result for missing arrival address", () => {
+      const data = {
+        movingType: "home",
+        movingDate: "2025-12-31",
+        departure: {
+          roadAddress: "서울 강남구 테헤란로 123",
+          detailAddress: "456호",
+        },
+        arrival: {
+          roadAddress: "",
+          detailAddress: "789호",
+        },
+      };
+
+      const result = (controller as any).validateCreateEstimateRequest(data);
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain("도착지 주소는 필수입니다.");
+    });
+
+    it("should return invalid result for past date", () => {
+      const data = {
+        movingType: "home",
+        movingDate: "2023-01-01",
+        departure: {
+          roadAddress: "서울 강남구 테헤란로 123",
+          detailAddress: "456호",
+        },
+        arrival: {
+          roadAddress: "경기 성남시 분당구 판교로 456",
+          detailAddress: "789호",
+        },
+      };
+
+      const result = (controller as any).validateCreateEstimateRequest(data);
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain("이사일은 오늘 이후로 설정해주세요.");
+    });
+
+    it("should return invalid result for same addresses", () => {
+      const data = {
+        movingType: "home",
+        movingDate: "2025-12-31",
+        departure: {
+          roadAddress: "서울 강남구 테헤란로 123",
+          detailAddress: "456호",
+        },
+        arrival: {
+          roadAddress: "서울 강남구 테헤란로 123",
+          detailAddress: "456호",
+        },
+      };
+
+      const result = (controller as any).validateCreateEstimateRequest(data);
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain("출발지와 도착지는 달라야 합니다.");
     });
   });
 
-  describe("cancelEstimateRequest", () => {
-    it("should cancel estimate request successfully", async () => {
-      const mockCancelledRequest = {
-        id: "test-id",
-        status: "CANCELLED",
+  describe("validateUpdateEstimateRequest", () => {
+    it("should return valid result for correct data", () => {
+      const data = {
+        movingType: "home",
+        movingDate: "2025-12-31",
+        departure: {
+          roadAddress: "서울 강남구 테헤란로 123",
+          detailAddress: "456호",
+        },
+        arrival: {
+          roadAddress: "경기 성남시 분당구 판교로 456",
+          detailAddress: "789호",
+        },
       };
 
-      mockReq.params = { id: "test-id" };
-      mockService.cancelActiveEstimateRequest.mockResolvedValue(mockCancelledRequest);
-
-      await controller.cancelEstimateRequest(mockReq, mockRes);
-
-      expect(mockService.cancelActiveEstimateRequest).toHaveBeenCalledWith("test-id");
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        success: true,
-        message: "견적 요청이 성공적으로 취소되었습니다.",
-        data: mockCancelledRequest,
-      });
+      const result = (controller as any).validateUpdateEstimateRequest(data);
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
     });
 
-    it("should handle service error", async () => {
-      mockReq.params = { id: "test-id" };
-      mockService.cancelActiveEstimateRequest.mockRejectedValue(new Error("Service error"));
+    it("should return invalid result for invalid moving type", () => {
+      const data = {
+        movingType: "invalid",
+        movingDate: "2025-12-31",
+        departure: {
+          roadAddress: "서울 강남구 테헤란로 123",
+          detailAddress: "456호",
+        },
+        arrival: {
+          roadAddress: "경기 성남시 분당구 판교로 456",
+          detailAddress: "789호",
+        },
+      };
 
-      await controller.cancelEstimateRequest(mockReq, mockRes);
+      const result = (controller as any).validateUpdateEstimateRequest(data);
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain("이사 종류는 small, home, office 중 하나여야 합니다.");
+    });
 
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        success: false,
-        message: "견적 요청 취소 중 오류가 발생했습니다.",
-      });
+    it("should return valid result for partial data", () => {
+      const data = {
+        movingType: "home",
+      };
+
+      const result = (controller as any).validateUpdateEstimateRequest(data);
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+  });
+
+  describe("getUserId", () => {
+    it("should throw error when user is not authenticated", () => {
+      mockRequest = {};
+
+      expect(() => {
+        (controller as any).getUserId(mockRequest as Request);
+      }).toThrow("인증이 필요합니다.");
+    });
+
+    it("should throw error when userId is missing", () => {
+      mockRequest = {
+        user: {
+          userId: "",
+          name: "Test User",
+          userType: "CUSTOMER" as const,
+          hasProfile: true,
+          iat: 1234567890,
+          exp: 1234567890,
+        },
+      };
+
+      expect(() => {
+        (controller as any).getUserId(mockRequest as Request);
+      }).toThrow("인증이 필요합니다.");
+    });
+
+    it("should return userId when authenticated", () => {
+      const userId = "user123";
+      mockRequest = {
+        user: {
+          userId,
+          name: "Test User",
+          userType: "CUSTOMER" as const,
+          hasProfile: true,
+          iat: 1234567890,
+          exp: 1234567890,
+        },
+      };
+
+      const result = (controller as any).getUserId(mockRequest as Request);
+      expect(result).toBe(userId);
+    });
+  });
+
+  describe("validateUser", () => {
+    it("should throw error for empty userId", () => {
+      expect(() => {
+        (controller as any).validateUser("");
+      }).toThrow("인증이 필요합니다.");
+    });
+
+    it("should throw error for null userId", () => {
+      expect(() => {
+        (controller as any).validateUser(null as any);
+      }).toThrow("인증이 필요합니다.");
+    });
+
+    it("should throw error for undefined userId", () => {
+      expect(() => {
+        (controller as any).validateUser(undefined as any);
+      }).toThrow("인증이 필요합니다.");
+    });
+
+    it("should not throw error for valid userId", () => {
+      expect(() => {
+        (controller as any).validateUser("user123");
+      }).not.toThrow();
     });
   });
 });

@@ -1,4 +1,5 @@
 import { PrismaClient, RequestStatus, EstimateRequest, UserType, MoveType, RegionType } from "@prisma/client";
+import { getCurrentDateString } from "../utils/dateUtils";
 import {
   IParsedAddressData,
   IDatabaseEstimateRequest,
@@ -45,7 +46,7 @@ const getActiveEstimateRequestByUserId = async (userId: string): Promise<IDataba
       deletedAt: true,
       fromAddress: {
         select: {
-          postalCode: true,
+          zoneCode: true,
           city: true,
           district: true,
           detail: true,
@@ -55,7 +56,7 @@ const getActiveEstimateRequestByUserId = async (userId: string): Promise<IDataba
       },
       toAddress: {
         select: {
-          postalCode: true,
+          zoneCode: true,
           city: true,
           district: true,
           detail: true,
@@ -98,7 +99,7 @@ const getEstimateRequestById = async (id: string): Promise<IDatabaseEstimateRequ
       deletedAt: true,
       fromAddress: {
         select: {
-          postalCode: true,
+          zoneCode: true,
           city: true,
           district: true,
           detail: true,
@@ -108,7 +109,7 @@ const getEstimateRequestById = async (id: string): Promise<IDatabaseEstimateRequ
       },
       toAddress: {
         select: {
-          postalCode: true,
+          zoneCode: true,
           city: true,
           district: true,
           detail: true,
@@ -152,8 +153,7 @@ const updateEstimateRequest = async (id: string, updateData: TUpdateEstimateRequ
 };
 
 const cancelEstimateRequest = async (id: string): Promise<EstimateRequest> => {
-  const today = new Date();
-  const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const todayDateOnly = new Date(getCurrentDateString());
 
   return await prisma.$transaction(async (tx) => {
     const request = await tx.estimateRequest.findUnique({
@@ -222,7 +222,7 @@ const hasEstimateFromMover = async (userId: string): Promise<boolean> => {
 
 const findOrCreateAddress = async (addressData: IParsedAddressData): Promise<{ id: string }> => {
   const createData = {
-    postalCode: addressData.postalCode,
+    zoneCode: addressData.zoneCode,
     city: addressData.city,
     district: addressData.district,
     region: addressData.region as RegionType,
@@ -240,8 +240,7 @@ const findOrCreateAddress = async (addressData: IParsedAddressData): Promise<{ i
 };
 
 const softDeleteAddress = async (addressId: string): Promise<void> => {
-  const today = new Date();
-  const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const todayDateOnly = new Date(getCurrentDateString());
 
   await prisma.address.update({
     where: { id: addressId },
