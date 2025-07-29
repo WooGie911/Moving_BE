@@ -1,6 +1,13 @@
 import { NextFunction, Request, Response } from "express";
 import customerEstimateRequestService from "../services/customerEstimateRequest.service";
 import { NotFoundError } from "../types/commonError.types";
+import {
+  ControllerError,
+  ControllerAuthError,
+  ControllerValidationError,
+  ServiceError,
+  RepositoryError,
+} from "../types/errors.types";
 
 const customerEstimateRequestController = {
   // 1. 진행중인 견적요청 조회
@@ -11,13 +18,11 @@ const customerEstimateRequestController = {
   ): Promise<void> => {
     try {
       const userId = req.user?.userId;
+
       if (!userId || typeof userId !== "string") {
-        res.status(401).json({
-          success: false,
-          message: "유효하지 않은 사용자 정보입니다.",
-        });
-        return;
+        throw new ControllerAuthError("유효하지 않은 사용자 정보입니다.");
       }
+
       const result =
         await customerEstimateRequestService.getPendingEstimateRequest(userId);
 
@@ -28,7 +33,15 @@ const customerEstimateRequestController = {
         data: result,
       });
     } catch (error) {
-      console.error("getPendingEstimateRequest error:", error);
+      if (error instanceof ControllerAuthError) {
+        res.status(error.statusCode).json({
+          success: false,
+          message: error.message,
+          code: error.code,
+          layer: error.layer,
+        });
+        return;
+      }
       next(error);
     }
   },
@@ -41,28 +54,37 @@ const customerEstimateRequestController = {
   ): Promise<void> => {
     try {
       const userId = req.user?.userId;
+
       if (!userId || typeof userId !== "string") {
-        res.status(401).json({
-          success: false,
-          message: "유효하지 않은 사용자 정보입니다.",
-        });
-        return;
+        throw new ControllerAuthError("유효하지 않은 사용자 정보입니다.");
       }
+
       const result =
         await customerEstimateRequestService.getReceivedEstimateRequests(
           userId
         );
+
       res.status(200).json({
         success: true,
         message: "완료된 견적요청 목록 조회 성공",
         data: result, // 서비스 리턴값 그대로 전달
       });
     } catch (error) {
-      console.error("getReceivedEstimateRequests controller error:", error);
       if (error instanceof NotFoundError) {
         res.status(404).json({
           success: false,
           message: error.message,
+          code: (error as any).code || "NOT_FOUND",
+          layer: (error as any).layer || "SERVICE",
+        });
+        return;
+      }
+      if (error instanceof ControllerAuthError) {
+        res.status(error.statusCode).json({
+          success: false,
+          message: error.message,
+          code: error.code,
+          layer: error.layer,
         });
         return;
       }
