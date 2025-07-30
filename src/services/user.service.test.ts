@@ -7,6 +7,7 @@ import {
   getProfileData,
   updateCustomerProfileCheck,
   userInfo,
+  updateMoverBasicInfo,
 } from "./user.service";
 import { validateCustomerProfileData } from "../utils/validators/profileValidator";
 import { MoveType, RegionType } from "../types/user.types";
@@ -15,6 +16,7 @@ import bcrypt from "bcrypt";
 jest.mock("../repositories/user.repository");
 jest.mock("../utils/generateToken");
 jest.mock("../utils/validators/profileValidator");
+jest.mock("../utils/phoneEncryption");
 
 describe("userService.userInfo", () => {
   afterEach(() => {
@@ -462,7 +464,326 @@ describe("userService.updateMoverBasicInfo", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
+
+  test("기사님 기본정보 수정 성공 - 이름만 수정", async () => {
+    // Setup
+    const mockUser = {
+      id: "1",
+      name: "김기사",
+      email: "mover@test.com",
+      userType: ["MOVER"],
+    };
+
+    const updateData = {
+      name: "김기사수정",
+    };
+
+    const mockGetUserById = userRepository.getUserById as jest.Mock;
+    mockGetUserById.mockResolvedValue(mockUser);
+
+    const mockUpdateUserProfile = userRepository.updateUserProfile as jest.Mock;
+    mockUpdateUserProfile.mockResolvedValue({ ...mockUser, name: "김기사수정" });
+
+    // Exercise
+    await updateMoverBasicInfo("1", updateData);
+
+    // Assertion
+    expect(mockGetUserById).toHaveBeenCalledWith("1");
+    expect(mockUpdateUserProfile).toHaveBeenCalledWith("1", { name: "김기사수정" });
+  });
+
+  test("기사님 기본정보 수정 성공 - 전화번호만 수정", async () => {
+    // Setup
+    const mockUser = {
+      id: "1",
+      name: "김기사",
+      email: "mover@test.com",
+      userType: ["MOVER"],
+    };
+
+    const updateData = {
+      phoneNumber: "01087654321",
+    };
+
+    // 전화번호 암호화 모킹
+    const mockEncryptPhoneNumber = encryptPhoneNumber as jest.Mock;
+    mockEncryptPhoneNumber.mockReturnValue("encrypted_phone_number");
+
+    const mockGetUserById = userRepository.getUserById as jest.Mock;
+    mockGetUserById.mockResolvedValue(mockUser);
+
+    const mockUpdateUserProfile = userRepository.updateUserProfile as jest.Mock;
+    mockUpdateUserProfile.mockResolvedValue(mockUser);
+
+    // Exercise
+    await updateMoverBasicInfo("1", updateData);
+
+    // Assertion
+    expect(mockGetUserById).toHaveBeenCalledWith("1");
+    expect(mockUpdateUserProfile).toHaveBeenCalledWith("1", {
+      encryptedPhoneNumber: "encrypted_phone_number",
+    });
+    expect(mockEncryptPhoneNumber).toHaveBeenCalledWith("01087654321");
+  });
+
+  test("기사님 기본정보 수정 성공 - 비밀번호만 수정", async () => {
+    // Setup
+    const mockUser = {
+      id: "1",
+      name: "김기사",
+      email: "mover@test.com",
+      userType: ["MOVER"],
+    };
+
+    const mockUserWithPassword = {
+      id: "1",
+      name: "김기사",
+      email: "mover@test.com",
+      encryptedPassword: await bcrypt.hash("현재비밀번호123!", 10),
+      userType: ["MOVER"],
+    };
+
+    const updateData = {
+      currentPassword: "현재비밀번호123!",
+      newPassword: "새비밀번호456!",
+    };
+
+    const mockGetUserById = userRepository.getUserById as jest.Mock;
+    mockGetUserById.mockResolvedValue(mockUser);
+
+    const mockGetUserWithPassword = userRepository.getUserWithPassword as jest.Mock;
+    mockGetUserWithPassword.mockResolvedValue(mockUserWithPassword);
+
+    const mockUpdateUserProfile = userRepository.updateUserProfile as jest.Mock;
+    mockUpdateUserProfile.mockResolvedValue(mockUser);
+
+    // Exercise
+    await updateMoverBasicInfo("1", updateData);
+
+    // Assertion
+    expect(mockGetUserById).toHaveBeenCalledWith("1");
+    expect(mockGetUserWithPassword).toHaveBeenCalledWith("1");
+    expect(mockUpdateUserProfile).toHaveBeenCalledWith("1", {
+      encryptedPassword: expect.any(String), // 해시된 새 비밀번호
+    });
+  });
+
+  test("기사님 기본정보 수정 성공 - 모든 필드 수정", async () => {
+    // Setup
+    const mockUser = {
+      id: "1",
+      name: "김기사",
+      email: "mover@test.com",
+      userType: ["MOVER"],
+    };
+
+    const mockUserWithPassword = {
+      id: "1",
+      name: "김기사",
+      email: "mover@test.com",
+      encryptedPassword: await bcrypt.hash("현재비밀번호123!", 10),
+      userType: ["MOVER"],
+    };
+
+    const updateData = {
+      name: "김기사수정",
+      phoneNumber: "01087654321",
+      currentPassword: "현재비밀번호123!",
+      newPassword: "새비밀번호456!",
+    };
+
+    // 전화번호 암호화 모킹
+    const mockEncryptPhoneNumber = encryptPhoneNumber as jest.Mock;
+    mockEncryptPhoneNumber.mockReturnValue("encrypted_phone_number");
+
+    const mockGetUserById = userRepository.getUserById as jest.Mock;
+    mockGetUserById.mockResolvedValue(mockUser);
+
+    const mockGetUserWithPassword = userRepository.getUserWithPassword as jest.Mock;
+    mockGetUserWithPassword.mockResolvedValue(mockUserWithPassword);
+
+    const mockUpdateUserProfile = userRepository.updateUserProfile as jest.Mock;
+    mockUpdateUserProfile.mockResolvedValue(mockUser);
+
+    // Exercise
+    await updateMoverBasicInfo("1", updateData);
+
+    // Assertion
+    expect(mockGetUserById).toHaveBeenCalledWith("1");
+    expect(mockGetUserWithPassword).toHaveBeenCalledWith("1");
+    expect(mockUpdateUserProfile).toHaveBeenCalledWith("1", {
+      name: "김기사수정",
+      encryptedPhoneNumber: "encrypted_phone_number",
+      encryptedPassword: expect.any(String),
+    });
+    expect(mockEncryptPhoneNumber).toHaveBeenCalledWith("01087654321");
+  });
+
+  test("기사님 기본정보 수정 실패 - 사용자 존재하지 않음 NotFoundError(404) 발생", async () => {
+    // Setup
+    const updateData = {
+      name: "김기사수정",
+    };
+
+    const mockGetUserById = userRepository.getUserById as jest.Mock;
+    mockGetUserById.mockResolvedValue(null);
+
+    // Assertion
+    await expect(updateMoverBasicInfo("1", updateData)).rejects.toThrow(NotFoundError);
+    expect(mockGetUserById).toHaveBeenCalledWith("1");
+  });
+
+  test("기사님 기본정보 수정 실패 - 현재 비밀번호 불일치 ValidationError(422) 발생", async () => {
+    // Setup
+    const mockUser = {
+      id: "1",
+      name: "김기사",
+      email: "mover@test.com",
+      userType: ["MOVER"],
+    };
+
+    const mockUserWithPassword = {
+      id: "1",
+      name: "김기사",
+      email: "mover@test.com",
+      encryptedPassword: await bcrypt.hash("현재비밀번호123!", 10),
+      userType: ["MOVER"],
+    };
+
+    const updateData = {
+      currentPassword: "잘못된비밀번호", // 현재 비밀번호와 다름
+      newPassword: "새비밀번호456!",
+    };
+
+    const mockGetUserById = userRepository.getUserById as jest.Mock;
+    mockGetUserById.mockResolvedValue(mockUser);
+
+    const mockGetUserWithPassword = userRepository.getUserWithPassword as jest.Mock;
+    mockGetUserWithPassword.mockResolvedValue(mockUserWithPassword);
+
+    // Assertion
+    await expect(updateMoverBasicInfo("1", updateData)).rejects.toThrow(ValidationError);
+    expect(mockGetUserById).toHaveBeenCalledWith("1");
+    expect(mockGetUserWithPassword).toHaveBeenCalledWith("1");
+  });
+
+  test("기사님 기본정보 수정 실패 - 현재 비밀번호 확인 불가 ValidationError(422) 발생", async () => {
+    // Setup
+    const mockUser = {
+      id: "1",
+      name: "김기사",
+      email: "mover@test.com",
+      userType: ["MOVER"],
+    };
+
+    const updateData = {
+      currentPassword: "현재비밀번호123!",
+      newPassword: "새비밀번호456!",
+    };
+
+    const mockGetUserById = userRepository.getUserById as jest.Mock;
+    mockGetUserById.mockResolvedValue(mockUser);
+
+    const mockGetUserWithPassword = userRepository.getUserWithPassword as jest.Mock;
+    mockGetUserWithPassword.mockResolvedValue(null); // 사용자 정보 없음
+
+    // Assertion
+    await expect(updateMoverBasicInfo("1", updateData)).rejects.toThrow(ValidationError);
+    expect(mockGetUserById).toHaveBeenCalledWith("1");
+    expect(mockGetUserWithPassword).toHaveBeenCalledWith("1");
+  });
+
+  test("기사님 기본정보 수정 실패 - 현재 비밀번호 없음 ValidationError(422) 발생", async () => {
+    // Setup
+    const mockUser = {
+      id: "1",
+      name: "김기사",
+      email: "mover@test.com",
+      userType: ["MOVER"],
+    };
+
+    const mockUserWithPassword = {
+      id: "1",
+      name: "김기사",
+      email: "mover@test.com",
+      encryptedPassword: null, // 비밀번호 없음
+      userType: ["MOVER"],
+    };
+
+    const updateData = {
+      currentPassword: "현재비밀번호123!",
+      newPassword: "새비밀번호456!",
+    };
+
+    const mockGetUserById = userRepository.getUserById as jest.Mock;
+    mockGetUserById.mockResolvedValue(mockUser);
+
+    const mockGetUserWithPassword = userRepository.getUserWithPassword as jest.Mock;
+    mockGetUserWithPassword.mockResolvedValue(mockUserWithPassword);
+
+    // Assertion
+    await expect(updateMoverBasicInfo("1", updateData)).rejects.toThrow(ValidationError);
+    expect(mockGetUserById).toHaveBeenCalledWith("1");
+    expect(mockGetUserWithPassword).toHaveBeenCalledWith("1");
+  });
+
+  test("기사님 기본정보 수정 성공 - 비밀번호 변경 없이 이름만 수정", async () => {
+    // Setup
+    const mockUser = {
+      id: "1",
+      name: "김기사",
+      email: "mover@test.com",
+      userType: ["MOVER"],
+    };
+
+    const updateData = {
+      name: "김기사수정",
+      // currentPassword, newPassword 없음
+    };
+
+    const mockGetUserById = userRepository.getUserById as jest.Mock;
+    mockGetUserById.mockResolvedValue(mockUser);
+
+    const mockUpdateUserProfile = userRepository.updateUserProfile as jest.Mock;
+    mockUpdateUserProfile.mockResolvedValue({ ...mockUser, name: "김기사수정" });
+
+    // Exercise
+    await updateMoverBasicInfo("1", updateData);
+
+    // Assertion
+    expect(mockGetUserById).toHaveBeenCalledWith("1");
+    expect(mockUpdateUserProfile).toHaveBeenCalledWith("1", { name: "김기사수정" });
+    // getUserWithPassword는 호출되지 않아야 함 (비밀번호 변경이 없으므로)
+  });
+
+  test("기사님 기본정보 수정 성공 - 이름 앞뒤 공백 제거", async () => {
+    // Setup
+    const mockUser = {
+      id: "1",
+      name: "김기사",
+      email: "mover@test.com",
+      userType: ["MOVER"],
+    };
+
+    const updateData = {
+      name: "  김기사수정  ", // 앞뒤 공백 포함
+    };
+
+    const mockGetUserById = userRepository.getUserById as jest.Mock;
+    mockGetUserById.mockResolvedValue(mockUser);
+
+    const mockUpdateUserProfile = userRepository.updateUserProfile as jest.Mock;
+    mockUpdateUserProfile.mockResolvedValue({ ...mockUser, name: "김기사수정" });
+
+    // Exercise
+    await updateMoverBasicInfo("1", updateData);
+
+    // Assertion
+    expect(mockGetUserById).toHaveBeenCalledWith("1");
+    expect(mockUpdateUserProfile).toHaveBeenCalledWith("1", { name: "김기사수정" }); // 공백 제거됨
+  });
 });
+
 describe("userService.updateMoverProfileCheck", () => {
   afterEach(() => {
     jest.clearAllMocks();
