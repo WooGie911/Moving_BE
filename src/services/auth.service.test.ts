@@ -29,6 +29,8 @@ describe("authService.signup", () => {
   // Teardown
   afterEach(() => {
     jest.clearAllMocks();
+    // validateUserSignupInput 초기화
+    (validateUserSignupInput as jest.Mock).mockReset();
   });
 
   test("CUSTOMER 회원가입 성공", async () => {
@@ -270,7 +272,6 @@ describe("authService.signup", () => {
 
   test("회원가입 실패 - 유저 생성 실패시 DatabaseError(500) 발생", async () => {
     // Setup
-
     const mockFindUserByEmail = authRepository.findUserByEmail as jest.Mock;
     mockFindUserByEmail.mockResolvedValue(null);
 
@@ -329,6 +330,8 @@ describe("authService.signin", () => {
   // Teardown
   afterEach(() => {
     jest.clearAllMocks();
+    // validateUserSignupInput 초기화
+    (validateUserSignupInput as jest.Mock).mockReset();
   });
 
   test("CUSTOMER 로그인 성공", async () => {
