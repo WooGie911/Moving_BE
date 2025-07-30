@@ -1,13 +1,13 @@
-// @ts-nocheck
-// @jest-environment node
-
 import EstimateRequestService from "./estimateRequest.service";
 import estimateRequestRepository from "../repositories/estimateRequest.repository";
+import { parseAddress } from "../utils/addressUtils";
 
-// Mock the repository
+// Mock the repository and utils
 jest.mock("../repositories/estimateRequest.repository");
+jest.mock("../utils/addressUtils");
 
 const mockEstimateRequestRepository = estimateRequestRepository as jest.Mocked<typeof estimateRequestRepository>;
+const mockParseAddress = parseAddress as jest.MockedFunction<typeof parseAddress>;
 
 describe("EstimateRequestService", () => {
   let service: EstimateRequestService;
@@ -18,299 +18,599 @@ describe("EstimateRequestService", () => {
   });
 
   describe("checkUserType", () => {
-    it("should return customer type for customer user", async () => {
-      const mockUser = {
-        userType: ["CUSTOMER"],
-        isCustomer: true,
-        isMover: false,
-      };
+    it("사용자 타입을 올바르게 반환해야 한다", async () => {
+      // Arrange
+      const userId = "test-user-id";
+      const mockUserTypeResult = { isCustomer: true, isMover: false };
+      mockEstimateRequestRepository.checkUserType = jest.fn().mockResolvedValue(mockUserTypeResult);
 
-      mockEstimateRequestRepository.checkUserType = jest.fn().mockResolvedValue({
-        isCustomer: true,
-        isMover: false,
-      });
+      // Act
+      const result = await service.checkUserType(userId);
 
-      const result = await service.checkUserType("customer123");
-
-      expect(result.isCustomer).toBe(true);
-      expect(result.isMover).toBe(false);
-      expect(mockEstimateRequestRepository.checkUserType).toHaveBeenCalledWith("customer123");
+      // Assert
+      expect(mockEstimateRequestRepository.checkUserType).toHaveBeenCalledWith(userId);
+      expect(result).toEqual(mockUserTypeResult);
     });
 
-    it("should return mover type for mover user", async () => {
-      mockEstimateRequestRepository.checkUserType = jest.fn().mockResolvedValue({
-        isCustomer: false,
-        isMover: true,
-      });
+    it("레포지토리 에러를 올바르게 전파해야 한다", async () => {
+      // Arrange
+      const userId = "test-user-id";
+      const mockError = new Error("사용자를 찾을 수 없습니다.");
+      mockEstimateRequestRepository.checkUserType = jest.fn().mockRejectedValue(mockError);
 
-      const result = await service.checkUserType("mover123");
-
-      expect(result.isCustomer).toBe(false);
-      expect(result.isMover).toBe(true);
-      expect(mockEstimateRequestRepository.checkUserType).toHaveBeenCalledWith("mover123");
-    });
-
-    it("should throw error when user not found", async () => {
-      mockEstimateRequestRepository.checkUserType = jest
-        .fn()
-        .mockRejectedValue(new Error("사용자를 찾을 수 없습니다."));
-
-      await expect(service.checkUserType("invalid123")).rejects.toThrow("사용자를 찾을 수 없습니다.");
+      // Act & Assert
+      await expect(service.checkUserType(userId)).rejects.toThrow("사용자를 찾을 수 없습니다.");
+      expect(mockEstimateRequestRepository.checkUserType).toHaveBeenCalledWith(userId);
     });
   });
 
   describe("hasPendingRequest", () => {
-    it("should return true when user has pending request", async () => {
+    it("진행중인 요청이 있으면 true를 반환해야 한다", async () => {
+      // Arrange
+      const userId = "test-user-id";
       mockEstimateRequestRepository.hasPendingRequest = jest.fn().mockResolvedValue(true);
 
-      const result = await service.hasPendingRequest("user123");
+      // Act
+      const result = await service.hasPendingRequest(userId);
 
+      // Assert
+      expect(mockEstimateRequestRepository.hasPendingRequest).toHaveBeenCalledWith(userId);
       expect(result).toBe(true);
-      expect(mockEstimateRequestRepository.hasPendingRequest).toHaveBeenCalledWith("user123");
     });
 
-    it("should return false when user has no pending request", async () => {
+    it("진행중인 요청이 없으면 false를 반환해야 한다", async () => {
+      // Arrange
+      const userId = "test-user-id";
       mockEstimateRequestRepository.hasPendingRequest = jest.fn().mockResolvedValue(false);
 
-      const result = await service.hasPendingRequest("user123");
+      // Act
+      const result = await service.hasPendingRequest(userId);
 
+      // Assert
+      expect(mockEstimateRequestRepository.hasPendingRequest).toHaveBeenCalledWith(userId);
       expect(result).toBe(false);
-      expect(mockEstimateRequestRepository.hasPendingRequest).toHaveBeenCalledWith("user123");
     });
   });
 
   describe("hasEstimateFromMover", () => {
-    it("should return true when movers have submitted estimates", async () => {
+    it("기사님이 견적을 제출했으면 true를 반환해야 한다", async () => {
+      // Arrange
+      const userId = "test-user-id";
       mockEstimateRequestRepository.hasEstimateFromMover = jest.fn().mockResolvedValue(true);
 
-      const result = await service.hasEstimateFromMover("user123");
+      // Act
+      const result = await service.hasEstimateFromMover(userId);
 
+      // Assert
+      expect(mockEstimateRequestRepository.hasEstimateFromMover).toHaveBeenCalledWith(userId);
       expect(result).toBe(true);
-      expect(mockEstimateRequestRepository.hasEstimateFromMover).toHaveBeenCalledWith("user123");
     });
 
-    it("should return false when no movers have submitted estimates", async () => {
+    it("기사님이 견적을 제출하지 않았으면 false를 반환해야 한다", async () => {
+      // Arrange
+      const userId = "test-user-id";
       mockEstimateRequestRepository.hasEstimateFromMover = jest.fn().mockResolvedValue(false);
 
-      const result = await service.hasEstimateFromMover("user123");
+      // Act
+      const result = await service.hasEstimateFromMover(userId);
 
+      // Assert
+      expect(mockEstimateRequestRepository.hasEstimateFromMover).toHaveBeenCalledWith(userId);
       expect(result).toBe(false);
-      expect(mockEstimateRequestRepository.hasEstimateFromMover).toHaveBeenCalledWith("user123");
     });
   });
 
   describe("getActiveEstimateRequestByUserId", () => {
-    it("should return active estimate request when exists", async () => {
-      const mockRequest = {
-        id: "request123",
-        customerId: "user123",
+    it("활성 견적 요청을 성공적으로 반환해야 한다", async () => {
+      // Arrange
+      const userId = "test-user-id";
+      const mockActiveRequest = {
+        id: "request-id",
+        customerId: "test-user-id",
         moveType: "HOME",
-        moveDate: new Date("2025-12-31"),
-        fromAddressId: "address1",
-        toAddressId: "address2",
+        moveDate: new Date("2024-12-25"),
+        fromAddressId: "from-address-id",
+        toAddressId: "to-address-id",
+        description: "테스트 이사",
         status: "PENDING",
-        description: "Test request",
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
         fromAddress: {
           zoneCode: "06123",
           city: "강남구",
-          district: "역삼동",
-          detail: "테헤란로 123",
+          district: "테헤란로",
+          detail: "456동 789호",
           region: "SEOUL",
           deletedAt: null,
         },
         toAddress: {
-          zoneCode: "13561",
-          city: "분당구",
-          district: "정자동",
-          detail: "판교로 456",
-          region: "GYEONGGI",
+          zoneCode: "06124",
+          city: "서초구",
+          district: "서초대로",
+          detail: "789동 101호",
+          region: "SEOUL",
           deletedAt: null,
         },
       };
+      mockEstimateRequestRepository.getActiveEstimateRequestByUserId = jest.fn().mockResolvedValue(mockActiveRequest);
 
-      mockEstimateRequestRepository.getActiveEstimateRequestByUserId = jest.fn().mockResolvedValue(mockRequest);
+      // Act
+      const result = await service.getActiveEstimateRequestByUserId(userId);
 
-      const result = await service.getActiveEstimateRequestByUserId("user123");
-
-      expect(result).toEqual(mockRequest);
-      expect(mockEstimateRequestRepository.getActiveEstimateRequestByUserId).toHaveBeenCalledWith("user123");
+      // Assert
+      expect(mockEstimateRequestRepository.getActiveEstimateRequestByUserId).toHaveBeenCalledWith(userId);
+      expect(result).toEqual(mockActiveRequest);
     });
 
-    it("should return null when no active estimate request exists", async () => {
+    it("활성 견적 요청이 없으면 null을 반환해야 한다", async () => {
+      // Arrange
+      const userId = "test-user-id";
       mockEstimateRequestRepository.getActiveEstimateRequestByUserId = jest.fn().mockResolvedValue(null);
 
-      const result = await service.getActiveEstimateRequestByUserId("user123");
+      // Act
+      const result = await service.getActiveEstimateRequestByUserId(userId);
 
+      // Assert
+      expect(mockEstimateRequestRepository.getActiveEstimateRequestByUserId).toHaveBeenCalledWith(userId);
       expect(result).toBeNull();
-      expect(mockEstimateRequestRepository.getActiveEstimateRequestByUserId).toHaveBeenCalledWith("user123");
     });
   });
 
   describe("createEstimateRequest", () => {
-    it("should create estimate request successfully", async () => {
-      const mockParams = {
-        userId: "user123",
-        movingType: "home",
-        movingDate: "2025-12-31",
-        departure: {
-          roadAddress: "서울 강남구 테헤란로 123",
-          detailAddress: "456호",
-          zoneCode: "06123",
-        },
-        arrival: {
-          roadAddress: "경기 성남시 분당구 판교로 456",
-          detailAddress: "789호",
-          zoneCode: "13561",
-        },
-        description: "Test request",
-      };
+    const validParams = {
+      userId: "test-user-id",
+      movingType: "home",
+      movingDate: "2024-12-25",
+      departure: {
+        roadAddress: "서울특별시 강남구 테헤란로 123",
+        detailAddress: "456동 789호",
+        zoneCode: "06123",
+      },
+      arrival: {
+        roadAddress: "서울특별시 서초구 서초대로 456",
+        detailAddress: "789동 101호",
+        zoneCode: "06124",
+      },
+      description: "테스트 이사",
+    };
 
-      const mockFromAddress = { id: "address1" };
-      const mockToAddress = { id: "address2" };
+    it("성공적으로 견적 요청을 생성해야 한다", async () => {
+      // Arrange
+      const mockParsedDeparture = {
+        zoneCode: "06123",
+        city: "강남구",
+        district: "테헤란로",
+        region: "SEOUL",
+        detail: "456동 789호",
+      };
+      const mockParsedArrival = {
+        zoneCode: "06124",
+        city: "서초구",
+        district: "서초대로",
+        region: "SEOUL",
+        detail: "789동 101호",
+      };
       const mockCreatedRequest = {
-        id: "request123",
-        customerId: "user123",
+        id: "request-id",
+        customerId: "test-user-id",
         moveType: "HOME",
-        moveDate: new Date("2025-12-31"),
-        fromAddressId: "address1",
-        toAddressId: "address2",
+        moveDate: new Date("2024-12-25"),
+        fromAddressId: "from-address-id",
+        toAddressId: "to-address-id",
+        description: "테스트 이사",
         status: "PENDING",
-        description: "Test request",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      // Mock the private method
-      const processAddressSpy = jest.spyOn(service as any, "processAddress");
-      processAddressSpy.mockResolvedValueOnce(mockFromAddress).mockResolvedValueOnce(mockToAddress);
-
+      mockParseAddress.mockReturnValueOnce(mockParsedDeparture).mockReturnValueOnce(mockParsedArrival);
+      mockEstimateRequestRepository.findOrCreateAddress = jest
+        .fn()
+        .mockResolvedValueOnce({ id: "from-address-id" })
+        .mockResolvedValueOnce({ id: "to-address-id" });
       mockEstimateRequestRepository.createEstimateRequest = jest.fn().mockResolvedValue(mockCreatedRequest);
 
-      const result = await service.createEstimateRequest(mockParams);
+      // Act
+      const result = await service.createEstimateRequest(validParams);
 
-      expect(result).toEqual(mockCreatedRequest);
-      expect(processAddressSpy).toHaveBeenCalledTimes(2);
+      // Assert
+      expect(mockParseAddress).toHaveBeenCalledTimes(2);
+      expect(mockParseAddress).toHaveBeenCalledWith({
+        roadAddress: "서울특별시 강남구 테헤란로 123",
+        detailAddress: "456동 789호",
+        zoneCode: "06123",
+      });
+      expect(mockParseAddress).toHaveBeenCalledWith({
+        roadAddress: "서울특별시 서초구 서초대로 456",
+        detailAddress: "789동 101호",
+        zoneCode: "06124",
+      });
+      expect(mockEstimateRequestRepository.findOrCreateAddress).toHaveBeenCalledTimes(2);
+      expect(mockEstimateRequestRepository.findOrCreateAddress).toHaveBeenCalledWith(mockParsedDeparture);
+      expect(mockEstimateRequestRepository.findOrCreateAddress).toHaveBeenCalledWith(mockParsedArrival);
       expect(mockEstimateRequestRepository.createEstimateRequest).toHaveBeenCalledWith(
         {
           moveType: "HOME",
-          moveDate: "2025-12-31",
-          fromAddressId: "address1",
-          toAddressId: "address2",
-          description: "Test request",
+          moveDate: "2024-12-25",
+          fromAddressId: "from-address-id",
+          toAddressId: "to-address-id",
+          description: "테스트 이사",
         },
-        "user123",
+        "test-user-id",
+      );
+      expect(result).toEqual(mockCreatedRequest);
+    });
+
+    it("이사 종류를 대문자로 변환해야 한다", async () => {
+      // Arrange
+      const paramsWithLowerCase = {
+        ...validParams,
+        movingType: "office",
+      };
+      const mockParsedAddress = {
+        zoneCode: "06123",
+        city: "강남구",
+        district: "테헤란로",
+        region: "SEOUL",
+        detail: "456동 789호",
+      };
+      const mockCreatedRequest = {
+        id: "request-id",
+        moveType: "OFFICE",
+      };
+
+      mockParseAddress.mockReturnValue(mockParsedAddress);
+      mockEstimateRequestRepository.findOrCreateAddress = jest.fn().mockResolvedValue({ id: "address-id" });
+      mockEstimateRequestRepository.createEstimateRequest = jest.fn().mockResolvedValue(mockCreatedRequest);
+
+      // Act
+      await service.createEstimateRequest(paramsWithLowerCase);
+
+      // Assert
+      expect(mockEstimateRequestRepository.createEstimateRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          moveType: "OFFICE",
+        }),
+        "test-user-id",
       );
     });
 
-    it("should throw error when address processing fails", async () => {
-      const mockParams = {
-        userId: "user123",
-        movingType: "home",
-        movingDate: "2025-12-31",
-        departure: {
-          roadAddress: "서울 강남구 테헤란로 123",
-          detailAddress: "456호",
-          zoneCode: "06123",
-        },
-        arrival: {
-          roadAddress: "경기 성남시 분당구 판교로 456",
-          detailAddress: "789호",
-          zoneCode: "13561",
-        },
-        description: "Test request",
+    it("주소 처리 중 에러가 발생하면 에러를 전파해야 한다", async () => {
+      // Arrange
+      const mockError = new Error("주소 처리 중 오류 발생");
+      mockParseAddress.mockImplementation(() => {
+        throw mockError;
+      });
+
+      // Act & Assert
+      await expect(service.createEstimateRequest(validParams)).rejects.toThrow("주소 처리 중 오류 발생");
+    });
+
+    it("레포지토리 에러를 올바르게 전파해야 한다", async () => {
+      // Arrange
+      const mockParsedAddress = {
+        zoneCode: "06123",
+        city: "강남구",
+        district: "테헤란로",
+        region: "SEOUL",
+        detail: "456동 789호",
       };
+      const mockError = new Error("데이터베이스 오류");
 
-      const processAddressSpy = jest.spyOn(service as any, "processAddress");
-      processAddressSpy.mockRejectedValue(new Error("주소 처리 실패"));
+      mockParseAddress.mockReturnValue(mockParsedAddress);
+      mockEstimateRequestRepository.findOrCreateAddress = jest.fn().mockRejectedValue(mockError);
 
-      await expect(service.createEstimateRequest(mockParams)).rejects.toThrow("주소 처리 실패");
+      // Act & Assert
+      await expect(service.createEstimateRequest(validParams)).rejects.toThrow("데이터베이스 오류");
     });
   });
 
   describe("updateActiveEstimateRequest", () => {
-    it("should update estimate request successfully", async () => {
-      const mockRequestId = "request123";
-      const mockUpdateData = {
-        movingType: "office",
-        movingDate: "2025-12-31",
-        description: "Updated request",
-      };
+    const updateData = {
+      movingType: "office",
+      movingDate: "2024-12-26",
+      departure: {
+        roadAddress: "서울특별시 강남구 테헤란로 456",
+        detailAddress: "789동 101호",
+        zoneCode: "06125",
+      },
+      arrival: {
+        roadAddress: "서울특별시 서초구 서초대로 789",
+        detailAddress: "101동 202호",
+        zoneCode: "06126",
+      },
+      description: "수정된 이사",
+    };
 
+    it("성공적으로 견적 요청을 수정해야 한다", async () => {
+      // Arrange
+      const requestId = "request-id";
+      const mockCurrentRequest = {
+        id: requestId,
+        fromAddressId: "old-from-address-id",
+        toAddressId: "old-to-address-id",
+      };
+      const mockParsedDeparture = {
+        zoneCode: "06125",
+        city: "강남구",
+        district: "테헤란로",
+        region: "SEOUL",
+        detail: "789동 101호",
+      };
+      const mockParsedArrival = {
+        zoneCode: "06126",
+        city: "서초구",
+        district: "서초대로",
+        region: "SEOUL",
+        detail: "101동 202호",
+      };
       const mockUpdatedRequest = {
-        id: "request123",
-        customerId: "user123",
+        id: requestId,
         moveType: "OFFICE",
-        moveDate: new Date("2025-12-31"),
-        fromAddressId: "address1",
-        toAddressId: "address2",
-        status: "PENDING",
-        description: "Updated request",
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        moveDate: new Date("2024-12-26"),
+        fromAddressId: "new-from-address-id",
+        toAddressId: "new-to-address-id",
+        description: "수정된 이사",
       };
 
-      mockEstimateRequestRepository.getEstimateRequestById = jest.fn().mockResolvedValue({
-        id: "request123",
-        fromAddressId: "address1",
-        toAddressId: "address2",
-      });
-
-      const processAddressSpy = jest.spyOn(service as any, "processAddress");
-      processAddressSpy.mockResolvedValue({ id: "address3" });
-
+      mockEstimateRequestRepository.getEstimateRequestById = jest.fn().mockResolvedValue(mockCurrentRequest);
+      mockParseAddress.mockReturnValueOnce(mockParsedDeparture).mockReturnValueOnce(mockParsedArrival);
+      mockEstimateRequestRepository.findOrCreateAddress = jest
+        .fn()
+        .mockResolvedValueOnce({ id: "new-from-address-id" })
+        .mockResolvedValueOnce({ id: "new-to-address-id" });
       mockEstimateRequestRepository.updateEstimateRequest = jest.fn().mockResolvedValue(mockUpdatedRequest);
-      mockEstimateRequestRepository.softDeleteAddress = jest.fn().mockResolvedValue();
+      mockEstimateRequestRepository.softDeleteAddress = jest.fn().mockResolvedValue(undefined);
 
-      const result = await service.updateActiveEstimateRequest(mockRequestId, mockUpdateData);
+      // Act
+      const result = await service.updateActiveEstimateRequest(requestId, updateData);
 
+      // Assert
+      expect(mockEstimateRequestRepository.getEstimateRequestById).toHaveBeenCalledWith(requestId);
+      expect(mockParseAddress).toHaveBeenCalledTimes(2);
+      expect(mockEstimateRequestRepository.findOrCreateAddress).toHaveBeenCalledTimes(2);
+      expect(mockEstimateRequestRepository.updateEstimateRequest).toHaveBeenCalledWith(requestId, {
+        moveType: "OFFICE",
+        moveDate: new Date("2024-12-26"),
+        fromAddressId: "new-from-address-id",
+        toAddressId: "new-to-address-id",
+        description: "수정된 이사",
+      });
+      expect(mockEstimateRequestRepository.softDeleteAddress).toHaveBeenCalledTimes(2);
+      expect(mockEstimateRequestRepository.softDeleteAddress).toHaveBeenCalledWith("old-from-address-id");
+      expect(mockEstimateRequestRepository.softDeleteAddress).toHaveBeenCalledWith("old-to-address-id");
       expect(result).toEqual(mockUpdatedRequest);
-      expect(mockEstimateRequestRepository.updateEstimateRequest).toHaveBeenCalled();
     });
 
-    it("should throw error when estimate request not found", async () => {
-      const mockRequestId = "request123";
-      const mockUpdateData = {
-        movingType: "office",
-        departure: {
-          roadAddress: "서울 강남구 테헤란로 123",
-          detailAddress: "456호",
-          zoneCode: "06123",
-        },
-      };
-
+    it("견적 요청을 찾을 수 없으면 에러를 던져야 한다", async () => {
+      // Arrange
+      const requestId = "request-id";
       mockEstimateRequestRepository.getEstimateRequestById = jest.fn().mockResolvedValue(null);
 
-      await expect(service.updateActiveEstimateRequest(mockRequestId, mockUpdateData)).rejects.toThrow(
+      // Act & Assert
+      await expect(service.updateActiveEstimateRequest(requestId, updateData)).rejects.toThrow(
         "견적 요청을 찾을 수 없습니다.",
       );
+    });
+
+    it("주소 정보 없이 수정할 때도 성공해야 한다", async () => {
+      // Arrange
+      const requestId = "request-id";
+      const updateDataWithoutAddress = {
+        movingType: "office",
+        movingDate: "2024-12-26",
+        description: "수정된 이사",
+      };
+      const mockUpdatedRequest = {
+        id: requestId,
+        moveType: "OFFICE",
+        moveDate: new Date("2024-12-26"),
+        description: "수정된 이사",
+      };
+
+      mockEstimateRequestRepository.updateEstimateRequest = jest.fn().mockResolvedValue(mockUpdatedRequest);
+
+      // Act
+      const result = await service.updateActiveEstimateRequest(requestId, updateDataWithoutAddress);
+
+      // Assert
+      expect(mockEstimateRequestRepository.updateEstimateRequest).toHaveBeenCalledWith(requestId, {
+        moveType: "OFFICE",
+        moveDate: new Date("2024-12-26"),
+        description: "수정된 이사",
+      });
+      expect(result).toEqual(mockUpdatedRequest);
+    });
+
+    it("출발지만 수정할 때 올바르게 처리해야 한다", async () => {
+      // Arrange
+      const requestId = "request-id";
+      const updateDataOnlyDeparture = {
+        departure: {
+          roadAddress: "서울특별시 강남구 테헤란로 456",
+          detailAddress: "789동 101호",
+          zoneCode: "06125",
+        },
+      };
+      const mockCurrentRequest = {
+        id: requestId,
+        fromAddressId: "old-from-address-id",
+        toAddressId: "old-to-address-id",
+      };
+      const mockParsedDeparture = {
+        zoneCode: "06125",
+        city: "강남구",
+        district: "테헤란로",
+        region: "SEOUL",
+        detail: "789동 101호",
+      };
+      const mockUpdatedRequest = {
+        id: requestId,
+        fromAddressId: "new-from-address-id",
+      };
+
+      mockEstimateRequestRepository.getEstimateRequestById = jest.fn().mockResolvedValue(mockCurrentRequest);
+      mockParseAddress.mockReturnValue(mockParsedDeparture);
+      mockEstimateRequestRepository.findOrCreateAddress = jest.fn().mockResolvedValue({ id: "new-from-address-id" });
+      mockEstimateRequestRepository.updateEstimateRequest = jest.fn().mockResolvedValue(mockUpdatedRequest);
+      mockEstimateRequestRepository.softDeleteAddress = jest.fn().mockResolvedValue(undefined);
+
+      // Act
+      const result = await service.updateActiveEstimateRequest(requestId, updateDataOnlyDeparture);
+
+      // Assert
+      expect(mockEstimateRequestRepository.findOrCreateAddress).toHaveBeenCalledTimes(1);
+      expect(mockEstimateRequestRepository.updateEstimateRequest).toHaveBeenCalledWith(requestId, {
+        fromAddressId: "new-from-address-id",
+      });
+      expect(mockEstimateRequestRepository.softDeleteAddress).toHaveBeenCalledTimes(1);
+      expect(mockEstimateRequestRepository.softDeleteAddress).toHaveBeenCalledWith("old-from-address-id");
+      expect(result).toEqual(mockUpdatedRequest);
+    });
+
+    it("도착지만 수정할 때 올바르게 처리해야 한다", async () => {
+      // Arrange
+      const requestId = "request-id";
+      const updateDataOnlyArrival = {
+        arrival: {
+          roadAddress: "서울특별시 서초구 서초대로 789",
+          detailAddress: "101동 202호",
+          zoneCode: "06126",
+        },
+      };
+      const mockCurrentRequest = {
+        id: requestId,
+        fromAddressId: "old-from-address-id",
+        toAddressId: "old-to-address-id",
+      };
+      const mockParsedArrival = {
+        zoneCode: "06126",
+        city: "서초구",
+        district: "서초대로",
+        region: "SEOUL",
+        detail: "101동 202호",
+      };
+      const mockUpdatedRequest = {
+        id: requestId,
+        toAddressId: "new-to-address-id",
+      };
+
+      mockEstimateRequestRepository.getEstimateRequestById = jest.fn().mockResolvedValue(mockCurrentRequest);
+      mockParseAddress.mockReturnValue(mockParsedArrival);
+      mockEstimateRequestRepository.findOrCreateAddress = jest.fn().mockResolvedValue({ id: "new-to-address-id" });
+      mockEstimateRequestRepository.updateEstimateRequest = jest.fn().mockResolvedValue(mockUpdatedRequest);
+      mockEstimateRequestRepository.softDeleteAddress = jest.fn().mockResolvedValue(undefined);
+
+      // Act
+      const result = await service.updateActiveEstimateRequest(requestId, updateDataOnlyArrival);
+
+      // Assert
+      expect(mockEstimateRequestRepository.findOrCreateAddress).toHaveBeenCalledTimes(1);
+      expect(mockEstimateRequestRepository.updateEstimateRequest).toHaveBeenCalledWith(requestId, {
+        toAddressId: "new-to-address-id",
+      });
+      expect(mockEstimateRequestRepository.softDeleteAddress).toHaveBeenCalledTimes(1);
+      expect(mockEstimateRequestRepository.softDeleteAddress).toHaveBeenCalledWith("old-to-address-id");
+      expect(result).toEqual(mockUpdatedRequest);
+    });
+
+    it("이사 종류를 대문자로 변환해야 한다", async () => {
+      // Arrange
+      const requestId = "request-id";
+      const updateDataWithLowerCase = {
+        movingType: "small",
+      };
+      const mockUpdatedRequest = {
+        id: requestId,
+        moveType: "SMALL",
+      };
+
+      mockEstimateRequestRepository.updateEstimateRequest = jest.fn().mockResolvedValue(mockUpdatedRequest);
+
+      // Act
+      await service.updateActiveEstimateRequest(requestId, updateDataWithLowerCase);
+
+      // Assert
+      expect(mockEstimateRequestRepository.updateEstimateRequest).toHaveBeenCalledWith(requestId, {
+        moveType: "SMALL",
+      });
+    });
+
+    it("날짜를 Date 객체로 변환해야 한다", async () => {
+      // Arrange
+      const requestId = "request-id";
+      const updateDataWithDate = {
+        movingDate: "2024-12-26",
+      };
+      const mockUpdatedRequest = {
+        id: requestId,
+        moveDate: new Date("2024-12-26"),
+      };
+
+      mockEstimateRequestRepository.updateEstimateRequest = jest.fn().mockResolvedValue(mockUpdatedRequest);
+
+      // Act
+      await service.updateActiveEstimateRequest(requestId, updateDataWithDate);
+
+      // Assert
+      expect(mockEstimateRequestRepository.updateEstimateRequest).toHaveBeenCalledWith(requestId, {
+        moveDate: new Date("2024-12-26"),
+      });
+    });
+
+    it("description이 undefined일 때도 올바르게 처리해야 한다", async () => {
+      // Arrange
+      const requestId = "request-id";
+      const updateDataWithUndefinedDescription = {
+        description: undefined,
+      };
+      const mockUpdatedRequest = {
+        id: requestId,
+        description: undefined,
+      };
+
+      mockEstimateRequestRepository.updateEstimateRequest = jest.fn().mockResolvedValue(mockUpdatedRequest);
+
+      // Act
+      await service.updateActiveEstimateRequest(requestId, updateDataWithUndefinedDescription);
+
+      // Assert
+      expect(mockEstimateRequestRepository.updateEstimateRequest).toHaveBeenCalledWith(requestId, {
+        description: undefined,
+      });
     });
   });
 
   describe("cancelActiveEstimateRequest", () => {
-    it("should cancel estimate request successfully", async () => {
-      const mockRequestId = "request123";
+    it("성공적으로 견적 요청을 취소해야 한다", async () => {
+      // Arrange
+      const requestId = "request-id";
       const mockCancelledRequest = {
-        id: "request123",
-        customerId: "user123",
-        moveType: "HOME",
-        moveDate: new Date("2025-12-31"),
-        fromAddressId: "address1",
-        toAddressId: "address2",
+        id: requestId,
         status: "CANCELLED",
-        description: "Cancelled request",
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        deletedAt: new Date(),
       };
 
       mockEstimateRequestRepository.cancelEstimateRequest = jest.fn().mockResolvedValue(mockCancelledRequest);
 
-      const result = await service.cancelActiveEstimateRequest(mockRequestId);
+      // Act
+      const result = await service.cancelActiveEstimateRequest(requestId);
 
+      // Assert
+      expect(mockEstimateRequestRepository.cancelEstimateRequest).toHaveBeenCalledWith(requestId);
       expect(result).toEqual(mockCancelledRequest);
-      expect(mockEstimateRequestRepository.cancelEstimateRequest).toHaveBeenCalledWith(mockRequestId);
+    });
+
+    it("레포지토리 에러를 올바르게 전파해야 한다", async () => {
+      // Arrange
+      const requestId = "request-id";
+      const mockError = new Error("견적 요청을 찾을 수 없습니다.");
+      mockEstimateRequestRepository.cancelEstimateRequest = jest.fn().mockRejectedValue(mockError);
+
+      // Act & Assert
+      await expect(service.cancelActiveEstimateRequest(requestId)).rejects.toThrow("견적 요청을 찾을 수 없습니다.");
+      expect(mockEstimateRequestRepository.cancelEstimateRequest).toHaveBeenCalledWith(requestId);
     });
   });
 });
