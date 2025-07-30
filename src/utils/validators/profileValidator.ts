@@ -163,19 +163,4 @@ export const validateMoverProfileData = async (
   } else if (!profileData.detailIntro) {
     throw new ValidationError(PROFILE_ERROR_MESSAGES.DESCRIPTION_REQUIRED);
   }
-
-  // 7. 프로필 이미지 유효성 검사 (선택사항, URL 형식 체크)
-  if (profileData.moverImage !== undefined && profileData.moverImage !== null) {
-    if (profileData.moverImage.trim().length === 0) {
-      throw new ValidationError("프로필 이미지 URL이 유효하지 않습니다");
-    }
-    // URL 형식 간단 검증
-    try {
-      new URL(profileData.moverImage);
-    } catch {
-      throw new ValidationError(
-        "프로필 이미지는 유효한 URL 형식이어야 합니다 "
-      );
-    }
-  }
 };
