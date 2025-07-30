@@ -16,7 +16,8 @@
     "ssh": "dotenv -- bash -c 'ssh -i \"$SSH_KEY_PATH\" -L 5432:$DB_HOST:5432 $EC2_USER@$EC2_HOST'",
     "format": "prettier --write \"src/**/*.{ts,js,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
-    "test": "jest"
+    "test": "jest",
+    "test:coverage": "jest --collectCoverage"
   },
   "keywords": [
     "nodejs",
