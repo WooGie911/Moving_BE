@@ -187,7 +187,7 @@ const signup = async ({
   return {
     id: user.id,
     userName: user.name,
-    userType: userTypeResponse,
+    userType,
     accessToken,
     refreshToken,
   };

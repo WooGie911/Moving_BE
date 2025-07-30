@@ -164,7 +164,7 @@ const updateMoverProfile = async (
 ) => {
   // currentAreas 배열을 그대로 사용
   const data = {
-    ...updateData
+    ...updateData,
   };
 
   return await prisma.user.update({
