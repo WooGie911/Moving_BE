@@ -1,9 +1,7 @@
 // @ts-nocheck
-// @jest-environment node
 
 import favoriteService from "./favorite.service";
 
-// Repository 완전 모킹
 jest.mock("../repositories/favorite.repository", () => ({
   getFavoriteStatus: jest.fn(),
   addFavorite: jest.fn(),
@@ -26,7 +24,6 @@ describe("FavoriteService - 유닛 테스트", () => {
       const customerId = "customer-1";
       const moverId = "mover-1";
 
-      // 현재 상태: 찜하지 않은 상태
       mockFavoriteRepository.getFavoriteStatus
         .mockResolvedValueOnce({
           isFavorited: false,
@@ -104,7 +101,6 @@ describe("FavoriteService - 유닛 테스트", () => {
       const customerId = "customer-1";
       const moverId = "mover-1";
 
-      // 현재 상태: 찜한 상태
       mockFavoriteRepository.getFavoriteStatus
         .mockResolvedValueOnce({
           isFavorited: true,

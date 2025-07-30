@@ -1,15 +1,10 @@
-// @ts-nocheck
-// @jest-environment node
-
 import favoriteController from "./favorite.controller";
 
-// Service 완전 모킹
 jest.mock("../services/favorite.service", () => ({
   addFavorite: jest.fn(),
   removeFavorite: jest.fn(),
 }));
 
-// Repository 모킹
 jest.mock("../repositories/favorite.repository", () => ({
   getFavoriteStatus: jest.fn(),
 }));

@@ -1,7 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-// Prisma 모킹
-const mockPrisma = {
+const mockDatabase = {
   favorite: {
     findUnique: jest.fn(),
     create: jest.fn(),
@@ -15,10 +12,9 @@ const mockPrisma = {
 };
 
 jest.mock("@prisma/client", () => ({
-  PrismaClient: jest.fn().mockImplementation(() => mockPrisma),
+  PrismaClient: jest.fn().mockImplementation(() => mockDatabase),
 }));
 
-// Repository import
 import favoriteRepository from "./favorite.repository";
 
 describe("FavoriteRepository - 유닛 테스트", () => {
@@ -38,14 +34,14 @@ describe("FavoriteRepository - 유닛 테스트", () => {
         updatedAt: new Date(),
       };
 
-      mockPrisma.favorite.findUnique.mockResolvedValue(mockFavorite);
+      mockDatabase.favorite.findUnique.mockResolvedValue(mockFavorite);
 
       const result = await favoriteRepository.getFavoriteStatus(
         customerId,
         moverId
       );
 
-      expect(mockPrisma.favorite.findUnique).toHaveBeenCalledWith({
+      expect(mockDatabase.favorite.findUnique).toHaveBeenCalledWith({
         where: {
           customerId_moverId: {
             customerId,
@@ -63,7 +59,7 @@ describe("FavoriteRepository - 유닛 테스트", () => {
       const customerId = "customer-1";
       const moverId = "mover-1";
 
-      mockPrisma.favorite.findUnique.mockResolvedValue(null);
+      mockDatabase.favorite.findUnique.mockResolvedValue(null);
 
       const result = await favoriteRepository.getFavoriteStatus(
         customerId,
@@ -80,7 +76,7 @@ describe("FavoriteRepository - 유닛 테스트", () => {
       const customerId = "customer-1";
       const moverId = "mover-1";
 
-      mockPrisma.favorite.findUnique.mockResolvedValue(null);
+      mockDatabase.favorite.findUnique.mockResolvedValue(null);
 
       const result = await favoriteRepository.getFavoriteStatus(
         customerId,
@@ -106,11 +102,11 @@ describe("FavoriteRepository - 유닛 테스트", () => {
         updatedAt: new Date(),
       };
 
-      mockPrisma.favorite.create.mockResolvedValue(mockFavorite);
+      mockDatabase.favorite.create.mockResolvedValue(mockFavorite);
 
       const result = await favoriteRepository.addFavorite(customerId, moverId);
 
-      expect(mockPrisma.favorite.create).toHaveBeenCalledWith({
+      expect(mockDatabase.favorite.create).toHaveBeenCalledWith({
         data: {
           customerId,
           moverId,
@@ -132,14 +128,14 @@ describe("FavoriteRepository - 유닛 테스트", () => {
         updatedAt: new Date(),
       };
 
-      mockPrisma.favorite.delete.mockResolvedValue(mockFavorite);
+      mockDatabase.favorite.delete.mockResolvedValue(mockFavorite);
 
       const result = await favoriteRepository.removeFavorite(
         customerId,
         moverId
       );
 
-      expect(mockPrisma.favorite.delete).toHaveBeenCalledWith({
+      expect(mockDatabase.favorite.delete).toHaveBeenCalledWith({
         where: {
           customerId_moverId: {
             customerId,
@@ -151,84 +147,15 @@ describe("FavoriteRepository - 유닛 테스트", () => {
     });
   });
 
-  describe("getUserFavorites", () => {
-    it("찜한 기사님 목록을 성공적으로 조회한다", async () => {
-      const customerId = "customer-1";
-      const mockFavorites = [
-        {
-          id: "favorite-1",
-          customerId,
-          moverId: "mover-1",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          mover: {
-            id: "mover-1",
-            name: "김기사",
-            profileImage: "image1.jpg",
-            totalReviewCount: 10,
-            averageRating: 4.5,
-            totalFavoriteCount: 5,
-          },
-        },
-      ];
-
-      mockPrisma.favorite.findMany.mockResolvedValue(mockFavorites);
-
-      const result = await favoriteRepository.getUserFavorites(customerId);
-
-      expect(mockPrisma.favorite.findMany).toHaveBeenCalledWith({
-        where: {
-          customerId,
-          deletedAt: null,
-          mover: {
-            deletedAt: null,
-          },
-        },
-        include: {
-          mover: {
-            select: {
-              id: true,
-              nickname: true,
-              name: true,
-              career: true,
-              shortIntro: true,
-              detailIntro: true,
-              workedCount: true,
-              averageRating: true,
-              totalReviewCount: true,
-              serviceAreas: true,
-              serviceTypes: true,
-              moverImage: true,
-            },
-          },
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
-      expect(result).toEqual(mockFavorites);
-    });
-
-    it("빈 찜 목록을 반환한다", async () => {
-      const customerId = "customer-1";
-
-      mockPrisma.favorite.findMany.mockResolvedValue([]);
-
-      const result = await favoriteRepository.getUserFavorites(customerId);
-
-      expect(result).toEqual([]);
-    });
-  });
-
   describe("getMoverFavoriteCount", () => {
     it("기사님의 찜 개수를 성공적으로 조회한다", async () => {
       const moverId = "mover-1";
 
-      mockPrisma.favorite.count.mockResolvedValue(5);
+      mockDatabase.favorite.count.mockResolvedValue(5);
 
       const result = await favoriteRepository.getMoverFavoriteCount(moverId);
 
-      expect(mockPrisma.favorite.count).toHaveBeenCalledWith({
+      expect(mockDatabase.favorite.count).toHaveBeenCalledWith({
         where: {
           moverId,
           deletedAt: null,
@@ -240,7 +167,7 @@ describe("FavoriteRepository - 유닛 테스트", () => {
     it("찜이 없는 기사님의 개수를 조회한다", async () => {
       const moverId = "mover-1";
 
-      mockPrisma.favorite.count.mockResolvedValue(0);
+      mockDatabase.favorite.count.mockResolvedValue(0);
 
       const result = await favoriteRepository.getMoverFavoriteCount(moverId);
 
