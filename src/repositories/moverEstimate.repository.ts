@@ -265,15 +265,6 @@ const moverEstimateRepository = {
         where.moveType = movingType;
       }
 
-      where.NOT = {
-        estimates: {
-          some: {
-            moverId: moverId,
-            status: { in: ["PROPOSED", "REJECTED"] },
-          },
-        },
-      };
-
       switch (sortBy) {
         case "moveDate":
           orderBy = { moveDate: "asc" };

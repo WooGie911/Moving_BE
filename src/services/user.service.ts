@@ -86,6 +86,11 @@ const getProfileData = async (userId: string, userType: TUserRole) => {
     return { ...rest, phoneNumber };
   } else if (userType === "MOVER") {
     const profile = await getMoverProfile(userId);
+
+    if (!profile) {
+      throw new NotFoundError(PROFILE_ERROR_MESSAGES.PROFILE_NOT_FOUND);
+    }
+
     return profile;
   }
 };
