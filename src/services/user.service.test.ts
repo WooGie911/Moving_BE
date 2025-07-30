@@ -21,7 +21,7 @@ describe("userService.userInfo", () => {
     jest.clearAllMocks();
   });
 
-  test("CUSTOMER 유저 정보 조회 성공", async () => {
+  it("CUSTOMER 유저 정보 조회 성공", async () => {
     // Setup
     const plainPhoneNumber = "01012345678";
     // 실제 전화번호 암호화
@@ -61,7 +61,7 @@ describe("userService.userInfo", () => {
     expect(user).toEqual(expectedUser);
   });
 
-  test("MOVER 유저 정보 조회 성공", async () => {
+  it("MOVER 유저 정보 조회 성공", async () => {
     // Setup
     const plainPhoneNumber = "01012345678";
     // 실제 전화번호 암호화
@@ -101,7 +101,7 @@ describe("userService.userInfo", () => {
     expect(user).toEqual(expectedUser);
   });
 
-  test("유저 정보 조회 실패 - 유저 정보 없음 NotFoundError(404) 발생", async () => {
+  it("유저 정보 조회 실패 - 유저 정보 없음 NotFoundError(404) 발생", async () => {
     // Setup
     const mockGetUserById = userRepository.getUserById as jest.Mock;
     mockGetUserById.mockResolvedValue(null);
@@ -116,7 +116,7 @@ describe("userService.getProfileData", () => {
     jest.clearAllMocks();
   });
 
-  test("CUSTOMER 프로필 정보 조회 성공", async () => {
+  it("CUSTOMER 프로필 정보 조회 성공", async () => {
     // Setup
     const plainPhoneNumber = "01012345678";
     // 실제 전화번호 암호화
@@ -153,7 +153,7 @@ describe("userService.getProfileData", () => {
     expect(profile).toMatchObject(expectedProfile);
   });
 
-  test("MOVER 프로필 정보 조회 성공", async () => {
+  it("MOVER 프로필 정보 조회 성공", async () => {
     const mockUser = {
       name: "홍길동",
       nickname: "홍길동",
@@ -196,7 +196,7 @@ describe("userService.getProfileData", () => {
     expect(profile).toMatchObject(expectedProfile);
   });
 
-  test("CUSTOMER 프로필 정보 조회 실패 - 프로필 정보 없음 NotFoundError(404) 발생", async () => {
+  it("CUSTOMER 프로필 정보 조회 실패 - 프로필 정보 없음 NotFoundError(404) 발생", async () => {
     // Setup
     const mockGetCustomerProfile =
       userRepository.getCustomerProfile as jest.Mock;
@@ -208,7 +208,7 @@ describe("userService.getProfileData", () => {
     );
   });
 
-  test("MOVER 프로필 정보 조회 실패 - 프로필 정보 없음 NotFoundError(404) 발생", async () => {
+  it("MOVER 프로필 정보 조회 실패 - 프로필 정보 없음 NotFoundError(404) 발생", async () => {
     // Setup
     const mockGetMoverProfile = userRepository.getMoverProfile as jest.Mock;
     mockGetMoverProfile.mockResolvedValue(null);
@@ -223,7 +223,7 @@ describe("userService.createCustomerProfile", () => {
     jest.clearAllMocks();
   });
 
-  test("CUSTOMER 프로필 등록 성공", async () => {
+  it("CUSTOMER 프로필 등록 성공", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -283,7 +283,7 @@ describe("userService.createCustomerProfile", () => {
     expect(profile).toMatchObject(expectedProfile);
   });
 
-  test("CUSTOMER 프로필 등록 실패 - 사용자 존재 확인 실패 NotFoundError(404) 발생", async () => {
+  it("CUSTOMER 프로필 등록 실패 - 사용자 존재 확인 실패 NotFoundError(404) 발생", async () => {
     // Setup
 
     // 사용자 존재 확인 로직 모킹
@@ -301,7 +301,7 @@ describe("userService.createCustomerProfile", () => {
     ).rejects.toThrow(NotFoundError);
   });
 
-  test("CUSTOMER 프로필 등록 실패 - 프로필 생성 데이터 유효성 검사 실패 ValidationError(422) 발생", async () => {
+  it("CUSTOMER 프로필 등록 실패 - 프로필 생성 데이터 유효성 검사 실패 ValidationError(422) 발생", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -347,7 +347,7 @@ describe("userService.updateCustomerProfileCheck", () => {
     jest.clearAllMocks();
   });
 
-  test("CUSTOMER 프로필 수정 성공 - 반환값 없음", async () => {
+  it("CUSTOMER 프로필 수정 성공 - 반환값 없음", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -393,7 +393,7 @@ describe("userService.updateCustomerProfileCheck", () => {
     expect(profile).toBeUndefined();
   });
 
-  test("CUSTOMER 프로필 수정 실패 - 사용자 존재 확인 실패 NotFoundError(404) 발생", async () => {
+  it("CUSTOMER 프로필 수정 실패 - 사용자 존재 확인 실패 NotFoundError(404) 발생", async () => {
     // Setup
 
     const updateUserProfileData = {
@@ -419,7 +419,7 @@ describe("userService.updateCustomerProfileCheck", () => {
     ).rejects.toThrow(NotFoundError);
   });
 
-  test("CUSTOMER 프로필 수정 실패 - 현재 비밀번호 검증 실패 ValidationError(422) 발생", async () => {
+  it("CUSTOMER 프로필 수정 실패 - 현재 비밀번호 검증 실패 ValidationError(422) 발생", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -450,21 +450,5 @@ describe("userService.updateCustomerProfileCheck", () => {
     await expect(
       updateCustomerProfileCheck("1", updateUserProfileData)
     ).rejects.toThrow(ValidationError);
-  });
-});
-
-describe("userService.createMoverProfile", () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-});
-describe("userService.updateMoverBasicInfo", () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-});
-describe("userService.updateMoverProfileCheck", () => {
-  afterEach(() => {
-    jest.clearAllMocks();
   });
 });
