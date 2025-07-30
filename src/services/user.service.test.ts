@@ -9,8 +9,9 @@ import {
   userInfo,
   updateMoverBasicInfo,
   updateMoverProfileCheck,
+  createMoverProfile,
 } from "./user.service";
-import { validateCustomerProfileData } from "../utils/validators/profileValidator";
+import { validateCustomerProfileData, validateMoverProfileData } from "../utils/validators/profileValidator";
 import { MoveType, RegionType } from "../types/user.types";
 import bcrypt from "bcrypt";
 import { validateMoverProfileUpdate } from "../utils/validators/userValidator";
@@ -458,11 +459,6 @@ describe("userService.updateCustomerProfileCheck", () => {
   });
 });
 
-describe("userService.createMoverProfile", () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-});
 describe("userService.updateMoverBasicInfo", () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -1317,5 +1313,295 @@ describe("userService.updateMoverProfileCheck", () => {
     await expect(updateMoverProfileCheck("1", updateData)).rejects.toThrow(ValidationError);
     expect(mockGetUserById).toHaveBeenCalledWith("1");
     expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(updateData, "1");
+  });
+});
+
+
+describe("userService.createMoverProfile", () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test("기사님 프로필 등록 성공 - 모든 필드 포함", async () => {
+    // Setup
+    const mockUser = {
+      id: "1",
+      name: "김기사",
+      email: "mover@test.com",
+      userType: ["MOVER"],
+    };
+
+    const profileData = {
+      nickname: "믿을만한김기사",
+      moverImage: "https://example.com/mover.jpg",
+      career: 5,
+      shortIntro: "5년 경력의 꼼꼼한 이사 전문가입니다",
+      detailIntro: "안전하고 신속한 이사를 약속드립니다. 고객님의 만족을 최우선으로 생각합니다.",
+      currentAreas: ["SEOUL", "INCHEON"] as RegionType[],
+      serviceTypes: ["SMALL", "HOME"] as MoveType[],
+    };
+
+    const expectedResult = {
+      id: "1",
+      name: "김기사",
+      nickname: "믿을만한김기사",
+      moverImage: "https://example.com/mover.jpg",
+      career: 5,
+      shortIntro: "5년 경력의 꼼꼼한 이사 전문가입니다",
+      detailIntro: "안전하고 신속한 이사를 약속드립니다. 고객님의 만족을 최우선으로 생각합니다.",
+      currentAreas: ["SEOUL", "INCHEON"],
+      serviceTypes: ["SMALL", "HOME"],
+      isVeteran: true,
+      workedCount: 0,
+      averageRating: 0,
+      totalReviewCount: 0,
+      totalFavoriteCount: 0,
+    };
+
+    const mockTokens = {
+      newAccessToken: "new_access_token",
+      newRefreshToken: "new_refresh_token",
+    };
+
+    (userRepository.getUserById as jest.Mock).mockResolvedValue(mockUser);
+    (validateMoverProfileData as jest.Mock).mockResolvedValue(undefined);
+    (userRepository.createMoverProfileRepository as jest.Mock).mockResolvedValue(expectedResult);
+    (generateToken as jest.Mock).mockReturnValue(mockTokens);
+
+    // Exercise
+    const result = await createMoverProfile("1", profileData);
+
+    // Assertion
+    expect(userRepository.getUserById).toHaveBeenCalledWith("1");
+    expect(validateMoverProfileData).toHaveBeenCalledWith(profileData, "1");
+    expect(userRepository.createMoverProfileRepository).toHaveBeenCalledWith({
+      userId: "1",
+      nickname: "믿을만한김기사",
+      moverImage: "https://example.com/mover.jpg",
+      career: 5,
+      shortIntro: "5년 경력의 꼼꼼한 이사 전문가입니다",
+      detailIntro: "안전하고 신속한 이사를 약속드립니다. 고객님의 만족을 최우선으로 생각합니다.",
+      currentAreas: ["SEOUL", "INCHEON"],
+      serviceTypes: ["SMALL", "HOME"],
+    });
+    expect(generateToken).toHaveBeenCalledWith({
+      id: "1",
+      name: "김기사",
+      userType: "MOVER",
+      hasProfile: true,
+    });
+    expect(result).toEqual({
+      result: expectedResult,
+      accessToken: "new_access_token",
+      refreshToken: "new_refresh_token",
+    });
+  });
+
+  test("기사님 프로필 등록 성공 - 최소 필드만 포함", async () => {
+    // Setup
+    const mockUser = {
+      id: "1",
+      name: "김기사",
+      email: "mover@test.com",
+      userType: ["MOVER"],
+    };
+
+    const profileData = {
+      nickname: "새로운기사",
+      currentAreas: ["SEOUL"] as RegionType[],
+      serviceTypes: ["SMALL"] as MoveType[],
+    };
+
+    const expectedResult = {
+      id: "1",
+      name: "김기사",
+      nickname: "새로운기사",
+      moverImage: null,
+      career: 0,
+      shortIntro: "",
+      detailIntro: "",
+      currentAreas: ["SEOUL"],
+      serviceTypes: ["SMALL"],
+      isVeteran: null,
+      workedCount: 0,
+      averageRating: 0,
+      totalReviewCount: 0,
+      totalFavoriteCount: 0,
+    };
+
+    const mockTokens = {
+      newAccessToken: "new_access_token",
+      newRefreshToken: "new_refresh_token",
+    };
+
+    (userRepository.getUserById as jest.Mock).mockResolvedValue(mockUser);
+    (validateMoverProfileData as jest.Mock).mockResolvedValue(undefined);
+    (userRepository.createMoverProfileRepository as jest.Mock).mockResolvedValue(expectedResult);
+    (generateToken as jest.Mock).mockReturnValue(mockTokens);
+
+    // Exercise
+    const result = await createMoverProfile("1", profileData);
+
+    // Assertion
+    expect(userRepository.createMoverProfileRepository).toHaveBeenCalledWith({
+      userId: "1",
+      nickname: "새로운기사",
+      moverImage: undefined,
+      career: 0,
+      shortIntro: "",
+      detailIntro: "",
+      currentAreas: ["SEOUL"],
+      serviceTypes: ["SMALL"],
+    });
+    expect(result).toEqual({
+      result: expectedResult,
+      accessToken: "new_access_token",
+      refreshToken: "new_refresh_token",
+    });
+  });
+
+  test("기사님 프로필 등록 실패 - 사용자 존재하지 않음 NotFoundError(404) 발생", async () => {
+    // Setup
+    const profileData = {
+      nickname: "믿을만한김기사",
+      currentAreas: ["SEOUL"] as RegionType[],
+      serviceTypes: ["SMALL"] as MoveType[],
+    };
+
+    (userRepository.getUserById as jest.Mock).mockResolvedValue(null);
+
+    // Assertion
+    await expect(createMoverProfile("1", profileData)).rejects.toThrow(NotFoundError);
+    expect(userRepository.getUserById).toHaveBeenCalledWith("1");
+  });
+
+  test("기사님 프로필 등록 실패 - 유효성 검사 실패 ValidationError(422) 발생", async () => {
+    // Setup
+    const mockUser = {
+      id: "1",
+      name: "김기사",
+      email: "mover@test.com",
+      userType: ["MOVER"],
+    };
+
+    const profileData = {
+      nickname: "믿을만한김기사",
+      currentAreas: ["INVALID_REGION" as any], // 잘못된 지역
+      serviceTypes: ["SMALL"] as MoveType[],
+    };
+
+    (userRepository.getUserById as jest.Mock).mockResolvedValue(mockUser);
+    (validateMoverProfileData as jest.Mock).mockRejectedValue(
+      new ValidationError("유효하지 않은 지역입니다")
+    );
+
+    // Assertion
+    await expect(createMoverProfile("1", profileData)).rejects.toThrow(ValidationError);
+    expect(userRepository.getUserById).toHaveBeenCalledWith("1");
+    expect(validateMoverProfileData).toHaveBeenCalledWith(profileData, "1");
+  });
+
+  test("기사님 프로필 등록 실패 - 닉네임 중복 ValidationError(422) 발생", async () => {
+    // Setup
+    const mockUser = {
+      id: "1",
+      name: "김기사",
+      email: "mover@test.com",
+      userType: ["MOVER"],
+    };
+
+    const profileData = {
+      nickname: "이미존재하는닉네임",
+      currentAreas: ["SEOUL"] as RegionType[],
+      serviceTypes: ["SMALL"] as MoveType[],
+    };
+
+    (userRepository.getUserById as jest.Mock).mockResolvedValue(mockUser);
+    (validateMoverProfileData as jest.Mock).mockRejectedValue(
+      new ValidationError("이미 사용 중인 닉네임입니다")
+    );
+
+    // Assertion
+    await expect(createMoverProfile("1", profileData)).rejects.toThrow(ValidationError);
+    expect(userRepository.getUserById).toHaveBeenCalledWith("1");
+    expect(validateMoverProfileData).toHaveBeenCalledWith(profileData, "1");
+  });
+
+  test("기사님 프로필 등록 실패 - 빈 닉네임 ValidationError(422) 발생", async () => {
+    // Setup
+    const mockUser = {
+      id: "1",
+      name: "김기사",
+      email: "mover@test.com",
+      userType: ["MOVER"],
+    };
+
+    const profileData = {
+      nickname: "", // 빈 닉네임
+      currentAreas: ["SEOUL"] as RegionType[],
+      serviceTypes: ["SMALL"] as MoveType[],
+    };
+
+    (userRepository.getUserById as jest.Mock).mockResolvedValue(mockUser);
+    (validateMoverProfileData as jest.Mock).mockRejectedValue(
+      new ValidationError("닉네임은 필수 입력 항목입니다")
+    );
+
+    // Assertion
+    await expect(createMoverProfile("1", profileData)).rejects.toThrow(ValidationError);
+    expect(userRepository.getUserById).toHaveBeenCalledWith("1");
+    expect(validateMoverProfileData).toHaveBeenCalledWith(profileData, "1");
+  });
+
+  test("기사님 프로필 등록 실패 - 빈 서비스 타입 ValidationError(422) 발생", async () => {
+    // Setup
+    const mockUser = {
+      id: "1",
+      name: "김기사",
+      email: "mover@test.com",
+      userType: ["MOVER"],
+    };
+
+    const profileData = {
+      nickname: "믿을만한김기사",
+      currentAreas: ["SEOUL"] as RegionType[],
+      serviceTypes: [], // 빈 서비스 타입 배열
+    };
+
+    (userRepository.getUserById as jest.Mock).mockResolvedValue(mockUser);
+    (validateMoverProfileData as jest.Mock).mockRejectedValue(
+      new ValidationError("서비스 타입은 최소 1개 이상 선택해야 합니다")
+    );
+
+    // Assertion
+    await expect(createMoverProfile("1", profileData)).rejects.toThrow(ValidationError);
+    expect(userRepository.getUserById).toHaveBeenCalledWith("1");
+    expect(validateMoverProfileData).toHaveBeenCalledWith(profileData, "1");
+  });
+
+  test("기사님 프로필 등록 실패 - 빈 지역 ValidationError(422) 발생", async () => {
+    // Setup
+    const mockUser = {
+      id: "1",
+      name: "김기사",
+      email: "mover@test.com",
+      userType: ["MOVER"],
+    };
+
+    const profileData = {
+      nickname: "믿을만한김기사",
+      currentAreas: [], // 빈 지역 배열
+      serviceTypes: ["SMALL"] as MoveType[],
+    };
+
+    (userRepository.getUserById as jest.Mock).mockResolvedValue(mockUser);
+    (validateMoverProfileData as jest.Mock).mockRejectedValue(
+      new ValidationError("활동 지역은 최소 1개 이상 선택해야 합니다")
+    );
+
+    // Assertion
+    await expect(createMoverProfile("1", profileData)).rejects.toThrow(ValidationError);
+    expect(userRepository.getUserById).toHaveBeenCalledWith("1");
+    expect(validateMoverProfileData).toHaveBeenCalledWith(profileData, "1");
   });
 });
