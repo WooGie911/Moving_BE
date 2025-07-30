@@ -7,6 +7,17 @@ import {
   ServiceDataProcessingError,
   RepositoryError,
 } from "../types/errors.types";
+import {
+  RequestStatus,
+  EstimateStatus,
+  RegionType,
+  MoveType,
+  UserType,
+} from "../types/user.types";
+import {
+  SingleEstimateRequestWithRelations,
+  MultipleEstimateRequestWithRelations,
+} from "../types/repository.types";
 
 // 레포지토리 모킹
 jest.mock("../repositories/customerEstimateRequest.repository");
@@ -19,46 +30,46 @@ describe("customerEstimateRequestService", () => {
     jest.clearAllMocks();
   });
 
-  describe("현재 대기중인 견적을 조회한다", () => {
+  describe("현재 진행중인 견적요청을 조회한다", () => {
     const mockUserId = "user123";
 
     test("성공적으로 진행중인 견적요청을 조회한다", async () => {
       // Arrange
       const mockActiveEstimateRequestId = "estimateRequest123";
-      const mockRawData = {
+      const mockRawData: SingleEstimateRequestWithRelations = {
         id: "estimateRequest123",
         customerId: "user123",
-        moveType: "HOME",
+        moveType: "HOME" as MoveType,
         moveDate: new Date("2025-08-10"),
         createdAt: new Date("2024-07-30"),
         description: "이사 견적 요청",
-        status: "PENDING",
+        status: "PENDING" as RequestStatus,
         fromAddress: {
           zoneCode: "12345",
           city: "서울특별시",
           district: "강남구",
           detail: "상세주소",
-          region: "SEOUL",
+          region: "SEOUL" as RegionType,
         },
         toAddress: {
           zoneCode: "12346",
           city: "서울특별시",
           district: "서초구",
           detail: "상세주소",
-          region: "SEOUL",
+          region: "SEOUL" as RegionType,
         },
         estimates: [
           {
             id: "estimate1",
             price: 500000,
             comment: "합리적인 가격",
-            status: "PROPOSED",
+            status: "PROPOSED" as EstimateStatus,
             isDesignated: false,
             createdAt: new Date("2025-07-31"),
             mover: {
               id: "mover1",
               name: "이사업체A",
-              userType: "MOVER",
+              userType: ["MOVER"] as UserType[],
               moverImage: null,
               nickname: null,
               isVeteran: false,
@@ -75,7 +86,7 @@ describe("customerEstimateRequestService", () => {
             },
           },
         ],
-      } as any;
+      };
 
       mockedRepository.getActiveEstimateRequest.mockResolvedValue(
         mockActiveEstimateRequestId
@@ -123,7 +134,7 @@ describe("customerEstimateRequestService", () => {
               mover: {
                 id: "mover1",
                 name: "이사업체A",
-                userType: "MOVER",
+                userType: ["MOVER"] as UserType[],
                 moverImage: null,
                 nickname: null,
                 isVeteran: false,
@@ -217,40 +228,40 @@ describe("customerEstimateRequestService", () => {
   describe("레포지토리에서 받은 데이터를 변환한다", () => {
     test("정상적으로 데이터를 변환한다", () => {
       // Arrange
-      const mockRawData = {
+      const mockRawData: SingleEstimateRequestWithRelations = {
         id: "estimateRequest123",
         customerId: "user123",
-        moveType: "HOME",
+        moveType: "HOME" as MoveType,
         moveDate: new Date("2024-01-15"),
         createdAt: new Date("2024-01-10"),
         description: "이사 견적 요청",
-        status: "PENDING",
+        status: "PENDING" as RequestStatus,
         fromAddress: {
           zoneCode: "12345",
           city: "서울특별시",
           district: "강남구",
           detail: "상세주소",
-          region: "SEOUL",
+          region: "SEOUL" as RegionType,
         },
         toAddress: {
           zoneCode: "12346",
           city: "서울특별시",
           district: "서초구",
           detail: "상세주소",
-          region: "SEOUL",
+          region: "SEOUL" as RegionType,
         },
         estimates: [
           {
             id: "estimate1",
             price: 500000,
             comment: "합리적인 가격",
-            status: "PROPOSED",
+            status: "PROPOSED" as EstimateStatus,
             isDesignated: false,
             createdAt: new Date("2024-01-11"),
             mover: {
               id: "mover1",
               name: "이사업체A",
-              userType: "MOVER",
+              userType: ["MOVER"] as UserType[],
               moverImage: null,
               nickname: null,
               isVeteran: false,
@@ -267,7 +278,7 @@ describe("customerEstimateRequestService", () => {
             },
           },
         ],
-      } as any;
+      };
 
       // Act
       const result =
@@ -307,7 +318,7 @@ describe("customerEstimateRequestService", () => {
       // Act
       const result =
         customerEstimateRequestService.transformPendingEstimateData(
-          null as any
+          null as unknown as SingleEstimateRequestWithRelations
         );
 
       // Assert
@@ -330,52 +341,52 @@ describe("customerEstimateRequestService", () => {
       // Act & Assert
       expect(() =>
         customerEstimateRequestService.transformPendingEstimateData(
-          invalidData as any
+          invalidData as unknown as SingleEstimateRequestWithRelations
         )
       ).toThrow(ServiceDataProcessingError);
     });
   });
 
-  describe("getReceivedEstimateRequests", () => {
+  describe("이미 완료한 이사견적요청을 조회한다", () => {
     const mockUserId = "user123";
 
     test("성공적으로 완료된 견적요청 목록을 조회한다", async () => {
       // Arrange
-      const mockRawData = [
+      const mockRawData: MultipleEstimateRequestWithRelations = [
         {
           id: "estimateRequest1",
           customerId: "user123",
-          moveType: "HOME",
+          moveType: "HOME" as MoveType,
           moveDate: new Date("2024-01-15"),
           createdAt: new Date("2024-01-10"),
           description: "이사 견적 요청",
-          status: "COMPLETED",
+          status: "COMPLETED" as RequestStatus,
           fromAddress: {
             zoneCode: "12345",
             city: "서울특별시",
             district: "강남구",
             detail: "상세주소",
-            region: "SEOUL",
+            region: "SEOUL" as RegionType,
           },
           toAddress: {
             zoneCode: "12346",
             city: "서울특별시",
             district: "서초구",
             detail: "상세주소",
-            region: "SEOUL",
+            region: "SEOUL" as RegionType,
           },
           estimates: [
             {
               id: "estimate1",
               price: 500000,
               comment: "합리적인 가격",
-              status: "ACCEPTED",
+              status: "ACCEPTED" as EstimateStatus,
               isDesignated: true,
               createdAt: new Date("2024-01-11"),
               mover: {
                 id: "mover1",
                 name: "이사업체A",
-                userType: "MOVER",
+                userType: ["MOVER"] as UserType[],
                 moverImage: null,
                 nickname: null,
                 isVeteran: false,
@@ -393,7 +404,7 @@ describe("customerEstimateRequestService", () => {
             },
           ],
         },
-      ] as any;
+      ];
 
       mockedRepository.getReceivedEstimateRequests.mockResolvedValue(
         mockRawData
@@ -442,44 +453,44 @@ describe("customerEstimateRequestService", () => {
     });
   });
 
-  describe("transformReceivedEstimateData", () => {
+  describe("레포지토리에서 받은 데이터를 변환한다", () => {
     test("정상적으로 데이터를 변환한다", () => {
       // Arrange
-      const mockRawData = [
+      const mockRawData: MultipleEstimateRequestWithRelations = [
         {
           id: "estimateRequest1",
           customerId: "user123",
-          moveType: "HOME",
+          moveType: "HOME" as MoveType,
           moveDate: new Date("2024-01-15"),
           createdAt: new Date("2024-01-10"),
           description: "이사 견적 요청",
-          status: "COMPLETED",
+          status: "COMPLETED" as RequestStatus,
           fromAddress: {
             zoneCode: "12345",
             city: "서울특별시",
             district: "강남구",
             detail: "상세주소",
-            region: "SEOUL",
+            region: "SEOUL" as RegionType,
           },
           toAddress: {
             zoneCode: "12346",
             city: "서울특별시",
             district: "서초구",
             detail: "상세주소",
-            region: "SEOUL",
+            region: "SEOUL" as RegionType,
           },
           estimates: [
             {
               id: "estimate1",
               price: 500000,
               comment: "합리적인 가격",
-              status: "ACCEPTED",
+              status: "ACCEPTED" as EstimateStatus,
               isDesignated: true,
               createdAt: new Date("2024-01-11"),
               mover: {
                 id: "mover1",
                 name: "이사업체A",
-                userType: "MOVER",
+                userType: ["MOVER"] as UserType[],
                 moverImage: null,
                 nickname: null,
                 isVeteran: false,
@@ -497,7 +508,7 @@ describe("customerEstimateRequestService", () => {
             },
           ],
         },
-      ] as any;
+      ];
 
       // Act
       const result =
@@ -515,7 +526,7 @@ describe("customerEstimateRequestService", () => {
       // Act
       const result =
         customerEstimateRequestService.transformReceivedEstimateData(
-          null as any
+          null as unknown as MultipleEstimateRequestWithRelations
         );
 
       // Assert
@@ -537,13 +548,13 @@ describe("customerEstimateRequestService", () => {
       // Act & Assert
       expect(() =>
         customerEstimateRequestService.transformReceivedEstimateData(
-          invalidData as any
+          invalidData as unknown as MultipleEstimateRequestWithRelations
         )
       ).toThrow(ServiceDataProcessingError);
     });
   });
 
-  describe("getPendingEstimateRequestDetail", () => {
+  describe("진행중인 견적요청 상세 조회", () => {
     const mockUserId = "user123";
     const mockEstimateId = "estimate1";
 
@@ -554,7 +565,7 @@ describe("customerEstimateRequestService", () => {
         id: "estimate1",
         price: 500000,
         comment: "합리적인 가격",
-        status: "PROPOSED",
+        status: "PROPOSED" as EstimateStatus,
         isDesignated: false,
         createdAt: new Date("2024-01-11"),
         mover: {
@@ -564,7 +575,7 @@ describe("customerEstimateRequestService", () => {
           totalFavoriteCount: 10,
           Favorite: [{ id: "favorite1" }],
         },
-      } as any;
+      };
 
       mockedRepository.getActiveEstimateRequest.mockResolvedValue(
         mockActiveEstimateRequestId
@@ -619,7 +630,7 @@ describe("customerEstimateRequestService", () => {
     });
   });
 
-  describe("getReceivedEstimateRequestDetail", () => {
+  describe("이미 완료한 이사견적요청 상세 조회", () => {
     const mockUserId = "user123";
     const mockEstimateRequestId = "estimateRequest1";
     const mockEstimateId = "estimate1";
@@ -630,7 +641,7 @@ describe("customerEstimateRequestService", () => {
         id: "estimate1",
         price: 500000,
         comment: "합리적인 가격",
-        status: "ACCEPTED",
+        status: "ACCEPTED" as EstimateStatus,
         isDesignated: true,
         createdAt: new Date("2024-01-11"),
         mover: {
@@ -640,7 +651,7 @@ describe("customerEstimateRequestService", () => {
           totalFavoriteCount: 10,
           Favorite: [{ id: "favorite1" }],
         },
-      } as any;
+      };
 
       mockedRepository.getReceivedEstimateRequestDetail.mockResolvedValue(
         mockResult
@@ -673,7 +684,7 @@ describe("customerEstimateRequestService", () => {
     });
   });
 
-  describe("confirmEstimate", () => {
+  describe("견적 확정", () => {
     const mockUserId = "user123";
     const mockEstimateId = "estimate1";
 
@@ -682,13 +693,35 @@ describe("customerEstimateRequestService", () => {
       const mockResult = {
         estimateRequest: {
           id: "estimateRequest1",
-          status: "APPROVED",
+          customerId: "user123",
+          moveType: "HOME" as MoveType,
+          moveDate: new Date("2024-01-15"),
+          fromAddressId: "addr1",
+          toAddressId: "addr2",
+          description: "이사 견적 요청",
+          status: "APPROVED" as RequestStatus,
+          createdAt: new Date("2024-01-10"),
+          updatedAt: new Date("2024-01-10"),
+          deletedAt: null,
         },
         estimate: {
           id: "estimate1",
-          status: "ACCEPTED",
+          moverId: "mover1",
+          estimateRequestId: "estimateRequest1",
+          price: 500000,
+          comment: "합리적인 가격",
+          status: "ACCEPTED" as EstimateStatus,
+          rejectReason: null,
+          isDesignated: false,
+          workingHours: null,
+          includesPackaging: false,
+          insuranceAmount: null,
+          validUntil: null,
+          createdAt: new Date("2024-01-11"),
+          updatedAt: new Date("2024-01-11"),
+          deletedAt: null,
         },
-      } as any;
+      };
 
       mockedRepository.confirmEstimate.mockResolvedValue(mockResult);
 
@@ -720,7 +753,7 @@ describe("customerEstimateRequestService", () => {
     });
   });
 
-  describe("designateEstimateRequest", () => {
+  describe("지정 견적 요청", () => {
     const mockEstimateRequestId = "estimateRequest1";
     const mockUserId = "user123";
     const mockMessage = "지정 견적 요청 메시지";
@@ -733,12 +766,12 @@ describe("customerEstimateRequestService", () => {
         estimateRequestId: mockEstimateRequestId,
         message: mockMessage,
         moverId: mockMoverId,
-        status: "PENDING",
+        status: "PENDING" as RequestStatus,
         expiresAt: new Date("2024-02-01"),
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
-      } as any;
+      };
 
       mockedRepository.designateEstimateRequest.mockResolvedValue(mockResult);
 
