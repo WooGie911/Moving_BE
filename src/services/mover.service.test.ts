@@ -6,7 +6,6 @@ import {
   checkDesignatedQuoteRequest,
 } from "./mover.service";
 
-// Repository 완전 모킹
 jest.mock("../repositories/mover.repository", () => ({
   getMoverList: jest.fn(),
   getFavoriteMovers: jest.fn(),
@@ -21,6 +20,52 @@ const mockMoverRepository = moverRepository as jest.Mocked<
   typeof moverRepository
 >;
 
+const createMockMover = (overrides = {}) => ({
+  id: "mover-1",
+  nickname: "김기사",
+  name: "김기사",
+  career: 10,
+  shortIntro: "안전한 이사 서비스",
+  detailIntro: "안전하고 신뢰할 수 있는 이사 서비스",
+  workedCount: 150,
+  averageRating: 4.5,
+  totalReviewCount: 45,
+  Favorite: [],
+  serviceAreas: ["서울특별시"],
+  serviceTypes: ["HOME"],
+  moverImage: "profile.jpg",
+  ...overrides,
+});
+
+const createTransformedMover = (overrides = {}) => ({
+  id: "mover-1",
+  userId: 0,
+  nickname: "김기사",
+  profileImage: "profile.jpg",
+  experience: 10,
+  introduction: "안전한 이사 서비스",
+  description: "안전하고 신뢰할 수 있는 이사 서비스",
+  completedCount: 150,
+  avgRating: 4.5,
+  reviewCount: 45,
+  favoriteCount: 0,
+  lastActivityAt: null,
+  user: {
+    id: 0,
+    name: "김기사",
+    email: "",
+  },
+  serviceRegions: ["서울특별시"],
+  serviceTypes: [
+    {
+      service: {
+        name: "가정이사",
+      },
+    },
+  ],
+  ...overrides,
+});
+
 describe("MoverService - 유닛 테스트", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -28,25 +73,8 @@ describe("MoverService - 유닛 테스트", () => {
 
   describe("fetchMoverList", () => {
     it("기사님 목록을 성공적으로 조회한다", async () => {
-      // Mock 데이터 설정
       const mockRepositoryResponse = {
-        items: [
-          {
-            id: "mover-1",
-            nickname: "김기사",
-            name: "김기사",
-            career: 10,
-            shortIntro: "안전한 이사 서비스",
-            detailIntro: "안전하고 신뢰할 수 있는 이사 서비스",
-            workedCount: 150,
-            averageRating: 4.5,
-            totalReviewCount: 45,
-            Favorite: [],
-            serviceAreas: ["서울특별시"],
-            serviceTypes: ["HOME"],
-            moverImage: "profile.jpg",
-          },
-        ],
+        items: [createMockMover()],
         nextCursor: "next-cursor",
         hasNext: true,
       };
@@ -66,36 +94,9 @@ describe("MoverService - 유닛 테스트", () => {
 
       const result = await fetchMoverList(filter);
 
-      // 검증
       expect(mockMoverRepository.getMoverList).toHaveBeenCalledWith(filter);
       expect(result.items).toHaveLength(1);
-      expect(result.items[0]).toEqual({
-        id: "mover-1",
-        userId: 0,
-        nickname: "김기사",
-        profileImage: "profile.jpg",
-        experience: 10,
-        introduction: "안전한 이사 서비스",
-        description: "안전하고 신뢰할 수 있는 이사 서비스",
-        completedCount: 150,
-        avgRating: 4.5,
-        reviewCount: 45,
-        favoriteCount: 0,
-        lastActivityAt: null,
-        user: {
-          id: 0,
-          name: "김기사",
-          email: "",
-        },
-        serviceRegions: ["서울특별시"],
-        serviceTypes: [
-          {
-            service: {
-              name: "가정이사",
-            },
-          },
-        ],
-      });
+      expect(result.items[0]).toEqual(createTransformedMover());
       expect(result.nextCursor).toBe("next-cursor");
       expect(result.hasNext).toBe(true);
     });
@@ -130,21 +131,16 @@ describe("MoverService - 유닛 테스트", () => {
     it("서비스 타입 변환을 올바르게 처리한다", async () => {
       const mockRepositoryResponse = {
         items: [
-          {
-            id: "mover-1",
-            nickname: "김기사",
-            name: "김기사",
+          createMockMover({
             career: 5,
             shortIntro: "소형이사 전문",
             detailIntro: "소형이사 전문 서비스",
             workedCount: 80,
             averageRating: 4.8,
             totalReviewCount: 30,
-            Favorite: [],
-            serviceAreas: ["서울특별시"],
             serviceTypes: ["SMALL"],
             moverImage: null,
-          },
+          }),
         ],
         nextCursor: null,
         hasNext: false,
@@ -164,25 +160,16 @@ describe("MoverService - 유닛 테스트", () => {
     it("찜 개수를 올바르게 계산한다", async () => {
       const mockRepositoryResponse = {
         items: [
-          {
-            id: "mover-1",
-            nickname: "김기사",
-            name: "김기사",
-            career: 10,
-            shortIntro: "안전한 이사 서비스",
-            detailIntro: "안전하고 신뢰할 수 있는 이사 서비스",
-            workedCount: 150,
-            averageRating: 4.5,
-            totalReviewCount: 45,
+          createMockMover({
             Favorite: [
               { deletedAt: null },
               { deletedAt: null },
-              { deletedAt: new Date() }, // 삭제된 찜
+              { deletedAt: new Date() },
             ],
             serviceAreas: [],
             serviceTypes: [],
             moverImage: null,
-          },
+          }),
         ],
         nextCursor: null,
         hasNext: false,
@@ -196,30 +183,14 @@ describe("MoverService - 유닛 테스트", () => {
 
       const result = await fetchMoverList(filter);
 
-      expect(result.items[0].favoriteCount).toBe(2); // 삭제되지 않은 찜만 카운트
+      expect(result.items[0].favoriteCount).toBe(2);
     });
   });
 
   describe("fetchFavoriteMovers", () => {
     it("찜한 기사님 목록을 성공적으로 조회한다", async () => {
       const customerId = "customer-1";
-      const mockRepositoryResponse = [
-        {
-          id: "mover-1",
-          nickname: "김기사",
-          name: "김기사",
-          career: 10,
-          shortIntro: "안전한 이사 서비스",
-          detailIntro: "안전하고 신뢰할 수 있는 이사 서비스",
-          workedCount: 150,
-          averageRating: 4.5,
-          totalReviewCount: 45,
-          favoriteCount: 5,
-          serviceAreas: ["서울특별시"],
-          serviceTypes: ["HOME"],
-          moverImage: "profile.jpg",
-        },
-      ];
+      const mockRepositoryResponse = [createMockMover({ favoriteCount: 5 })];
 
       mockMoverRepository.getFavoriteMovers.mockResolvedValue(
         mockRepositoryResponse as any
@@ -231,33 +202,7 @@ describe("MoverService - 유닛 테스트", () => {
         customerId
       );
       expect(result).toHaveLength(1);
-      expect(result[0]).toEqual({
-        id: "mover-1",
-        userId: 0,
-        nickname: "김기사",
-        profileImage: "profile.jpg",
-        experience: 10,
-        introduction: "안전한 이사 서비스",
-        description: "안전하고 신뢰할 수 있는 이사 서비스",
-        completedCount: 150,
-        avgRating: 4.5,
-        reviewCount: 45,
-        favoriteCount: 5,
-        lastActivityAt: null,
-        user: {
-          id: 0,
-          name: "김기사",
-          email: "",
-        },
-        serviceRegions: ["서울특별시"],
-        serviceTypes: [
-          {
-            service: {
-              name: "가정이사",
-            },
-          },
-        ],
-      });
+      expect(result[0]).toEqual(createTransformedMover({ favoriteCount: 5 }));
     });
 
     it("빈 찜 목록을 반환한다", async () => {
@@ -275,22 +220,10 @@ describe("MoverService - 유닛 테스트", () => {
     it("기사님 상세 정보를 성공적으로 조회한다", async () => {
       const moverId = "mover-1";
       const userId = "customer-1";
-      const mockRepositoryResponse = {
-        id: "mover-1",
-        nickname: "김기사",
-        name: "김기사",
-        career: 10,
-        shortIntro: "안전한 이사 서비스",
-        detailIntro: "안전하고 신뢰할 수 있는 이사 서비스",
-        workedCount: 150,
-        averageRating: 4.5,
-        totalReviewCount: 45,
+      const mockRepositoryResponse = createMockMover({
         favoriteCount: 5,
-        serviceAreas: ["서울특별시"],
-        serviceTypes: ["HOME"],
-        moverImage: "profile.jpg",
         isFavorited: true,
-      };
+      });
 
       mockMoverRepository.getMoverDetail.mockResolvedValue(
         mockRepositoryResponse as any
@@ -302,34 +235,12 @@ describe("MoverService - 유닛 테스트", () => {
         moverId,
         userId
       );
-      expect(result).toEqual({
-        id: "mover-1",
-        userId: 0,
-        nickname: "김기사",
-        profileImage: "profile.jpg",
-        experience: 10,
-        introduction: "안전한 이사 서비스",
-        description: "안전하고 신뢰할 수 있는 이사 서비스",
-        completedCount: 150,
-        avgRating: 4.5,
-        reviewCount: 45,
-        favoriteCount: 5,
-        lastActivityAt: null,
-        user: {
-          id: 0,
-          name: "김기사",
-          email: "",
-        },
-        serviceRegions: ["서울특별시"],
-        serviceTypes: [
-          {
-            service: {
-              name: "가정이사",
-            },
-          },
-        ],
-        isFavorited: true,
-      });
+      expect(result).toEqual(
+        createTransformedMover({
+          favoriteCount: 5,
+          isFavorited: true,
+        })
+      );
     });
 
     it("존재하지 않는 기사님을 조회한다", async () => {
@@ -346,22 +257,10 @@ describe("MoverService - 유닛 테스트", () => {
     it("로그인하지 않은 사용자가 조회한다", async () => {
       const moverId = "mover-1";
       const userId = undefined;
-      const mockRepositoryResponse = {
-        id: "mover-1",
-        nickname: "김기사",
-        name: "김기사",
-        career: 10,
-        shortIntro: "안전한 이사 서비스",
-        detailIntro: "안전하고 신뢰할 수 있는 이사 서비스",
-        workedCount: 150,
-        averageRating: 4.5,
-        totalReviewCount: 45,
+      const mockRepositoryResponse = createMockMover({
         favoriteCount: 5,
-        serviceAreas: ["서울특별시"],
-        serviceTypes: ["HOME"],
-        moverImage: "profile.jpg",
         isFavorited: false,
-      };
+      });
 
       mockMoverRepository.getMoverDetail.mockResolvedValue(
         mockRepositoryResponse as any

@@ -1,6 +1,3 @@
-import { PrismaClient } from "@prisma/client";
-
-// Prisma 모킹
 const mockPrisma = {
   user: {
     findMany: jest.fn(),
@@ -22,7 +19,6 @@ jest.mock("@prisma/client", () => ({
   PrismaClient: jest.fn().mockImplementation(() => mockPrisma),
 }));
 
-// Repository import
 import moverRepository from "./mover.repository";
 
 describe("MoverRepository - 유닛 테스트", () => {
@@ -56,7 +52,7 @@ describe("MoverRepository - 유닛 테스트", () => {
           Favorite: [
             { id: "favorite-1", deletedAt: null },
             { id: "favorite-2", deletedAt: null },
-            { id: "favorite-3", deletedAt: new Date() }, // 삭제된 찜
+            { id: "favorite-3", deletedAt: new Date() },
           ],
           moverImage: "image1.jpg",
         },
@@ -339,7 +335,7 @@ describe("MoverRepository - 유닛 테스트", () => {
             Favorite: [
               { id: "favorite-1", deletedAt: null },
               { id: "favorite-2", deletedAt: null },
-              { id: "favorite-3", deletedAt: new Date() }, // 삭제된 찜
+              { id: "favorite-3", deletedAt: new Date() }, 
             ],
           },
         },
@@ -381,7 +377,7 @@ describe("MoverRepository - 유닛 테스트", () => {
       expect(result).toEqual([
         {
           ...mockFavorites[0].mover,
-          favoriteCount: 2, // deletedAt이 null인 것만 카운트
+          favoriteCount: 2, 
         },
       ]);
     });
@@ -417,7 +413,7 @@ describe("MoverRepository - 유닛 테스트", () => {
         Favorite: [
           { id: "favorite-1", deletedAt: null },
           { id: "favorite-2", deletedAt: null },
-          { id: "favorite-3", deletedAt: new Date() }, // 삭제된 찜
+          { id: "favorite-3", deletedAt: new Date() },
         ],
       };
 
@@ -459,7 +455,7 @@ describe("MoverRepository - 유닛 테스트", () => {
       });
       expect(result).toEqual({
         ...mockMover,
-        favoriteCount: 2, // deletedAt이 null인 것만 카운트
+        favoriteCount: 2, 
         isFavorited: true,
       });
     });
@@ -483,7 +479,7 @@ describe("MoverRepository - 유닛 테스트", () => {
         Favorite: [
           { id: "favorite-1", deletedAt: null },
           { id: "favorite-2", deletedAt: null },
-          { id: "favorite-3", deletedAt: new Date() }, // 삭제된 찜
+          { id: "favorite-3", deletedAt: new Date() }, 
         ],
       };
 
@@ -494,7 +490,7 @@ describe("MoverRepository - 유닛 테스트", () => {
 
       expect(result).toEqual({
         ...mockMover,
-        favoriteCount: 2, // deletedAt이 null인 것만 카운트
+        favoriteCount: 2, 
         isFavorited: false,
       });
     });
@@ -529,7 +525,7 @@ describe("MoverRepository - 유닛 테스트", () => {
         Favorite: [
           { id: "favorite-1", deletedAt: null },
           { id: "favorite-2", deletedAt: null },
-          { id: "favorite-3", deletedAt: new Date() }, // 삭제된 찜
+          { id: "favorite-3", deletedAt: new Date() }, 
         ],
       };
 
@@ -558,7 +554,7 @@ describe("MoverRepository - 유닛 테스트", () => {
       expect(mockPrisma.favorite.findUnique).not.toHaveBeenCalled();
       expect(result).toEqual({
         ...mockMover,
-        favoriteCount: 2, // deletedAt이 null인 것만 카운트
+        favoriteCount: 2, 
         isFavorited: false,
       });
     });
