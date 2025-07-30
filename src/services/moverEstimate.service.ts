@@ -374,12 +374,17 @@ const moverEstimateService = {
 
       if (region) {
         try {
+          // 비즈니스 로직: 사용자 서비스 지역 조회
+          const currentAreas =
+            await moverEstimateRepository.findUserServiceAreas(moverId);
+
           regionEstimateRequests =
             (await moverEstimateRepository.getRegionEstimateRequest(
               moverId,
               sortBy,
               customerName,
-              movingType
+              movingType,
+              currentAreas
             )) || [];
         } catch (error) {
           regionEstimateRequests = [];
