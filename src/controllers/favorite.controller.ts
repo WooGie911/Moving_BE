@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import favoriteService from "../services/favorite.service";
+import favoriteRepository from "../repositories/favorite.repository";
 import { IFavoriteRequest } from "../types/favorite.types";
 
 // 커스텀 Request 타입 정의
@@ -8,6 +9,9 @@ interface IUserRequest extends Request {
     userId: string;
     name: string;
     userType: "CUSTOMER" | "MOVER";
+    hasProfile: boolean;
+    iat: number;
+    exp: number;
   };
 }
 
@@ -129,7 +133,10 @@ class FavoriteController {
         });
       }
 
-      const status = await favoriteRepository.getFavoriteStatus(customerId!, moverId);
+      const status = await favoriteRepository.getFavoriteStatus(
+        customerId!,
+        moverId
+      );
 
       return res.status(200).json({
         success: true,
