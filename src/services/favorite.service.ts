@@ -1,4 +1,6 @@
 import favoriteRepository from "../repositories/favorite.repository";
+import actionService from "./action.service";
+import { ActionType } from "@prisma/client";
 import { IFavoriteResponse } from "../types/favorite.types";
 
 const favoriteService = {
@@ -23,7 +25,23 @@ const favoriteService = {
       }
 
       // 찜하기 추가
-      await favoriteRepository.addFavorite(customerId, moverId);
+      const favorite = await favoriteRepository.addFavorite(
+        customerId,
+        moverId
+      );
+
+      // FAVORITE_ADDED 액션 생성
+      const favoriteDetail =
+        await favoriteRepository.getFavoriteDetailForAction(favorite.id);
+      if (favoriteDetail) {
+        await actionService.createAction(
+          customerId,
+          ActionType.FAVORITE_ADDED,
+          favorite.id,
+          "FAVORITE",
+          { moverId: moverId }
+        );
+      }
 
       // 새로운 상태 조회
       const newStatus = await favoriteRepository.getFavoriteStatus(
@@ -67,7 +85,23 @@ const favoriteService = {
       }
 
       // 찜하기 제거
-      await favoriteRepository.removeFavorite(customerId, moverId);
+      const favorite = await favoriteRepository.removeFavorite(
+        customerId,
+        moverId
+      );
+
+      // FAVORITE_REMOVED 액션 생성
+      const favoriteDetail =
+        await favoriteRepository.getFavoriteDetailForAction(favorite.id);
+      if (favoriteDetail) {
+        await actionService.createAction(
+          customerId,
+          ActionType.FAVORITE_REMOVED,
+          favorite.id,
+          "FAVORITE",
+          { moverId: moverId }
+        );
+      }
 
       // 새로운 상태 조회
       const newStatus = await favoriteRepository.getFavoriteStatus(

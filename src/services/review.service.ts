@@ -1,8 +1,26 @@
 import reviewRepository from "../repositories/review.repository";
+import actionService from "./action.service";
+import { ActionType } from "@prisma/client";
 
 const reviewService = {
   postReview: async (reviewId: string, rating: number, content: string) => {
-    return reviewRepository.postReview(reviewId, rating, content);
+    const review = await reviewRepository.postReview(reviewId, rating, content);
+
+    // 리뷰 제출 액션 생성
+    const reviewDetail = await reviewRepository.getReviewDetailForAction(
+      review.id
+    );
+    if (reviewDetail) {
+      await actionService.createAction(
+        reviewDetail.customerId,
+        ActionType.REVIEW_SUBMITTED,
+        review.id,
+        "REVIEW",
+        { moverId: reviewDetail.moverId }
+      );
+    }
+
+    return review;
   },
 
   getWritableEstimateRequests: async (

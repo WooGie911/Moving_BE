@@ -664,6 +664,42 @@ const moverEstimateRepository = {
       throw new RepositoryQueryError("견적서 업데이트 실패", error);
     }
   },
+
+  // 견적 상세 정보 조회 (액션 메타데이터용)
+  getEstimateDetailForAction: async (estimateId: string) => {
+    const estimate = await prisma.estimate.findUnique({
+      where: { id: estimateId },
+      select: {
+        id: true,
+        moverId: true,
+        estimateRequestId: true,
+        status: true,
+        isDesignated: true,
+        mover: {
+          select: {
+            id: true,
+            name: true,
+            nickname: true,
+          },
+        },
+        estimateRequest: {
+          select: {
+            id: true,
+            customerId: true,
+            moveType: true,
+            moveDate: true,
+            customer: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    return estimate;
+  },
 };
 
 export default moverEstimateRepository;

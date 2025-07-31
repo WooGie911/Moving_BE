@@ -2,6 +2,27 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+// 리뷰 상세 정보 조회 (액션 메타데이터용)
+const getReviewDetailForAction = async (reviewId: string) => {
+  const review = await prisma.review.findUnique({
+    where: { id: reviewId },
+    select: {
+      id: true,
+      customerId: true,
+      moverId: true,
+      estimateRequestId: true,
+      status: true,
+      mover: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  });
+  return review;
+};
+
 const reviewRepository = {
   // 1. 리뷰 작성 (PATCH)
   postReview: async (reviewId: string, rating: number, content: string) => {
@@ -138,6 +159,9 @@ const reviewRepository = {
 
     return { items, total, page, pageSize };
   },
+
+  // 리뷰 상세 정보 조회 (액션 메타데이터용)
+  getReviewDetailForAction,
 };
 
 export default reviewRepository;

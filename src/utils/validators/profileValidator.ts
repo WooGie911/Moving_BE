@@ -11,7 +11,7 @@ import {
   MoveType,
   RegionType,
 } from "../../types/user.types";
-import { checkNicknameExists } from "../../repositories/user.repository";
+import userRepository from "../../repositories/user.repository";
 
 // MoveType 유효성 검사
 export const validateMoveTypes = (moveTypes: MoveType[]): boolean => {
@@ -58,7 +58,7 @@ export const ensureNicknameUnique = async (
     throw new ValidationError(PROFILE_ERROR_MESSAGES.NICKNAME_REQUIRED);
   }
 
-  const nicknameExists = await checkNicknameExists(nickname, excludeUserId);
+  const nicknameExists = await userRepository.checkNicknameExists(nickname, excludeUserId);
   if (nicknameExists) {
     throw new ValidationError(PROFILE_ERROR_MESSAGES.NICKNAME_ALREADY_EXISTS);
   }

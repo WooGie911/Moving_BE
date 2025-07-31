@@ -9,6 +9,9 @@ import {
   createDesignatedEstimateRequest,
   checkDesignatedEstimateRequest,
 } from "../repositories/mover.repository";
+import actionService from "./action.service";
+import { ActionType } from "@prisma/client";
+import estimateRequestRepository from "../repositories/estimateRequest.repository";
 
 /**
  * 기사님 리스트 조회
@@ -146,7 +149,26 @@ export const fetchMoverDetail = async (id: string, userId?: string) => {
 export const requestDesignatedQuote = async (
   dto: DesignatedQuoteRequestDto
 ) => {
-  return await createDesignatedEstimateRequest(dto);
+  const designatedRequest = await createDesignatedEstimateRequest(dto);
+
+  // 지정 견적 요청 액션 생성
+  if (designatedRequest) {
+    const estimateRequest =
+      await estimateRequestRepository.getEstimateRequestDetailForAction(
+        dto.quoteId
+      );
+    if (estimateRequest) {
+      await actionService.createAction(
+        estimateRequest.customerId,
+        ActionType.DESIGNATED_ESTIMATE_REQUEST_SUBMITTED,
+        dto.quoteId,
+        "DESIGNATED_ESTIMATE_REQUEST",
+        { customerName: estimateRequest.customer?.name || "" }
+      );
+    }
+  }
+
+  return designatedRequest;
 };
 
 /**
