@@ -12,6 +12,7 @@ const moverScheduleRepository = {
       const startDate = new Date(year, month - 1, 1); // 월은 0부터 시작하므로 -1
       const endDate = new Date(year, month, 0); // 다음 달의 0일 = 이번 달의 마지막 날
 
+      // Estimate 테이블에서 조회
       const estimates = await prisma.estimate.findMany({
         where: {
           moverId,
@@ -22,6 +23,9 @@ const moverScheduleRepository = {
             moveDate: {
               gte: startDate,
               lte: endDate,
+            },
+            status: {
+              in: ["APPROVED", "COMPLETED"], // RequestStatus.APPROVED 또는 COMPLETED
             },
           },
         },
