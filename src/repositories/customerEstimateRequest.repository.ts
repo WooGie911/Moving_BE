@@ -3,6 +3,8 @@ import {
   Estimate,
   User,
   DesignatedMover,
+  RequestStatus,
+  EstimateStatus,
 } from "@prisma/client";
 import { PrismaClient } from "@prisma/client";
 import {
@@ -10,6 +12,10 @@ import {
   MultipleEstimateRequestWithRelations,
 } from "../types/repository.types";
 import { RepositoryQueryError } from "../types/errors.types";
+import {
+  TCancelEstimateResponse,
+  TCompleteEstimateResponse,
+} from "../types/customerEstimateRequest";
 
 const prisma = new PrismaClient();
 
@@ -97,6 +103,9 @@ const customerEstimateRequestRepository = {
               price: {
                 not: null,
               },
+              status: {
+                in: ["PROPOSED", "ACCEPTED", "AUTO_REJECTED"],
+              },
             },
             select: {
               id: true,
@@ -120,6 +129,7 @@ const customerEstimateRequestRepository = {
                   averageRating: true,
                   totalReviewCount: true,
                   serviceTypes: true,
+                  serviceAreas: true,
                   totalFavoriteCount: true,
                   // 순수 데이터만 반환 - 가공은 Service에서 처리
                   Favorite: {
@@ -189,6 +199,9 @@ const customerEstimateRequestRepository = {
               price: {
                 not: null,
               },
+              status: {
+                in: ["PROPOSED", "ACCEPTED", "AUTO_REJECTED"],
+              },
             },
             select: {
               id: true,
@@ -196,7 +209,7 @@ const customerEstimateRequestRepository = {
               comment: true,
               status: true,
               isDesignated: true,
-              createdAt: true, // 누락된 필드 추가
+              createdAt: true,
               mover: {
                 select: {
                   id: true,
@@ -241,286 +254,99 @@ const customerEstimateRequestRepository = {
     }
   },
 
-  //진행중인 이사 견적들 중 상세 견적 조회
-  getPendingEstimateRequestDetail: async (
-    activeEstimateRequestId: string,
-    estimateId: string,
-    customerId: string
-  ): Promise<Record<string, any> | null> => {
-    const pendingDetailEstimate = await prisma.estimateRequest.findUnique({
-      where: {
-        id: activeEstimateRequestId,
-      },
-      select: {
-        id: true,
-        moveType: true,
-        moveDate: true,
-        description: true,
-        status: true,
-        estimates: {
-          where: {
-            id: estimateId,
-          },
-          select: {
-            id: true,
-            price: true,
-            comment: true,
-            status: true,
-            isDesignated: true,
-            createdAt: true,
-            mover: {
-              select: {
-                id: true,
-                name: true,
-                userType: true,
-                moverImage: true,
-                nickname: true,
-                isVeteran: true,
-                shortIntro: true,
-                detailIntro: true,
-                career: true,
-                workedCount: true,
-                averageRating: true,
-                totalReviewCount: true,
-                serviceTypes: true,
-                serviceAreas: true,
-                totalFavoriteCount: true, // 추가
-                // 찜 여부 확인을 위한 Favorite 관계 추가
-                Favorite: {
-                  where: {
-                    customerId: customerId,
-                    deletedAt: null,
-                  },
-                  select: {
-                    id: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-    if (!pendingDetailEstimate) return null;
-
-    const estimate = pendingDetailEstimate.estimates[0];
-    if (!estimate) return null;
-
-    return {
-      ...estimate,
-      mover: {
-        ...estimate.mover,
-        isFavorite: estimate.mover.Favorite.length > 0,
-        Favorite: undefined, // Favorite 배열은 제거
-      },
-    };
-  },
-
-  //완료된 이사 견적들 중 상세 견적 조회
-  getReceivedEstimateRequestDetail: async (
-    userId: string,
-    estimateRequestId: string,
-    estimateId: string
-  ): Promise<Record<string, any> | null> => {
-    const receivedDetailEstimate = await prisma.estimateRequest.findUnique({
-      where: {
-        customerId: userId,
-        id: estimateRequestId,
-      },
-      select: {
-        id: true,
-        moveType: true,
-        moveDate: true,
-        description: true,
-        status: true,
-        estimates: {
-          where: {
-            id: estimateId,
-          },
-          select: {
-            id: true,
-            price: true,
-            comment: true,
-            status: true,
-            isDesignated: true,
-            createdAt: true,
-            mover: {
-              select: {
-                id: true,
-                name: true,
-                userType: true,
-                moverImage: true,
-                nickname: true,
-                isVeteran: true,
-                shortIntro: true,
-                detailIntro: true,
-                career: true,
-                workedCount: true,
-                averageRating: true,
-                totalReviewCount: true,
-                serviceTypes: true,
-                serviceAreas: true,
-                totalFavoriteCount: true, // 추가
-                // 찜 여부 확인을 위한 Favorite 관계 추가
-                Favorite: {
-                  where: {
-                    customerId: userId,
-                    deletedAt: null,
-                  },
-                  select: {
-                    id: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-    if (!receivedDetailEstimate) return null;
-
-    const estimate = receivedDetailEstimate.estimates[0];
-    if (!estimate) return null;
-
-    return {
-      ...estimate,
-      mover: {
-        ...estimate.mover,
-        isFavorite: estimate.mover.Favorite.length > 0,
-        Favorite: undefined, // Favorite 배열은 제거
-      },
-    };
-  },
-
-  //견적 컨펌
-  confirmEstimate: async (
-    userId: string,
-    estimateId: string
-  ): Promise<{
-    estimateRequest: EstimateRequest;
-    estimate: Estimate;
-  } | null> => {
-    const activeEstimateRequestId =
-      await customerEstimateRequestRepository.getActiveEstimateRequest(userId);
-    if (!activeEstimateRequestId) {
-      throw new Error("진행중인 견적요청이 없습니다.");
-    }
-
-    // 이미 확정된 견적요청인지 확인
-    const estimateRequest = await prisma.estimateRequest.findUnique({
-      where: { id: activeEstimateRequestId },
-      select: { status: true },
-    });
-    if (!estimateRequest) {
-      throw new Error("견적요청을 찾을 수 없습니다.");
-    }
-    if (
-      estimateRequest.status === "APPROVED" ||
-      estimateRequest.status === "COMPLETED"
-    ) {
-      throw new Error("이미 확정된 견적요청입니다.");
-    }
-
-    // estimate가 해당 estimateRequest에 속하는지 확인
-    const estimate = await prisma.estimate.findUnique({
-      where: {
-        id: estimateId,
-        estimateRequestId: activeEstimateRequestId,
-      },
-    });
-
-    if (!estimate) {
-      throw new Error(
-        "현재 진행중인 견적요청에 대한 기사님들의 견적서가 존재하지 않습니다."
+  // 견적요청 ID로 견적요청 조회
+  getEstimateRequestById: async (
+    estimateRequestId: string
+  ): Promise<EstimateRequest | null> => {
+    try {
+      const estimateRequest = await prisma.estimateRequest.findUnique({
+        where: { id: estimateRequestId },
+      });
+      return estimateRequest;
+    } catch (error) {
+      throw new RepositoryQueryError(
+        `견적요청 ID ${estimateRequestId} 조회 실패`,
+        error
       );
     }
-
-    const [confirmedEstimateRequest, acceptedEstimate, _] =
-      await prisma.$transaction([
-        // 1. 견적요청 상태 변경
-        prisma.estimateRequest.update({
-          where: { id: activeEstimateRequestId },
-          data: { status: "APPROVED" },
-        }),
-        // 2. 선택된 기사님 견적 ACCEPTED
-        prisma.estimate.update({
-          where: { id: estimateId },
-          data: { status: "ACCEPTED" },
-        }),
-        // 3. 나머지 기사님 견적 AUTO_REJECTED
-        prisma.estimate.updateMany({
-          where: {
-            estimateRequestId: activeEstimateRequestId,
-            id: { not: estimateId },
-          },
-          data: { status: "AUTO_REJECTED" },
-        }),
-      ]);
-
-    // 두 결과를 객체로 반환
-    return {
-      estimateRequest: confirmedEstimateRequest,
-      estimate: acceptedEstimate,
-    };
   },
 
-  //지정견적요청 생성
-  designateEstimateRequest: async (
+  // 견적 ID와 견적요청 ID로 견적 조회
+  getEstimateByIdAndRequestId: async (
+    estimateId: string,
+    estimateRequestId: string
+  ): Promise<Estimate | null> => {
+    try {
+      const estimate = await prisma.estimate.findUnique({
+        where: {
+          id: estimateId,
+          estimateRequestId: estimateRequestId,
+        },
+      });
+      return estimate;
+    } catch (error) {
+      throw new RepositoryQueryError(`견적 ID ${estimateId} 조회 실패`, error);
+    }
+  },
+
+  // 견적요청 상태 업데이트
+  updateEstimateRequestStatus: async (
     estimateRequestId: string,
-    userId: string,
-    message: string,
-    moverId: string
-  ): Promise<DesignatedMover | null> => {
-    // estimateRequest가 해당 사용자의 것인지 확인
-    const estimateRequest = await prisma.estimateRequest.findFirst({
-      where: {
-        id: estimateRequestId,
-        customerId: userId,
-      },
-      select: {
-        moveDate: true,
-        status: true,
-      },
-    });
-
-    if (!estimateRequest) {
-      throw new Error("해당 견적 요청을 찾을 수 없거나 권한이 없습니다.");
+    status: "PENDING" | "APPROVED" | "COMPLETED" | "EXPIRED"
+  ): Promise<EstimateRequest> => {
+    try {
+      const updatedEstimateRequest = await prisma.estimateRequest.update({
+        where: { id: estimateRequestId },
+        data: { status },
+      });
+      return updatedEstimateRequest;
+    } catch (error) {
+      throw new RepositoryQueryError(
+        `견적요청 상태 업데이트 실패 - 견적요청ID: ${estimateRequestId}, 상태: ${status}`,
+        error
+      );
     }
+  },
 
-    if (estimateRequest.status !== "PENDING") {
-      throw new Error("진행중인 견적만 지정 견적을 요청할 수 있습니다.");
+  // 견적 상태 업데이트
+  updateEstimateStatus: async (
+    estimateId: string,
+    status: EstimateStatus
+  ): Promise<Estimate> => {
+    try {
+      const updatedEstimate = await prisma.estimate.update({
+        where: { id: estimateId },
+        data: { status },
+      });
+      return updatedEstimate;
+    } catch (error) {
+      throw new RepositoryQueryError(
+        `견적 상태 업데이트 실패 - 견적ID: ${estimateId}, 상태: ${status}`,
+        error
+      );
     }
+  },
 
-    const validUntil = new Date(
-      estimateRequest.moveDate.getTime() - 1000 * 60 * 60 * 24
-    );
-
-    // 이미 해당 estimateRequest에 대한 지정 견적 요청이 있는지 확인
-    const existingRequest = await prisma.designatedMover.findFirst({
-      where: {
-        estimateRequestId: estimateRequestId,
-        moverId: moverId,
-        status: "PENDING",
-      },
-    });
-
-    if (existingRequest) {
-      throw new Error("이미 해당 기사님에게 지정 견적을 요청했습니다.");
+  // 견적요청의 모든 견적 상태 일괄 업데이트
+  updateAllEstimatesStatus: async (
+    estimateRequestId: string,
+    status: EstimateStatus,
+    excludeEstimateId?: string
+  ): Promise<void> => {
+    try {
+      await prisma.estimate.updateMany({
+        where: {
+          estimateRequestId: estimateRequestId,
+          ...(excludeEstimateId && { id: { not: excludeEstimateId } }),
+        },
+        data: { status },
+      });
+    } catch (error) {
+      throw new RepositoryQueryError(
+        `견적 일괄 상태 업데이트 실패 - 견적요청ID: ${estimateRequestId}, 상태: ${status}`,
+        error
+      );
     }
-
-    const designatedrequest = await prisma.designatedMover.create({
-      data: {
-        estimateRequestId: estimateRequestId,
-        message: message,
-        moverId: moverId,
-        status: "PENDING",
-        expiresAt: validUntil,
-      },
-    });
-
-    if (!designatedrequest) return null;
-    return designatedrequest;
   },
 };
-
 export default customerEstimateRequestRepository;

@@ -393,55 +393,7 @@ const moverEstimateController = {
     }
   },
 
-  // 6. 견적 요청 상세 조회
-  getEstimateRequestById: async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const moverId = req.user?.userId;
-      const userType = req.user?.userType;
-      const estimateRequestId = req.params.estimateRequestId;
-
-      if (!moverId || typeof moverId !== "string") {
-        res.status(HTTP_STATUS.UNAUTHORIZED).json({
-          success: false,
-          message: "유효하지 않은 사용자 정보입니다.",
-        });
-        return;
-      }
-
-      // 무버 권한 확인
-      if (userType !== "MOVER") {
-        res.status(HTTP_STATUS.FORBIDDEN).json({
-          success: false,
-          message: "현재 유저타입이 기사가 아닙니다.",
-        });
-        return;
-      }
-
-      if (!estimateRequestId || typeof estimateRequestId !== "string") {
-        res.status(HTTP_STATUS.BAD_REQUEST).json({
-          success: false,
-          message: "유효하지 않은 견적 요청 ID입니다.",
-        });
-        return;
-      }
-
-      const result =
-        await moverEstimateService.getEstimateRequestById(estimateRequestId);
-      res.status(HTTP_STATUS.OK).json({
-        success: true,
-        message: "견적 요청 상세 조회 성공",
-        data: result,
-      });
-    } catch (error) {
-      next(error);
-    }
-  },
-
-  // 7. 내가 보낸 견적서 조회
+  // 6. 내가 보낸 견적서 조회
   getMyEstimate: async (
     req: Request,
     res: Response,
@@ -479,7 +431,7 @@ const moverEstimateController = {
     }
   },
 
-  // 8. 내가 반려한 견적 조회
+  // 7. 내가 반려한 견적 조회
   getMyRejectedEstimates: async (
     req: Request,
     res: Response,
@@ -518,7 +470,7 @@ const moverEstimateController = {
     }
   },
 
-  // 9. 견적 상태 업데이트
+  // 8. 견적 상태 업데이트
   updateEstimateStatus: async (
     req: Request,
     res: Response,
@@ -582,7 +534,7 @@ const moverEstimateController = {
     }
   },
 
-  // 10. 견적서 업데이트
+  // 9. 견적서 업데이트
   updateEstimate: async (
     req: Request,
     res: Response,
