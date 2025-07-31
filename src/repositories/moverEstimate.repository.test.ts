@@ -35,13 +35,36 @@ jest.mock("@prisma/client", () => {
   };
 });
 
-// 모킹된 객체들을 가져오기 - 완전한 타입 안전성 확보
+// 모킹된 객체들을 가져오기 - 타입 안전성 확보
 const { PrismaClient } = require("@prisma/client");
 const mockPrisma = new PrismaClient();
-const mockEstimateRequest = mockPrisma.estimateRequest as any;
-const mockUser = mockPrisma.user as any;
-const mockEstimate = mockPrisma.estimate as any;
-const mockDesignatedMover = mockPrisma.designatedMover as any;
+
+// 타입 안전한 모킹 객체 정의
+interface MockEstimateRequest {
+  findUnique: jest.Mock;
+  findMany: jest.Mock;
+}
+
+interface MockUser {
+  findUnique: jest.Mock;
+}
+
+interface MockEstimate {
+  findUnique: jest.Mock;
+  create: jest.Mock;
+  update: jest.Mock;
+  findMany: jest.Mock;
+}
+
+interface MockDesignatedMover {
+  findFirst: jest.Mock;
+  findMany: jest.Mock;
+}
+
+const mockEstimateRequest = mockPrisma.estimateRequest as MockEstimateRequest;
+const mockUser = mockPrisma.user as MockUser;
+const mockEstimate = mockPrisma.estimate as MockEstimate;
+const mockDesignatedMover = mockPrisma.designatedMover as MockDesignatedMover;
 
 describe("moverEstimateRepository", () => {
   beforeEach(() => {
@@ -510,6 +533,7 @@ describe("moverEstimateRepository", () => {
       ];
 
       mockEstimateRequest.findMany.mockResolvedValue(mockEstimateRequests);
+      mockDesignatedMover.findFirst.mockResolvedValue(null);
 
       // Act
       const result = await moverEstimateRepository.getRegionEstimateRequest(
@@ -521,7 +545,10 @@ describe("moverEstimateRepository", () => {
       );
 
       // Assert
-      expect(result).toEqual(mockEstimateRequests);
+      expect(result).toEqual(mockEstimateRequests.map(request => ({
+        ...request,
+        isDesignated: false,
+      })));
       expect(mockEstimateRequest.findMany).toHaveBeenCalledWith({
         where: expect.objectContaining({
           status: "PENDING",
@@ -620,7 +647,10 @@ describe("moverEstimateRepository", () => {
       );
 
       // Assert
-      expect(result).toEqual([mockDesignatedRequests[0].estimateRequest]);
+      expect(result).toEqual([{
+        ...mockDesignatedRequests[0].estimateRequest,
+        isDesignated: true,
+      }]);
       expect(mockDesignatedMover.findMany).toHaveBeenCalledWith({
         where: {
           moverId: moverId,

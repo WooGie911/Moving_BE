@@ -12,6 +12,8 @@ import {
   TRejectEstimateRequest,
   TUpdateEstimateRequest,
   TUpdateEstimateStatusRequest,
+  TCreateEstimateResponse,
+  TRejectEstimateResponse,
 } from "../types/moverEstimate";
 
 // Service 모킹
@@ -21,11 +23,39 @@ const mockedService = moverEstimateService as jest.Mocked<
 >;
 
 describe("moverEstimateController", () => {
-  let mockRequest: Partial<Request>;
-  let mockResponse: Partial<Response>;
-  let mockNext: NextFunction;
+  // 타입 안전한 테스트 헬퍼 함수들
+  const createMockRequest = (overrides: Partial<Request> = {}): Request =>
+    ({
+      cookies: {},
+      signedCookies: {},
+      get: jest.fn(),
+      headers: {},
+      method: "GET",
+      url: "/",
+      params: {},
+      query: {},
+      body: {},
+      user: {
+        userId: "mover123",
+        name: "김이사",
+        userType: "MOVER",
+        hasProfile: true,
+        iat: 1234567890,
+        exp: 1234567890,
+      },
+      ...overrides,
+    }) as Request;
 
-  // 타입 안전한 mock 데이터 타입 정의
+  const createMockResponse = (): Response =>
+    ({
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis(),
+      send: jest.fn().mockReturnThis(),
+    }) as unknown as Response;
+
+  const createMockNext = (): NextFunction => jest.fn();
+
+  // 타입 정의들
   type MockUser = {
     userId: string;
     name: string;
@@ -35,26 +65,14 @@ describe("moverEstimateController", () => {
     exp: number;
   };
 
-  type MockRequestBody = {
-    estimateRequestId?: string;
-    price?: number;
-    comment?: string;
-    status?: "PROPOSED" | "ACCEPTED" | "REJECTED" | "AUTO_REJECTED";
-  };
-
-  type MockQueryParams = {
-    sortBy?: "moveDate" | "createdAt";
-    customerName?: string;
-    movingType?: "SMALL" | "HOME" | "OFFICE";
-    region?: string;
-    designated?: string;
-    estimateId?: string;
-  };
+  let mockRequest: Request;
+  let mockResponse: Response;
+  let mockNext: NextFunction;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockRequest = {
+    mockRequest = createMockRequest({
       user: {
         userId: "mover123",
         name: "김이사",
@@ -62,17 +80,13 @@ describe("moverEstimateController", () => {
         hasProfile: true,
         iat: 1234567890,
         exp: 1234567890,
-      } as MockUser,
-      body: {} as MockRequestBody,
-      query: {} as MockQueryParams,
-    };
+      },
+      body: {},
+      query: {},
+    });
 
-    mockResponse = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis(),
-    };
-
-    mockNext = jest.fn();
+    mockResponse = createMockResponse();
+    mockNext = createMockNext();
   });
 
   describe("createEstimate", () => {
@@ -84,78 +98,22 @@ describe("moverEstimateController", () => {
         comment: "합리적인 가격으로 안전한 이사 서비스 제공",
       } as TCreateEstimateRequest;
 
-      const mockData: TEstimateResponse = {
+      const mockData: TCreateEstimateResponse = {
         id: "estimate123",
-        moverId: "mover123",
         estimateRequestId: "estimateRequest123",
+        moverId: "mover123",
         price: 500000,
         comment: "합리적인 가격으로 안전한 이사 서비스 제공",
         status: "PROPOSED",
-        rejectReason: null,
-        isDesignated: false,
-        workingHours: null,
-        includesPackaging: false,
-        insuranceAmount: null,
-        validUntil: null,
         createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-        mover: {
-          id: "mover123",
-          name: "김이사",
-          moverImage: null,
-          nickname: "김이사",
-          shortIntro: "5년 경력의 전문 이사업체",
-          detailIntro: "신중하고 안전한 이사 서비스",
-          career: 5,
-          workedCount: 120,
-          averageRating: 4.8,
-          totalReviewCount: 45,
-          serviceTypes: ["HOME", "SMALL"],
-        },
-        estimateRequest: {
-          id: "estimateRequest123",
-          customerId: "customer123",
-          moveType: "HOME",
-          moveDate: new Date("2025-08-10"),
-          fromAddressId: "addr1",
-          toAddressId: "addr2",
-          description: "1인가구 이사",
-          status: "PENDING",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          customer: {
-            id: "customer123",
-            name: "김고객",
-            currentArea: "SEOUL",
-            customerImage: null,
-            nickname: "김고객",
-          },
-          fromAddress: {
-            id: "addr1",
-            zoneCode: "06123",
-            city: "서울특별시",
-            district: "강남구",
-            detail: "테헤란로 123",
-            region: "SEOUL",
-          },
-          toAddress: {
-            id: "addr2",
-            zoneCode: "06621",
-            city: "서울특별시",
-            district: "서초구",
-            detail: "서초대로 456",
-            region: "SEOUL",
-          },
-        },
       };
 
       mockedService.createEstimate.mockResolvedValue(mockData);
 
       // Act
       await moverEstimateController.createEstimate(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -180,8 +138,8 @@ describe("moverEstimateController", () => {
 
       // Act
       await moverEstimateController.createEstimate(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -207,8 +165,8 @@ describe("moverEstimateController", () => {
 
       // Act
       await moverEstimateController.createEstimate(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -230,78 +188,22 @@ describe("moverEstimateController", () => {
         comment: "일정이 맞지 않아 반려합니다",
       } as TRejectEstimateRequest;
 
-      const mockData: TEstimateResponse = {
+      const mockData: TRejectEstimateResponse = {
         id: "estimate123",
-        moverId: "mover123",
         estimateRequestId: "estimateRequest123",
+        moverId: "mover123",
         price: null,
         comment: "일정이 맞지 않아 반려합니다",
         status: "REJECTED",
-        rejectReason: "일정이 맞지 않음",
-        isDesignated: false,
-        workingHours: null,
-        includesPackaging: false,
-        insuranceAmount: null,
-        validUntil: null,
         createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-        mover: {
-          id: "mover123",
-          name: "김이사",
-          moverImage: null,
-          nickname: "김이사",
-          shortIntro: "5년 경력의 전문 이사업체",
-          detailIntro: "신중하고 안전한 이사 서비스",
-          career: 5,
-          workedCount: 120,
-          averageRating: 4.8,
-          totalReviewCount: 45,
-          serviceTypes: ["HOME", "SMALL"],
-        },
-        estimateRequest: {
-          id: "estimateRequest123",
-          customerId: "customer123",
-          moveType: "HOME" as const,
-          moveDate: new Date("2025-08-10"),
-          fromAddressId: "addr1",
-          toAddressId: "addr2",
-          description: "1인가구 이사",
-          status: "PENDING",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          customer: {
-            id: "customer123",
-            name: "김고객",
-            currentArea: "SEOUL",
-            customerImage: null,
-            nickname: "김고객",
-          },
-          fromAddress: {
-            id: "addr1",
-            zoneCode: "06123",
-            city: "서울특별시",
-            district: "강남구",
-            detail: "테헤란로 123",
-            region: "SEOUL",
-          },
-          toAddress: {
-            id: "addr2",
-            zoneCode: "06621",
-            city: "서울특별시",
-            district: "서초구",
-            detail: "서초대로 456",
-            region: "SEOUL",
-          },
-        },
       };
 
       mockedService.rejectEstimate.mockResolvedValue(mockData);
 
       // Act
       await moverEstimateController.rejectEstimate(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -327,8 +229,8 @@ describe("moverEstimateController", () => {
 
       // Act
       await moverEstimateController.rejectEstimate(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -350,8 +252,8 @@ describe("moverEstimateController", () => {
 
       // Act
       await moverEstimateController.rejectEstimate(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -374,8 +276,8 @@ describe("moverEstimateController", () => {
 
       // Act
       await moverEstimateController.rejectEstimate(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -441,8 +343,8 @@ describe("moverEstimateController", () => {
 
       // Act
       await moverEstimateController.getRegionEstimateRequest(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -464,13 +366,13 @@ describe("moverEstimateController", () => {
     it("잘못된 정렬 옵션일 때 400 응답을 반환한다", async () => {
       // Arrange
       mockRequest.query = {
-        sortBy: "invalidSort",
+        sortBy: "invalidSort" as any,
       };
 
       // Act
       await moverEstimateController.getRegionEstimateRequest(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -486,13 +388,13 @@ describe("moverEstimateController", () => {
     it("잘못된 이사 타입일 때 400 응답을 반환한다", async () => {
       // Arrange
       mockRequest.query = {
-        movingType: "INVALID_TYPE",
+        movingType: "INVALID_TYPE" as any,
       };
 
       // Act
       await moverEstimateController.getRegionEstimateRequest(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -558,8 +460,8 @@ describe("moverEstimateController", () => {
 
       // Act
       await moverEstimateController.getDesignatedEstimateRequest(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -636,8 +538,8 @@ describe("moverEstimateController", () => {
 
       // Act
       await moverEstimateController.getAllEstimateRequests(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -669,8 +571,8 @@ describe("moverEstimateController", () => {
 
       // Act
       await moverEstimateController.getAllEstimateRequests(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -759,8 +661,8 @@ describe("moverEstimateController", () => {
 
       // Act
       await moverEstimateController.getMyEstimate(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -850,8 +752,8 @@ describe("moverEstimateController", () => {
 
       // Act
       await moverEstimateController.getMyRejectedEstimates(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -944,8 +846,8 @@ describe("moverEstimateController", () => {
 
       // Act
       await moverEstimateController.updateEstimateStatus(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -970,8 +872,8 @@ describe("moverEstimateController", () => {
 
       // Act
       await moverEstimateController.updateEstimateStatus(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -991,8 +893,8 @@ describe("moverEstimateController", () => {
 
       // Act
       await moverEstimateController.updateEstimateStatus(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -1085,8 +987,8 @@ describe("moverEstimateController", () => {
 
       // Act
       await moverEstimateController.updateEstimate(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -1115,8 +1017,8 @@ describe("moverEstimateController", () => {
 
       // Act
       await moverEstimateController.updateEstimate(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -1139,8 +1041,8 @@ describe("moverEstimateController", () => {
 
       // Act
       await moverEstimateController.updateEstimate(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -1163,8 +1065,8 @@ describe("moverEstimateController", () => {
 
       // Act
       await moverEstimateController.updateEstimate(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
@@ -1188,8 +1090,8 @@ describe("moverEstimateController", () => {
 
       // Act
       await moverEstimateController.updateEstimate(
-        mockRequest as Request,
-        mockResponse as Response,
+        mockRequest,
+        mockResponse,
         mockNext
       );
 
