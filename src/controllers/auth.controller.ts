@@ -157,16 +157,23 @@ const getGoogleCallback = async (req: Request, res: Response) => {
   const { accessToken, refreshToken, userType } = req.user as any;
 
   try {
+    res.cookie("accessToken", accessToken, {
+      httpOnly: false,
+      sameSite: "none",
+      secure: true,
+      path: "/",
+      maxAge: TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE * 1000,
+      domain:
+        process.env.NODE_ENV === "production" ? ".gomoving.site" : undefined,
+    });
+
     res.cookie(
       "refreshToken",
       refreshToken,
       authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
     );
 
-    // 보호되지 않는 콜백 페이지로 리디렉션
-    res.redirect(
-      `${FRONTEND_URL}/callback?success=true&accessToken=${accessToken}&userType=${userType}`
-    );
+    res.redirect(`${FRONTEND_URL}/`);
   } catch (error: any) {
     const params = new URLSearchParams({
       success: "false",
@@ -186,16 +193,23 @@ const getKakaoCallback = async (req: Request, res: Response) => {
   const { accessToken, refreshToken, userType } = req.user as any;
 
   try {
+    res.cookie("accessToken", accessToken, {
+      httpOnly: false,
+      sameSite: "none",
+      secure: true,
+      path: "/",
+      maxAge: TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE * 1000,
+      domain:
+        process.env.NODE_ENV === "production" ? ".gomoving.site" : undefined,
+    });
+
     res.cookie(
       "refreshToken",
       refreshToken,
       authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
     );
 
-    // 보호되지 않는 콜백 페이지로 리디렉션
-    res.redirect(
-      `${FRONTEND_URL}/callback?success=true&accessToken=${accessToken}&userType=${userType}`
-    );
+    res.redirect(`${FRONTEND_URL}/`);
   } catch (error: any) {
     const params = new URLSearchParams({
       success: "false",
@@ -215,16 +229,22 @@ const getNaverCallback = async (req: Request, res: Response) => {
   const { accessToken, refreshToken, userType } = req.user as any;
 
   try {
+    res.cookie("accessToken", accessToken, {
+      httpOnly: false,
+      sameSite: "none",
+      secure: true,
+      path: "/",
+      maxAge: TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE * 1000,
+      domain:
+        process.env.NODE_ENV === "production" ? ".gomoving.site" : undefined,
+    });
     res.cookie(
       "refreshToken",
       refreshToken,
       authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
     );
 
-    // 보호되지 않는 콜백 페이지로 리디렉션
-    res.redirect(
-      `${FRONTEND_URL}/callback?success=true&accessToken=${accessToken}&userType=${userType}`
-    );
+    res.redirect(`${FRONTEND_URL}/`);
   } catch (error: any) {
     const params = new URLSearchParams({
       success: "false",
