@@ -68,8 +68,8 @@ const customerEstimateRequestController = {
         res.status(404).json({
           success: false,
           message: error.message,
-          code: (error as any).code || "NOT_FOUND",
-          layer: (error as any).layer || "SERVICE",
+          code: error.code || "NOT_FOUND",
+          layer: "SERVICE",
         });
         return;
       }
@@ -94,13 +94,13 @@ const customerEstimateRequestController = {
   ): Promise<void> => {
     try {
       const userId = req.user?.userId;
-      const estimateId = req.query.estimateId;
+      const estimateId = req.query.estimateId as string;
 
       if (!userId || typeof userId !== "string") {
         throw new ControllerAuthError("유효하지 않은 사용자 정보입니다.");
       }
 
-      if (!estimateId || typeof estimateId !== "string") {
+      if (!estimateId || estimateId.trim() === "") {
         res.status(400).json({
           success: false,
           message: "유효하지 않은 견적 ID입니다.",
@@ -140,13 +140,13 @@ const customerEstimateRequestController = {
   ): Promise<void> => {
     try {
       const userId = req.user?.userId;
-      const estimateId = req.query.estimateId;
+      const estimateId = req.query.estimateId as string;
 
       if (!userId || typeof userId !== "string") {
         throw new ControllerAuthError("유효하지 않은 사용자 정보입니다.");
       }
 
-      if (!estimateId || typeof estimateId !== "string") {
+      if (!estimateId || estimateId.trim() === "") {
         res.status(400).json({
           success: false,
           message: "유효하지 않은 견적 ID입니다.",
@@ -186,13 +186,13 @@ const customerEstimateRequestController = {
   ): Promise<void> => {
     try {
       const userId = req.user?.userId;
-      const estimateId = req.query.estimateId;
+      const estimateId = req.query.estimateId as string;
 
       if (!userId || typeof userId !== "string") {
         throw new ControllerAuthError("유효하지 않은 사용자 정보입니다.");
       }
 
-      if (!estimateId || typeof estimateId !== "string") {
+      if (!estimateId || estimateId.trim() === "") {
         res.status(400).json({
           success: false,
           message: "유효하지 않은 견적 ID입니다.",

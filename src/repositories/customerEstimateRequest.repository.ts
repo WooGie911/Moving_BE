@@ -107,7 +107,7 @@ const customerEstimateRequestRepository = {
               comment: true,
               status: true,
               isDesignated: true,
-              createdAt: true, // 누락된 필드 추가
+              createdAt: true,
               mover: {
                 select: {
                   id: true,
@@ -160,7 +160,7 @@ const customerEstimateRequestRepository = {
       const receivedEstimateRequests = await prisma.estimateRequest.findMany({
         where: {
           customerId: userId,
-          status: { in: ["EXPIRED", "COMPLETED", "COMPLETED"] },
+          status: { in: ["EXPIRED", "COMPLETED"] },
         },
         select: {
           id: true,
@@ -338,6 +338,97 @@ const customerEstimateRequestRepository = {
     } catch (error) {
       throw new RepositoryQueryError(
         `견적 일괄 상태 업데이트 실패 - 견적요청ID: ${estimateRequestId}, 상태: ${status}`,
+        error
+      );
+    }
+  },
+
+  // 견적 확정 트랜잭션 처리
+  executeConfirmEstimateTransaction: async (
+    estimateRequestId: string,
+    estimateId: string
+  ): Promise<{
+    estimateRequest: {
+      id: string;
+      customerId: string;
+      moveType: string;
+      moveDate: Date;
+      createdAt: Date;
+      description: string | null;
+      status: string;
+      fromAddress: {
+        zoneCode: string;
+        city: string;
+        district: string;
+        detail: string | null;
+        region: string;
+      };
+      toAddress: {
+        zoneCode: string;
+        city: string;
+        district: string;
+        detail: string | null;
+        region: string;
+      };
+    };
+    estimate: {
+      id: string;
+      estimateRequestId: string;
+      price: number | null;
+      comment: string | null;
+      status: string;
+      isDesignated: boolean;
+      createdAt: Date;
+      updatedAt: Date;
+    };
+  }> => {
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        // 1. 견적요청 상태를 APPROVED로 변경
+        const confirmedEstimateRequest = await tx.estimateRequest.update({
+          where: { id: estimateRequestId },
+          data: { status: "APPROVED" },
+          include: {
+            fromAddress: true,
+            toAddress: true,
+          },
+        });
+
+        // 2. 선택된 견적 상태를 ACCEPTED로 변경
+        const acceptedEstimate = await tx.estimate.update({
+          where: { id: estimateId },
+          data: { status: "ACCEPTED" },
+        });
+
+        // 3. 나머지 견적들을 AUTO_REJECTED로 변경
+        await tx.estimate.updateMany({
+          where: {
+            estimateRequestId: estimateRequestId,
+            id: { not: estimateId },
+          },
+          data: { status: "AUTO_REJECTED" },
+        });
+
+        return {
+          estimateRequest: {
+            id: confirmedEstimateRequest.id,
+            customerId: confirmedEstimateRequest.customerId,
+            moveType: confirmedEstimateRequest.moveType,
+            moveDate: confirmedEstimateRequest.moveDate,
+            createdAt: confirmedEstimateRequest.createdAt,
+            description: confirmedEstimateRequest.description,
+            status: confirmedEstimateRequest.status,
+            fromAddress: confirmedEstimateRequest.fromAddress,
+            toAddress: confirmedEstimateRequest.toAddress,
+          },
+          estimate: acceptedEstimate,
+        };
+      });
+
+      return result;
+    } catch (error) {
+      throw new RepositoryQueryError(
+        `견적 확정 트랜잭션 실패 - 견적요청ID: ${estimateRequestId}, 견적ID: ${estimateId}`,
         error
       );
     }

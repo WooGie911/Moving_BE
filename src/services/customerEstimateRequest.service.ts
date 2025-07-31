@@ -115,8 +115,8 @@ const customerEstimateRequestService = {
               // 비즈니스 로직: 찜 여부 계산
               isFavorite:
                 estimate.mover.Favorite && estimate.mover.Favorite.length > 0,
-              totalFavoriteCount: estimate.mover.totalFavoriteCount,
-              Favorite: estimate.mover.Favorite,
+              totalFavoriteCount: estimate.mover.totalFavoriteCount ?? 0,
+              Favorite: estimate.mover.Favorite ?? [],
             },
           })) ?? [],
       };
@@ -170,7 +170,7 @@ const customerEstimateRequestService = {
     rawData: MultipleEstimateRequestWithRelations
   ): TReceivedQuoteResponse[] => {
     try {
-      if (!rawData) return [];
+      if (!rawData || rawData.length === 0) return [];
 
       return rawData.map((request) => ({
         estimateRequest: {
@@ -196,8 +196,8 @@ const customerEstimateRequestService = {
             // 비즈니스 로직: 찜 여부 계산
             isFavorite:
               estimate.mover.Favorite && estimate.mover.Favorite.length > 0,
-            totalFavoriteCount: estimate.mover.totalFavoriteCount,
-            Favorite: estimate.mover.Favorite,
+            totalFavoriteCount: estimate.mover.totalFavoriteCount ?? 0,
+            Favorite: estimate.mover.Favorite ?? [],
           },
         })),
       }));
@@ -281,34 +281,12 @@ const customerEstimateRequestService = {
     estimateId: string
   ): Promise<TConfirmEstimateResponse> => {
     try {
-      // Prisma 트랜잭션으로 견적 확정 처리
-      const result = await prisma.$transaction(async (tx) => {
-        // 1. 견적요청 상태를 APPROVED로 변경
-        const confirmedEstimateRequest = await tx.estimateRequest.update({
-          where: { id: estimateRequestId },
-          data: { status: "APPROVED" },
-        });
-
-        // 2. 선택된 견적 상태를 ACCEPTED로 변경
-        const acceptedEstimate = await tx.estimate.update({
-          where: { id: estimateId },
-          data: { status: "ACCEPTED" },
-        });
-
-        // 3. 나머지 견적들을 AUTO_REJECTED로 변경
-        await tx.estimate.updateMany({
-          where: {
-            estimateRequestId: estimateRequestId,
-            id: { not: estimateId },
-          },
-          data: { status: "AUTO_REJECTED" },
-        });
-
-        return {
-          estimateRequest: confirmedEstimateRequest,
-          estimate: acceptedEstimate,
-        };
-      });
+      // Repository를 통해 트랜잭션 처리
+      const result =
+        await customerEstimateRequestRepository.executeConfirmEstimateTransaction(
+          estimateRequestId,
+          estimateId
+        );
 
       return result;
     } catch (error) {
@@ -431,7 +409,34 @@ const customerEstimateRequestService = {
       if (!result) {
         throw new NotFoundError("이사완료에 실패했습니다.");
       }
-      return { estimateRequest: result };
+
+      // 주소 정보를 포함하여 반환
+      const estimateRequestWithAddresses =
+        await prisma.estimateRequest.findUnique({
+          where: { id: activeEstimateRequestId },
+          include: {
+            fromAddress: true,
+            toAddress: true,
+          },
+        });
+
+      if (!estimateRequestWithAddresses) {
+        throw new NotFoundError("견적요청을 찾을 수 없습니다.");
+      }
+
+      return {
+        estimateRequest: {
+          id: estimateRequestWithAddresses.id,
+          customerId: estimateRequestWithAddresses.customerId,
+          moveType: estimateRequestWithAddresses.moveType,
+          moveDate: estimateRequestWithAddresses.moveDate,
+          createdAt: estimateRequestWithAddresses.createdAt,
+          description: estimateRequestWithAddresses.description,
+          status: estimateRequestWithAddresses.status,
+          fromAddress: estimateRequestWithAddresses.fromAddress,
+          toAddress: estimateRequestWithAddresses.toAddress,
+        },
+      };
     } catch (error) {
       if (error instanceof RepositoryError) {
         // Repository 에러를 Service 에러로 래핑
