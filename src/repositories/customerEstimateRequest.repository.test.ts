@@ -2,7 +2,7 @@ import customerEstimateRequestRepository from "./customerEstimateRequest.reposit
 import { RepositoryQueryError } from "../types/errors.types";
 import { RequestStatus, EstimateStatus } from "@prisma/client";
 
-// PrismaClient 모킹 - 호이스팅 문제 해결
+// PrismaClient 모킹
 jest.mock("@prisma/client", () => {
   const mockEstimateRequest = {
     findFirst: jest.fn(),
@@ -37,12 +37,12 @@ const mockEstimateRequest = mockPrisma.estimateRequest;
 const mockUser = mockPrisma.user;
 const mockEstimate = mockPrisma.estimate;
 
-describe("customerEstimateRequestRepository", () => {
+describe("견적 - 유저 관련 레포지토리 테스트", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe("getActiveEstimateRequest", () => {
+  describe("활성 견적 요청 조회", () => {
     it("성공적으로 활성 견적 요청 ID를 조회한다", async () => {
       // Arrange
       const userId = "user123";

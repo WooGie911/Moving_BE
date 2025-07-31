@@ -2,8 +2,6 @@ import {
   EstimateRequest,
   Estimate,
   User,
-  DesignatedMover,
-  RequestStatus,
   EstimateStatus,
 } from "@prisma/client";
 import { PrismaClient } from "@prisma/client";
@@ -12,10 +10,6 @@ import {
   MultipleEstimateRequestWithRelations,
 } from "../types/repository.types";
 import { RepositoryQueryError } from "../types/errors.types";
-import {
-  TCancelEstimateResponse,
-  TCompleteEstimateResponse,
-} from "../types/customerEstimateRequest";
 
 const prisma = new PrismaClient();
 
