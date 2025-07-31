@@ -189,7 +189,7 @@ describe("moverEstimateController", () => {
       expect(mockResponse.status).toHaveBeenCalledWith(401);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: false,
-        message: "유효하지 않은 사용자 정보입니다.",
+        message: "[Controller 오류] 인증 실패: 유효하지 않은 사용자 정보입니다",
         code: ErrorCode.CONTROLLER_AUTH_ERROR,
       });
     });
@@ -216,7 +216,7 @@ describe("moverEstimateController", () => {
       expect(mockResponse.status).toHaveBeenCalledWith(403);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: false,
-        message: "현재 유저타입이 기사가 아닙니다.",
+        message: "[기사 오류] 현재 유저타입이 기사가 아닙니다",
         code: ErrorCode.MOVER_UNAUTHORIZED_ACCESS,
       });
     });
@@ -337,6 +337,7 @@ describe("moverEstimateController", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: false,
         message: "유효하지 않은 견적 요청 ID입니다.",
+        code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
       });
     });
 
@@ -359,6 +360,7 @@ describe("moverEstimateController", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: false,
         message: "반려 사유를 입력해주세요.",
+        code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
       });
     });
 
@@ -382,6 +384,7 @@ describe("moverEstimateController", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: false,
         message: "반려 사유는 500자 이내로 입력해주세요.",
+        code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
       });
     });
   });
@@ -476,6 +479,7 @@ describe("moverEstimateController", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: false,
         message: "유효하지 않은 정렬 옵션입니다.",
+        code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
       });
     });
 
@@ -497,6 +501,7 @@ describe("moverEstimateController", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: false,
         message: "유효하지 않은 이사 타입입니다.",
+        code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
       });
     });
   });
@@ -975,6 +980,7 @@ describe("moverEstimateController", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: false,
         message: "유효하지 않은 견적서 ID입니다.",
+        code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
       });
     });
 
@@ -995,6 +1001,7 @@ describe("moverEstimateController", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: false,
         message: "유효하지 않은 견적 상태입니다.",
+        code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
       });
     });
   });
@@ -1118,6 +1125,7 @@ describe("moverEstimateController", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: false,
         message: "유효하지 않은 견적서 ID입니다.",
+        code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
       });
     });
 
@@ -1141,6 +1149,7 @@ describe("moverEstimateController", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: false,
         message: "유효하지 않은 가격입니다.",
+        code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
       });
     });
 
@@ -1164,6 +1173,7 @@ describe("moverEstimateController", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: false,
         message: "견적 코멘트를 입력해주세요.",
+        code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
       });
     });
 
@@ -1188,6 +1198,7 @@ describe("moverEstimateController", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: false,
         message: "견적 코멘트는 1000자 이내로 입력해주세요.",
+        code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
       });
     });
   });

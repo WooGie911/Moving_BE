@@ -256,7 +256,9 @@ const moverEstimateController = {
       }
 
       // 정렬 옵션 검증
-      if (sortBy && !["moveDate", "createdAt"].includes(sortBy as string)) {
+      const validSortBy =
+        sortBy === "moveDate" || sortBy === "createdAt" ? sortBy : undefined;
+      if (sortBy && !validSortBy) {
         res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 정렬 옵션입니다.",
@@ -266,10 +268,13 @@ const moverEstimateController = {
       }
 
       // 이사 타입 검증
-      if (
-        movingType &&
-        !["SMALL", "HOME", "OFFICE"].includes(movingType as string)
-      ) {
+      const validMovingType =
+        movingType === "SMALL" ||
+        movingType === "HOME" ||
+        movingType === "OFFICE"
+          ? movingType
+          : undefined;
+      if (movingType && !validMovingType) {
         res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 이사 타입입니다.",
@@ -280,9 +285,9 @@ const moverEstimateController = {
 
       const result = await moverEstimateService.getRegionEstimateRequest(
         moverId,
-        sortBy as "moveDate" | "createdAt" | undefined,
-        customerName ? (customerName as string).trim() : undefined,
-        movingType as "SMALL" | "HOME" | "OFFICE" | undefined
+        validSortBy,
+        customerName ? String(customerName).trim() : undefined,
+        validMovingType
       );
 
       res.status(HTTP_STATUS.OK).json({
@@ -326,7 +331,9 @@ const moverEstimateController = {
       }
 
       // 정렬 옵션 검증
-      if (sortBy && !["moveDate", "createdAt"].includes(sortBy as string)) {
+      const validSortBy =
+        sortBy === "moveDate" || sortBy === "createdAt" ? sortBy : undefined;
+      if (sortBy && !validSortBy) {
         res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 정렬 옵션입니다.",
@@ -336,10 +343,13 @@ const moverEstimateController = {
       }
 
       // 이사 타입 검증
-      if (
-        movingType &&
-        !["SMALL", "HOME", "OFFICE"].includes(movingType as string)
-      ) {
+      const validMovingType =
+        movingType === "SMALL" ||
+        movingType === "HOME" ||
+        movingType === "OFFICE"
+          ? movingType
+          : undefined;
+      if (movingType && !validMovingType) {
         res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 이사 타입입니다.",
@@ -350,9 +360,9 @@ const moverEstimateController = {
 
       const result = await moverEstimateService.getDesignatedEstimateRequest(
         moverId,
-        sortBy as "moveDate" | "createdAt" | undefined,
-        customerName ? (customerName as string).trim() : undefined,
-        movingType as "SMALL" | "HOME" | "OFFICE" | undefined
+        validSortBy,
+        customerName ? String(customerName).trim() : undefined,
+        validMovingType
       );
 
       res.status(HTTP_STATUS.OK).json({
@@ -407,14 +417,26 @@ const moverEstimateController = {
         return;
       }
 
+      // 정렬 옵션 검증
+      const validSortBy =
+        sortBy === "moveDate" || sortBy === "createdAt" ? sortBy : undefined;
+
+      // 이사 타입 검증
+      const validMovingType =
+        movingType === "SMALL" ||
+        movingType === "HOME" ||
+        movingType === "OFFICE"
+          ? movingType
+          : undefined;
+
       const result = await moverEstimateService.getAllEstimateRequests(
         moverId,
         {
           region: regionBool,
           designated: designatedBool,
-          sortBy: sortBy as "moveDate" | "createdAt" | undefined,
-          customerName: customerName as string | undefined,
-          movingType: movingType as "SMALL" | "HOME" | "OFFICE" | undefined,
+          sortBy: validSortBy,
+          customerName: customerName ? String(customerName) : undefined,
+          movingType: validMovingType,
         }
       );
 
