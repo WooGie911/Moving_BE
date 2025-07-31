@@ -11,7 +11,6 @@ export type TMoverScheduleResponse = {
   id: string;
   customerName: string;
   movingType: "소형이사" | "가정이사" | "원룸이사" | "사무실이사";
-  time: string;
   status: "confirmed" | "pending" | "completed";
   fromAddress: string;
   toAddress: string;

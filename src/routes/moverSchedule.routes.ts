@@ -1,6 +1,7 @@
 import { Router } from "express";
 import moverScheduleController from "../controllers/moverSchedule.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
+import { translationMiddleware } from "../middlewares/translationMiddleware";
 
 const moverScheduleRouter = Router();
 
@@ -89,6 +90,13 @@ const moverScheduleRouter = Router();
  *       500:
  *         description: "서버 오류"
  */
-moverScheduleRouter.get("/monthly/:year/:month", verifyAccessToken, moverScheduleController.getMonthlySchedules);
+moverScheduleRouter.get(
+  "/monthly/:year/:month",
+  verifyAccessToken,
+  translationMiddleware({
+    excludeKeys: ["id", "uuid", "createdAt", "updatedAt", "email", "phone", "url", "link", "customerName", "moveDate"],
+  }),
+  moverScheduleController.getMonthlySchedules,
+);
 
 export default moverScheduleRouter;
