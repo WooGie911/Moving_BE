@@ -189,6 +189,19 @@ const customerEstimateRequestRouter = Router();
  *                   $ref: '#/components/schemas/EstimateInfo'
  *               description: 완료된 견적 목록
  *
+ *     CustomerQuoteSuccessResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           description: 성공 여부
+ *         message:
+ *           type: string
+ *           description: 응답 메시지
+ *         data:
+ *           type: object
+ *           description: 응답 데이터
+ *
  *     CustomerQuoteErrorResponse:
  *       type: object
  *       properties:
@@ -285,7 +298,7 @@ const customerEstimateRequestRouter = Router();
 customerEstimateRequestRouter.get(
   "/pending",
   verifyAccessToken,
-  customerEstimateRequestController.getPendingEstimateRequest,
+  customerEstimateRequestController.getPendingEstimateRequest
 );
 
 /**
@@ -373,183 +386,7 @@ customerEstimateRequestRouter.get(
 customerEstimateRequestRouter.get(
   "/received",
   verifyAccessToken,
-  customerEstimateRequestController.getReceivedEstimateRequests,
-);
-
-/**
- * @swagger
- * /customer-quotes/pending/{estimateId}:
- *   get:
- *     summary: 진행중인 견적요청의 특정 견적 상세 조회
- *     description: 진행중인 견적요청의 특정 견적 상세 정보를 조회합니다.
- *     tags: [UserQuote]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: estimateId
- *         schema:
- *           type: string
- *         required: true
- *         description: 견적 ID
- *     responses:
- *       200:
- *         description: 진행중인 견적 상세 조회 성공
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/EstimateDetailResponse'
- *             example:
- *               success: true
- *               message: "진행중인 견적 상세 조회 성공"
- *               data:
- *                 id: "clx789..."
- *                 price: 150000
- *                 comment: "안전하고 신속한 이사 서비스"
- *                 status: "PENDING"
- *                 isDesignated: false
- *                 createdAt: "2025-07-10T01:00:00.000Z"
- *                 mover:
- *                   id: "clx999..."
- *                   name: "김기사"
- *                   userType: ["MOVER"]
- *                   moverImage: null
- *                   nickname: "믿을만한김기사"
- *                   isVeteran: true
- *                   shortIntro: "5년 경력의 전문가"
- *                   detailIntro: "안전하고 신속한 이사"
- *                   career: 5
- *                   workedCount: 100
- *                   averageRating: 4.8
- *                   totalReviewCount: 50
- *                   serviceTypes: []
- *                   serviceAreas: []
- *                   isFavorite: true
- *                   totalFavoriteCount: 12
- *                   Favorite: []
- *       400:
- *         description: 유효하지 않은 견적 ID
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/CustomerQuoteErrorResponse'
- *             example:
- *               success: false
- *               message: "유효하지 않은 견적 ID입니다"
- *       401:
- *         description: 인증 실패
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/CustomerQuoteErrorResponse'
- *             example:
- *               success: false
- *               message: "유효하지 않은 사용자 정보입니다"
- *       404:
- *         description: 견적 상세 정보 없음
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/CustomerQuoteErrorResponse'
- *             example:
- *               success: false
- *               message: "견적 상세 정보를 찾을 수 없습니다"
- */
-customerEstimateRequestRouter.get(
-  "/pending/:estimateId",
-  verifyAccessToken,
-  customerEstimateRequestController.getPendingEstimateRequestDetail,
-);
-
-/**
- * @swagger
- * /customer-quotes/received/{estimateRequestId}/{estimateId}:
- *   get:
- *     summary: 완료된 견적요청의 특정 견적 상세 조회
- *     description: 완료된 견적요청의 특정 견적 상세 정보를 조회합니다.
- *     tags: [UserQuote]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: estimateRequestId
- *         schema:
- *           type: string
- *         required: true
- *         description: 견적요청 ID
- *       - in: path
- *         name: estimateId
- *         schema:
- *           type: string
- *         required: true
- *         description: 견적 ID
- *     responses:
- *       200:
- *         description: 완료된 견적 상세 조회 성공
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/EstimateDetailResponse'
- *             example:
- *               success: true
- *               message: "완료된 견적 상세 조회 성공"
- *               data:
- *                 id: "clx789..."
- *                 price: 150000
- *                 comment: "안전하고 신속한 이사 서비스"
- *                 status: "ACCEPTED"
- *                 isDesignated: false
- *                 createdAt: "2025-07-10T01:00:00.000Z"
- *                 mover:
- *                   id: "clx999..."
- *                   name: "김기사"
- *                   userType: ["MOVER"]
- *                   moverImage: null
- *                   nickname: "믿을만한김기사"
- *                   isVeteran: true
- *                   shortIntro: "5년 경력의 전문가"
- *                   detailIntro: "안전하고 신속한 이사"
- *                   career: 5
- *                   workedCount: 100
- *                   averageRating: 4.8
- *                   totalReviewCount: 50
- *                   serviceTypes: []
- *                   serviceAreas: []
- *                   isFavorite: true
- *                   totalFavoriteCount: 12
- *                   Favorite: []
- *       400:
- *         description: 유효하지 않은 ID
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/CustomerQuoteErrorResponse'
- *             example:
- *               success: false
- *               message: "유효하지 않은 ID입니다"
- *       401:
- *         description: 인증 실패
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/CustomerQuoteErrorResponse'
- *             example:
- *               success: false
- *               message: "유효하지 않은 사용자 정보입니다"
- *       404:
- *         description: 견적 상세 정보 없음
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/CustomerQuoteErrorResponse'
- *             example:
- *               success: false
- *               message: "견적 상세 정보를 찾을 수 없습니다"
- */
-customerEstimateRequestRouter.get(
-  "/received/:estimateRequestId/:estimateId",
-  verifyAccessToken,
-  customerEstimateRequestController.getReceivedEstimateRequestDetail,
+  customerEstimateRequestController.getReceivedEstimateRequests
 );
 
 /**
@@ -610,115 +447,50 @@ customerEstimateRequestRouter.get(
  *               success: false
  *               message: "진행중인 견적요청이 없습니다"
  */
-customerEstimateRequestRouter.patch("/confirm", verifyAccessToken, customerEstimateRequestController.confirmEstimate);
-
 /**
  * @swagger
- * components:
- *   schemas:
- *     DesignateEstimateRequest:
- *       type: object
- *       properties:
- *         message:
- *           type: string
- *           description: 요청 메시지
- *           required: true
- *         moverId:
- *           type: string
- *           description: 기사님 ID
- *           required: true
- *       required:
- *         - message
- *         - moverId
- *
- *     DesignateEstimateResponse:
- *       type: object
- *       properties:
- *         success:
- *           type: boolean
- *           description: 성공 여부
- *         message:
- *           type: string
- *           description: 응답 메시지
- *         data:
- *           type: object
- *           properties:
- *             id:
- *               type: string
- *               description: 지정 견적 ID
- *             estimateRequestId:
- *               type: string
- *               description: 견적요청 ID
- *             customerId:
- *               type: string
- *               description: 고객 ID
- *             moverId:
- *               type: string
- *               description: 기사님 ID
- *             message:
- *               type: string
- *               description: 요청 메시지
- *             status:
- *               type: string
- *               description: 상태
- *             expiresAt:
- *               type: string
- *               description: 만료일시
- *               format: date-time
- */
-
-/**
- * @swagger
- * /customer-quotes/designate:
- *   post:
- *     summary: 지정 견적 요청
- *     description: 특정 기사님에게 지정 견적을 요청합니다.
+ * /customer-quotes/cancel:
+ *   patch:
+ *     summary: 견적 취소
+ *     description: 특정 견적을 취소합니다.
  *     tags: [UserQuote]
  *     security:
  *       - BearerAuth: []
  *     parameters:
  *       - in: query
- *         name: estimateRequestId
+ *         name: estimateId
  *         schema:
  *           type: string
  *         required: true
- *         description: 견적요청 ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/DesignateEstimateRequest'
- *           example:
- *             message: "안전하고 신속한 이사 부탁드립니다."
- *             moverId: "clx999..."
+ *         description: 견적 ID
  *     responses:
  *       200:
- *         description: 지정 견적 요청 성공
+ *         description: 견적 취소 성공
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/DesignateEstimateResponse'
+ *               $ref: '#/components/schemas/CustomerQuoteSuccessResponse'
  *             example:
  *               success: true
- *               message: "지정 견적 요청 성공"
+ *               message: "견적 취소 성공"
  *               data:
- *                 id: "clx111..."
+ *                 id: "clx789..."
  *                 estimateRequestId: "clx123..."
- *                 customerId: "clx456..."
- *                 moverId: "clx999..."
- *                 message: "안전하고 신속한 이사 부탁드립니다."
- *                 status: "PENDING"
- *                 expiresAt: "2025-07-09T00:00:00.000Z"
+ *                 price: null
+ *                 comment: "고객 요청으로 취소"
+ *                 status: "REJECTED"
+ *                 isDesignated: false
+ *                 createdAt: "2025-07-10T01:00:00.000Z"
+ *                 updatedAt: "2025-07-10T02:00:00.000Z"
  *       400:
- *         description: 유효하지 않은 입력값
+ *         description: 유효하지 않은 견적 ID
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/CustomerQuoteErrorResponse'
  *             example:
  *               success: false
- *               message: "유효하지 않은 입력값입니다"
+ *               message: "유효하지 않은 견적 ID입니다"
  *       401:
  *         description: 인증 실패
  *         content:
@@ -738,10 +510,89 @@ customerEstimateRequestRouter.patch("/confirm", verifyAccessToken, customerEstim
  *               success: false
  *               message: "진행중인 견적요청이 없습니다"
  */
-customerEstimateRequestRouter.post(
-  "/designate",
+customerEstimateRequestRouter.patch(
+  "/cancel",
   verifyAccessToken,
-  customerEstimateRequestController.designateEstimateRequest,
+  customerEstimateRequestController.cancelEstimate
+);
+
+/**
+ * @swagger
+ * /customer-quotes/complete:
+ *   patch:
+ *     summary: 이사완료(구매확정)
+ *     description: 확정된 견적을 완료 처리합니다.
+ *     tags: [UserQuote]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: estimateId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 견적 ID
+ *     responses:
+ *       200:
+ *         description: 이사완료 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CustomerQuoteSuccessResponse'
+ *             example:
+ *               success: true
+ *               message: "이사완료 성공"
+ *               data:
+ *                 estimateRequest:
+ *                   id: "clx123..."
+ *                   customerId: "clx456..."
+ *                   moveType: "SMALL"
+ *                   moveDate: "2025-07-10T00:33:16.456Z"
+ *                   createdAt: "2025-07-10T00:33:16.456Z"
+ *                   description: "이사 요청 설명"
+ *                   status: "COMPLETED"
+ *                   fromAddress:
+ *                     city: "서울시"
+ *                     district: "강남구"
+ *                     detail: "123-456"
+ *                     region: "SEOUL"
+ *                   toAddress:
+ *                     city: "경기도"
+ *                     district: "성남시"
+ *                     detail: "789-012"
+ *                     region: "GYEONGGI"
+ *       400:
+ *         description: 유효하지 않은 견적 ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CustomerQuoteErrorResponse'
+ *             example:
+ *               success: false
+ *               message: "유효하지 않은 견적 ID입니다"
+ *       401:
+ *         description: 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CustomerQuoteErrorResponse'
+ *             example:
+ *               success: false
+ *               message: "유효하지 않은 사용자 정보입니다"
+ *       404:
+ *         description: 진행중인 견적요청 없음
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CustomerQuoteErrorResponse'
+ *             example:
+ *               success: false
+ *               message: "진행중인 견적요청이 없습니다"
+ */
+customerEstimateRequestRouter.patch(
+  "/complete",
+  verifyAccessToken,
+  customerEstimateRequestController.completeEstimate
 );
 
 export default customerEstimateRequestRouter;

@@ -71,10 +71,18 @@ export type TMoverInfo = {
   averageRating: number | null;
   totalReviewCount: number | null;
   totalFavoriteCount: number; // 추가
-  serviceTypes: any;
-  serviceAreas: any;
+  serviceTypes: string[];
+  serviceAreas: Array<{
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    deletedAt: Date | null;
+    district: string | null;
+    region: string;
+    userId: string;
+  }>;
   isFavorite: boolean; // 찜 여부 추가
-  Favorite?: any; // Favorite 배열도 select에 포함될 수 있으므로 옵셔널로 추가
+  Favorite?: Array<{ id: string }>; // Favorite 배열도 select에 포함될 수 있으므로 옵셔널로 추가
 };
 
 // 견적 상세 조회 응답 타입
@@ -94,11 +102,19 @@ export type TConfirmEstimateResponse = {
   estimate: Estimate;
 };
 
+// 견적 취소 응답 타입
+export type TCancelEstimateResponse = Estimate;
+
+// 이사완료 응답 타입
+export type TCompleteEstimateResponse = {
+  estimateRequest: EstimateRequest;
+};
+
 // 지정 견적 요청 응답 타입
 export type TDesignateEstimateRequest = DesignatedMover;
 
 // 이용 내역 응답 타입
-export type TQuoteHistoryResponse = {
+export type TUsageHistoryResponse = {
   id: string;
   moveType: string;
   moveDate: Date;

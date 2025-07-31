@@ -418,48 +418,6 @@ const moverEstimateService = {
     }
   },
 
-  // 견적 요청 상세 조회
-  getEstimateRequestById: async (
-    estimateRequestId: string
-  ): Promise<TEstimateRequestResponse | null> => {
-    try {
-      // 입력 검증
-      if (!estimateRequestId || typeof estimateRequestId !== "string") {
-        throw new ServiceValidationError("잘못된 견적 요청 ID입니다");
-      }
-
-      const estimateRequest =
-        await moverEstimateRepository.getEstimateRequestById(estimateRequestId);
-
-      if (!estimateRequest) {
-        throw new NotFoundError("견적 요청을 찾을 수 없습니다.");
-      }
-
-      return estimateRequest;
-    } catch (error) {
-      if (error instanceof RepositoryError) {
-        throw new ServiceError(
-          `견적 요청 상세 조회 실패: ${error.message}`,
-          undefined,
-          error
-        );
-      }
-
-      if (
-        error instanceof ServiceValidationError ||
-        error instanceof NotFoundError
-      ) {
-        throw error;
-      }
-
-      throw new ServiceError(
-        "견적 요청 상세 조회 중 오류가 발생했습니다",
-        undefined,
-        error
-      );
-    }
-  },
-
   // 내가 보낸 견적서 조회
   getMyEstimate: async (moverId: string): Promise<TMyEstimateResponse[]> => {
     try {
