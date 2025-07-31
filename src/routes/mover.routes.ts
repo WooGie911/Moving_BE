@@ -2,6 +2,7 @@ import { Router } from "express";
 import * as moverController from "../controllers/mover.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 import { optionalAuth } from "../middlewares/optionalAuth";
+import { defaultTranslationMiddleware } from "../middlewares/translationMiddleware";
 
 const moverRouter = Router();
 
@@ -219,7 +220,11 @@ const moverRouter = Router();
  *               success: false
  *               message: "기사님을 찾을 수 없습니다"
  */
-moverRouter.get("/", moverController.getMoverListController);
+moverRouter.get(
+  "/",
+  defaultTranslationMiddleware,
+  moverController.getMoverListController
+);
 
 /**
  * @swagger
@@ -407,7 +412,12 @@ moverRouter.get("/", moverController.getMoverListController);
  *               status: 404
  *               message: "찜한 기사님이 없습니다."
  */
-moverRouter.get("/favorite", verifyAccessToken, moverController.getFavoriteMoversController);
+moverRouter.get(
+  "/favorite",
+  verifyAccessToken,
+  defaultTranslationMiddleware,
+  moverController.getFavoriteMoversController
+);
 
 /**
  * @swagger
@@ -582,7 +592,12 @@ moverRouter.get("/favorite", verifyAccessToken, moverController.getFavoriteMover
  *               status: 404
  *               message: "기사님을 찾을 수 없습니다."
  */
-moverRouter.get("/:moverId", optionalAuth, moverController.getMoverDetailController);
+moverRouter.get(
+  "/:moverId",
+  optionalAuth,
+  defaultTranslationMiddleware,
+  moverController.getMoverDetailController
+);
 
 /**
  * @swagger
@@ -703,7 +718,11 @@ moverRouter.get("/:moverId", optionalAuth, moverController.getMoverDetailControl
  *               success: false
  *               message: "필수값 누락"
  */
-moverRouter.post("/:moverId/quote-request", verifyAccessToken, moverController.postDesignatedQuoteRequestController);
+moverRouter.post(
+  "/:moverId/quote-request",
+  verifyAccessToken,
+  moverController.postDesignatedQuoteRequestController
+);
 
 /**
  * @swagger
@@ -817,7 +836,7 @@ moverRouter.post("/:moverId/quote-request", verifyAccessToken, moverController.p
 moverRouter.get(
   "/:moverId/quote-request/check",
   verifyAccessToken,
-  moverController.getDesignatedQuoteRequestCheckController,
+  moverController.getDesignatedQuoteRequestCheckController
 );
 
 export default moverRouter;
