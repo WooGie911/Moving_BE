@@ -105,7 +105,7 @@ const customerEstimateRequestService = {
         estimates:
           rawData.estimates?.map((estimate) => ({
             id: estimate.id,
-            price: estimate.price ?? 0,
+            price: estimate.price || 0, // null 체크 개선
             comment: estimate.comment,
             status: estimate.status,
             isDesignated: estimate.isDesignated,

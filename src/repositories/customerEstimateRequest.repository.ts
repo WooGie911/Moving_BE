@@ -123,7 +123,17 @@ const customerEstimateRequestRepository = {
                   averageRating: true,
                   totalReviewCount: true,
                   serviceTypes: true,
-                  serviceAreas: true,
+                  serviceAreas: {
+                    select: {
+                      id: true,
+                      createdAt: true,
+                      updatedAt: true,
+                      deletedAt: true,
+                      district: true,
+                      region: true,
+                      userId: true,
+                    },
+                  },
                   totalFavoriteCount: true,
                   // 순수 데이터만 반환 - 가공은 Service에서 처리
                   Favorite: {
@@ -219,7 +229,17 @@ const customerEstimateRequestRepository = {
                   averageRating: true,
                   totalReviewCount: true,
                   serviceTypes: true,
-                  serviceAreas: true,
+                  serviceAreas: {
+                    select: {
+                      id: true,
+                      createdAt: true,
+                      updatedAt: true,
+                      deletedAt: true,
+                      district: true,
+                      region: true,
+                      userId: true,
+                    },
+                  },
                   totalFavoriteCount: true,
                   // 순수 데이터만 반환 - 가공은 Service에서 처리
                   Favorite: {
