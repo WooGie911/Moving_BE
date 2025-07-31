@@ -48,12 +48,12 @@ const mockCustomerEstimateRequestRepository =
     typeof customerEstimateRequestRepository
   >;
 
-describe("customerEstimateRequestService", () => {
+describe("고객 견적 요청 서비스", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe("getPendingEstimateRequest", () => {
+  describe("진행중인 견적 요청 조회", () => {
     it("성공적으로 진행중인 견적요청을 조회한다", async () => {
       // Arrange
       const userId = "user123";
@@ -216,7 +216,7 @@ describe("customerEstimateRequestService", () => {
     });
   });
 
-  describe("getReceivedEstimateRequests", () => {
+  describe("완료된 견적 요청 목록 조회", () => {
     it("성공적으로 완료된 견적요청 목록을 조회한다", async () => {
       // Arrange
       const userId = "user123";
@@ -366,7 +366,7 @@ describe("customerEstimateRequestService", () => {
     });
   });
 
-  describe("confirmEstimate", () => {
+  describe("견적 확정", () => {
     it("성공적으로 견적을 확정한다", async () => {
       // Arrange
       const userId = "user123";
@@ -543,7 +543,7 @@ describe("customerEstimateRequestService", () => {
     });
   });
 
-  describe("executeConfirmEstimateTransaction", () => {
+  describe("견적 확정 트랜잭션 실행", () => {
     it("성공적으로 견적 확정 트랜잭션을 실행한다", async () => {
       // Arrange
       const estimateRequestId = "estimateRequest123";
@@ -614,7 +614,7 @@ describe("customerEstimateRequestService", () => {
     });
   });
 
-  describe("cancelEstimate", () => {
+  describe("견적 취소", () => {
     it("성공적으로 견적을 취소한다", async () => {
       // Arrange
       const userId = "user123";
@@ -781,7 +781,7 @@ describe("customerEstimateRequestService", () => {
     });
   });
 
-  describe("completeEstimate", () => {
+  describe("이사 완료", () => {
     it("성공적으로 이사를 완료한다", async () => {
       // Arrange
       const userId = "user123";
@@ -995,7 +995,7 @@ describe("customerEstimateRequestService", () => {
     });
   });
 
-  describe("transformPendingEstimateData", () => {
+  describe("진행중인 견적 데이터 변환", () => {
     it("성공적으로 진행중인 견적 데이터를 변환한다", () => {
       // Arrange
       const mockRawData: TestEstimateRequestWithRelations = {
@@ -1134,7 +1134,7 @@ describe("customerEstimateRequestService", () => {
     });
   });
 
-  describe("transformReceivedEstimateData", () => {
+  describe("완료된 견적 데이터 변환", () => {
     it("성공적으로 완료된 견적 데이터를 변환한다", () => {
       // Arrange
       const mockRawData: TestMultipleEstimateRequestWithRelations = [

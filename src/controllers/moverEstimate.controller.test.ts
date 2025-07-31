@@ -22,7 +22,7 @@ const mockedService = moverEstimateService as jest.Mocked<
   typeof moverEstimateService
 >;
 
-describe("moverEstimateController", () => {
+describe("이사업체 견적 컨트롤러", () => {
   // 타입 안전한 테스트 헬퍼 함수들
   const createMockRequest = (overrides: Partial<Request> = {}): Request =>
     ({
@@ -89,7 +89,7 @@ describe("moverEstimateController", () => {
     mockNext = createMockNext();
   });
 
-  describe("createEstimate", () => {
+  describe("견적 생성", () => {
     it("성공적으로 견적을 생성한다", async () => {
       // Arrange
       mockRequest.body = {
@@ -180,7 +180,7 @@ describe("moverEstimateController", () => {
     });
   });
 
-  describe("rejectEstimate", () => {
+  describe("견적 반려", () => {
     it("성공적으로 견적을 반려한다", async () => {
       // Arrange
       mockRequest.body = {
@@ -291,7 +291,7 @@ describe("moverEstimateController", () => {
     });
   });
 
-  describe("getRegionEstimateRequest", () => {
+  describe("지역 견적 요청 조회", () => {
     it("성공적으로 서비스 가능 지역 견적을 조회한다", async () => {
       // Arrange
       mockRequest.query = {
@@ -408,7 +408,7 @@ describe("moverEstimateController", () => {
     });
   });
 
-  describe("getDesignatedEstimateRequest", () => {
+  describe("지정 견적 요청 조회", () => {
     it("성공적으로 지정 견적을 조회한다", async () => {
       // Arrange
       mockRequest.query = {
@@ -481,7 +481,7 @@ describe("moverEstimateController", () => {
     });
   });
 
-  describe("getAllEstimateRequests", () => {
+  describe("전체 견적 요청 조회", () => {
     it("성공적으로 통합 견적을 조회한다", async () => {
       // Arrange
       mockRequest.query = {
@@ -586,7 +586,7 @@ describe("moverEstimateController", () => {
     });
   });
 
-  describe("getMyEstimate", () => {
+  describe("내 견적서 조회", () => {
     it("성공적으로 내가 보낸 견적서를 조회한다", async () => {
       // Arrange
       const mockData: TMyEstimateResponse[] = [
@@ -677,7 +677,7 @@ describe("moverEstimateController", () => {
     });
   });
 
-  describe("getMyRejectedEstimates", () => {
+  describe("내 반려 견적 조회", () => {
     it("성공적으로 내가 반려한 견적을 조회한다", async () => {
       // Arrange
       const mockData: TMyRejectedEstimateResponse[] = [
@@ -770,7 +770,7 @@ describe("moverEstimateController", () => {
     });
   });
 
-  describe("updateEstimateStatus", () => {
+  describe("견적 상태 업데이트", () => {
     it("성공적으로 견적 상태를 업데이트한다", async () => {
       // Arrange
       mockRequest.query = { estimateId: "estimate123" };
@@ -908,7 +908,7 @@ describe("moverEstimateController", () => {
     });
   });
 
-  describe("updateEstimate", () => {
+  describe("견적서 업데이트", () => {
     it("성공적으로 견적서를 업데이트한다", async () => {
       // Arrange
       mockRequest.query = { estimateId: "estimate123" };

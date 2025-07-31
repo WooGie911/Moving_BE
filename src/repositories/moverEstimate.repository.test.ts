@@ -66,12 +66,12 @@ const mockUser = mockPrisma.user as MockUser;
 const mockEstimate = mockPrisma.estimate as MockEstimate;
 const mockDesignatedMover = mockPrisma.designatedMover as MockDesignatedMover;
 
-describe("moverEstimateRepository", () => {
+describe("이사업체 견적 레포지토리", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe("findEstimateRequestById", () => {
+  describe("견적 요청 ID로 조회", () => {
     it("성공적으로 견적 요청을 조회한다", async () => {
       // Arrange
       const estimateRequestId = "estimateRequest123";
@@ -126,7 +126,7 @@ describe("moverEstimateRepository", () => {
     });
   });
 
-  describe("findExistingEstimate", () => {
+  describe("기존 견적 조회", () => {
     it("성공적으로 기존 견적을 조회한다", async () => {
       // Arrange
       const estimateRequestId = "estimateRequest123";
@@ -191,7 +191,7 @@ describe("moverEstimateRepository", () => {
     });
   });
 
-  describe("findDesignatedRequest", () => {
+  describe("지정 견적 요청 조회", () => {
     it("성공적으로 지정 견적 요청을 조회한다", async () => {
       // Arrange
       const estimateRequestId = "estimateRequest123";
@@ -259,7 +259,7 @@ describe("moverEstimateRepository", () => {
     });
   });
 
-  describe("countExistingEstimates", () => {
+  describe("기존 견적 개수 조회", () => {
     it("성공적으로 기존 견적 개수를 조회한다", async () => {
       // Arrange
       const estimateRequestId = "estimateRequest123";
@@ -309,7 +309,7 @@ describe("moverEstimateRepository", () => {
     });
   });
 
-  describe("createEstimate", () => {
+  describe("견적 생성", () => {
     it("성공적으로 견적을 생성한다", async () => {
       // Arrange
       const estimateRequestId = "estimateRequest123";
@@ -434,7 +434,7 @@ describe("moverEstimateRepository", () => {
     });
   });
 
-  describe("findUserServiceAreas", () => {
+  describe("사용자 서비스 지역 조회", () => {
     it("성공적으로 사용자 서비스 지역을 조회한다", async () => {
       // Arrange
       const moverId = "mover123";
@@ -484,7 +484,7 @@ describe("moverEstimateRepository", () => {
     });
   });
 
-  describe("getRegionEstimateRequest", () => {
+  describe("지역 견적 요청 조회", () => {
     it("성공적으로 서비스 가능 지역 견적을 조회한다", async () => {
       // Arrange
       const moverId = "mover123";
@@ -545,10 +545,12 @@ describe("moverEstimateRepository", () => {
       );
 
       // Assert
-      expect(result).toEqual(mockEstimateRequests.map(request => ({
-        ...request,
-        isDesignated: false,
-      })));
+      expect(result).toEqual(
+        mockEstimateRequests.map((request) => ({
+          ...request,
+          isDesignated: false,
+        }))
+      );
       expect(mockEstimateRequest.findMany).toHaveBeenCalledWith({
         where: expect.objectContaining({
           status: "PENDING",
@@ -587,7 +589,7 @@ describe("moverEstimateRepository", () => {
     });
   });
 
-  describe("getDesignatedEstimateRequest", () => {
+  describe("지정 견적 요청 조회", () => {
     it("성공적으로 지정 견적을 조회한다", async () => {
       // Arrange
       const moverId = "mover123";
@@ -647,10 +649,12 @@ describe("moverEstimateRepository", () => {
       );
 
       // Assert
-      expect(result).toEqual([{
-        ...mockDesignatedRequests[0].estimateRequest,
-        isDesignated: true,
-      }]);
+      expect(result).toEqual([
+        {
+          ...mockDesignatedRequests[0].estimateRequest,
+          isDesignated: true,
+        },
+      ]);
       expect(mockDesignatedMover.findMany).toHaveBeenCalledWith({
         where: {
           moverId: moverId,
@@ -685,7 +689,7 @@ describe("moverEstimateRepository", () => {
     });
   });
 
-  describe("getEstimateRequestById", () => {
+  describe("견적 요청 상세 조회", () => {
     it("성공적으로 견적 요청 상세를 조회한다", async () => {
       // Arrange
       const estimateRequestId = "estimateRequest123";
@@ -770,7 +774,7 @@ describe("moverEstimateRepository", () => {
     });
   });
 
-  describe("getMyEstimate", () => {
+  describe("내 견적서 조회", () => {
     it("성공적으로 내가 보낸 견적서들을 조회한다", async () => {
       // Arrange
       const moverId = "mover123";
@@ -884,7 +888,7 @@ describe("moverEstimateRepository", () => {
     });
   });
 
-  describe("getMyRejectedEstimates", () => {
+  describe("내 반려 견적 조회", () => {
     it("성공적으로 내가 반려한 견적들을 조회한다", async () => {
       // Arrange
       const moverId = "mover123";
@@ -992,7 +996,7 @@ describe("moverEstimateRepository", () => {
     });
   });
 
-  describe("checkEstimateOwnership", () => {
+  describe("견적 소유권 확인", () => {
     it("견적 소유권이 있을 때 true를 반환한다", async () => {
       // Arrange
       const estimateId = "estimate123";
@@ -1052,7 +1056,7 @@ describe("moverEstimateRepository", () => {
     });
   });
 
-  describe("updateEstimateStatus", () => {
+  describe("견적 상태 업데이트", () => {
     it("성공적으로 견적 상태를 업데이트한다", async () => {
       // Arrange
       const estimateId = "estimate123";
@@ -1160,7 +1164,7 @@ describe("moverEstimateRepository", () => {
     });
   });
 
-  describe("updateEstimatePrice", () => {
+  describe("견적서 업데이트", () => {
     it("성공적으로 견적서를 업데이트한다", async () => {
       // Arrange
       const estimateId = "estimate123";

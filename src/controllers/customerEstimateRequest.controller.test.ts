@@ -12,7 +12,7 @@ const mockCustomerEstimateRequestService =
     typeof customerEstimateRequestService
   >;
 
-describe("customerEstimateRequestController", () => {
+describe("고객 견적 요청 컨트롤러", () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
   let mockNext: NextFunction;
@@ -40,7 +40,7 @@ describe("customerEstimateRequestController", () => {
     mockNext = jest.fn();
   });
 
-  describe("getPendingEstimateRequest", () => {
+  describe("진행중인 견적 요청 조회", () => {
     it("성공적으로 진행중인 견적요청을 조회한다", async () => {
       // Arrange
       const mockData = {
@@ -145,7 +145,7 @@ describe("customerEstimateRequestController", () => {
     });
   });
 
-  describe("getReceivedEstimateRequests", () => {
+  describe("완료된 견적 요청 목록 조회", () => {
     it("성공적으로 완료된 견적요청 목록을 조회한다", async () => {
       // Arrange
       const mockData = [
@@ -224,7 +224,7 @@ describe("customerEstimateRequestController", () => {
     });
   });
 
-  describe("confirmEstimate", () => {
+  describe("견적 확정", () => {
     it("성공적으로 견적을 확정한다", async () => {
       // Arrange
       mockRequest.query = { estimateId: "estimate123" };
@@ -368,7 +368,7 @@ describe("customerEstimateRequestController", () => {
     });
   });
 
-  describe("cancelEstimate", () => {
+  describe("견적 취소", () => {
     it("성공적으로 견적을 취소한다", async () => {
       // Arrange
       mockRequest.query = { estimateId: "estimate123" };
@@ -407,7 +407,7 @@ describe("customerEstimateRequestController", () => {
     });
   });
 
-  describe("completeEstimate", () => {
+  describe("이사 완료", () => {
     it("성공적으로 이사를 완료한다", async () => {
       // Arrange
       mockRequest.query = { estimateId: "estimate123" };

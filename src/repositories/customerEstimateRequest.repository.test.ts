@@ -97,12 +97,12 @@ type MockEstimateRequestData = {
   }>;
 };
 
-describe("customerEstimateRequestRepository", () => {
+describe("고객 견적 요청 레포지토리", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe("getActiveEstimateRequest", () => {
+  describe("활성 견적 요청 조회", () => {
     it("성공적으로 활성 견적요청 ID를 조회한다", async () => {
       // Arrange
       const userId = "user123";
@@ -161,7 +161,7 @@ describe("customerEstimateRequestRepository", () => {
     });
   });
 
-  describe("getMover", () => {
+  describe("기사님 조회", () => {
     it("성공적으로 이사업체 정보를 조회한다", async () => {
       // Arrange
       const moverId = "mover123";
@@ -199,7 +199,7 @@ describe("customerEstimateRequestRepository", () => {
     });
   });
 
-  describe("getPendingEstimateRequest", () => {
+  describe("진행중인 견적 요청 조회", () => {
     it("성공적으로 진행중인 견적요청을 조회한다", async () => {
       // Arrange
       const activeEstimateRequestId = "estimateRequest123";
@@ -328,7 +328,7 @@ describe("customerEstimateRequestRepository", () => {
     });
   });
 
-  describe("getReceivedEstimateRequests", () => {
+  describe("완료된 견적 요청 목록 조회", () => {
     it("성공적으로 완료된 견적요청 목록을 조회한다", async () => {
       // Arrange
       const userId = "user123";
@@ -406,7 +406,7 @@ describe("customerEstimateRequestRepository", () => {
     });
   });
 
-  describe("getEstimateRequestById", () => {
+  describe("견적 요청 ID로 조회", () => {
     it("성공적으로 견적요청을 조회한다", async () => {
       // Arrange
       const estimateRequestId = "estimateRequest123";
@@ -454,7 +454,7 @@ describe("customerEstimateRequestRepository", () => {
     });
   });
 
-  describe("getEstimateByIdAndRequestId", () => {
+  describe("견적 ID와 요청 ID로 견적 조회", () => {
     it("성공적으로 견적을 조회한다", async () => {
       // Arrange
       const estimateId = "estimate123";
@@ -507,7 +507,7 @@ describe("customerEstimateRequestRepository", () => {
     });
   });
 
-  describe("updateEstimateRequestStatus", () => {
+  describe("견적 요청 상태 업데이트", () => {
     it("성공적으로 견적요청 상태를 업데이트한다", async () => {
       // Arrange
       const estimateRequestId = "estimateRequest123";
@@ -537,7 +537,7 @@ describe("customerEstimateRequestRepository", () => {
     });
   });
 
-  describe("updateEstimateStatus", () => {
+  describe("견적 상태 업데이트", () => {
     it("성공적으로 견적 상태를 업데이트한다", async () => {
       // Arrange
       const estimateId = "estimate123";
@@ -565,7 +565,7 @@ describe("customerEstimateRequestRepository", () => {
     });
   });
 
-  describe("updateAllEstimatesStatus", () => {
+  describe("모든 견적 상태 업데이트", () => {
     it("성공적으로 모든 견적 상태를 일괄 업데이트한다", async () => {
       // Arrange
       const estimateRequestId = "estimateRequest123";
