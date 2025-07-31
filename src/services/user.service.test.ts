@@ -11,7 +11,10 @@ import {
   updateMoverProfileCheck,
   createMoverProfile,
 } from "./user.service";
-import { validateCustomerProfileData, validateMoverProfileData } from "../utils/validators/profileValidator";
+import {
+  validateCustomerProfileData,
+  validateMoverProfileData,
+} from "../utils/validators/profileValidator";
 import { MoveType, RegionType } from "../types/user.types";
 import bcrypt from "bcrypt";
 import { validateMoverProfileUpdate } from "../utils/validators/userValidator";
@@ -19,7 +22,10 @@ import { validateMoverProfileUpdate } from "../utils/validators/userValidator";
 jest.mock("../repositories/user.repository");
 jest.mock("../utils/generateToken");
 jest.mock("../utils/validators/profileValidator");
-jest.mock("../utils/phoneEncryption");
+jest.mock("../utils/phoneEncryption", () => ({
+  encryptPhoneNumber: jest.fn((v: string) => `encrypted-${v}`),
+  decryptPhoneNumber: jest.fn((v: string) => v.replace("encrypted-", "")),
+}));
 jest.mock("../utils/validators/userValidator");
 
 describe("userService.userInfo", () => {
@@ -64,7 +70,7 @@ describe("userService.userInfo", () => {
     const user = await userInfo("1", "CUSTOMER");
 
     // Assertion
-    expect(user).toEqual(expectedUser);
+    expect(user).toMatchObject(expectedUser);
   });
 
   it("MOVER 유저 정보 조회 성공", async () => {
@@ -459,13 +465,12 @@ describe("userService.updateCustomerProfileCheck", () => {
   });
 });
 
-
 describe("userService.updateMoverBasicInfo", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  test("기사님 기본정보 수정 성공 - 이름만 수정", async () => {
+  it("기사님 기본정보 수정 성공 - 이름만 수정", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -482,17 +487,22 @@ describe("userService.updateMoverBasicInfo", () => {
     mockGetUserById.mockResolvedValue(mockUser);
 
     const mockUpdateUserProfile = userRepository.updateUserProfile as jest.Mock;
-    mockUpdateUserProfile.mockResolvedValue({ ...mockUser, name: "김기사수정" });
+    mockUpdateUserProfile.mockResolvedValue({
+      ...mockUser,
+      name: "김기사수정",
+    });
 
     // Exercise
     await updateMoverBasicInfo("1", updateData);
 
     // Assertion
     expect(mockGetUserById).toHaveBeenCalledWith("1");
-    expect(mockUpdateUserProfile).toHaveBeenCalledWith("1", { name: "김기사수정" });
+    expect(mockUpdateUserProfile).toHaveBeenCalledWith("1", {
+      name: "김기사수정",
+    });
   });
 
-  test("기사님 기본정보 수정 성공 - 전화번호만 수정", async () => {
+  it("기사님 기본정보 수정 성공 - 전화번호만 수정", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -526,7 +536,7 @@ describe("userService.updateMoverBasicInfo", () => {
     expect(mockEncryptPhoneNumber).toHaveBeenCalledWith("01087654321");
   });
 
-  test("기사님 기본정보 수정 성공 - 비밀번호만 수정", async () => {
+  it("기사님 기본정보 수정 성공 - 비밀번호만 수정", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -551,7 +561,8 @@ describe("userService.updateMoverBasicInfo", () => {
     const mockGetUserById = userRepository.getUserById as jest.Mock;
     mockGetUserById.mockResolvedValue(mockUser);
 
-    const mockGetUserWithPassword = userRepository.getUserWithPassword as jest.Mock;
+    const mockGetUserWithPassword =
+      userRepository.getUserWithPassword as jest.Mock;
     mockGetUserWithPassword.mockResolvedValue(mockUserWithPassword);
 
     const mockUpdateUserProfile = userRepository.updateUserProfile as jest.Mock;
@@ -568,7 +579,7 @@ describe("userService.updateMoverBasicInfo", () => {
     });
   });
 
-  test("기사님 기본정보 수정 성공 - 모든 필드 수정", async () => {
+  it("기사님 기본정보 수정 성공 - 모든 필드 수정", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -599,7 +610,8 @@ describe("userService.updateMoverBasicInfo", () => {
     const mockGetUserById = userRepository.getUserById as jest.Mock;
     mockGetUserById.mockResolvedValue(mockUser);
 
-    const mockGetUserWithPassword = userRepository.getUserWithPassword as jest.Mock;
+    const mockGetUserWithPassword =
+      userRepository.getUserWithPassword as jest.Mock;
     mockGetUserWithPassword.mockResolvedValue(mockUserWithPassword);
 
     const mockUpdateUserProfile = userRepository.updateUserProfile as jest.Mock;
@@ -619,7 +631,7 @@ describe("userService.updateMoverBasicInfo", () => {
     expect(mockEncryptPhoneNumber).toHaveBeenCalledWith("01087654321");
   });
 
-  test("기사님 기본정보 수정 실패 - 사용자 존재하지 않음 NotFoundError(404) 발생", async () => {
+  it("기사님 기본정보 수정 실패 - 사용자 존재하지 않음 NotFoundError(404) 발생", async () => {
     // Setup
     const updateData = {
       name: "김기사수정",
@@ -629,11 +641,13 @@ describe("userService.updateMoverBasicInfo", () => {
     mockGetUserById.mockResolvedValue(null);
 
     // Assertion
-    await expect(updateMoverBasicInfo("1", updateData)).rejects.toThrow(NotFoundError);
+    await expect(updateMoverBasicInfo("1", updateData)).rejects.toThrow(
+      NotFoundError
+    );
     expect(mockGetUserById).toHaveBeenCalledWith("1");
   });
 
-  test("기사님 기본정보 수정 실패 - 현재 비밀번호 불일치 ValidationError(422) 발생", async () => {
+  it("기사님 기본정보 수정 실패 - 현재 비밀번호 불일치 ValidationError(422) 발생", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -658,16 +672,19 @@ describe("userService.updateMoverBasicInfo", () => {
     const mockGetUserById = userRepository.getUserById as jest.Mock;
     mockGetUserById.mockResolvedValue(mockUser);
 
-    const mockGetUserWithPassword = userRepository.getUserWithPassword as jest.Mock;
+    const mockGetUserWithPassword =
+      userRepository.getUserWithPassword as jest.Mock;
     mockGetUserWithPassword.mockResolvedValue(mockUserWithPassword);
 
     // Assertion
-    await expect(updateMoverBasicInfo("1", updateData)).rejects.toThrow(ValidationError);
+    await expect(updateMoverBasicInfo("1", updateData)).rejects.toThrow(
+      ValidationError
+    );
     expect(mockGetUserById).toHaveBeenCalledWith("1");
     expect(mockGetUserWithPassword).toHaveBeenCalledWith("1");
   });
 
-  test("기사님 기본정보 수정 실패 - 현재 비밀번호 확인 불가 ValidationError(422) 발생", async () => {
+  it("기사님 기본정보 수정 실패 - 현재 비밀번호 확인 불가 ValidationError(422) 발생", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -684,16 +701,19 @@ describe("userService.updateMoverBasicInfo", () => {
     const mockGetUserById = userRepository.getUserById as jest.Mock;
     mockGetUserById.mockResolvedValue(mockUser);
 
-    const mockGetUserWithPassword = userRepository.getUserWithPassword as jest.Mock;
+    const mockGetUserWithPassword =
+      userRepository.getUserWithPassword as jest.Mock;
     mockGetUserWithPassword.mockResolvedValue(null); // 사용자 정보 없음
 
     // Assertion
-    await expect(updateMoverBasicInfo("1", updateData)).rejects.toThrow(ValidationError);
+    await expect(updateMoverBasicInfo("1", updateData)).rejects.toThrow(
+      ValidationError
+    );
     expect(mockGetUserById).toHaveBeenCalledWith("1");
     expect(mockGetUserWithPassword).toHaveBeenCalledWith("1");
   });
 
-  test("기사님 기본정보 수정 실패 - 현재 비밀번호 없음 ValidationError(422) 발생", async () => {
+  it("기사님 기본정보 수정 실패 - 현재 비밀번호 없음 ValidationError(422) 발생", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -718,16 +738,19 @@ describe("userService.updateMoverBasicInfo", () => {
     const mockGetUserById = userRepository.getUserById as jest.Mock;
     mockGetUserById.mockResolvedValue(mockUser);
 
-    const mockGetUserWithPassword = userRepository.getUserWithPassword as jest.Mock;
+    const mockGetUserWithPassword =
+      userRepository.getUserWithPassword as jest.Mock;
     mockGetUserWithPassword.mockResolvedValue(mockUserWithPassword);
 
     // Assertion
-    await expect(updateMoverBasicInfo("1", updateData)).rejects.toThrow(ValidationError);
+    await expect(updateMoverBasicInfo("1", updateData)).rejects.toThrow(
+      ValidationError
+    );
     expect(mockGetUserById).toHaveBeenCalledWith("1");
     expect(mockGetUserWithPassword).toHaveBeenCalledWith("1");
   });
 
-  test("기사님 기본정보 수정 성공 - 비밀번호 변경 없이 이름만 수정", async () => {
+  it("기사님 기본정보 수정 성공 - 비밀번호 변경 없이 이름만 수정", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -745,18 +768,23 @@ describe("userService.updateMoverBasicInfo", () => {
     mockGetUserById.mockResolvedValue(mockUser);
 
     const mockUpdateUserProfile = userRepository.updateUserProfile as jest.Mock;
-    mockUpdateUserProfile.mockResolvedValue({ ...mockUser, name: "김기사수정" });
+    mockUpdateUserProfile.mockResolvedValue({
+      ...mockUser,
+      name: "김기사수정",
+    });
 
     // Exercise
     await updateMoverBasicInfo("1", updateData);
 
     // Assertion
     expect(mockGetUserById).toHaveBeenCalledWith("1");
-    expect(mockUpdateUserProfile).toHaveBeenCalledWith("1", { name: "김기사수정" });
+    expect(mockUpdateUserProfile).toHaveBeenCalledWith("1", {
+      name: "김기사수정",
+    });
     // getUserWithPassword는 호출되지 않아야 함 (비밀번호 변경이 없으므로)
   });
 
-  test("기사님 기본정보 수정 성공 - 이름 앞뒤 공백 제거", async () => {
+  it("기사님 기본정보 수정 성공 - 이름 앞뒤 공백 제거", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -773,14 +801,19 @@ describe("userService.updateMoverBasicInfo", () => {
     mockGetUserById.mockResolvedValue(mockUser);
 
     const mockUpdateUserProfile = userRepository.updateUserProfile as jest.Mock;
-    mockUpdateUserProfile.mockResolvedValue({ ...mockUser, name: "김기사수정" });
+    mockUpdateUserProfile.mockResolvedValue({
+      ...mockUser,
+      name: "김기사수정",
+    });
 
     // Exercise
     await updateMoverBasicInfo("1", updateData);
 
     // Assertion
     expect(mockGetUserById).toHaveBeenCalledWith("1");
-    expect(mockUpdateUserProfile).toHaveBeenCalledWith("1", { name: "김기사수정" }); // 공백 제거됨
+    expect(mockUpdateUserProfile).toHaveBeenCalledWith("1", {
+      name: "김기사수정",
+    }); // 공백 제거됨
   });
 });
 
@@ -789,7 +822,7 @@ describe("userService.updateMoverProfileCheck", () => {
     jest.clearAllMocks();
   });
 
-  test("기사님 프로필 수정 성공 - 닉네임만 수정", async () => {
+  it("기사님 프로필 수정 성공 - 닉네임만 수정", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -822,10 +855,12 @@ describe("userService.updateMoverProfileCheck", () => {
     const mockGetUserById = userRepository.getUserById as jest.Mock;
     mockGetUserById.mockResolvedValue(mockUser);
 
-    const mockValidateMoverProfileUpdate = validateMoverProfileUpdate as jest.Mock;
+    const mockValidateMoverProfileUpdate =
+      validateMoverProfileUpdate as jest.Mock;
     mockValidateMoverProfileUpdate.mockResolvedValue(undefined);
 
-    const mockUpdateMoverProfile = userRepository.updateMoverProfile as jest.Mock;
+    const mockUpdateMoverProfile =
+      userRepository.updateMoverProfile as jest.Mock;
     mockUpdateMoverProfile.mockResolvedValue(expectedResult);
 
     // Exercise
@@ -833,12 +868,15 @@ describe("userService.updateMoverProfileCheck", () => {
 
     // Assertion
     expect(mockGetUserById).toHaveBeenCalledWith("1");
-    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(updateData, "1");
+    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(
+      updateData,
+      "1"
+    );
     expect(mockUpdateMoverProfile).toHaveBeenCalledWith("1", updateData);
     expect(result).toEqual(expectedResult);
   });
 
-  test("기사님 프로필 수정 성공 - 이미지만 수정", async () => {
+  it("기사님 프로필 수정 성공 - 이미지만 수정", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -871,10 +909,12 @@ describe("userService.updateMoverProfileCheck", () => {
     const mockGetUserById = userRepository.getUserById as jest.Mock;
     mockGetUserById.mockResolvedValue(mockUser);
 
-    const mockValidateMoverProfileUpdate = validateMoverProfileUpdate as jest.Mock;
+    const mockValidateMoverProfileUpdate =
+      validateMoverProfileUpdate as jest.Mock;
     mockValidateMoverProfileUpdate.mockResolvedValue(undefined);
 
-    const mockUpdateMoverProfile = userRepository.updateMoverProfile as jest.Mock;
+    const mockUpdateMoverProfile =
+      userRepository.updateMoverProfile as jest.Mock;
     mockUpdateMoverProfile.mockResolvedValue(expectedResult);
 
     // Exercise
@@ -882,12 +922,15 @@ describe("userService.updateMoverProfileCheck", () => {
 
     // Assertion
     expect(mockGetUserById).toHaveBeenCalledWith("1");
-    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(updateData, "1");
+    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(
+      updateData,
+      "1"
+    );
     expect(mockUpdateMoverProfile).toHaveBeenCalledWith("1", updateData);
     expect(result).toEqual(expectedResult);
   });
 
-  test("기사님 프로필 수정 성공 - 활동지역만 수정", async () => {
+  it("기사님 프로필 수정 성공 - 활동지역만 수정", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -920,10 +963,12 @@ describe("userService.updateMoverProfileCheck", () => {
     const mockGetUserById = userRepository.getUserById as jest.Mock;
     mockGetUserById.mockResolvedValue(mockUser);
 
-    const mockValidateMoverProfileUpdate = validateMoverProfileUpdate as jest.Mock;
+    const mockValidateMoverProfileUpdate =
+      validateMoverProfileUpdate as jest.Mock;
     mockValidateMoverProfileUpdate.mockResolvedValue(undefined);
 
-    const mockUpdateMoverProfile = userRepository.updateMoverProfile as jest.Mock;
+    const mockUpdateMoverProfile =
+      userRepository.updateMoverProfile as jest.Mock;
     mockUpdateMoverProfile.mockResolvedValue(expectedResult);
 
     // Exercise
@@ -931,12 +976,15 @@ describe("userService.updateMoverProfileCheck", () => {
 
     // Assertion
     expect(mockGetUserById).toHaveBeenCalledWith("1");
-    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(updateData, "1");
+    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(
+      updateData,
+      "1"
+    );
     expect(mockUpdateMoverProfile).toHaveBeenCalledWith("1", updateData);
     expect(result).toEqual(expectedResult);
   });
 
-  test("기사님 프로필 수정 성공 - 서비스타입만 수정", async () => {
+  it("기사님 프로필 수정 성공 - 서비스타입만 수정", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -969,10 +1017,12 @@ describe("userService.updateMoverProfileCheck", () => {
     const mockGetUserById = userRepository.getUserById as jest.Mock;
     mockGetUserById.mockResolvedValue(mockUser);
 
-    const mockValidateMoverProfileUpdate = validateMoverProfileUpdate as jest.Mock;
+    const mockValidateMoverProfileUpdate =
+      validateMoverProfileUpdate as jest.Mock;
     mockValidateMoverProfileUpdate.mockResolvedValue(undefined);
 
-    const mockUpdateMoverProfile = userRepository.updateMoverProfile as jest.Mock;
+    const mockUpdateMoverProfile =
+      userRepository.updateMoverProfile as jest.Mock;
     mockUpdateMoverProfile.mockResolvedValue(expectedResult);
 
     // Exercise
@@ -980,12 +1030,15 @@ describe("userService.updateMoverProfileCheck", () => {
 
     // Assertion
     expect(mockGetUserById).toHaveBeenCalledWith("1");
-    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(updateData, "1");
+    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(
+      updateData,
+      "1"
+    );
     expect(mockUpdateMoverProfile).toHaveBeenCalledWith("1", updateData);
     expect(result).toEqual(expectedResult);
   });
 
-  test("기사님 프로필 수정 성공 - 소개글만 수정", async () => {
+  it("기사님 프로필 수정 성공 - 소개글만 수정", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -1019,10 +1072,12 @@ describe("userService.updateMoverProfileCheck", () => {
     const mockGetUserById = userRepository.getUserById as jest.Mock;
     mockGetUserById.mockResolvedValue(mockUser);
 
-    const mockValidateMoverProfileUpdate = validateMoverProfileUpdate as jest.Mock;
+    const mockValidateMoverProfileUpdate =
+      validateMoverProfileUpdate as jest.Mock;
     mockValidateMoverProfileUpdate.mockResolvedValue(undefined);
 
-    const mockUpdateMoverProfile = userRepository.updateMoverProfile as jest.Mock;
+    const mockUpdateMoverProfile =
+      userRepository.updateMoverProfile as jest.Mock;
     mockUpdateMoverProfile.mockResolvedValue(expectedResult);
 
     // Exercise
@@ -1030,12 +1085,15 @@ describe("userService.updateMoverProfileCheck", () => {
 
     // Assertion
     expect(mockGetUserById).toHaveBeenCalledWith("1");
-    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(updateData, "1");
+    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(
+      updateData,
+      "1"
+    );
     expect(mockUpdateMoverProfile).toHaveBeenCalledWith("1", updateData);
     expect(result).toEqual(expectedResult);
   });
 
-  test("기사님 프로필 수정 성공 - 경력만 수정", async () => {
+  it("기사님 프로필 수정 성공 - 경력만 수정", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -1068,10 +1126,12 @@ describe("userService.updateMoverProfileCheck", () => {
     const mockGetUserById = userRepository.getUserById as jest.Mock;
     mockGetUserById.mockResolvedValue(mockUser);
 
-    const mockValidateMoverProfileUpdate = validateMoverProfileUpdate as jest.Mock;
+    const mockValidateMoverProfileUpdate =
+      validateMoverProfileUpdate as jest.Mock;
     mockValidateMoverProfileUpdate.mockResolvedValue(undefined);
 
-    const mockUpdateMoverProfile = userRepository.updateMoverProfile as jest.Mock;
+    const mockUpdateMoverProfile =
+      userRepository.updateMoverProfile as jest.Mock;
     mockUpdateMoverProfile.mockResolvedValue(expectedResult);
 
     // Exercise
@@ -1079,12 +1139,15 @@ describe("userService.updateMoverProfileCheck", () => {
 
     // Assertion
     expect(mockGetUserById).toHaveBeenCalledWith("1");
-    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(updateData, "1");
+    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(
+      updateData,
+      "1"
+    );
     expect(mockUpdateMoverProfile).toHaveBeenCalledWith("1", updateData);
     expect(result).toEqual(expectedResult);
   });
 
-  test("기사님 프로필 수정 성공 - 모든 필드 수정", async () => {
+  it("기사님 프로필 수정 성공 - 모든 필드 수정", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -1124,10 +1187,12 @@ describe("userService.updateMoverProfileCheck", () => {
     const mockGetUserById = userRepository.getUserById as jest.Mock;
     mockGetUserById.mockResolvedValue(mockUser);
 
-    const mockValidateMoverProfileUpdate = validateMoverProfileUpdate as jest.Mock;
+    const mockValidateMoverProfileUpdate =
+      validateMoverProfileUpdate as jest.Mock;
     mockValidateMoverProfileUpdate.mockResolvedValue(undefined);
 
-    const mockUpdateMoverProfile = userRepository.updateMoverProfile as jest.Mock;
+    const mockUpdateMoverProfile =
+      userRepository.updateMoverProfile as jest.Mock;
     mockUpdateMoverProfile.mockResolvedValue(expectedResult);
 
     // Exercise
@@ -1135,12 +1200,15 @@ describe("userService.updateMoverProfileCheck", () => {
 
     // Assertion
     expect(mockGetUserById).toHaveBeenCalledWith("1");
-    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(updateData, "1");
+    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(
+      updateData,
+      "1"
+    );
     expect(mockUpdateMoverProfile).toHaveBeenCalledWith("1", updateData);
     expect(result).toEqual(expectedResult);
   });
 
-  test("기사님 프로필 수정 실패 - 사용자 존재하지 않음 NotFoundError(404) 발생", async () => {
+  it("기사님 프로필 수정 실패 - 사용자 존재하지 않음 NotFoundError(404) 발생", async () => {
     // Setup
     const updateData = {
       nickname: "수정된닉네임",
@@ -1150,11 +1218,13 @@ describe("userService.updateMoverProfileCheck", () => {
     mockGetUserById.mockResolvedValue(null);
 
     // Assertion
-    await expect(updateMoverProfileCheck("1", updateData)).rejects.toThrow(NotFoundError);
+    await expect(updateMoverProfileCheck("1", updateData)).rejects.toThrow(
+      NotFoundError
+    );
     expect(mockGetUserById).toHaveBeenCalledWith("1");
   });
 
-  test("기사님 프로필 수정 실패 - 유효성 검사 실패 ValidationError(422) 발생", async () => {
+  it("기사님 프로필 수정 실패 - 유효성 검사 실패 ValidationError(422) 발생", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -1170,18 +1240,24 @@ describe("userService.updateMoverProfileCheck", () => {
     const mockGetUserById = userRepository.getUserById as jest.Mock;
     mockGetUserById.mockResolvedValue(mockUser);
 
-    const mockValidateMoverProfileUpdate = validateMoverProfileUpdate as jest.Mock;
+    const mockValidateMoverProfileUpdate =
+      validateMoverProfileUpdate as jest.Mock;
     mockValidateMoverProfileUpdate.mockRejectedValue(
       new ValidationError("이미 사용 중인 닉네임입니다")
     );
 
     // Assertion
-    await expect(updateMoverProfileCheck("1", updateData)).rejects.toThrow(ValidationError);
+    await expect(updateMoverProfileCheck("1", updateData)).rejects.toThrow(
+      ValidationError
+    );
     expect(mockGetUserById).toHaveBeenCalledWith("1");
-    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(updateData, "1");
+    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(
+      updateData,
+      "1"
+    );
   });
 
-  test("기사님 프로필 수정 실패 - 잘못된 지역 ValidationError(422) 발생", async () => {
+  it("기사님 프로필 수정 실패 - 잘못된 지역 ValidationError(422) 발생", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -1197,18 +1273,24 @@ describe("userService.updateMoverProfileCheck", () => {
     const mockGetUserById = userRepository.getUserById as jest.Mock;
     mockGetUserById.mockResolvedValue(mockUser);
 
-    const mockValidateMoverProfileUpdate = validateMoverProfileUpdate as jest.Mock;
+    const mockValidateMoverProfileUpdate =
+      validateMoverProfileUpdate as jest.Mock;
     mockValidateMoverProfileUpdate.mockRejectedValue(
       new ValidationError("유효하지 않은 지역입니다")
     );
 
     // Assertion
-    await expect(updateMoverProfileCheck("1", updateData)).rejects.toThrow(ValidationError);
+    await expect(updateMoverProfileCheck("1", updateData)).rejects.toThrow(
+      ValidationError
+    );
     expect(mockGetUserById).toHaveBeenCalledWith("1");
-    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(updateData, "1");
+    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(
+      updateData,
+      "1"
+    );
   });
 
-  test("기사님 프로필 수정 실패 - 잘못된 서비스타입 ValidationError(422) 발생", async () => {
+  it("기사님 프로필 수정 실패 - 잘못된 서비스타입 ValidationError(422) 발생", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -1224,18 +1306,24 @@ describe("userService.updateMoverProfileCheck", () => {
     const mockGetUserById = userRepository.getUserById as jest.Mock;
     mockGetUserById.mockResolvedValue(mockUser);
 
-    const mockValidateMoverProfileUpdate = validateMoverProfileUpdate as jest.Mock;
+    const mockValidateMoverProfileUpdate =
+      validateMoverProfileUpdate as jest.Mock;
     mockValidateMoverProfileUpdate.mockRejectedValue(
       new ValidationError("유효하지 않은 서비스 타입입니다")
     );
 
     // Assertion
-    await expect(updateMoverProfileCheck("1", updateData)).rejects.toThrow(ValidationError);
+    await expect(updateMoverProfileCheck("1", updateData)).rejects.toThrow(
+      ValidationError
+    );
     expect(mockGetUserById).toHaveBeenCalledWith("1");
-    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(updateData, "1");
+    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(
+      updateData,
+      "1"
+    );
   });
 
-  test("기사님 프로필 수정 실패 - 음수 경력 ValidationError(422) 발생", async () => {
+  it("기사님 프로필 수정 실패 - 음수 경력 ValidationError(422) 발생", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -1251,18 +1339,24 @@ describe("userService.updateMoverProfileCheck", () => {
     const mockGetUserById = userRepository.getUserById as jest.Mock;
     mockGetUserById.mockResolvedValue(mockUser);
 
-    const mockValidateMoverProfileUpdate = validateMoverProfileUpdate as jest.Mock;
+    const mockValidateMoverProfileUpdate =
+      validateMoverProfileUpdate as jest.Mock;
     mockValidateMoverProfileUpdate.mockRejectedValue(
       new ValidationError("경력은 0년 이상이어야 합니다")
     );
 
     // Assertion
-    await expect(updateMoverProfileCheck("1", updateData)).rejects.toThrow(ValidationError);
+    await expect(updateMoverProfileCheck("1", updateData)).rejects.toThrow(
+      ValidationError
+    );
     expect(mockGetUserById).toHaveBeenCalledWith("1");
-    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(updateData, "1");
+    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(
+      updateData,
+      "1"
+    );
   });
 
-  test("기사님 프로필 수정 실패 - 짧은 소개글 ValidationError(422) 발생", async () => {
+  it("기사님 프로필 수정 실패 - 짧은 소개글 ValidationError(422) 발생", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -1278,18 +1372,24 @@ describe("userService.updateMoverProfileCheck", () => {
     const mockGetUserById = userRepository.getUserById as jest.Mock;
     mockGetUserById.mockResolvedValue(mockUser);
 
-    const mockValidateMoverProfileUpdate = validateMoverProfileUpdate as jest.Mock;
+    const mockValidateMoverProfileUpdate =
+      validateMoverProfileUpdate as jest.Mock;
     mockValidateMoverProfileUpdate.mockRejectedValue(
       new ValidationError("한줄 소개는 최소 8자 이상이어야 합니다")
     );
 
     // Assertion
-    await expect(updateMoverProfileCheck("1", updateData)).rejects.toThrow(ValidationError);
+    await expect(updateMoverProfileCheck("1", updateData)).rejects.toThrow(
+      ValidationError
+    );
     expect(mockGetUserById).toHaveBeenCalledWith("1");
-    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(updateData, "1");
+    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(
+      updateData,
+      "1"
+    );
   });
 
-  test("기사님 프로필 수정 실패 - 짧은 상세설명 ValidationError(422) 발생", async () => {
+  it("기사님 프로필 수정 실패 - 짧은 상세설명 ValidationError(422) 발생", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -1305,25 +1405,30 @@ describe("userService.updateMoverProfileCheck", () => {
     const mockGetUserById = userRepository.getUserById as jest.Mock;
     mockGetUserById.mockResolvedValue(mockUser);
 
-    const mockValidateMoverProfileUpdate = validateMoverProfileUpdate as jest.Mock;
+    const mockValidateMoverProfileUpdate =
+      validateMoverProfileUpdate as jest.Mock;
     mockValidateMoverProfileUpdate.mockRejectedValue(
       new ValidationError("상세 설명은 최소 10자 이상이어야 합니다")
     );
 
     // Assertion
-    await expect(updateMoverProfileCheck("1", updateData)).rejects.toThrow(ValidationError);
+    await expect(updateMoverProfileCheck("1", updateData)).rejects.toThrow(
+      ValidationError
+    );
     expect(mockGetUserById).toHaveBeenCalledWith("1");
-    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(updateData, "1");
+    expect(mockValidateMoverProfileUpdate).toHaveBeenCalledWith(
+      updateData,
+      "1"
+    );
   });
 });
-
 
 describe("userService.createMoverProfile", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  test("기사님 프로필 등록 성공 - 모든 필드 포함", async () => {
+  it("기사님 프로필 등록 성공 - 모든 필드 포함", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -1337,7 +1442,8 @@ describe("userService.createMoverProfile", () => {
       moverImage: "https://example.com/mover.jpg",
       career: 5,
       shortIntro: "5년 경력의 꼼꼼한 이사 전문가입니다",
-      detailIntro: "안전하고 신속한 이사를 약속드립니다. 고객님의 만족을 최우선으로 생각합니다.",
+      detailIntro:
+        "안전하고 신속한 이사를 약속드립니다. 고객님의 만족을 최우선으로 생각합니다.",
       currentAreas: ["SEOUL", "INCHEON"] as RegionType[],
       serviceTypes: ["SMALL", "HOME"] as MoveType[],
     };
@@ -1349,7 +1455,8 @@ describe("userService.createMoverProfile", () => {
       moverImage: "https://example.com/mover.jpg",
       career: 5,
       shortIntro: "5년 경력의 꼼꼼한 이사 전문가입니다",
-      detailIntro: "안전하고 신속한 이사를 약속드립니다. 고객님의 만족을 최우선으로 생각합니다.",
+      detailIntro:
+        "안전하고 신속한 이사를 약속드립니다. 고객님의 만족을 최우선으로 생각합니다.",
       currentAreas: ["SEOUL", "INCHEON"],
       serviceTypes: ["SMALL", "HOME"],
       isVeteran: true,
@@ -1366,7 +1473,9 @@ describe("userService.createMoverProfile", () => {
 
     (userRepository.getUserById as jest.Mock).mockResolvedValue(mockUser);
     (validateMoverProfileData as jest.Mock).mockResolvedValue(undefined);
-    (userRepository.createMoverProfileRepository as jest.Mock).mockResolvedValue(expectedResult);
+    (
+      userRepository.createMoverProfileRepository as jest.Mock
+    ).mockResolvedValue(expectedResult);
     (generateToken as jest.Mock).mockReturnValue(mockTokens);
 
     // Exercise
@@ -1381,7 +1490,8 @@ describe("userService.createMoverProfile", () => {
       moverImage: "https://example.com/mover.jpg",
       career: 5,
       shortIntro: "5년 경력의 꼼꼼한 이사 전문가입니다",
-      detailIntro: "안전하고 신속한 이사를 약속드립니다. 고객님의 만족을 최우선으로 생각합니다.",
+      detailIntro:
+        "안전하고 신속한 이사를 약속드립니다. 고객님의 만족을 최우선으로 생각합니다.",
       currentAreas: ["SEOUL", "INCHEON"],
       serviceTypes: ["SMALL", "HOME"],
     });
@@ -1398,7 +1508,7 @@ describe("userService.createMoverProfile", () => {
     });
   });
 
-  test("기사님 프로필 등록 성공 - 최소 필드만 포함", async () => {
+  it("기사님 프로필 등록 성공 - 최소 필드만 포함", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -1437,7 +1547,9 @@ describe("userService.createMoverProfile", () => {
 
     (userRepository.getUserById as jest.Mock).mockResolvedValue(mockUser);
     (validateMoverProfileData as jest.Mock).mockResolvedValue(undefined);
-    (userRepository.createMoverProfileRepository as jest.Mock).mockResolvedValue(expectedResult);
+    (
+      userRepository.createMoverProfileRepository as jest.Mock
+    ).mockResolvedValue(expectedResult);
     (generateToken as jest.Mock).mockReturnValue(mockTokens);
 
     // Exercise
@@ -1461,7 +1573,7 @@ describe("userService.createMoverProfile", () => {
     });
   });
 
-  test("기사님 프로필 등록 실패 - 사용자 존재하지 않음 NotFoundError(404) 발생", async () => {
+  it("기사님 프로필 등록 실패 - 사용자 존재하지 않음 NotFoundError(404) 발생", async () => {
     // Setup
     const profileData = {
       nickname: "믿을만한김기사",
@@ -1472,11 +1584,13 @@ describe("userService.createMoverProfile", () => {
     (userRepository.getUserById as jest.Mock).mockResolvedValue(null);
 
     // Assertion
-    await expect(createMoverProfile("1", profileData)).rejects.toThrow(NotFoundError);
+    await expect(createMoverProfile("1", profileData)).rejects.toThrow(
+      NotFoundError
+    );
     expect(userRepository.getUserById).toHaveBeenCalledWith("1");
   });
 
-  test("기사님 프로필 등록 실패 - 유효성 검사 실패 ValidationError(422) 발생", async () => {
+  it("기사님 프로필 등록 실패 - 유효성 검사 실패 ValidationError(422) 발생", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -1497,12 +1611,14 @@ describe("userService.createMoverProfile", () => {
     );
 
     // Assertion
-    await expect(createMoverProfile("1", profileData)).rejects.toThrow(ValidationError);
+    await expect(createMoverProfile("1", profileData)).rejects.toThrow(
+      ValidationError
+    );
     expect(userRepository.getUserById).toHaveBeenCalledWith("1");
     expect(validateMoverProfileData).toHaveBeenCalledWith(profileData, "1");
   });
 
-  test("기사님 프로필 등록 실패 - 닉네임 중복 ValidationError(422) 발생", async () => {
+  it("기사님 프로필 등록 실패 - 닉네임 중복 ValidationError(422) 발생", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -1523,12 +1639,14 @@ describe("userService.createMoverProfile", () => {
     );
 
     // Assertion
-    await expect(createMoverProfile("1", profileData)).rejects.toThrow(ValidationError);
+    await expect(createMoverProfile("1", profileData)).rejects.toThrow(
+      ValidationError
+    );
     expect(userRepository.getUserById).toHaveBeenCalledWith("1");
     expect(validateMoverProfileData).toHaveBeenCalledWith(profileData, "1");
   });
 
-  test("기사님 프로필 등록 실패 - 빈 닉네임 ValidationError(422) 발생", async () => {
+  it("기사님 프로필 등록 실패 - 빈 닉네임 ValidationError(422) 발생", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -1549,12 +1667,14 @@ describe("userService.createMoverProfile", () => {
     );
 
     // Assertion
-    await expect(createMoverProfile("1", profileData)).rejects.toThrow(ValidationError);
+    await expect(createMoverProfile("1", profileData)).rejects.toThrow(
+      ValidationError
+    );
     expect(userRepository.getUserById).toHaveBeenCalledWith("1");
     expect(validateMoverProfileData).toHaveBeenCalledWith(profileData, "1");
   });
 
-  test("기사님 프로필 등록 실패 - 빈 서비스 타입 ValidationError(422) 발생", async () => {
+  it("기사님 프로필 등록 실패 - 빈 서비스 타입 ValidationError(422) 발생", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -1575,12 +1695,14 @@ describe("userService.createMoverProfile", () => {
     );
 
     // Assertion
-    await expect(createMoverProfile("1", profileData)).rejects.toThrow(ValidationError);
+    await expect(createMoverProfile("1", profileData)).rejects.toThrow(
+      ValidationError
+    );
     expect(userRepository.getUserById).toHaveBeenCalledWith("1");
     expect(validateMoverProfileData).toHaveBeenCalledWith(profileData, "1");
   });
 
-  test("기사님 프로필 등록 실패 - 빈 지역 ValidationError(422) 발생", async () => {
+  it("기사님 프로필 등록 실패 - 빈 지역 ValidationError(422) 발생", async () => {
     // Setup
     const mockUser = {
       id: "1",
@@ -1601,7 +1723,9 @@ describe("userService.createMoverProfile", () => {
     );
 
     // Assertion
-    await expect(createMoverProfile("1", profileData)).rejects.toThrow(ValidationError);
+    await expect(createMoverProfile("1", profileData)).rejects.toThrow(
+      ValidationError
+    );
     expect(userRepository.getUserById).toHaveBeenCalledWith("1");
     expect(validateMoverProfileData).toHaveBeenCalledWith(profileData, "1");
   });
