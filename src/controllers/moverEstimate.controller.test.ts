@@ -1,8 +1,18 @@
 import { Request, Response, NextFunction } from "express";
 import moverEstimateController from "./moverEstimate.controller";
 import moverEstimateService from "../services/moverEstimate.service";
-import { ControllerAuthError } from "../types/errors.types";
+import { ControllerAuthError, ErrorCode } from "../types/errors.types";
 import { NotFoundError } from "../types/commonError.types";
+import {
+  TEstimateResponse,
+  TEstimateRequestResponse,
+  TMyEstimateResponse,
+  TMyRejectedEstimateResponse,
+  TCreateEstimateRequest,
+  TRejectEstimateRequest,
+  TUpdateEstimateRequest,
+  TUpdateEstimateStatusRequest,
+} from "../types/moverEstimate";
 
 // Service 모킹
 jest.mock("../services/moverEstimate.service");
@@ -15,6 +25,32 @@ describe("moverEstimateController", () => {
   let mockResponse: Partial<Response>;
   let mockNext: NextFunction;
 
+  // 타입 안전한 mock 데이터 타입 정의
+  type MockUser = {
+    userId: string;
+    name: string;
+    userType: "CUSTOMER" | "MOVER";
+    hasProfile: boolean;
+    iat: number;
+    exp: number;
+  };
+
+  type MockRequestBody = {
+    estimateRequestId?: string;
+    price?: number;
+    comment?: string;
+    status?: "PROPOSED" | "ACCEPTED" | "REJECTED" | "AUTO_REJECTED";
+  };
+
+  type MockQueryParams = {
+    sortBy?: "moveDate" | "createdAt";
+    customerName?: string;
+    movingType?: "SMALL" | "HOME" | "OFFICE";
+    region?: string;
+    designated?: string;
+    estimateId?: string;
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
 
@@ -22,13 +58,13 @@ describe("moverEstimateController", () => {
       user: {
         userId: "mover123",
         name: "김이사",
-        userType: "MOVER" as const,
+        userType: "MOVER",
         hasProfile: true,
         iat: 1234567890,
         exp: 1234567890,
-      },
-      body: {},
-      query: {},
+      } as MockUser,
+      body: {} as MockRequestBody,
+      query: {} as MockQueryParams,
     };
 
     mockResponse = {
@@ -46,15 +82,15 @@ describe("moverEstimateController", () => {
         estimateRequestId: "estimateRequest123",
         price: 500000,
         comment: "합리적인 가격으로 안전한 이사 서비스 제공",
-      };
+      } as TCreateEstimateRequest;
 
-      const mockData = {
+      const mockData: TEstimateResponse = {
         id: "estimate123",
         moverId: "mover123",
         estimateRequestId: "estimateRequest123",
         price: 500000,
         comment: "합리적인 가격으로 안전한 이사 서비스 제공",
-        status: "PROPOSED" as const,
+        status: "PROPOSED",
         rejectReason: null,
         isDesignated: false,
         workingHours: null,
@@ -80,7 +116,7 @@ describe("moverEstimateController", () => {
         estimateRequest: {
           id: "estimateRequest123",
           customerId: "customer123",
-          moveType: "HOME" as const,
+          moveType: "HOME",
           moveDate: new Date("2025-08-10"),
           fromAddressId: "addr1",
           toAddressId: "addr2",
@@ -129,7 +165,7 @@ describe("moverEstimateController", () => {
         moverId: "mover123",
         price: 500000,
         comment: "합리적인 가격으로 안전한 이사 서비스 제공",
-      });
+      } as TCreateEstimateRequest);
       expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
@@ -153,8 +189,8 @@ describe("moverEstimateController", () => {
       expect(mockResponse.status).toHaveBeenCalledWith(401);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: false,
-        message: "[Controller 오류] 인증 실패: 유효하지 않은 사용자 정보입니다",
-        code: "CTRL_3003",
+        message: "유효하지 않은 사용자 정보입니다.",
+        code: ErrorCode.CONTROLLER_AUTH_ERROR,
       });
     });
 
@@ -163,11 +199,11 @@ describe("moverEstimateController", () => {
       mockRequest.user = {
         userId: "customer123",
         name: "김고객",
-        userType: "CUSTOMER" as const,
+        userType: "CUSTOMER",
         hasProfile: true,
         iat: 1234567890,
         exp: 1234567890,
-      };
+      } as MockUser;
 
       // Act
       await moverEstimateController.createEstimate(
@@ -180,8 +216,8 @@ describe("moverEstimateController", () => {
       expect(mockResponse.status).toHaveBeenCalledWith(403);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: false,
-        message: "[기사 오류] 현재 유저타입이 기사가 아닙니다",
-        code: "MOVER_4005",
+        message: "현재 유저타입이 기사가 아닙니다.",
+        code: ErrorCode.MOVER_UNAUTHORIZED_ACCESS,
       });
     });
   });
@@ -192,15 +228,15 @@ describe("moverEstimateController", () => {
       mockRequest.body = {
         estimateRequestId: "estimateRequest123",
         comment: "일정이 맞지 않아 반려합니다",
-      };
+      } as TRejectEstimateRequest;
 
-      const mockData = {
+      const mockData: TEstimateResponse = {
         id: "estimate123",
         moverId: "mover123",
         estimateRequestId: "estimateRequest123",
         price: null,
         comment: "일정이 맞지 않아 반려합니다",
-        status: "REJECTED" as const,
+        status: "REJECTED",
         rejectReason: "일정이 맞지 않음",
         isDesignated: false,
         workingHours: null,
@@ -474,11 +510,11 @@ describe("moverEstimateController", () => {
         movingType: "SMALL",
       };
 
-      const mockData = [
+      const mockData: TEstimateRequestResponse[] = [
         {
           id: "estimateRequest1",
           customerId: "customer1",
-          moveType: "SMALL" as const,
+          moveType: "SMALL",
           moveDate: new Date("2025-08-10"),
           fromAddressId: "addr1",
           toAddressId: "addr2",
@@ -646,14 +682,14 @@ describe("moverEstimateController", () => {
   describe("getMyEstimate", () => {
     it("성공적으로 내가 보낸 견적서를 조회한다", async () => {
       // Arrange
-      const mockData = [
+      const mockData: TMyEstimateResponse[] = [
         {
           id: "estimate1",
           moverId: "mover123",
           estimateRequestId: "estimateRequest1",
           price: 500000,
           comment: "합리적인 가격",
-          status: "PROPOSED" as const,
+          status: "PROPOSED",
           rejectReason: null,
           isDesignated: false,
           workingHours: null,
@@ -679,7 +715,7 @@ describe("moverEstimateController", () => {
           estimateRequest: {
             id: "estimateRequest1",
             customerId: "customer1",
-            moveType: "HOME" as const,
+            moveType: "HOME",
             moveDate: new Date("2025-08-10"),
             fromAddressId: "addr1",
             toAddressId: "addr2",
@@ -737,14 +773,14 @@ describe("moverEstimateController", () => {
   describe("getMyRejectedEstimates", () => {
     it("성공적으로 내가 반려한 견적을 조회한다", async () => {
       // Arrange
-      const mockData = [
+      const mockData: TMyRejectedEstimateResponse[] = [
         {
           id: "estimate1",
           moverId: "mover123",
           estimateRequestId: "estimateRequest1",
           price: null,
           comment: "일정이 맞지 않아 반려합니다",
-          status: "REJECTED" as const,
+          status: "REJECTED",
           rejectReason: "일정이 맞지 않음",
           isDesignated: false,
           workingHours: null,
@@ -770,7 +806,7 @@ describe("moverEstimateController", () => {
           estimateRequest: {
             id: "estimateRequest1",
             customerId: "customer1",
-            moveType: "HOME" as const,
+            moveType: "HOME",
             moveDate: new Date("2025-08-10"),
             fromAddressId: "addr1",
             toAddressId: "addr2",
@@ -833,13 +869,13 @@ describe("moverEstimateController", () => {
       mockRequest.query = { estimateId: "estimate123" };
       mockRequest.body = { status: "ACCEPTED" };
 
-      const mockData = {
+      const mockData: TEstimateResponse = {
         id: "estimate123",
         moverId: "mover123",
         estimateRequestId: "estimateRequest1",
         price: 500000,
         comment: "합리적인 가격",
-        status: "ACCEPTED" as const,
+        status: "ACCEPTED",
         rejectReason: null,
         isDesignated: false,
         workingHours: null,
@@ -865,7 +901,7 @@ describe("moverEstimateController", () => {
         estimateRequest: {
           id: "estimateRequest1",
           customerId: "customer1",
-          moveType: "HOME" as const,
+          moveType: "HOME",
           moveDate: new Date("2025-08-10"),
           fromAddressId: "addr1",
           toAddressId: "addr2",

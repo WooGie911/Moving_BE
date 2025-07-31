@@ -3,6 +3,7 @@ import moverEstimateService from "../services/moverEstimate.service";
 import { NotFoundError } from "../types/commonError.types";
 import {
   HTTP_STATUS,
+  ErrorCode,
   MoverEstimateDuplicateError,
   MoverEstimateQuotaExceededError,
   MoverInvalidEstimateRequestError,
@@ -40,11 +41,35 @@ const moverEstimateController = {
         throw new MoverUnauthorizedAccessError();
       }
 
+      // 입력 파라미터 검증
+      if (!estimateRequestId || typeof estimateRequestId !== "string") {
+        throw new ControllerValidationError("유효하지 않은 견적 요청 ID입니다");
+      }
+
+      if (!price || typeof price !== "number" || price <= 0) {
+        throw new ControllerValidationError("유효하지 않은 가격입니다");
+      }
+
+      if (
+        !comment ||
+        typeof comment !== "string" ||
+        comment.trim().length === 0
+      ) {
+        throw new ControllerValidationError("견적 코멘트를 입력해주세요");
+      }
+
+      // 코멘트 길이 제한 (1000자)
+      if (comment.length > 1000) {
+        throw new ControllerValidationError(
+          "견적 코멘트는 1000자 이내로 입력해주세요"
+        );
+      }
+
       const result = await moverEstimateService.createEstimate({
-        estimateRequestId,
+        estimateRequestId: estimateRequestId.trim(),
         moverId,
         price,
-        comment,
+        comment: comment.trim(),
       });
 
       res.status(HTTP_STATUS.CREATED).json({
@@ -97,6 +122,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.NOT_FOUND).json({
           success: false,
           message: error.message,
+          code: ErrorCode.REPOSITORY_DATA_NOT_FOUND,
         });
         return;
       }
@@ -120,6 +146,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.UNAUTHORIZED).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
+          code: ErrorCode.CONTROLLER_AUTH_ERROR,
         });
         return;
       }
@@ -129,6 +156,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.FORBIDDEN).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
+          code: ErrorCode.MOVER_UNAUTHORIZED_ACCESS,
         });
         return;
       }
@@ -137,6 +165,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 견적 요청 ID입니다.",
+          code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
         });
         return;
       }
@@ -149,6 +178,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "반려 사유를 입력해주세요.",
+          code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
         });
         return;
       }
@@ -158,12 +188,13 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "반려 사유는 500자 이내로 입력해주세요.",
+          code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
         });
         return;
       }
 
       const result = await moverEstimateService.rejectEstimate({
-        estimateRequestId,
+        estimateRequestId: estimateRequestId.trim(),
         moverId,
         comment: comment.trim(),
       });
@@ -185,6 +216,7 @@ const moverEstimateController = {
           res.status(HTTP_STATUS.BAD_REQUEST).json({
             success: false,
             message: error.message,
+            code: ErrorCode.SERVICE_BUSINESS_LOGIC_ERROR,
           });
           return;
         }
@@ -208,6 +240,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.UNAUTHORIZED).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
+          code: ErrorCode.CONTROLLER_AUTH_ERROR,
         });
         return;
       }
@@ -217,6 +250,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.FORBIDDEN).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
+          code: ErrorCode.MOVER_UNAUTHORIZED_ACCESS,
         });
         return;
       }
@@ -226,6 +260,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 정렬 옵션입니다.",
+          code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
         });
         return;
       }
@@ -238,6 +273,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 이사 타입입니다.",
+          code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
         });
         return;
       }
@@ -245,7 +281,7 @@ const moverEstimateController = {
       const result = await moverEstimateService.getRegionEstimateRequest(
         moverId,
         sortBy as "moveDate" | "createdAt" | undefined,
-        customerName as string | undefined,
+        customerName ? (customerName as string).trim() : undefined,
         movingType as "SMALL" | "HOME" | "OFFICE" | undefined
       );
 
@@ -274,6 +310,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.UNAUTHORIZED).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
+          code: ErrorCode.CONTROLLER_AUTH_ERROR,
         });
         return;
       }
@@ -283,6 +320,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.FORBIDDEN).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
+          code: ErrorCode.MOVER_UNAUTHORIZED_ACCESS,
         });
         return;
       }
@@ -292,6 +330,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 정렬 옵션입니다.",
+          code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
         });
         return;
       }
@@ -304,6 +343,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 이사 타입입니다.",
+          code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
         });
         return;
       }
@@ -311,7 +351,7 @@ const moverEstimateController = {
       const result = await moverEstimateService.getDesignatedEstimateRequest(
         moverId,
         sortBy as "moveDate" | "createdAt" | undefined,
-        customerName as string | undefined,
+        customerName ? (customerName as string).trim() : undefined,
         movingType as "SMALL" | "HOME" | "OFFICE" | undefined
       );
 
@@ -341,6 +381,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.UNAUTHORIZED).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
+          code: ErrorCode.CONTROLLER_AUTH_ERROR,
         });
         return;
       }
@@ -348,6 +389,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.FORBIDDEN).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
+          code: ErrorCode.MOVER_UNAUTHORIZED_ACCESS,
         });
         return;
       }
@@ -386,6 +428,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.NOT_FOUND).json({
           success: false,
           message: (error as Error).message,
+          code: ErrorCode.REPOSITORY_DATA_NOT_FOUND,
         });
         return;
       }
@@ -407,6 +450,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.UNAUTHORIZED).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
+          code: ErrorCode.CONTROLLER_AUTH_ERROR,
         });
         return;
       }
@@ -416,6 +460,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.FORBIDDEN).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
+          code: ErrorCode.MOVER_UNAUTHORIZED_ACCESS,
         });
         return;
       }
@@ -445,6 +490,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.UNAUTHORIZED).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
+          code: ErrorCode.CONTROLLER_AUTH_ERROR,
         });
         return;
       }
@@ -454,6 +500,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.FORBIDDEN).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
+          code: ErrorCode.MOVER_UNAUTHORIZED_ACCESS,
         });
         return;
       }
@@ -486,6 +533,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.UNAUTHORIZED).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
+          code: ErrorCode.CONTROLLER_AUTH_ERROR,
         });
         return;
       }
@@ -495,6 +543,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.FORBIDDEN).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
+          code: ErrorCode.MOVER_UNAUTHORIZED_ACCESS,
         });
         return;
       }
@@ -503,6 +552,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 견적서 ID입니다.",
+          code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
         });
         return;
       }
@@ -514,12 +564,13 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 견적 상태입니다.",
+          code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
         });
         return;
       }
 
       const result = await moverEstimateService.updateEstimateStatus({
-        estimateId,
+        estimateId: estimateId.trim(),
         moverId,
         status,
       });
@@ -550,6 +601,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.UNAUTHORIZED).json({
           success: false,
           message: "유효하지 않은 사용자 정보입니다.",
+          code: ErrorCode.CONTROLLER_AUTH_ERROR,
         });
         return;
       }
@@ -559,6 +611,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.FORBIDDEN).json({
           success: false,
           message: "현재 유저타입이 기사가 아닙니다.",
+          code: ErrorCode.MOVER_UNAUTHORIZED_ACCESS,
         });
         return;
       }
@@ -567,6 +620,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 견적서 ID입니다.",
+          code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
         });
         return;
       }
@@ -575,6 +629,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "유효하지 않은 가격입니다.",
+          code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
         });
         return;
       }
@@ -587,6 +642,7 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "견적 코멘트를 입력해주세요.",
+          code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
         });
         return;
       }
@@ -596,12 +652,13 @@ const moverEstimateController = {
         res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "견적 코멘트는 1000자 이내로 입력해주세요.",
+          code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
         });
         return;
       }
 
       const result = await moverEstimateService.updateEstimate({
-        estimateId,
+        estimateId: estimateId.trim(),
         moverId,
         price,
         comment: comment.trim(),

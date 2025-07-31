@@ -6,6 +6,57 @@ import {
 } from "../types/moverEstimate";
 import { RepositoryQueryError } from "../types/errors.types";
 
+// Prisma 타입 안전한 인터페이스 정의
+interface PrismaOrderBy {
+  moveDate?: "asc" | "desc";
+  createdAt?: "asc" | "desc";
+}
+
+interface PrismaWhereCondition {
+  status?: string;
+  moveDate?: { gt: Date };
+  customerId?: { not: string };
+  estimates?: {
+    none: {
+      moverId: string;
+      status: { in: string[] };
+    };
+  };
+  designatedMovers?: {
+    none: {
+      moverId: string;
+    };
+  };
+  OR?: Array<{
+    fromAddress: { region: string };
+  }>;
+  customer?: {
+    name: {
+      contains: string;
+    };
+  };
+  moveType?: "SMALL" | "HOME" | "OFFICE";
+  moverId?: string;
+  deletedAt?: null;
+  estimateRequest?: {
+    status: string;
+    moveDate: { gt: Date };
+    customerId: { not: string };
+    estimates: {
+      none: {
+        moverId: string;
+        status: { in: string[] };
+      };
+    };
+    customer?: {
+      name: {
+        contains: string;
+      };
+    };
+    moveType?: "SMALL" | "HOME" | "OFFICE";
+  };
+}
+
 const prisma = new PrismaClient();
 
 // 공통 select 옵션 - EstimateRequest용
@@ -110,8 +161,13 @@ const moverEstimateRepository = {
   // 견적 요청 조회
   findEstimateRequestById: async (estimateRequestId: string) => {
     try {
+      // 파라미터 검증
+      if (!estimateRequestId || typeof estimateRequestId !== "string") {
+        throw new RepositoryQueryError("유효하지 않은 견적 요청 ID입니다");
+      }
+
       const estimateRequest = await prisma.estimateRequest.findUnique({
-        where: { id: estimateRequestId },
+        where: { id: estimateRequestId.trim() },
         select: { status: true, moveDate: true },
       });
       return estimateRequest;
@@ -123,11 +179,20 @@ const moverEstimateRepository = {
   // 기존 견적 조회
   findExistingEstimate: async (estimateRequestId: string, moverId: string) => {
     try {
+      // 파라미터 검증
+      if (!estimateRequestId || typeof estimateRequestId !== "string") {
+        throw new RepositoryQueryError("유효하지 않은 견적 요청 ID입니다");
+      }
+
+      if (!moverId || typeof moverId !== "string") {
+        throw new RepositoryQueryError("유효하지 않은 기사 ID입니다");
+      }
+
       const existingEstimate = await prisma.estimate.findUnique({
         where: {
           estimateRequestId_moverId: {
-            estimateRequestId: estimateRequestId,
-            moverId: moverId,
+            estimateRequestId: estimateRequestId.trim(),
+            moverId: moverId.trim(),
           },
         },
       });
@@ -140,10 +205,19 @@ const moverEstimateRepository = {
   // 지정 견적 요청 조회
   findDesignatedRequest: async (estimateRequestId: string, moverId: string) => {
     try {
+      // 파라미터 검증
+      if (!estimateRequestId || typeof estimateRequestId !== "string") {
+        throw new RepositoryQueryError("유효하지 않은 견적 요청 ID입니다");
+      }
+
+      if (!moverId || typeof moverId !== "string") {
+        throw new RepositoryQueryError("유효하지 않은 기사 ID입니다");
+      }
+
       const designatedRequest = await prisma.designatedMover.findFirst({
         where: {
-          estimateRequestId: estimateRequestId,
-          moverId: moverId,
+          estimateRequestId: estimateRequestId.trim(),
+          moverId: moverId.trim(),
           deletedAt: null,
         },
       });
@@ -156,9 +230,14 @@ const moverEstimateRepository = {
   // 기존 견적 개수 조회
   countExistingEstimates: async (estimateRequestId: string) => {
     try {
+      // 파라미터 검증
+      if (!estimateRequestId || typeof estimateRequestId !== "string") {
+        throw new RepositoryQueryError("유효하지 않은 견적 요청 ID입니다");
+      }
+
       const existingEstimates = await prisma.estimate.findMany({
         where: {
-          estimateRequestId: estimateRequestId,
+          estimateRequestId: estimateRequestId.trim(),
           status: { in: ["PROPOSED", "ACCEPTED"] },
           deletedAt: null,
         },
@@ -183,12 +262,41 @@ const moverEstimateRepository = {
     isDesignated: boolean
   ): Promise<EstimateWithRelations | null> => {
     try {
+      // 파라미터 검증
+      if (!estimateRequestId || typeof estimateRequestId !== "string") {
+        throw new RepositoryQueryError("유효하지 않은 견적 요청 ID입니다");
+      }
+
+      if (!moverId || typeof moverId !== "string") {
+        throw new RepositoryQueryError("유효하지 않은 기사 ID입니다");
+      }
+
+      if (!price || typeof price !== "number" || price <= 0) {
+        throw new RepositoryQueryError("유효하지 않은 가격입니다");
+      }
+
+      if (
+        !comment ||
+        typeof comment !== "string" ||
+        comment.trim().length === 0
+      ) {
+        throw new RepositoryQueryError("유효하지 않은 코멘트입니다");
+      }
+
+      if (!status || !["PROPOSED", "REJECTED"].includes(status)) {
+        throw new RepositoryQueryError("유효하지 않은 상태입니다");
+      }
+
+      if (typeof isDesignated !== "boolean") {
+        throw new RepositoryQueryError("유효하지 않은 지정 여부입니다");
+      }
+
       const estimate = await prisma.estimate.create({
         data: {
-          estimateRequestId: estimateRequestId,
-          moverId: moverId,
+          estimateRequestId: estimateRequestId.trim(),
+          moverId: moverId.trim(),
           price: price,
-          comment: comment,
+          comment: comment.trim(),
           status: status,
           isDesignated: isDesignated,
         },
@@ -222,8 +330,8 @@ const moverEstimateRepository = {
     currentAreas?: string[]
   ) => {
     try {
-      let orderBy: any = {};
-      let where: any = {
+      let orderBy: PrismaOrderBy = {};
+      let where: PrismaWhereCondition = {
         status: "PENDING",
         moveDate: {
           gt: new Date(),
@@ -296,8 +404,8 @@ const moverEstimateRepository = {
     movingType?: "SMALL" | "HOME" | "OFFICE"
   ) => {
     try {
-      let orderBy: any = {};
-      let where: any = {
+      let orderBy: PrismaOrderBy = {};
+      let where: PrismaWhereCondition = {
         moverId: moverId,
         deletedAt: null,
         estimateRequest: {

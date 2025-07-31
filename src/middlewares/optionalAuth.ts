@@ -14,6 +14,9 @@ export const optionalAuth = (
         userId: decoded.userId,
         name: decoded.name,
         userType: decoded.userType,
+        hasProfile: decoded.hasProfile,
+        iat: decoded.iat,
+        exp: decoded.exp,
       };
     }
   } catch (error) {
