@@ -107,6 +107,7 @@ const postLogout = async (req: Request, res: Response) => {
   try {
     await authService.logout(userId);
 
+    res.clearCookie("accessToken", authCookieOptions(0));
     res.clearCookie("refreshToken", authCookieOptions(0));
 
     res.status(200).json({
