@@ -37,12 +37,6 @@ const postSignin = async (req: Request, res: Response) => {
     } = await authService.signin(email, password, userType);
 
     res.cookie(
-      "accessToken",
-      accessToken,
-      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
-    );
-
-    res.cookie(
       "refreshToken",
       refreshToken,
       authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
@@ -56,6 +50,7 @@ const postSignin = async (req: Request, res: Response) => {
         userName,
         userType: userTypeResponse,
       },
+      accessToken,
     });
   } catch (error: any) {
     console.error("로그인 에러:", error);
@@ -88,12 +83,6 @@ const postSignup = async (req: Request, res: Response) => {
     });
 
     res.cookie(
-      "accessToken",
-      accessToken,
-      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
-    );
-
-    res.cookie(
       "refreshToken",
       refreshToken,
       authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
@@ -107,6 +96,7 @@ const postSignup = async (req: Request, res: Response) => {
         name: userName,
         userType: userTypeResponse,
       },
+      accessToken,
     });
   } catch (error: any) {
     handleError(res, error);
@@ -147,12 +137,6 @@ const postRefresh = async (req: Request, res: Response) => {
       userId,
     });
 
-    res.cookie(
-      "accessToken",
-      accessToken,
-      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
-    );
-
     // 리프레쉬 쿠키까지 재발급 된다면 저장
     if (refreshToken) {
       res.cookie(
@@ -165,6 +149,7 @@ const postRefresh = async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       message: "토큰 갱신 성공",
+      accessToken,
     });
   } catch (error: any) {
     handleError(res, error);
