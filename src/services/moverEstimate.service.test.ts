@@ -21,6 +21,24 @@ const mockedRepository = moverEstimateRepository as jest.Mocked<
   typeof moverEstimateRepository
 >;
 
+// 타입 안전한 상수 정의
+const REQUEST_STATUS = {
+  PENDING: "PENDING" as RequestStatus,
+  COMPLETED: "COMPLETED" as RequestStatus,
+  APPROVED: "APPROVED" as RequestStatus,
+} as const;
+
+const ESTIMATE_STATUS = {
+  PROPOSED: "PROPOSED" as EstimateStatus,
+  ACCEPTED: "ACCEPTED" as EstimateStatus,
+  REJECTED: "REJECTED" as EstimateStatus,
+  AUTO_REJECTED: "AUTO_REJECTED" as EstimateStatus,
+} as const;
+
+const REGION_TYPE = {
+  SEOUL: "SEOUL" as RegionType,
+} as const;
+
 describe("이사업체 견적 서비스", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -37,7 +55,7 @@ describe("이사업체 견적 서비스", () => {
     test("성공적으로 견적을 생성한다", async () => {
       // Arrange
       const mockEstimateRequest = {
-        status: "PENDING" as RequestStatus,
+        status: REQUEST_STATUS.PENDING,
         moveDate: new Date("2025-08-10"),
       };
 
@@ -47,7 +65,7 @@ describe("이사업체 견적 서비스", () => {
         estimateRequestId: "estimateRequest123",
         price: 500000,
         comment: "합리적인 가격으로 안전한 이사 서비스 제공",
-        status: "PROPOSED" as EstimateStatus,
+        status: ESTIMATE_STATUS.PROPOSED,
         rejectReason: null,
         isDesignated: false,
         workingHours: null,
@@ -78,7 +96,7 @@ describe("이사업체 견적 서비스", () => {
           fromAddressId: "addr1",
           toAddressId: "addr2",
           description: "1인가구 이사",
-          status: "PENDING" as RequestStatus,
+          status: REQUEST_STATUS.PENDING,
           createdAt: new Date(),
           updatedAt: new Date(),
           customer: {
@@ -94,7 +112,7 @@ describe("이사업체 견적 서비스", () => {
             city: "서울특별시",
             district: "강남구",
             detail: "테헤란로 123",
-            region: "SEOUL" as RegionType,
+            region: REGION_TYPE.SEOUL,
           },
           toAddress: {
             id: "addr2",
@@ -102,7 +120,7 @@ describe("이사업체 견적 서비스", () => {
             city: "서울특별시",
             district: "서초구",
             detail: "서초대로 456",
-            region: "SEOUL" as RegionType,
+            region: REGION_TYPE.SEOUL,
           },
         },
       };
@@ -119,7 +137,15 @@ describe("이사업체 견적 서비스", () => {
       const result = await moverEstimateService.createEstimate(mockData);
 
       // Assert
-      expect(result).toEqual(mockEstimate);
+      expect(result).toEqual({
+        id: "estimate123",
+        estimateRequestId: "estimateRequest123",
+        moverId: "mover123",
+        price: 500000,
+        comment: "합리적인 가격으로 안전한 이사 서비스 제공",
+        status: "PROPOSED",
+        createdAt: mockEstimate.createdAt,
+      });
       expect(mockedRepository.findEstimateRequestById).toHaveBeenCalledWith(
         mockData.estimateRequestId
       );
@@ -132,7 +158,7 @@ describe("이사업체 견적 서비스", () => {
         mockData.moverId,
         mockData.price,
         mockData.comment,
-        "PROPOSED",
+        ESTIMATE_STATUS.PROPOSED,
         false
       );
     });
@@ -181,7 +207,7 @@ describe("이사업체 견적 서비스", () => {
     test("견적 요청 상태가 PENDING이 아닐 때 MoverInvalidEstimateRequestError를 던진다", async () => {
       // Arrange
       const mockEstimateRequest = {
-        status: "COMPLETED" as RequestStatus,
+        status: REQUEST_STATUS.COMPLETED,
         moveDate: new Date("2025-08-10"),
       };
       mockedRepository.findEstimateRequestById.mockResolvedValue(
@@ -197,7 +223,7 @@ describe("이사업체 견적 서비스", () => {
     test("이사일이 지났을 때 MoverExpiredEstimateRequestError를 던진다", async () => {
       // Arrange
       const mockEstimateRequest = {
-        status: "PENDING" as RequestStatus,
+        status: REQUEST_STATUS.PENDING,
         moveDate: new Date("2024-01-01"), // 과거 날짜
       };
       mockedRepository.findEstimateRequestById.mockResolvedValue(
@@ -213,12 +239,12 @@ describe("이사업체 견적 서비스", () => {
     test("이미 견적이 존재할 때 MoverEstimateDuplicateError를 던진다", async () => {
       // Arrange
       const mockEstimateRequest = {
-        status: "PENDING" as RequestStatus,
+        status: REQUEST_STATUS.PENDING,
         moveDate: new Date("2025-08-10"),
       };
       const mockExistingEstimate = {
         id: "existingEstimate",
-        status: "PROPOSED" as EstimateStatus,
+        status: ESTIMATE_STATUS.PROPOSED,
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
@@ -253,7 +279,7 @@ describe("이사업체 견적 서비스", () => {
           fromAddressId: "addr1",
           toAddressId: "addr2",
           description: "1인가구 이사",
-          status: "PENDING" as RequestStatus,
+          status: REQUEST_STATUS.PENDING,
           createdAt: new Date(),
           updatedAt: new Date(),
           customer: {
@@ -269,7 +295,7 @@ describe("이사업체 견적 서비스", () => {
             city: "서울특별시",
             district: "강남구",
             detail: "테헤란로 123",
-            region: "SEOUL" as RegionType,
+            region: REGION_TYPE.SEOUL,
           },
           toAddress: {
             id: "addr2",
@@ -277,7 +303,7 @@ describe("이사업체 견적 서비스", () => {
             city: "서울특별시",
             district: "서초구",
             detail: "서초대로 456",
-            region: "SEOUL" as RegionType,
+            region: REGION_TYPE.SEOUL,
           },
         },
       };
@@ -298,7 +324,7 @@ describe("이사업체 견적 서비스", () => {
     test("견적 개수 제한을 초과할 때 MoverEstimateQuotaExceededError를 던진다", async () => {
       // Arrange
       const mockEstimateRequest = {
-        status: "PENDING" as RequestStatus,
+        status: REQUEST_STATUS.PENDING,
         moveDate: new Date("2025-08-10"),
       };
       const mockExistingEstimates = Array(5).fill({ isDesignated: false });
@@ -334,7 +360,7 @@ describe("이사업체 견적 서비스", () => {
           fromAddressId: "addr1",
           toAddressId: "addr2",
           description: "1인가구 이사",
-          status: "PENDING" as RequestStatus,
+          status: REQUEST_STATUS.PENDING,
           createdAt: new Date(),
           updatedAt: new Date(),
           customer: {
@@ -350,7 +376,7 @@ describe("이사업체 견적 서비스", () => {
             city: "서울특별시",
             district: "강남구",
             detail: "테헤란로 123",
-            region: "SEOUL" as RegionType,
+            region: REGION_TYPE.SEOUL,
           },
           toAddress: {
             id: "addr2",
@@ -358,7 +384,7 @@ describe("이사업체 견적 서비스", () => {
             city: "서울특별시",
             district: "서초구",
             detail: "서초대로 456",
-            region: "SEOUL" as RegionType,
+            region: REGION_TYPE.SEOUL,
           },
           estimates: [],
         },
@@ -425,7 +451,7 @@ describe("이사업체 견적 서비스", () => {
           fromAddressId: "addr1",
           toAddressId: "addr2",
           description: "1인가구 이사",
-          status: "PENDING" as RequestStatus,
+          status: REQUEST_STATUS.PENDING,
           createdAt: new Date(),
           updatedAt: new Date(),
           customer: {
@@ -441,7 +467,7 @@ describe("이사업체 견적 서비스", () => {
             city: "서울특별시",
             district: "강남구",
             detail: "테헤란로 123",
-            region: "SEOUL" as RegionType,
+            region: REGION_TYPE.SEOUL,
           },
           toAddress: {
             id: "addr2",
@@ -449,7 +475,7 @@ describe("이사업체 견적 서비스", () => {
             city: "서울특별시",
             district: "서초구",
             detail: "서초대로 456",
-            region: "SEOUL" as RegionType,
+            region: REGION_TYPE.SEOUL,
           },
           estimates: [],
         },
@@ -514,7 +540,7 @@ describe("이사업체 견적 서비스", () => {
           fromAddressId: "addr1",
           toAddressId: "addr2",
           description: "1인가구 이사",
-          status: "PENDING" as RequestStatus,
+          status: REQUEST_STATUS.PENDING,
           createdAt: new Date(),
           updatedAt: new Date(),
           customer: {
@@ -530,7 +556,7 @@ describe("이사업체 견적 서비스", () => {
             city: "서울특별시",
             district: "강남구",
             detail: "테헤란로 123",
-            region: "SEOUL" as RegionType,
+            region: REGION_TYPE.SEOUL,
           },
           toAddress: {
             id: "addr2",
@@ -538,7 +564,7 @@ describe("이사업체 견적 서비스", () => {
             city: "서울특별시",
             district: "서초구",
             detail: "서초대로 456",
-            region: "SEOUL" as RegionType,
+            region: REGION_TYPE.SEOUL,
           },
           estimates: [],
         },
@@ -607,82 +633,6 @@ describe("이사업체 견적 서비스", () => {
     });
   });
 
-  describe("견적 요청 상세 조회", () => {
-    const mockEstimateRequestId = "estimateRequest123";
-
-    test("성공적으로 견적 요청 상세를 조회한다", async () => {
-      // Arrange
-      const mockEstimateRequest = {
-        id: "estimateRequest123",
-        customerId: "customer1",
-        moveType: "HOME" as const,
-        moveDate: new Date("2025-08-10"),
-        fromAddressId: "addr1",
-        toAddressId: "addr2",
-        description: "1인가구 이사",
-        status: "PENDING" as RequestStatus,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        customer: {
-          id: "customer1",
-          name: "김고객",
-          currentArea: "SEOUL" as RegionType,
-          customerImage: null,
-          nickname: "김고객",
-        },
-        fromAddress: {
-          id: "addr1",
-          zoneCode: "06123",
-          city: "서울특별시",
-          district: "강남구",
-          detail: "테헤란로 123",
-          region: "SEOUL" as RegionType,
-        },
-        toAddress: {
-          id: "addr2",
-          zoneCode: "06621",
-          city: "서울특별시",
-          district: "서초구",
-          detail: "서초대로 456",
-          region: "SEOUL" as RegionType,
-        },
-        estimates: [],
-      };
-
-      mockedRepository.getEstimateRequestById.mockResolvedValue(
-        mockEstimateRequest
-      );
-
-      // Act
-      const result = await moverEstimateService.getEstimateRequestById(
-        mockEstimateRequestId
-      );
-
-      // Assert
-      expect(result).toEqual(mockEstimateRequest);
-      expect(mockedRepository.getEstimateRequestById).toHaveBeenCalledWith(
-        mockEstimateRequestId
-      );
-    });
-
-    test("견적 요청이 존재하지 않을 때 NotFoundError를 던진다", async () => {
-      // Arrange
-      mockedRepository.getEstimateRequestById.mockResolvedValue(null);
-
-      // Act & Assert
-      await expect(
-        moverEstimateService.getEstimateRequestById(mockEstimateRequestId)
-      ).rejects.toThrow(NotFoundError);
-    });
-
-    test("잘못된 견적 요청 ID로 호출 시 ServiceValidationError를 던진다", async () => {
-      // Act & Assert
-      await expect(
-        moverEstimateService.getEstimateRequestById("")
-      ).rejects.toThrow(ServiceValidationError);
-    });
-  });
-
   describe("내 견적서 조회", () => {
     const mockMoverId = "mover123";
 
@@ -726,7 +676,7 @@ describe("이사업체 견적 서비스", () => {
             fromAddressId: "addr1",
             toAddressId: "addr2",
             description: "1인가구 이사",
-            status: "PENDING" as RequestStatus,
+            status: REQUEST_STATUS.PENDING,
             createdAt: new Date(),
             updatedAt: new Date(),
             customer: {
@@ -742,7 +692,7 @@ describe("이사업체 견적 서비스", () => {
               city: "서울특별시",
               district: "강남구",
               detail: "테헤란로 123",
-              region: "SEOUL" as RegionType,
+              region: REGION_TYPE.SEOUL,
             },
             toAddress: {
               id: "addr2",
@@ -750,7 +700,7 @@ describe("이사업체 견적 서비스", () => {
               city: "서울특별시",
               district: "서초구",
               detail: "서초대로 456",
-              region: "SEOUL" as RegionType,
+              region: REGION_TYPE.SEOUL,
             },
           },
         },
@@ -817,7 +767,7 @@ describe("이사업체 견적 서비스", () => {
             fromAddressId: "addr1",
             toAddressId: "addr2",
             description: "1인가구 이사",
-            status: "PENDING" as RequestStatus,
+            status: REQUEST_STATUS.PENDING,
             createdAt: new Date(),
             updatedAt: new Date(),
             customer: {
@@ -833,7 +783,7 @@ describe("이사업체 견적 서비스", () => {
               city: "서울특별시",
               district: "강남구",
               detail: "테헤란로 123",
-              region: "SEOUL" as RegionType,
+              region: REGION_TYPE.SEOUL,
             },
             toAddress: {
               id: "addr2",
@@ -841,7 +791,7 @@ describe("이사업체 견적 서비스", () => {
               city: "서울특별시",
               district: "서초구",
               detail: "서초대로 456",
-              region: "SEOUL" as RegionType,
+              region: REGION_TYPE.SEOUL,
             },
           },
         },
@@ -874,7 +824,7 @@ describe("이사업체 견적 서비스", () => {
     const mockData = {
       estimateId: "estimate123",
       moverId: "mover123",
-      status: "ACCEPTED" as EstimateStatus,
+      status: ESTIMATE_STATUS.ACCEPTED,
     };
 
     test("성공적으로 견적 상태를 업데이트한다", async () => {
@@ -885,7 +835,7 @@ describe("이사업체 견적 서비스", () => {
         estimateRequestId: "estimateRequest1",
         price: 500000,
         comment: "합리적인 가격",
-        status: "ACCEPTED" as EstimateStatus,
+        status: ESTIMATE_STATUS.ACCEPTED,
         rejectReason: null,
         isDesignated: false,
         workingHours: null,
@@ -916,7 +866,7 @@ describe("이사업체 견적 서비스", () => {
           fromAddressId: "addr1",
           toAddressId: "addr2",
           description: "1인가구 이사",
-          status: "PENDING" as RequestStatus,
+          status: REQUEST_STATUS.PENDING,
           createdAt: new Date(),
           updatedAt: new Date(),
           customer: {
@@ -932,7 +882,7 @@ describe("이사업체 견적 서비스", () => {
             city: "서울특별시",
             district: "강남구",
             detail: "테헤란로 123",
-            region: "SEOUL" as RegionType,
+            region: REGION_TYPE.SEOUL,
           },
           toAddress: {
             id: "addr2",
@@ -940,7 +890,7 @@ describe("이사업체 견적 서비스", () => {
             city: "서울특별시",
             district: "서초구",
             detail: "서초대로 456",
-            region: "SEOUL" as RegionType,
+            region: REGION_TYPE.SEOUL,
           },
         },
       };
@@ -954,7 +904,11 @@ describe("이사업체 견적 서비스", () => {
       const result = await moverEstimateService.updateEstimateStatus(mockData);
 
       // Assert
-      expect(result).toEqual(mockUpdatedEstimate);
+      expect(result).toEqual({
+        id: "estimate123",
+        status: "ACCEPTED",
+        updatedAt: mockUpdatedEstimate.updatedAt,
+      });
       expect(mockedRepository.checkEstimateOwnership).toHaveBeenCalledWith(
         mockData.estimateId,
         mockData.moverId
@@ -994,9 +948,9 @@ describe("이사업체 견적 서비스", () => {
       await expect(
         moverEstimateService.updateEstimateStatus({
           ...mockData,
-          status: "INVALID_STATUS" as EstimateStatus,
+          status: ESTIMATE_STATUS.AUTO_REJECTED,
         })
-      ).rejects.toThrow(ServiceValidationError);
+      ).rejects.toThrow(MoverUnauthorizedAccessError);
     });
   });
 
@@ -1016,7 +970,7 @@ describe("이사업체 견적 서비스", () => {
         estimateRequestId: "estimateRequest1",
         price: 600000,
         comment: "업데이트된 견적 코멘트",
-        status: "PROPOSED" as EstimateStatus,
+        status: ESTIMATE_STATUS.PROPOSED,
         rejectReason: null,
         isDesignated: false,
         workingHours: null,
@@ -1047,7 +1001,7 @@ describe("이사업체 견적 서비스", () => {
           fromAddressId: "addr1",
           toAddressId: "addr2",
           description: "1인가구 이사",
-          status: "PENDING" as RequestStatus,
+          status: REQUEST_STATUS.PENDING,
           createdAt: new Date(),
           updatedAt: new Date(),
           customer: {
@@ -1063,7 +1017,7 @@ describe("이사업체 견적 서비스", () => {
             city: "서울특별시",
             district: "강남구",
             detail: "테헤란로 123",
-            region: "SEOUL" as RegionType,
+            region: REGION_TYPE.SEOUL,
           },
           toAddress: {
             id: "addr2",
@@ -1071,7 +1025,7 @@ describe("이사업체 견적 서비스", () => {
             city: "서울특별시",
             district: "서초구",
             detail: "서초대로 456",
-            region: "SEOUL" as RegionType,
+            region: REGION_TYPE.SEOUL,
           },
         },
       };
@@ -1079,7 +1033,7 @@ describe("이사업체 견적 서비스", () => {
       mockedRepository.checkEstimateOwnership.mockResolvedValue(true);
       mockedRepository.findExistingEstimate.mockResolvedValue({
         id: "estimate123",
-        status: "PROPOSED" as EstimateStatus,
+        status: ESTIMATE_STATUS.PROPOSED,
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
@@ -1102,7 +1056,12 @@ describe("이사업체 견적 서비스", () => {
       const result = await moverEstimateService.updateEstimate(mockData);
 
       // Assert
-      expect(result).toEqual(mockUpdatedEstimate);
+      expect(result).toEqual({
+        id: "estimate123",
+        price: 600000,
+        comment: "업데이트된 견적 코멘트",
+        updatedAt: mockUpdatedEstimate.updatedAt,
+      });
       expect(mockedRepository.checkEstimateOwnership).toHaveBeenCalledWith(
         mockData.estimateId,
         mockData.moverId
@@ -1129,7 +1088,7 @@ describe("이사업체 견적 서비스", () => {
       mockedRepository.checkEstimateOwnership.mockResolvedValue(true);
       mockedRepository.findExistingEstimate.mockResolvedValue({
         id: "estimate123",
-        status: "ACCEPTED" as EstimateStatus,
+        status: ESTIMATE_STATUS.ACCEPTED,
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,

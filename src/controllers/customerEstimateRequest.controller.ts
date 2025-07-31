@@ -68,8 +68,8 @@ const customerEstimateRequestController = {
         res.status(404).json({
           success: false,
           message: error.message,
-          code: (error as any).code || "NOT_FOUND",
-          layer: (error as any).layer || "SERVICE",
+          code: error.code || "NOT_FOUND",
+          layer: "SERVICE",
         });
         return;
       }
