@@ -1,6 +1,7 @@
 import { Router } from "express";
 import EstimateRequestController from "../controllers/estimateRequest.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
+import { defaultTranslationMiddleware } from "../middlewares/translationMiddleware";
 
 const router = Router();
 const estimateRequestController = new EstimateRequestController();
@@ -374,8 +375,13 @@ router.post("/create", verifyAccessToken, (req, res) =>
  *               success: false
  *               message: "서버 내부 오류가 발생했습니다."
  */
+<<<<<<< HEAD
 router.get("/active", verifyAccessToken, (req, res) =>
   estimateRequestController.getActiveEstimateRequest(req, res)
+=======
+router.get("/active", verifyAccessToken, defaultTranslationMiddleware, (req, res) =>
+  estimateRequestController.getActiveEstimateRequest(req, res),
+>>>>>>> af06b0b0eb10f2d6245a68548a97f7426387ff2d
 );
 
 // 견적 요청 수정

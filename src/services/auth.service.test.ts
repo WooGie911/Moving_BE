@@ -33,7 +33,7 @@ describe("authService.signup", () => {
     (validateUserSignupInput as jest.Mock).mockReset();
   });
 
-  test("CUSTOMER 회원가입 성공", async () => {
+  it("CUSTOMER 회원가입 성공", async () => {
     // Setup
     // DB createUser 반환값 테스트용 객체
     const mockUser = {
@@ -86,7 +86,7 @@ describe("authService.signup", () => {
     });
   });
 
-  test("MOVER 회원가입 성공", async () => {
+  it("MOVER 회원가입 성공", async () => {
     // Setup
     // DB createUser 반환값 테스트용 객체
     const mockUser = {
@@ -139,7 +139,7 @@ describe("authService.signup", () => {
     });
   });
 
-  test("회원가입 실패 - 이메일 중복 ValidationError(422) 발생", async () => {
+  it("회원가입 실패 - 이메일 중복 ValidationError(422) 발생", async () => {
     // Setup
     const mockUser = {
       id: 1,
@@ -165,7 +165,7 @@ describe("authService.signup", () => {
     ).rejects.toThrow(ValidationError);
   });
 
-  test("회원가입 실패 - 잘못된 이메일 형식이면 ValidationError(422) 발생", async () => {
+  it("회원가입 실패 - 잘못된 이메일 형식이면 ValidationError(422) 발생", async () => {
     // 💡 validateUserSignupInput 직접 throw 시뮬레이션
     const mockFindUserByEmail = authRepository.findUserByEmail as jest.Mock;
     mockFindUserByEmail.mockResolvedValue(null); // 중복 아님
@@ -193,7 +193,7 @@ describe("authService.signup", () => {
     ).rejects.toThrow(ValidationError);
   });
 
-  test("회원가입 실패 - 잘못된 비밀번호 형식이면 ValidationError(422) 발생", async () => {
+  it("회원가입 실패 - 잘못된 비밀번호 형식이면 ValidationError(422) 발생", async () => {
     // 💡 validateUserSignupInput 직접 throw 시뮬레이션
     const mockFindUserByEmail = authRepository.findUserByEmail as jest.Mock;
     mockFindUserByEmail.mockResolvedValue(null); // 중복 아님
@@ -219,7 +219,7 @@ describe("authService.signup", () => {
     ).rejects.toThrow(ValidationError);
   });
 
-  test("회원가입 실패 - 잘못된 이름 형식이면 ValidationError(422) 발생", async () => {
+  it("회원가입 실패 - 잘못된 이름 형식이면 ValidationError(422) 발생", async () => {
     // 💡 validateUserSignupInput 직접 throw 시뮬레이션
     const mockFindUserByEmail = authRepository.findUserByEmail as jest.Mock;
     mockFindUserByEmail.mockResolvedValue(null); // 중복 아님
@@ -246,7 +246,7 @@ describe("authService.signup", () => {
     ).rejects.toThrow(ValidationError);
   });
 
-  test("회원가입 실패 - 잘못된 전화번호 형식이면 ValidationError(422) 발생", async () => {
+  it("회원가입 실패 - 잘못된 전화번호 형식이면 ValidationError(422) 발생", async () => {
     // 💡 validateUserSignupInput 직접 throw 시뮬레이션
     const mockFindUserByEmail = authRepository.findUserByEmail as jest.Mock;
     mockFindUserByEmail.mockResolvedValue(null); // 중복 아님
@@ -270,7 +270,7 @@ describe("authService.signup", () => {
     ).rejects.toThrow(ValidationError);
   });
 
-  test("회원가입 실패 - 유저 생성 실패시 DatabaseError(500) 발생", async () => {
+  it("회원가입 실패 - 유저 생성 실패시 DatabaseError(500) 발생", async () => {
     // Setup
     const mockFindUserByEmail = authRepository.findUserByEmail as jest.Mock;
     mockFindUserByEmail.mockResolvedValue(null);
@@ -291,7 +291,7 @@ describe("authService.signup", () => {
     ).rejects.toThrow(DatabaseError);
   });
 
-  test("회원가입 실패 - 토큰 생성 실패시 ServerError(500) 발생", async () => {
+  it("회원가입 실패 - 토큰 생성 실패시 ServerError(500) 발생", async () => {
     // Setup
     const mockUser = {
       id: 1,
@@ -334,7 +334,7 @@ describe("authService.signin", () => {
     (validateUserSignupInput as jest.Mock).mockReset();
   });
 
-  test("CUSTOMER 로그인 성공", async () => {
+  it("CUSTOMER 로그인 성공", async () => {
     // Setup
     const mockUser = {
       id: 1,
@@ -387,7 +387,7 @@ describe("authService.signin", () => {
     });
   });
 
-  test("MOVER 로그인 성공", async () => {
+  it("MOVER 로그인 성공", async () => {
     // Setup
     const mockUser = {
       id: 1,
@@ -440,7 +440,7 @@ describe("authService.signin", () => {
     });
   });
 
-  test("로그인 실패 - 잘못된 이메일 형식이면 ValidationError(422) 발생", async () => {
+  it("로그인 실패 - 잘못된 이메일 형식이면 ValidationError(422) 발생", async () => {
     // Setup
     const mockValidateUserSigninInput = validateUserSignupInput as jest.Mock;
     mockValidateUserSigninInput.mockImplementation(() => {
@@ -455,7 +455,7 @@ describe("authService.signin", () => {
     ).rejects.toThrow(ValidationError);
   });
 
-  test("로그인 실패 - 잘못된 비밀번호 형식이면 ValidationError(422) 발생", async () => {
+  it("로그인 실패 - 잘못된 비밀번호 형식이면 ValidationError(422) 발생", async () => {
     // Setup
     const mockValidateUserSigninInput = validateUserSignupInput as jest.Mock;
     mockValidateUserSigninInput.mockImplementation(() => {
@@ -470,7 +470,7 @@ describe("authService.signin", () => {
     ).rejects.toThrow(ValidationError);
   });
 
-  test("로그인 실패 - 존재하지 않는 유저 라면 AuthenticationError(401) 발생", async () => {
+  it("로그인 실패 - 존재하지 않는 유저 라면 AuthenticationError(401) 발생", async () => {
     // Setup
     const mockValidateUserSigninInput = validateUserSignupInput as jest.Mock;
     mockValidateUserSigninInput.mockImplementation(() => {
@@ -483,7 +483,7 @@ describe("authService.signin", () => {
     ).rejects.toThrow(AuthenticationError);
   });
 
-  test("로그인 실패 - 비밀번호 불일치 라면 AuthenticationError(401) 발생", async () => {
+  it("로그인 실패 - 비밀번호 불일치 라면 AuthenticationError(401) 발생", async () => {
     // Setup
     const mockValidateUserSigninInput = validateUserSignupInput as jest.Mock;
     mockValidateUserSigninInput.mockImplementation(() => {
@@ -496,7 +496,7 @@ describe("authService.signin", () => {
     ).rejects.toThrow(AuthenticationError);
   });
 
-  test("로그인 실패 - 토큰 생성 실패시 ServerError(500) 발생", async () => {
+  it("로그인 실패 - 토큰 생성 실패시 ServerError(500) 발생", async () => {
     // Setup: 로그인 성공 조건 세팅
     const mockUser = {
       id: 1,
@@ -535,7 +535,7 @@ describe("authService.logout", () => {
     jest.clearAllMocks();
   });
 
-  test("로그아웃 성공", async () => {
+  it("로그아웃 성공", async () => {
     // Setup
     const mockUser = {
       id: 1,
@@ -561,7 +561,7 @@ describe("authService.logout", () => {
     expect(mockFindUserById).toHaveBeenCalledWith(mockUser.id.toString());
   });
 
-  test("로그아웃 실패 - 존재하지 않는 유저 라면 NotFoundError(404) 발생", async () => {
+  it("로그아웃 실패 - 존재하지 않는 유저 라면 NotFoundError(404) 발생", async () => {
     // Setup
     const mockFindUserById = authRepository.findUserById as jest.Mock;
     mockFindUserById.mockResolvedValue(null);
@@ -570,7 +570,7 @@ describe("authService.logout", () => {
     await expect(authService.logout("1")).rejects.toThrow(NotFoundError);
   });
 
-  test("로그아웃 실패 - 이미 로그아웃된 유저 라면 AuthenticationError(401) 발생", async () => {
+  it("로그아웃 실패 - 이미 로그아웃된 유저 라면 AuthenticationError(401) 발생", async () => {
     // Setup
     const mockUser = {
       id: 1,
@@ -599,7 +599,7 @@ describe("authService.refresh", () => {
     jest.clearAllMocks();
   });
 
-  test("토큰 갱신 성공 - refreshToken 재발급 없이 accessToken만 반환", async () => {
+  it("토큰 갱신 성공 - refreshToken 재발급 없이 accessToken만 반환", async () => {
     // Setup
     const mockDecodedToken = {
       userId: "1",
@@ -630,7 +630,7 @@ describe("authService.refresh", () => {
     });
   });
 
-  test("토큰 갱신 성공 - refreshToken 만료 임박 시 둘 다 재발급", async () => {
+  it("토큰 갱신 성공 - refreshToken 만료 임박 시 둘 다 재발급", async () => {
     // Setup
     const mockDecodedToken = {
       userId: "1",
@@ -674,7 +674,7 @@ describe("authService.oauthCrateOrUpdate", () => {
     jest.clearAllMocks();
   });
 
-  test("기존 소셜 유저가 있는 경우 - 업데이트 후 토큰 반환", async () => {
+  it("기존 소셜 유저가 있는 경우 - 업데이트 후 토큰 반환", async () => {
     // Setup
     const mockUser = {
       id: 1,
@@ -726,7 +726,7 @@ describe("authService.oauthCrateOrUpdate", () => {
     });
   });
 
-  test("기존 소셜 유저가 없는 경우 - 생성 후 토큰 반환", async () => {
+  it("기존 소셜 유저가 없는 경우 - 생성 후 토큰 반환", async () => {
     // Setup
     const mockCreatedUser = {
       id: 2,

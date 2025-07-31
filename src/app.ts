@@ -1,4 +1,8 @@
 import dotenv from "dotenv";
+
+// 환경변수 로드
+dotenv.config();
+
 import express from "express";
 import cors from "cors";
 import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware";
@@ -12,8 +16,6 @@ import notificationIndexRoutes from "./routes/notificationIndex.routes";
 import businessRoutes from "./routes/index.routes";
 import passport from "./config/passport";
 
-// 환경변수 로드
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5050;

@@ -11,8 +11,11 @@ const FRONTEND_URL =
     ? process.env.FRONTEND_URL
     : "http://localhost:3000";
 
-export const authCookieOptions = (maxAgeSeconds: number): TCookieOptions => ({
-  httpOnly: true,
+export const authCookieOptions = (
+  maxAgeSeconds: number,
+  httpOnly?: boolean
+): TCookieOptions => ({
+  httpOnly,
   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 개발환경에서는 lax 사용
   secure: process.env.NODE_ENV === "production", // 개발환경에서는 false
   path: "/",
@@ -34,9 +37,15 @@ const postSignin = async (req: Request, res: Response) => {
     } = await authService.signin(email, password, userType);
 
     res.cookie(
+      "accessToken",
+      accessToken,
+      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+    );
+
+    res.cookie(
       "refreshToken",
       refreshToken,
-      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
+      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
     );
 
     res.status(200).json({
@@ -47,7 +56,6 @@ const postSignin = async (req: Request, res: Response) => {
         userName,
         userType: userTypeResponse,
       },
-      accessToken,
     });
   } catch (error: any) {
     console.error("로그인 에러:", error);
@@ -80,9 +88,15 @@ const postSignup = async (req: Request, res: Response) => {
     });
 
     res.cookie(
+      "accessToken",
+      accessToken,
+      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+    );
+
+    res.cookie(
       "refreshToken",
       refreshToken,
-      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
+      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
     );
 
     res.status(200).json({
@@ -93,7 +107,6 @@ const postSignup = async (req: Request, res: Response) => {
         name: userName,
         userType: userTypeResponse,
       },
-      accessToken,
     });
   } catch (error: any) {
     handleError(res, error);
@@ -107,6 +120,7 @@ const postLogout = async (req: Request, res: Response) => {
   try {
     await authService.logout(userId);
 
+    res.clearCookie("accessToken", authCookieOptions(0));
     res.clearCookie("refreshToken", authCookieOptions(0));
 
     res.status(200).json({
@@ -133,19 +147,24 @@ const postRefresh = async (req: Request, res: Response) => {
       userId,
     });
 
+    res.cookie(
+      "accessToken",
+      accessToken,
+      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+    );
+
     // 리프레쉬 쿠키까지 재발급 된다면 저장
     if (refreshToken) {
       res.cookie(
         "refreshToken",
         refreshToken,
-        authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
+        authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
       );
     }
 
     res.status(200).json({
       success: true,
       message: "토큰 갱신 성공",
-      accessToken,
     });
   } catch (error: any) {
     handleError(res, error);
@@ -157,20 +176,16 @@ const getGoogleCallback = async (req: Request, res: Response) => {
   const { accessToken, refreshToken, userType } = req.user as any;
 
   try {
-    res.cookie("accessToken", accessToken, {
-      httpOnly: false,
-      sameSite: "none",
-      secure: true,
-      path: "/",
-      maxAge: TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE * 1000,
-      domain:
-        process.env.NODE_ENV === "production" ? ".gomoving.site" : undefined,
-    });
+    res.cookie(
+      "accessToken",
+      accessToken,
+      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+    );
 
     res.cookie(
       "refreshToken",
       refreshToken,
-      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
+      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
     );
 
     res.redirect(`${FRONTEND_URL}/`);
@@ -193,20 +208,16 @@ const getKakaoCallback = async (req: Request, res: Response) => {
   const { accessToken, refreshToken, userType } = req.user as any;
 
   try {
-    res.cookie("accessToken", accessToken, {
-      httpOnly: false,
-      sameSite: "none",
-      secure: true,
-      path: "/",
-      maxAge: TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE * 1000,
-      domain:
-        process.env.NODE_ENV === "production" ? ".gomoving.site" : undefined,
-    });
+    res.cookie(
+      "accessToken",
+      accessToken,
+      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+    );
 
     res.cookie(
       "refreshToken",
       refreshToken,
-      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
+      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
     );
 
     res.redirect(`${FRONTEND_URL}/`);
@@ -229,19 +240,16 @@ const getNaverCallback = async (req: Request, res: Response) => {
   const { accessToken, refreshToken, userType } = req.user as any;
 
   try {
-    res.cookie("accessToken", accessToken, {
-      httpOnly: false,
-      sameSite: "none",
-      secure: true,
-      path: "/",
-      maxAge: TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE * 1000,
-      domain:
-        process.env.NODE_ENV === "production" ? ".gomoving.site" : undefined,
-    });
+    res.cookie(
+      "accessToken",
+      accessToken,
+      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+    );
+
     res.cookie(
       "refreshToken",
       refreshToken,
-      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
+      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
     );
 
     res.redirect(`${FRONTEND_URL}/`);
