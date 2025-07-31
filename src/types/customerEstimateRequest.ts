@@ -98,16 +98,54 @@ export type TQuoteDetailResponse = {
 
 // 견적 확정 응답 타입
 export type TConfirmEstimateResponse = {
-  estimateRequest: EstimateRequest;
-  estimate: Estimate;
+  estimateRequest: {
+    id: string;
+    customerId: string;
+    moveType: string;
+    moveDate: Date;
+    createdAt: Date;
+    description: string | null;
+    status: string;
+    fromAddress: TAddress;
+    toAddress: TAddress;
+  };
+  estimate: {
+    id: string;
+    estimateRequestId: string;
+    price: number | null;
+    comment: string | null;
+    status: string;
+    isDesignated: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  };
 };
 
 // 견적 취소 응답 타입
-export type TCancelEstimateResponse = Estimate;
+export type TCancelEstimateResponse = {
+  id: string;
+  estimateRequestId: string;
+  price: number | null;
+  comment: string | null;
+  status: string;
+  isDesignated: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 // 이사완료 응답 타입
 export type TCompleteEstimateResponse = {
-  estimateRequest: EstimateRequest;
+  estimateRequest: {
+    id: string;
+    customerId: string;
+    moveType: string;
+    moveDate: Date;
+    createdAt: Date;
+    description: string | null;
+    status: string;
+    fromAddress: TAddress;
+    toAddress: TAddress;
+  };
 };
 
 // 지정 견적 요청 응답 타입
@@ -129,4 +167,17 @@ export type TUsageHistoryResponse = {
     mover: TMoverInfo;
   };
   completedAt: Date;
+};
+
+// Prisma EstimateRequest with Addresses 타입 (서비스 내부용)
+export type EstimateRequestWithAddresses = {
+  id: string;
+  customerId: string;
+  moveType: string;
+  moveDate: Date;
+  createdAt: Date;
+  description: string | null;
+  status: string;
+  fromAddress: TAddress;
+  toAddress: TAddress;
 };

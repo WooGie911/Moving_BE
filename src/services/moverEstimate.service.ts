@@ -22,13 +22,17 @@ import {
   TEstimateResponse,
   TMyEstimateResponse,
   TMyRejectedEstimateResponse,
+  TCreateEstimateResponse,
+  TRejectEstimateResponse,
+  TUpdateEstimateStatusResponse,
+  TUpdateEstimateResponse,
 } from "../types/moverEstimate";
 
 const moverEstimateService = {
   // 견적 생성
   createEstimate: async (
     data: TCreateEstimateRequest
-  ): Promise<TEstimateResponse | null> => {
+  ): Promise<TCreateEstimateResponse | null> => {
     try {
       // 입력 검증
       if (!data.moverId || typeof data.moverId !== "string") {
@@ -122,7 +126,16 @@ const moverEstimateService = {
         throw new ServiceError("견적 생성에 실패했습니다");
       }
 
-      return estimate;
+      // 응답 타입에 맞게 변환
+      return {
+        id: estimate.id,
+        estimateRequestId: estimate.estimateRequestId,
+        moverId: estimate.moverId,
+        price: estimate.price || 0,
+        comment: estimate.comment || "",
+        status: "PROPOSED",
+        createdAt: estimate.createdAt,
+      };
     } catch (error) {
       if (error instanceof RepositoryError) {
         throw new ServiceError(
@@ -154,7 +167,7 @@ const moverEstimateService = {
   // 견적 반려
   rejectEstimate: async (
     data: TRejectEstimateRequest
-  ): Promise<TEstimateResponse | null> => {
+  ): Promise<TRejectEstimateResponse | null> => {
     try {
       // 입력 검증
       if (!data.moverId || typeof data.moverId !== "string") {
@@ -225,7 +238,16 @@ const moverEstimateService = {
         throw new ServiceError("견적 반려에 실패했습니다");
       }
 
-      return estimate;
+      // 응답 타입에 맞게 변환
+      return {
+        id: estimate.id,
+        estimateRequestId: estimate.estimateRequestId,
+        moverId: estimate.moverId,
+        price: estimate.price,
+        comment: estimate.comment || "",
+        status: "REJECTED",
+        createdAt: estimate.createdAt,
+      };
     } catch (error) {
       if (error instanceof RepositoryError) {
         throw new ServiceError(
@@ -486,7 +508,7 @@ const moverEstimateService = {
   // 견적 상태 업데이트
   updateEstimateStatus: async (
     data: TUpdateEstimateStatusRequest
-  ): Promise<TEstimateResponse | null> => {
+  ): Promise<TUpdateEstimateStatusResponse | null> => {
     try {
       // 입력 검증
       if (!data.moverId || typeof data.moverId !== "string") {
@@ -525,7 +547,12 @@ const moverEstimateService = {
         throw new ServiceError("견적 상태 업데이트에 실패했습니다");
       }
 
-      return estimate;
+      // 응답 타입에 맞게 변환
+      return {
+        id: estimate.id,
+        status: estimate.status,
+        updatedAt: estimate.updatedAt,
+      };
     } catch (error) {
       if (error instanceof RepositoryError) {
         throw new ServiceError(
@@ -554,7 +581,7 @@ const moverEstimateService = {
   // 견적서 업데이트
   updateEstimate: async (
     data: TUpdateEstimateRequest
-  ): Promise<TEstimateResponse | null> => {
+  ): Promise<TUpdateEstimateResponse | null> => {
     try {
       // 입력 검증
       if (!data.moverId || typeof data.moverId !== "string") {
@@ -604,7 +631,13 @@ const moverEstimateService = {
         throw new ServiceError("견적서 업데이트에 실패했습니다");
       }
 
-      return estimate;
+      // 응답 타입에 맞게 변환
+      return {
+        id: estimate.id,
+        price: estimate.price || 0,
+        comment: estimate.comment || "",
+        updatedAt: estimate.updatedAt,
+      };
     } catch (error) {
       if (error instanceof RepositoryError) {
         throw new ServiceError(

@@ -402,7 +402,7 @@ router.get("/region", moverEstimateController.getRegionEstimateRequest);
  *                           id:
  *                             type: string
  *                             description: 주소 ID
- *                           postalCode:
+ *                           zoneCode:
  *                             type: string
  *                             description: 우편번호
  *                           city:
@@ -423,7 +423,7 @@ router.get("/region", moverEstimateController.getRegionEstimateRequest);
  *                           id:
  *                             type: string
  *                             description: 주소 ID
- *                           postalCode:
+ *                           zoneCode:
  *                             type: string
  *                             description: 우편번호
  *                           city:
@@ -469,14 +469,14 @@ router.get("/region", moverEstimateController.getRegionEstimateRequest);
  *                   moveDate: "2025-07-15T00:00:00.000Z"
  *                   fromAddress:
  *                     id: "clx1234567893"
- *                     postalCode: "06123"
+ *                     zoneCode: "06123"
  *                     city: "서울시"
  *                     district: "강남구"
  *                     detail: "강남역 1번 출구"
  *                     region: "SEOUL"
  *                   toAddress:
  *                     id: "clx1234567894"
- *                     postalCode: "06123"
+ *                     zoneCode: "06123"
  *                     city: "서울시"
  *                     district: "서초구"
  *                     detail: "서초역 2번 출구"
@@ -711,7 +711,7 @@ router.get("/list", moverEstimateController.getAllEstimateRequests);
  *                               id:
  *                                 type: string
  *                                 description: 주소 ID
- *                               postalCode:
+ *                               zoneCode:
  *                                 type: string
  *                                 description: 우편번호
  *                               city:
@@ -732,7 +732,7 @@ router.get("/list", moverEstimateController.getAllEstimateRequests);
  *                               id:
  *                                 type: string
  *                                 description: 주소 ID
- *                               postalCode:
+ *                               zoneCode:
  *                                 type: string
  *                                 description: 우편번호
  *                               city:
@@ -762,14 +762,14 @@ router.get("/list", moverEstimateController.getAllEstimateRequests);
  *                     moveDate: "2025-07-15T00:00:00.000Z"
  *                     fromAddress:
  *                       id: "clx1234567893"
- *                       postalCode: "06123"
+ *                       zoneCode: "06123"
  *                       city: "서울시"
  *                       district: "강남구"
  *                       detail: "강남역 1번 출구"
  *                       region: "SEOUL"
  *                     toAddress:
  *                       id: "clx1234567894"
- *                       postalCode: "06123"
+ *                       zoneCode: "06123"
  *                       city: "서울시"
  *                       district: "서초구"
  *                       detail: "서초역 2번 출구"
@@ -871,7 +871,7 @@ router.get("/my-estimates", moverEstimateController.getMyEstimate);
  *                               id:
  *                                 type: string
  *                                 description: 주소 ID
- *                               postalCode:
+ *                               zoneCode:
  *                                 type: string
  *                                 description: 우편번호
  *                               city:
@@ -892,7 +892,7 @@ router.get("/my-estimates", moverEstimateController.getMyEstimate);
  *                               id:
  *                                 type: string
  *                                 description: 주소 ID
- *                               postalCode:
+ *                               zoneCode:
  *                                 type: string
  *                                 description: 우편번호
  *                               city:
@@ -921,14 +921,14 @@ router.get("/my-estimates", moverEstimateController.getMyEstimate);
  *                     moveDate: "2025-07-15T00:00:00.000Z"
  *                     fromAddress:
  *                       id: "clx1234567893"
- *                       postalCode: "06123"
+ *                       zoneCode: "06123"
  *                       city: "서울시"
  *                       district: "강남구"
  *                       detail: "강남역 1번 출구"
  *                       region: "SEOUL"
  *                     toAddress:
  *                       id: "clx1234567894"
- *                       postalCode: "06123"
+ *                       zoneCode: "06123"
  *                       city: "서울시"
  *                       district: "서초구"
  *                       detail: "서초역 2번 출구"

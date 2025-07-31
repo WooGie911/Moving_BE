@@ -61,7 +61,15 @@ abstract class BaseCustomError extends Error {
 
   // 에러 정보를 구조화된 객체로 반환
   toJSON() {
-    const result: any = {
+    const result: {
+      name: string;
+      message: string;
+      code: ErrorCode;
+      layer: string;
+      statusCode: number;
+      timestamp: string;
+      originalError?: unknown;
+    } = {
       name: this.name,
       message: this.message,
       code: this.code,
