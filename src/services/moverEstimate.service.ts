@@ -1,4 +1,6 @@
 import moverEstimateRepository from "../repositories/moverEstimate.repository";
+import actionService from "./action.service";
+import { ActionType } from "@prisma/client";
 import { NotFoundError } from "../types/commonError.types";
 import {
   MoverEstimateDuplicateError,
@@ -122,6 +124,25 @@ const moverEstimateService = {
         throw new ServiceError("견적 생성에 실패했습니다");
       }
 
+      // 견적 제출 액션 생성
+      const estimateDetail =
+        await moverEstimateRepository.getEstimateDetailForAction(estimate.id);
+      if (estimateDetail) {
+        const actionType = isDesignated
+          ? ActionType.DESIGNATED_ESTIMATE_SUBMITTED
+          : ActionType.ESTIMATE_SUBMITTED;
+        await actionService.createAction(
+          estimateDetail.estimateRequest.customerId,
+          actionType,
+          estimate.id,
+          isDesignated ? "DESIGNATED_ESTIMATE" : "ESTIMATE",
+          {
+            moverName: estimateDetail.mover?.name || "",
+            moveType: estimateDetail.estimateRequest?.moveType || "",
+          }
+        );
+      }
+
       return estimate;
     } catch (error) {
       if (error instanceof RepositoryError) {
@@ -223,6 +244,25 @@ const moverEstimateService = {
 
       if (!estimate) {
         throw new ServiceError("견적 반려에 실패했습니다");
+      }
+
+      // 견적 거절 액션 생성
+      const estimateDetail =
+        await moverEstimateRepository.getEstimateDetailForAction(estimate.id);
+      if (estimateDetail) {
+        const actionType = isDesignated
+          ? ActionType.DESIGNATED_ESTIMATE_REQUEST_REJECTED
+          : ActionType.ESTIMATE_REJECTED;
+        await actionService.createAction(
+          data.moverId,
+          actionType,
+          estimate.id,
+          isDesignated ? "DESIGNATED_ESTIMATE" : "ESTIMATE",
+          {
+            moveType: estimateDetail.estimateRequest?.moveType || "",
+            estimateRequestId: data.estimateRequestId,
+          }
+        );
       }
 
       return estimate;

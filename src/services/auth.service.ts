@@ -1,4 +1,6 @@
 import authRepository from "../repositories/auth.repository";
+import actionService from "./action.service";
+import { ActionType } from "@prisma/client";
 import bcrypt from "bcrypt";
 import {
   generateAccessToken,
@@ -147,6 +149,15 @@ const signup = async ({
   if (!user) {
     throw new DatabaseError("유저 생성 실패로 인한 회원가입 실패");
   }
+
+  // WELCOME 액션 생성
+  await actionService.createAction(
+    user.id,
+    ActionType.WELCOME,
+    user.id,
+    "USER",
+    {}
+  );
 
   let accessToken, refreshToken;
 

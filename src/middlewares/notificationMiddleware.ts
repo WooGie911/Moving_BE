@@ -16,7 +16,9 @@ export const notificationMiddleware: Prisma.Middleware = async (
     const action = result as Action;
 
     const mapping = actionNotificationMap[action.type];
-    if (!mapping) return result;
+    if (!mapping) {
+      return result;
+    }
 
     const receivers = await mapping.getReceivers(action);
 

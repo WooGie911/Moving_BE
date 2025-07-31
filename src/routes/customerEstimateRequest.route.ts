@@ -447,6 +447,12 @@ customerEstimateRequestRouter.get(
  *               success: false
  *               message: "진행중인 견적요청이 없습니다"
  */
+customerEstimateRequestRouter.patch(
+  "/confirm",
+  verifyAccessToken,
+  customerEstimateRequestController.confirmEstimate
+);
+
 /**
  * @swagger
  * /customer-quotes/cancel:
