@@ -1,3 +1,4 @@
+import { PrismaClient } from "@prisma/client";
 import customerEstimateRequestRepository from "../repositories/customerEstimateRequest.repository";
 import { NotFoundError } from "../types/commonError.types";
 import {
@@ -19,6 +20,8 @@ import {
   TCancelEstimateResponse,
   TCompleteEstimateResponse,
 } from "../types/customerEstimateRequest";
+
+const prisma = new PrismaClient();
 
 const customerEstimateRequestService = {
   // 1. 진행중인 견적요청 조회
@@ -278,31 +281,36 @@ const customerEstimateRequestService = {
     estimateId: string
   ): Promise<TConfirmEstimateResponse> => {
     try {
-      // 트랜잭션으로 견적 확정 처리
-      const [confirmedEstimateRequest, acceptedEstimate] = await Promise.all([
+      // Prisma 트랜잭션으로 견적 확정 처리
+      const result = await prisma.$transaction(async (tx) => {
         // 1. 견적요청 상태를 APPROVED로 변경
-        customerEstimateRequestRepository.updateEstimateRequestStatus(
-          estimateRequestId,
-          "APPROVED"
-        ),
+        const confirmedEstimateRequest = await tx.estimateRequest.update({
+          where: { id: estimateRequestId },
+          data: { status: "APPROVED" },
+        });
+
         // 2. 선택된 견적 상태를 ACCEPTED로 변경
-        customerEstimateRequestRepository.updateEstimateStatus(
-          estimateId,
-          "ACCEPTED"
-        ),
-      ]);
+        const acceptedEstimate = await tx.estimate.update({
+          where: { id: estimateId },
+          data: { status: "ACCEPTED" },
+        });
 
-      // 3. 나머지 견적들을 AUTO_REJECTED로 변경
-      await customerEstimateRequestRepository.updateAllEstimatesStatus(
-        estimateRequestId,
-        "AUTO_REJECTED",
-        estimateId
-      );
+        // 3. 나머지 견적들을 AUTO_REJECTED로 변경
+        await tx.estimate.updateMany({
+          where: {
+            estimateRequestId: estimateRequestId,
+            id: { not: estimateId },
+          },
+          data: { status: "AUTO_REJECTED" },
+        });
 
-      return {
-        estimateRequest: confirmedEstimateRequest,
-        estimate: acceptedEstimate,
-      };
+        return {
+          estimateRequest: confirmedEstimateRequest,
+          estimate: acceptedEstimate,
+        };
+      });
+
+      return result;
     } catch (error) {
       throw new ServiceError(
         `견적 확정 트랜잭션 실패: ${error instanceof Error ? error.message : "Unknown error"}`,
