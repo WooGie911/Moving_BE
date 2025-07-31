@@ -58,9 +58,35 @@ const getMoverFavoriteCount = async (moverId: string) => {
   });
 };
 
+// 즐겨찾기 상세 정보 조회 (액션 메타데이터용)
+const getFavoriteDetailForAction = async (favoriteId: string) => {
+  const favorite = await prisma.favorite.findUnique({
+    where: { id: favoriteId },
+    select: {
+      id: true,
+      customerId: true,
+      moverId: true,
+      customer: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      mover: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  });
+  return favorite;
+};
+
 export default {
   addFavorite,
   removeFavorite,
   getFavoriteStatus,
   getMoverFavoriteCount,
+  getFavoriteDetailForAction,
 };

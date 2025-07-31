@@ -362,5 +362,104 @@ const customerEstimateRequestRepository = {
       );
     }
   },
+
+  // 견적 상세 정보 조회 (액션 메타데이터용)
+  getEstimateDetailForAction: async (estimateId: string) => {
+    try {
+      const estimate = await prisma.estimate.findUnique({
+        where: { id: estimateId },
+        select: {
+          id: true,
+          moverId: true,
+          estimateRequestId: true,
+          status: true,
+          isDesignated: true,
+          mover: {
+            select: {
+              id: true,
+              name: true,
+              nickname: true,
+            },
+          },
+          estimateRequest: {
+            select: {
+              id: true,
+              customerId: true,
+              moveType: true,
+              moveDate: true,
+              customer: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      });
+      return estimate;
+    } catch (error) {
+      throw new RepositoryQueryError(
+        `견적 상세 정보 조회 실패 - 견적ID: ${estimateId}`,
+        error
+      );
+    }
+  },
+
+  // 다른 견적들 조회 (확정 시 반려용)
+  getOtherEstimates: async (
+    estimateRequestId: string,
+    excludeEstimateId: string
+  ) => {
+    try {
+      const otherEstimates = await prisma.estimate.findMany({
+        where: {
+          estimateRequestId: estimateRequestId,
+          id: { not: excludeEstimateId },
+          status: { in: ["PROPOSED", "ACCEPTED"] },
+        },
+        select: {
+          id: true,
+          moverId: true,
+          status: true,
+          isDesignated: true,
+        },
+      });
+      return otherEstimates;
+    } catch (error) {
+      throw new RepositoryQueryError(
+        `다른 견적들 조회 실패 - 견적요청ID: ${estimateRequestId}, 제외견적ID: ${excludeEstimateId}`,
+        error
+      );
+    }
+  },
+
+  // AUTO_REJECTED된 견적들 조회 (액션 생성용)
+  getAutoRejectedEstimates: async (
+    estimateRequestId: string,
+    excludeEstimateId: string
+  ) => {
+    try {
+      const autoRejectedEstimates = await prisma.estimate.findMany({
+        where: {
+          estimateRequestId: estimateRequestId,
+          id: { not: excludeEstimateId },
+          status: { in: ["PROPOSED", "ACCEPTED", "AUTO_REJECTED"] },
+        },
+        select: {
+          id: true,
+          moverId: true,
+          status: true,
+          isDesignated: true,
+        },
+      });
+      return autoRejectedEstimates;
+    } catch (error) {
+      throw new RepositoryQueryError(
+        `AUTO_REJECTED 견적들 조회 실패 - 견적요청ID: ${estimateRequestId}, 제외견적ID: ${excludeEstimateId}`,
+        error
+      );
+    }
+  },
 };
 export default customerEstimateRequestRepository;
