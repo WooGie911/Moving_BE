@@ -107,7 +107,7 @@ const estimateSelectOptions = {
 };
 
 const moverEstimateRepository = {
-  // 견적 요청 조회 (비즈니스 로직 제거)
+  // 견적 요청 조회
   findEstimateRequestById: async (estimateRequestId: string) => {
     try {
       const estimateRequest = await prisma.estimateRequest.findUnique({
@@ -120,7 +120,7 @@ const moverEstimateRepository = {
     }
   },
 
-  // 기존 견적 조회 (비즈니스 로직 제거)
+  // 기존 견적 조회
   findExistingEstimate: async (estimateRequestId: string, moverId: string) => {
     try {
       const existingEstimate = await prisma.estimate.findUnique({
@@ -137,7 +137,7 @@ const moverEstimateRepository = {
     }
   },
 
-  // 지정 견적 요청 조회 (비즈니스 로직 제거)
+  // 지정 견적 요청 조회
   findDesignatedRequest: async (estimateRequestId: string, moverId: string) => {
     try {
       const designatedRequest = await prisma.designatedMover.findFirst({
@@ -153,7 +153,7 @@ const moverEstimateRepository = {
     }
   },
 
-  // 기존 견적 개수 조회 (비즈니스 로직 제거)
+  // 기존 견적 개수 조회
   countExistingEstimates: async (estimateRequestId: string) => {
     try {
       const existingEstimates = await prisma.estimate.findMany({
@@ -173,7 +173,7 @@ const moverEstimateRepository = {
     }
   },
 
-  // 견적 생성 (순수 데이터 생성)
+  // 견적 생성
   createEstimate: async (
     estimateRequestId: string,
     moverId: string,
