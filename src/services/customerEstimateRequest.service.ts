@@ -281,12 +281,48 @@ const customerEstimateRequestService = {
     estimateId: string
   ): Promise<TConfirmEstimateResponse> => {
     try {
-      // Repository를 통해 트랜잭션 처리
-      const result =
-        await customerEstimateRequestRepository.executeConfirmEstimateTransaction(
-          estimateRequestId,
-          estimateId
-        );
+      // Prisma 트랜잭션으로 견적 확정 처리
+      const result = await prisma.$transaction(async (tx) => {
+        // 1. 견적요청 상태를 APPROVED로 변경
+        const confirmedEstimateRequest = await tx.estimateRequest.update({
+          where: { id: estimateRequestId },
+          data: { status: "APPROVED" },
+          include: {
+            fromAddress: true,
+            toAddress: true,
+          },
+        });
+
+        // 2. 선택된 견적 상태를 ACCEPTED로 변경
+        const acceptedEstimate = await tx.estimate.update({
+          where: { id: estimateId },
+          data: { status: "ACCEPTED" },
+        });
+
+        // 3. 나머지 견적들을 AUTO_REJECTED로 변경
+        await tx.estimate.updateMany({
+          where: {
+            estimateRequestId: estimateRequestId,
+            id: { not: estimateId },
+          },
+          data: { status: "AUTO_REJECTED" },
+        });
+
+        return {
+          estimateRequest: {
+            id: confirmedEstimateRequest.id,
+            customerId: confirmedEstimateRequest.customerId,
+            moveType: confirmedEstimateRequest.moveType,
+            moveDate: confirmedEstimateRequest.moveDate,
+            createdAt: confirmedEstimateRequest.createdAt,
+            description: confirmedEstimateRequest.description,
+            status: confirmedEstimateRequest.status,
+            fromAddress: confirmedEstimateRequest.fromAddress,
+            toAddress: confirmedEstimateRequest.toAddress,
+          },
+          estimate: acceptedEstimate,
+        };
+      });
 
       return result;
     } catch (error) {

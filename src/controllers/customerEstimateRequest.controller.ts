@@ -94,13 +94,13 @@ const customerEstimateRequestController = {
   ): Promise<void> => {
     try {
       const userId = req.user?.userId;
-      const estimateId = req.query.estimateId as string;
+      const estimateId = req.query.estimateId;
 
       if (!userId || typeof userId !== "string") {
         throw new ControllerAuthError("유효하지 않은 사용자 정보입니다.");
       }
 
-      if (!estimateId || estimateId.trim() === "") {
+      if (!estimateId || typeof estimateId !== "string") {
         res.status(400).json({
           success: false,
           message: "유효하지 않은 견적 ID입니다.",
@@ -140,13 +140,13 @@ const customerEstimateRequestController = {
   ): Promise<void> => {
     try {
       const userId = req.user?.userId;
-      const estimateId = req.query.estimateId as string;
+      const estimateId = req.query.estimateId;
 
       if (!userId || typeof userId !== "string") {
         throw new ControllerAuthError("유효하지 않은 사용자 정보입니다.");
       }
 
-      if (!estimateId || estimateId.trim() === "") {
+      if (!estimateId || typeof estimateId !== "string") {
         res.status(400).json({
           success: false,
           message: "유효하지 않은 견적 ID입니다.",
@@ -186,13 +186,13 @@ const customerEstimateRequestController = {
   ): Promise<void> => {
     try {
       const userId = req.user?.userId;
-      const estimateId = req.query.estimateId as string;
+      const estimateId = req.query.estimateId;
 
       if (!userId || typeof userId !== "string") {
         throw new ControllerAuthError("유효하지 않은 사용자 정보입니다.");
       }
 
-      if (!estimateId || estimateId.trim() === "") {
+      if (!estimateId || typeof estimateId !== "string") {
         res.status(400).json({
           success: false,
           message: "유효하지 않은 견적 ID입니다.",
