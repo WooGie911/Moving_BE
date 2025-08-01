@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import EstimateRequestService from "../services/estimateRequest.service";
 import { convertRegionToKorean } from "../utils/addressUtils";
-import { isBeforeKoreaToday, isKoreaToday, formatDateForAPI } from "../utils/dateUtils";
+import { validateMoveDate, formatDateForAPI } from "../utils/dateUtils";
 import {
   TCreateEstimateRequest,
   TUpdateEstimateRequest,
@@ -45,24 +45,11 @@ class EstimateRequestController {
   }
 
   private validateMoveDate(movingDate: string): void {
-    try {
-      const moveDate = new Date(movingDate);
-      if (isNaN(moveDate.getTime())) {
-        throw new Error("올바른 날짜 형식이 아닙니다. (YYYY-MM-DD 형식으로 입력해주세요)");
-      }
+    const moveDate = new Date(movingDate);
+    const validation = validateMoveDate(moveDate);
 
-      if (isBeforeKoreaToday(moveDate)) {
-        throw new Error("이사일은 오늘 이후로 설정해주세요.");
-      }
-
-      if (isKoreaToday(moveDate)) {
-        throw new Error("당일 이사는 불가능합니다. 내일 이후로 설정해주세요.");
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("날짜 검증 중 오류가 발생했습니다.");
+    if (!validation.isValid) {
+      throw new Error(validation.errorMessage);
     }
   }
 

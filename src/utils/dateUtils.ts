@@ -47,6 +47,61 @@ export const isAfterKoreaToday = (date: Date): boolean => {
 };
 
 /**
+ * 주어진 날짜가 한국 시간 기준 오늘 이후인지 확인합니다 (과거 및 당일 제외).
+ * @param date 확인할 날짜
+ * @returns 오늘 이후이면 true, 과거 또는 당일이면 false
+ */
+export const isValidFutureDate = (date: Date): boolean => {
+  const koreaToday = getKoreaToday();
+  const inputDate = new Date(date);
+  inputDate.setHours(0, 0, 0, 0);
+  return inputDate > koreaToday;
+};
+
+/**
+ * 주어진 날짜가 유효한 이사일인지 확인합니다 (과거 및 당일 제외).
+ * @param date 확인할 날짜
+ * @returns 유효한 미래 날짜이면 true, 아니면 false
+ */
+export const isValidMoveDate = (date: Date): boolean => {
+  return isValidFutureDate(date);
+};
+
+/**
+ * 주어진 날짜에 대한 이사일 유효성 검사 결과를 반환합니다.
+ * @param date 확인할 날짜
+ * @returns { isValid: boolean, errorMessage?: string }
+ */
+export const validateMoveDate = (date: Date): { isValid: boolean; errorMessage?: string } => {
+  const koreaToday = getKoreaToday();
+  const inputDate = new Date(date);
+  inputDate.setHours(0, 0, 0, 0);
+
+  if (isNaN(inputDate.getTime())) {
+    return {
+      isValid: false,
+      errorMessage: "올바른 날짜 형식이 아닙니다. (YYYY-MM-DD 형식으로 입력해주세요)",
+    };
+  }
+
+  if (inputDate < koreaToday) {
+    return {
+      isValid: false,
+      errorMessage: "이사일은 오늘 이후로 설정해주세요.",
+    };
+  }
+
+  if (inputDate.getTime() === koreaToday.getTime()) {
+    return {
+      isValid: false,
+      errorMessage: "당일 이사는 불가능합니다. 내일 이후로 설정해주세요.",
+    };
+  }
+
+  return { isValid: true };
+};
+
+/**
  * DateTime을 YYYY-MM-DD 형식의 날짜만 반환
  * @param dateTime - DateTime 객체 또는 문자열
  * @returns YYYY-MM-DD 형식의 날짜 문자열
