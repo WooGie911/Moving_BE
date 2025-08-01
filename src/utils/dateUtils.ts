@@ -23,6 +23,30 @@ export const isBeforeKoreaToday = (date: Date): boolean => {
 };
 
 /**
+ * 주어진 날짜가 한국 시간 기준 오늘과 같은지 확인합니다.
+ * @param date 확인할 날짜
+ * @returns 오늘과 같으면 true, 아니면 false
+ */
+export const isKoreaToday = (date: Date): boolean => {
+  const koreaToday = getKoreaToday();
+  const inputDate = new Date(date);
+  inputDate.setHours(0, 0, 0, 0);
+  return inputDate.getTime() === koreaToday.getTime();
+};
+
+/**
+ * 주어진 날짜가 한국 시간 기준 오늘 이후인지 확인합니다.
+ * @param date 확인할 날짜
+ * @returns 오늘 이후이면 true, 아니면 false
+ */
+export const isAfterKoreaToday = (date: Date): boolean => {
+  const koreaToday = getKoreaToday();
+  const inputDate = new Date(date);
+  inputDate.setHours(0, 0, 0, 0);
+  return inputDate > koreaToday;
+};
+
+/**
  * DateTime을 YYYY-MM-DD 형식의 날짜만 반환
  * @param dateTime - DateTime 객체 또는 문자열
  * @returns YYYY-MM-DD 형식의 날짜 문자열

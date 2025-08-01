@@ -94,7 +94,20 @@ moverScheduleRouter.get(
   "/monthly/:year/:month",
   verifyAccessToken,
   translationMiddleware({
-    excludeKeys: ["id", "uuid", "createdAt", "updatedAt", "email", "phone", "url", "link", "customerName", "moveDate"],
+    excludeKeys: [
+      "id",
+      "uuid",
+      "createdAt",
+      "updatedAt",
+      "email",
+      "phone",
+      "url",
+      "link",
+      "customerName",
+      "moveDate",
+      "movingType",
+      "status",
+    ],
   }),
   moverScheduleController.getMonthlySchedules,
 );
