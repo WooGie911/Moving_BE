@@ -375,8 +375,11 @@ router.post("/create", verifyAccessToken, (req, res) =>
  *               success: false
  *               message: "서버 내부 오류가 발생했습니다."
  */
-router.get("/active", verifyAccessToken, defaultTranslationMiddleware, (req, res) =>
-  estimateRequestController.getActiveEstimateRequest(req, res),
+router.get(
+  "/active",
+  verifyAccessToken,
+  defaultTranslationMiddleware,
+  (req, res) => estimateRequestController.getActiveEstimateRequest(req, res)
 );
 
 // 견적 요청 수정
