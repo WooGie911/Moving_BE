@@ -1,4 +1,3 @@
-import * as userRepository from "../repositories/user.repository";
 import { NotFoundError, ValidationError } from "../types/commonError.types";
 import { generateToken } from "../utils/generateToken";
 import { encryptPhoneNumber } from "../utils/phoneEncryption";
@@ -18,6 +17,7 @@ import {
 import { MoveType, RegionType } from "../types/user.types";
 import bcrypt from "bcrypt";
 import { validateMoverProfileUpdate } from "../utils/validators/userValidator";
+import userRepository from "../repositories/user.repository";
 
 jest.mock("../repositories/user.repository");
 jest.mock("../utils/generateToken");
@@ -51,6 +51,7 @@ describe("userService.userInfo", () => {
       moverImage: "test.jpg",
       userType: ["CUSTOMER", "MOVER"],
       refreshToken: "refreshToken",
+      provider: "LOCAL",
     };
 
     const expectedUser = {
@@ -61,6 +62,7 @@ describe("userService.userInfo", () => {
       nickname: "홍길동",
       customerImage: "test.jpg",
       userType: "CUSTOMER",
+      provider: "LOCAL",
     };
 
     const mockGetUserById = userRepository.getUserById as jest.Mock;
@@ -91,6 +93,7 @@ describe("userService.userInfo", () => {
       moverImage: "test.jpg",
       userType: ["CUSTOMER", "MOVER"],
       refreshToken: "refreshToken",
+      provider: "LOCAL",
     };
 
     const expectedUser = {
@@ -101,6 +104,7 @@ describe("userService.userInfo", () => {
       nickname: "홍길동",
       moverImage: "test.jpg",
       userType: "MOVER",
+      provider: "LOCAL",
     };
 
     const mockGetUserById = userRepository.getUserById as jest.Mock;
@@ -1473,9 +1477,9 @@ describe("userService.createMoverProfile", () => {
 
     (userRepository.getUserById as jest.Mock).mockResolvedValue(mockUser);
     (validateMoverProfileData as jest.Mock).mockResolvedValue(undefined);
-    (
-      userRepository.createMoverProfileRepository as jest.Mock
-    ).mockResolvedValue(expectedResult);
+    (userRepository.createMoverProfile as jest.Mock).mockResolvedValue(
+      expectedResult
+    );
     (generateToken as jest.Mock).mockReturnValue(mockTokens);
 
     // Exercise
@@ -1484,7 +1488,7 @@ describe("userService.createMoverProfile", () => {
     // Assertion
     expect(userRepository.getUserById).toHaveBeenCalledWith("1");
     expect(validateMoverProfileData).toHaveBeenCalledWith(profileData, "1");
-    expect(userRepository.createMoverProfileRepository).toHaveBeenCalledWith({
+    expect(userRepository.createMoverProfile).toHaveBeenCalledWith({
       userId: "1",
       nickname: "믿을만한김기사",
       moverImage: "https://example.com/mover.jpg",
@@ -1547,16 +1551,16 @@ describe("userService.createMoverProfile", () => {
 
     (userRepository.getUserById as jest.Mock).mockResolvedValue(mockUser);
     (validateMoverProfileData as jest.Mock).mockResolvedValue(undefined);
-    (
-      userRepository.createMoverProfileRepository as jest.Mock
-    ).mockResolvedValue(expectedResult);
+    (userRepository.createMoverProfile as jest.Mock).mockResolvedValue(
+      expectedResult
+    );
     (generateToken as jest.Mock).mockReturnValue(mockTokens);
 
     // Exercise
     const result = await createMoverProfile("1", profileData);
 
     // Assertion
-    expect(userRepository.createMoverProfileRepository).toHaveBeenCalledWith({
+    expect(userRepository.createMoverProfile).toHaveBeenCalledWith({
       userId: "1",
       nickname: "새로운기사",
       moverImage: undefined,

@@ -41,6 +41,10 @@ export const PROFILE_ERROR_MESSAGES = {
   USER_SERVICES_REQUIRED: "이용할 서비스를 하나 이상 선택해주세요",
   SERVICE_REGIONS_REQUIRED: "서비스 가능 지역을 하나 이상 선택해주세요",
   SERVICE_TYPES_REQUIRED: "제공할 서비스를 하나 이상 선택해주세요",
+  NICKNAME_INVALID_FORMAT: "닉네임은 한글, 영어, 중국어, 숫자만 허용합니다",
+  NICKNAME_TOO_LONG: "닉네임은 15자 이하로 입력해주세요",
+  INTRODUCTION_TOO_LONG: "한줄 소개는 30자 이하로 입력해주세요",
+  DESCRIPTION_TOO_LONG: "상세 설명은 300자 이하로 입력해주세요",
   INVALID_SERVICE_ID: `유효하지 않은 서비스 ID입니다. ${Object.entries(
     SERVICE_INFO
   )
@@ -69,4 +73,7 @@ export const VALIDATION_CONFIG = {
   MIN_DESCRIPTION_LENGTH: 10,
   MIN_SERVICE_COUNT: 1,
   MIN_REGION_COUNT: 1,
+  MAX_NICKNAME_LENGTH: 15,
+  MAX_INTRODUCTION_LENGTH: 30,
+  MAX_DESCRIPTION_LENGTH: 300,
 } as const;
