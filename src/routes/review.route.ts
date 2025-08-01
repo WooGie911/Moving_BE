@@ -1,5 +1,6 @@
 import { Router } from "express";
 import reviewController from "../controllers/review.controller";
+import { defaultTranslationMiddleware } from "../middlewares/translationMiddleware";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 
 const reviewRouter = Router();
@@ -196,7 +197,11 @@ const reviewRouter = Router();
  *                 status: "COMPLETED"
  *                 createdAt: "2025-07-10T00:33:16.456Z"
  */
-reviewRouter.patch("/:reviewId", verifyAccessToken, reviewController.postReview);
+reviewRouter.patch(
+  "/:reviewId",
+  verifyAccessToken,
+  reviewController.postReview
+);
 
 /**
  * @swagger
@@ -253,7 +258,12 @@ reviewRouter.patch("/:reviewId", verifyAccessToken, reviewController.postReview)
  *                 page: 1
  *                 pageSize: 4
  */
-reviewRouter.get("/writable-estimateRequests", verifyAccessToken, reviewController.getWritableEstimateRequests);
+reviewRouter.get(
+  "/writable-estimateRequests",
+  verifyAccessToken,
+  defaultTranslationMiddleware,
+  reviewController.getWritableEstimateRequests
+);
 
 /**
  * @swagger
@@ -408,7 +418,12 @@ reviewRouter.get("/writable-estimateRequests", verifyAccessToken, reviewControll
  *                 page: 1
  *                 pageSize: 10
  */
-reviewRouter.get("/customer/:customerId", verifyAccessToken, reviewController.getWrittenReviews);
+reviewRouter.get(
+  "/customer/:customerId",
+  verifyAccessToken,
+  defaultTranslationMiddleware,
+  reviewController.getWrittenReviews
+);
 
 /**
  * @swagger
@@ -567,6 +582,10 @@ reviewRouter.get("/customer/:customerId", verifyAccessToken, reviewController.ge
  *                 page: 1
  *                 pageSize: 5
  */
-reviewRouter.get("/mover/:moverId", reviewController.getReceivedReviews);
+reviewRouter.get(
+  "/mover/:moverId",
+  defaultTranslationMiddleware,
+  reviewController.getReceivedReviews
+);
 
 export default reviewRouter;
