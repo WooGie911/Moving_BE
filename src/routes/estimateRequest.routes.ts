@@ -301,9 +301,7 @@ const estimateRequestController = new EstimateRequestController();
  *               success: false
  *               message: "서버 내부 오류가 발생했습니다."
  */
-router.post("/create", verifyAccessToken, (req, res) =>
-  estimateRequestController.createEstimateRequest(req, res)
-);
+router.post("/create", verifyAccessToken, (req, res) => estimateRequestController.createEstimateRequest(req, res));
 
 // 활성 견적 요청 조회
 /**
@@ -375,11 +373,8 @@ router.post("/create", verifyAccessToken, (req, res) =>
  *               success: false
  *               message: "서버 내부 오류가 발생했습니다."
  */
-router.get(
-  "/active",
-  verifyAccessToken,
-  defaultTranslationMiddleware,
-  (req, res) => estimateRequestController.getActiveEstimateRequest(req, res)
+router.get("/active", verifyAccessToken, defaultTranslationMiddleware, (req, res) =>
+  estimateRequestController.getActiveEstimateRequest(req, res),
 );
 
 // 견적 요청 수정
@@ -524,7 +519,7 @@ router.get(
  *               message: "서버 내부 오류가 발생했습니다."
  */
 router.patch("/active", verifyAccessToken, (req, res) =>
-  estimateRequestController.updateActiveEstimateRequest(req, res)
+  estimateRequestController.updateActiveEstimateRequest(req, res),
 );
 
 // 견적 요청 취소
@@ -595,7 +590,7 @@ router.patch("/active", verifyAccessToken, (req, res) =>
  *               message: "서버 내부 오류가 발생했습니다."
  */
 router.delete("/active", verifyAccessToken, (req, res) =>
-  estimateRequestController.cancelActiveEstimateRequest(req, res)
+  estimateRequestController.cancelActiveEstimateRequest(req, res),
 );
 
 export default router;

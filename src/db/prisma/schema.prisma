@@ -124,7 +124,7 @@ model User {
   encryptedPassword    String? // 암호화된 비밀번호 (소셜 로그인은 null)
   refreshToken         String? // 리프레시 토큰 (JWT, 암호화 저장 권장)
   encryptedPhoneNumber String? // 암호화된 전화번호
-  name                 String // 실명
+  name                 String? // 실명
   userType             UserType[] // 유저 타입 배열 (CUSTOMER, MOVER 둘 다 가능)
   provider             AuthProvider @default(LOCAL) // 로그인 제공자
   providerId           String? // 소셜 로그인 ID

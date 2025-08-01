@@ -11,7 +11,7 @@ export type TMoverScheduleResponse = {
   id: string;
   customerName: string;
   movingType: "소형이사" | "가정이사" | "원룸이사" | "사무실이사";
-  status: "confirmed" | "pending" | "completed";
+  status: "confirmed" | "pending";
   fromAddress: string;
   toAddress: string;
   moveDate: string; // YYYY-MM-DD 형식
@@ -62,5 +62,4 @@ export type MoveTypeMapping = {
 export type StatusMapping = {
   APPROVED: "confirmed";
   PENDING: "pending";
-  COMPLETED: "completed";
 };

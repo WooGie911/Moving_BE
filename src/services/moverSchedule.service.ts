@@ -6,24 +6,13 @@ import {
   StatusMapping,
 } from "../types/moverSchedule";
 import { ServiceError, ServiceValidationError, RepositoryError } from "../types/errors.types";
+import { convertRegionToKorean } from "../utils/addressUtils";
 
 // 상수 정의
 const VALIDATION = {
   MIN_YEAR: 1900,
   MIN_MONTH: 1,
   MAX_MONTH: 12,
-} as const;
-
-const ADDRESS_TRANSLATIONS = {
-  DISTRICT: {
-    구: " District",
-    시: " City",
-  },
-  SUB_DISTRICT: {
-    동: "-dong",
-    읍: "-eup",
-    면: "-myeon",
-  },
 } as const;
 
 const MOVE_TYPE_MAPPING: MoveTypeMapping = {
@@ -35,7 +24,6 @@ const MOVE_TYPE_MAPPING: MoveTypeMapping = {
 const STATUS_MAPPING: StatusMapping = {
   APPROVED: "confirmed",
   PENDING: "pending",
-  COMPLETED: "completed",
 } as const;
 
 // 유틸리티 함수들
@@ -49,26 +37,23 @@ const validateInput = (moverId: string, year: number, month: number): void => {
   }
 };
 
-const formatAddressForTranslation = (address: { city: string; district: string; detail: string | null }): string => {
+const formatAddressForTranslation = (address: {
+  city: string;
+  district: string;
+  detail: string | null;
+  region: string;
+}): string => {
   const parts: string[] = [];
 
-  // 구/군 번역
-  const districtTranslation = Object.entries(ADDRESS_TRANSLATIONS.DISTRICT).find(([key]) => address.city.includes(key));
-
-  if (districtTranslation) {
-    parts.push(address.city.replace(districtTranslation[0], districtTranslation[1]));
-  } else {
+  // 리전 (시/도) - region이 있으면 region을 사용, 없으면 city 사용
+  if (address.region) {
+    parts.push(convertRegionToKorean(address.region));
+  } else if (address.city) {
     parts.push(address.city);
   }
 
-  // 동/읍/면 번역
-  const subDistrictTranslation = Object.entries(ADDRESS_TRANSLATIONS.SUB_DISTRICT).find(([key]) =>
-    address.district.includes(key),
-  );
-
-  if (subDistrictTranslation) {
-    parts.push(address.district.replace(subDistrictTranslation[0], subDistrictTranslation[1]));
-  } else {
+  // 구/군
+  if (address.district) {
     parts.push(address.district);
   }
 

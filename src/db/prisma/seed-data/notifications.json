@@ -1,0 +1,302 @@
+[
+  {
+    "id": "notif_001",
+    "actionId": "action_001",
+    "userId": "customer_001",
+    "type": "ESTIMATE_REQUEST_ARRIVED",
+    "title": "견적 요청이 도착했습니다",
+    "content": "새로운 견적 요청이 등록되었습니다. 확인해보세요.",
+    "path": "/estimate-requests",
+    "isRead": false
+  },
+  {
+    "id": "notif_002",
+    "actionId": "action_002",
+    "userId": "customer_002",
+    "type": "ESTIMATE_ARRIVED",
+    "title": "새로운 견적이 도착했습니다",
+    "content": "기사님이 견적을 제출했습니다. 확인해보세요.",
+    "path": "/estimates",
+    "isRead": false
+  },
+  {
+    "id": "notif_003",
+    "actionId": "action_003",
+    "userId": "customer_003",
+    "type": "ESTIMATE_STATUS_UPDATED",
+    "title": "견적 상태가 업데이트되었습니다",
+    "content": "견적이 수락되었습니다. 이사 준비를 시작하세요.",
+    "path": "/estimates",
+    "isRead": true
+  },
+  {
+    "id": "notif_004",
+    "actionId": "action_004",
+    "userId": "mover_001",
+    "type": "ESTIMATE_REQUEST_ARRIVED",
+    "title": "새로운 견적 요청이 있습니다",
+    "content": "고객님이 견적을 요청했습니다. 확인해보세요.",
+    "path": "/estimate-requests",
+    "isRead": false
+  },
+  {
+    "id": "notif_005",
+    "actionId": "action_005",
+    "userId": "mover_002",
+    "type": "ESTIMATE_STATUS_UPDATED",
+    "title": "견적이 수락되었습니다",
+    "content": "고객님이 견적을 수락했습니다. 이사 준비를 시작하세요.",
+    "path": "/estimates",
+    "isRead": true
+  },
+  {
+    "id": "notif_006",
+    "actionId": "action_006",
+    "userId": "customer_004",
+    "type": "REVIEW_EVENT",
+    "title": "리뷰 작성 기간이 시작되었습니다",
+    "content": "이사가 완료되었습니다. 리뷰를 작성해주세요.",
+    "path": "/reviews",
+    "isRead": false
+  },
+  {
+    "id": "notif_007",
+    "actionId": "action_007",
+    "userId": "mover_003",
+    "type": "REVIEW_EVENT",
+    "title": "새로운 리뷰가 작성되었습니다",
+    "content": "고객님이 리뷰를 작성했습니다. 확인해보세요.",
+    "path": "/reviews",
+    "isRead": false
+  },
+  {
+    "id": "notif_008",
+    "actionId": "action_008",
+    "userId": "customer_005",
+    "type": "FAVORITE_EVENT",
+    "title": "찜한 기사님이 업데이트되었습니다",
+    "content": "찜한 기사님의 정보가 업데이트되었습니다.",
+    "path": "/favorites",
+    "isRead": false
+  },
+  {
+    "id": "notif_009",
+    "actionId": "action_009",
+    "userId": "mover_004",
+    "type": "FAVORITE_EVENT",
+    "title": "새로운 찜이 추가되었습니다",
+    "content": "고객님이 당신을 찜했습니다.",
+    "path": "/profile",
+    "isRead": false
+  },
+  {
+    "id": "notif_010",
+    "actionId": "action_010",
+    "userId": "customer_006",
+    "type": "MOVE_DAY_REMINDER_TOMORROW",
+    "title": "내일 이사입니다",
+    "content": "내일 이사가 예정되어 있습니다. 준비사항을 확인해주세요.",
+    "path": "/schedule",
+    "isRead": false
+  },
+  {
+    "id": "notif_011",
+    "actionId": "action_011",
+    "userId": "customer_007",
+    "type": "MOVE_DAY_REMINDER_TODAY",
+    "title": "오늘 이사입니다",
+    "content": "오늘 이사가 예정되어 있습니다. 기사님이 곧 도착할 예정입니다.",
+    "path": "/schedule",
+    "isRead": false
+  },
+  {
+    "id": "notif_012",
+    "actionId": "action_012",
+    "userId": "customer_008",
+    "type": "MOVE_DAY_REVIEW_REQUEST",
+    "title": "리뷰를 작성해주세요",
+    "content": "이사가 완료되었습니다. 서비스에 대한 리뷰를 작성해주세요.",
+    "path": "/reviews",
+    "isRead": false
+  },
+  {
+    "id": "notif_013",
+    "actionId": "action_013",
+    "userId": "customer_009",
+    "type": "WELCOME",
+    "title": "환영합니다!",
+    "content": "이사 서비스에 가입해주셔서 감사합니다.",
+    "path": "/welcome",
+    "isRead": true
+  },
+  {
+    "id": "notif_014",
+    "actionId": "action_014",
+    "userId": "mover_005",
+    "type": "WELCOME",
+    "title": "기사님 등록이 완료되었습니다",
+    "content": "기사님으로 등록해주셔서 감사합니다.",
+    "path": "/welcome",
+    "isRead": true
+  },
+  {
+    "id": "notif_015",
+    "actionId": "action_015",
+    "userId": "customer_010",
+    "type": "DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED",
+    "title": "지정 견적 요청 상태가 변경되었습니다",
+    "content": "지정 견적 요청의 상태가 업데이트되었습니다.",
+    "path": "/designated-requests",
+    "isRead": false
+  },
+  {
+    "id": "notif_016",
+    "actionId": "action_016",
+    "userId": "mover_006",
+    "type": "DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED",
+    "title": "지정 견적 요청이 도착했습니다",
+    "content": "고객님이 지정 견적을 요청했습니다.",
+    "path": "/designated-requests",
+    "isRead": false
+  },
+  {
+    "id": "notif_017",
+    "actionId": "action_017",
+    "userId": "customer_011",
+    "type": "DESIGNATED_ESTIMATE_STATUS_UPDATED",
+    "title": "지정 견적 상태가 변경되었습니다",
+    "content": "지정 견적의 상태가 업데이트되었습니다.",
+    "path": "/designated-estimates",
+    "isRead": false
+  },
+  {
+    "id": "notif_018",
+    "actionId": "action_018",
+    "userId": "mover_007",
+    "type": "DESIGNATED_ESTIMATE_STATUS_UPDATED",
+    "title": "지정 견적이 수락되었습니다",
+    "content": "고객님이 지정 견적을 수락했습니다.",
+    "path": "/designated-estimates",
+    "isRead": true
+  },
+  {
+    "id": "notif_019",
+    "actionId": "action_019",
+    "userId": "customer_012",
+    "type": "ESTIMATE_ARRIVED",
+    "title": "새로운 견적이 도착했습니다",
+    "content": "기사님이 견적을 제출했습니다. 확인해보세요.",
+    "path": "/estimates",
+    "isRead": false
+  },
+  {
+    "id": "notif_020",
+    "actionId": "action_020",
+    "userId": "customer_013",
+    "type": "ESTIMATE_STATUS_UPDATED",
+    "title": "견적이 거절되었습니다",
+    "content": "견적이 거절되었습니다. 다른 견적을 확인해보세요.",
+    "path": "/estimates",
+    "isRead": true
+  },
+  {
+    "id": "notif_021",
+    "actionId": "action_021",
+    "userId": "mover_008",
+    "type": "ESTIMATE_STATUS_UPDATED",
+    "title": "견적이 거절되었습니다",
+    "content": "견적이 거절되었습니다. 다른 기회를 기다려주세요.",
+    "path": "/estimates",
+    "isRead": true
+  },
+  {
+    "id": "notif_022",
+    "actionId": "action_022",
+    "userId": "customer_014",
+    "type": "ESTIMATE_REQUEST_ARRIVED",
+    "title": "견적 요청이 도착했습니다",
+    "content": "새로운 견적 요청이 등록되었습니다. 확인해보세요.",
+    "path": "/estimate-requests",
+    "isRead": false
+  },
+  {
+    "id": "notif_023",
+    "actionId": "action_023",
+    "userId": "mover_009",
+    "type": "ESTIMATE_REQUEST_ARRIVED",
+    "title": "새로운 견적 요청이 있습니다",
+    "content": "고객님이 견적을 요청했습니다. 확인해보세요.",
+    "path": "/estimate-requests",
+    "isRead": false
+  },
+  {
+    "id": "notif_024",
+    "actionId": "action_024",
+    "userId": "customer_015",
+    "type": "ESTIMATE_ARRIVED",
+    "title": "새로운 견적이 도착했습니다",
+    "content": "기사님이 견적을 제출했습니다. 확인해보세요.",
+    "path": "/estimates",
+    "isRead": false
+  },
+  {
+    "id": "notif_025",
+    "actionId": "action_025",
+    "userId": "mover_010",
+    "type": "ESTIMATE_STATUS_UPDATED",
+    "title": "견적이 수락되었습니다",
+    "content": "고객님이 견적을 수락했습니다. 이사 준비를 시작하세요.",
+    "path": "/estimates",
+    "isRead": true
+  },
+  {
+    "id": "notif_026",
+    "actionId": "action_026",
+    "userId": "customer_016",
+    "type": "REVIEW_EVENT",
+    "title": "리뷰 작성 기간이 시작되었습니다",
+    "content": "이사가 완료되었습니다. 리뷰를 작성해주세요.",
+    "path": "/reviews",
+    "isRead": false
+  },
+  {
+    "id": "notif_027",
+    "actionId": "action_027",
+    "userId": "mover_011",
+    "type": "REVIEW_EVENT",
+    "title": "새로운 리뷰가 작성되었습니다",
+    "content": "고객님이 리뷰를 작성했습니다. 확인해보세요.",
+    "path": "/reviews",
+    "isRead": false
+  },
+  {
+    "id": "notif_028",
+    "actionId": "action_028",
+    "userId": "customer_017",
+    "type": "FAVORITE_EVENT",
+    "title": "찜한 기사님이 업데이트되었습니다",
+    "content": "찜한 기사님의 정보가 업데이트되었습니다.",
+    "path": "/favorites",
+    "isRead": false
+  },
+  {
+    "id": "notif_029",
+    "actionId": "action_029",
+    "userId": "mover_012",
+    "type": "FAVORITE_EVENT",
+    "title": "새로운 찜이 추가되었습니다",
+    "content": "고객님이 당신을 찜했습니다.",
+    "path": "/profile",
+    "isRead": false
+  },
+  {
+    "id": "notif_030",
+    "actionId": "action_030",
+    "userId": "customer_018",
+    "type": "MOVE_DAY_REMINDER_TOMORROW",
+    "title": "내일 이사입니다",
+    "content": "내일 이사가 예정되어 있습니다. 준비사항을 확인해주세요.",
+    "path": "/schedule",
+    "isRead": false
+  }
+]

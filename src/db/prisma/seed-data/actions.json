@@ -1,0 +1,346 @@
+[
+  {
+    "id": "action_001",
+    "userId": "customer_001",
+    "type": "ESTIMATE_REQUEST_CREATE",
+    "entityId": "est_req_001",
+    "entityType": "ESTIMATE_REQUEST",
+    "description": "견적 요청을 생성했습니다.",
+    "metadata": {
+      "movingType": "home",
+      "movingDate": "2025-08-15"
+    }
+  },
+  {
+    "id": "action_002",
+    "userId": "mover_001",
+    "type": "ESTIMATE_SUBMITTED",
+    "entityId": "est_001",
+    "entityType": "ESTIMATE",
+    "description": "견적을 제출했습니다.",
+    "metadata": {
+      "price": 350000,
+      "estimateRequestId": "est_req_001"
+    }
+  },
+  {
+    "id": "action_003",
+    "userId": "customer_001",
+    "type": "ESTIMATE_ACCEPTED",
+    "entityId": "est_001",
+    "entityType": "ESTIMATE",
+    "description": "견적을 수락했습니다.",
+    "metadata": {
+      "price": 350000,
+      "moverId": "mover_001"
+    }
+  },
+  {
+    "id": "action_004",
+    "userId": "customer_002",
+    "type": "ESTIMATE_REQUEST_CREATE",
+    "entityId": "est_req_002",
+    "entityType": "ESTIMATE_REQUEST",
+    "description": "견적 요청을 생성했습니다.",
+    "metadata": {
+      "movingType": "small",
+      "movingDate": "2025-08-20"
+    }
+  },
+  {
+    "id": "action_005",
+    "userId": "mover_002",
+    "type": "ESTIMATE_ACCEPTED",
+    "entityId": "est_002",
+    "entityType": "ESTIMATE",
+    "description": "견적이 수락되었습니다.",
+    "metadata": {
+      "price": 320000,
+      "customerId": "customer_001"
+    }
+  },
+  {
+    "id": "action_006",
+    "userId": "customer_004",
+    "type": "REVIEW_SUBMITTED",
+    "entityId": "review_004",
+    "entityType": "REVIEW",
+    "description": "리뷰를 작성했습니다.",
+    "metadata": {
+      "rating": 5,
+      "moverId": "mover_008"
+    }
+  },
+  {
+    "id": "action_007",
+    "userId": "mover_003",
+    "type": "REVIEW_SUBMITTED",
+    "entityId": "review_007",
+    "entityType": "REVIEW",
+    "description": "새로운 리뷰가 작성되었습니다.",
+    "metadata": {
+      "rating": 5,
+      "customerId": "customer_007"
+    }
+  },
+  {
+    "id": "action_008",
+    "userId": "customer_005",
+    "type": "FAVORITE_ADDED",
+    "entityId": "fav_009",
+    "entityType": "FAVORITE",
+    "description": "기사님을 찜했습니다.",
+    "metadata": {
+      "moverId": "mover_009"
+    }
+  },
+  {
+    "id": "action_009",
+    "userId": "mover_004",
+    "type": "FAVORITE_ADDED",
+    "entityId": "fav_010",
+    "entityType": "FAVORITE",
+    "description": "새로운 찜이 추가되었습니다.",
+    "metadata": {
+      "customerId": "customer_005"
+    }
+  },
+  {
+    "id": "action_010",
+    "userId": "customer_006",
+    "type": "MOVE_DAY_REMINDER_TOMORROW",
+    "entityId": "est_req_006",
+    "entityType": "ESTIMATE_REQUEST",
+    "description": "내일 이사 예정입니다.",
+    "metadata": {
+      "movingDate": "2025-09-10"
+    }
+  },
+  {
+    "id": "action_011",
+    "userId": "customer_007",
+    "type": "MOVE_DAY_REMINDER_TODAY",
+    "entityId": "est_req_007",
+    "entityType": "ESTIMATE_REQUEST",
+    "description": "오늘 이사 예정입니다.",
+    "metadata": {
+      "movingDate": "2025-09-15"
+    }
+  },
+  {
+    "id": "action_012",
+    "userId": "customer_008",
+    "type": "MOVE_DAY_REVIEW_REQUEST",
+    "entityId": "est_req_008",
+    "entityType": "ESTIMATE_REQUEST",
+    "description": "리뷰 작성 기간이 시작되었습니다.",
+    "metadata": {
+      "completedDate": "2025-09-20"
+    }
+  },
+  {
+    "id": "action_013",
+    "userId": "customer_009",
+    "type": "WELCOME",
+    "entityId": "customer_009",
+    "entityType": "USER",
+    "description": "회원가입을 환영합니다.",
+    "metadata": {
+      "userType": "CUSTOMER"
+    }
+  },
+  {
+    "id": "action_014",
+    "userId": "mover_005",
+    "type": "WELCOME",
+    "entityId": "mover_005",
+    "entityType": "USER",
+    "description": "기사님 등록을 환영합니다.",
+    "metadata": {
+      "userType": "MOVER"
+    }
+  },
+  {
+    "id": "action_015",
+    "userId": "customer_010",
+    "type": "DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED",
+    "entityId": "designated_req_001",
+    "entityType": "DESIGNATED_ESTIMATE_REQUEST",
+    "description": "지정 견적 요청 상태가 변경되었습니다.",
+    "metadata": {
+      "status": "PENDING"
+    }
+  },
+  {
+    "id": "action_016",
+    "userId": "mover_006",
+    "type": "DESIGNATED_ESTIMATE_REQUEST_SUBMITTED",
+    "entityId": "designated_req_002",
+    "entityType": "DESIGNATED_ESTIMATE_REQUEST",
+    "description": "지정 견적 요청이 도착했습니다.",
+    "metadata": {
+      "customerId": "customer_011"
+    }
+  },
+  {
+    "id": "action_017",
+    "userId": "customer_011",
+    "type": "DESIGNATED_ESTIMATE_STATUS_UPDATED",
+    "entityId": "designated_est_001",
+    "entityType": "DESIGNATED_ESTIMATE",
+    "description": "지정 견적 상태가 변경되었습니다.",
+    "metadata": {
+      "status": "PROPOSED"
+    }
+  },
+  {
+    "id": "action_018",
+    "userId": "mover_007",
+    "type": "DESIGNATED_ESTIMATE_ACCEPTED",
+    "entityId": "designated_est_002",
+    "entityType": "DESIGNATED_ESTIMATE",
+    "description": "지정 견적이 수락되었습니다.",
+    "metadata": {
+      "customerId": "customer_012"
+    }
+  },
+  {
+    "id": "action_019",
+    "userId": "customer_012",
+    "type": "ESTIMATE_ARRIVED",
+    "entityId": "est_019",
+    "entityType": "ESTIMATE",
+    "description": "새로운 견적이 도착했습니다.",
+    "metadata": {
+      "moverId": "mover_001",
+      "price": 320000
+    }
+  },
+  {
+    "id": "action_020",
+    "userId": "customer_013",
+    "type": "ESTIMATE_REJECTED",
+    "entityId": "est_020",
+    "entityType": "ESTIMATE",
+    "description": "견적이 거절되었습니다.",
+    "metadata": {
+      "moverId": "mover_002",
+      "reason": "가격이 높음"
+    }
+  },
+  {
+    "id": "action_021",
+    "userId": "mover_008",
+    "type": "ESTIMATE_REJECTED",
+    "entityId": "est_021",
+    "entityType": "ESTIMATE",
+    "description": "견적이 거절되었습니다.",
+    "metadata": {
+      "customerId": "customer_013",
+      "reason": "다른 견적 선택"
+    }
+  },
+  {
+    "id": "action_022",
+    "userId": "customer_014",
+    "type": "ESTIMATE_REQUEST_CREATE",
+    "entityId": "est_req_014",
+    "entityType": "ESTIMATE_REQUEST",
+    "description": "견적 요청을 생성했습니다.",
+    "metadata": {
+      "movingType": "small",
+      "movingDate": "2025-10-20"
+    }
+  },
+  {
+    "id": "action_023",
+    "userId": "mover_009",
+    "type": "ESTIMATE_REQUEST_CREATE",
+    "entityId": "est_req_015",
+    "entityType": "ESTIMATE_REQUEST",
+    "description": "새로운 견적 요청이 있습니다.",
+    "metadata": {
+      "customerId": "customer_015"
+    }
+  },
+  {
+    "id": "action_024",
+    "userId": "customer_015",
+    "type": "ESTIMATE_ARRIVED",
+    "entityId": "est_024",
+    "entityType": "ESTIMATE",
+    "description": "새로운 견적이 도착했습니다.",
+    "metadata": {
+      "moverId": "mover_005",
+      "price": 650000
+    }
+  },
+  {
+    "id": "action_025",
+    "userId": "mover_010",
+    "type": "ESTIMATE_ACCEPTED",
+    "entityId": "est_025",
+    "entityType": "ESTIMATE",
+    "description": "견적이 수락되었습니다.",
+    "metadata": {
+      "customerId": "customer_016"
+    }
+  },
+  {
+    "id": "action_026",
+    "userId": "customer_016",
+    "type": "REVIEW_SUBMITTED",
+    "entityId": "review_016",
+    "entityType": "REVIEW",
+    "description": "리뷰를 작성했습니다.",
+    "metadata": {
+      "rating": 5,
+      "moverId": "mover_006"
+    }
+  },
+  {
+    "id": "action_027",
+    "userId": "mover_011",
+    "type": "REVIEW_SUBMITTED",
+    "entityId": "review_017",
+    "entityType": "REVIEW",
+    "description": "새로운 리뷰가 작성되었습니다.",
+    "metadata": {
+      "rating": 4,
+      "customerId": "customer_017"
+    }
+  },
+  {
+    "id": "action_028",
+    "userId": "customer_017",
+    "type": "FAVORITE_ADDED",
+    "entityId": "fav_047",
+    "entityType": "FAVORITE",
+    "description": "기사님을 찜했습니다.",
+    "metadata": {
+      "moverId": "mover_015"
+    }
+  },
+  {
+    "id": "action_029",
+    "userId": "mover_012",
+    "type": "FAVORITE_ADDED",
+    "entityId": "fav_048",
+    "entityType": "FAVORITE",
+    "description": "새로운 찜이 추가되었습니다.",
+    "metadata": {
+      "customerId": "customer_017"
+    }
+  },
+  {
+    "id": "action_030",
+    "userId": "customer_018",
+    "type": "MOVE_DAY_REMINDER_TOMORROW",
+    "entityId": "est_req_018",
+    "entityType": "ESTIMATE_REQUEST",
+    "description": "내일 이사 예정입니다.",
+    "metadata": {
+      "movingDate": "2025-11-10"
+    }
+  }
+]

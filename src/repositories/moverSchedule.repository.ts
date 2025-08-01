@@ -25,7 +25,7 @@ const moverScheduleRepository = {
               lte: endDate,
             },
             status: {
-              in: ["APPROVED", "COMPLETED"], // RequestStatus.APPROVED 또는 COMPLETED
+              in: ["APPROVED"], // RequestStatus.APPROVED만 사용
             },
           },
         },

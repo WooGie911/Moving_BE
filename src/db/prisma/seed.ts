@@ -99,6 +99,16 @@ async function main() {
         RegionType.DAEGU,
         RegionType.INCHEON,
       ]),
+      isCustomer: true,
+      isMover: false,
+      preferredServices: getRandom([
+        [MoveType.SMALL],
+        [MoveType.HOME],
+        [MoveType.OFFICE],
+        [MoveType.SMALL, MoveType.HOME],
+        [MoveType.HOME, MoveType.OFFICE],
+        [MoveType.SMALL, MoveType.HOME, MoveType.OFFICE],
+      ]),
     });
   }
 
@@ -113,17 +123,32 @@ async function main() {
       nickname: `mover_${i + 1}`,
       customerImage: "",
       moverImage: "",
-      currentArea: getRandom([
-        RegionType.SEOUL,
-        RegionType.GYEONGGI,
-        RegionType.BUSAN,
-        RegionType.DAEGU,
-        RegionType.INCHEON,
-      ]),
-      totalReviewCount: 0,
-      averageRating: 0,
-      workedCount: 0,
+      isCustomer: false,
+      isMover: true,
+      shortIntro: `${moverNames[i]}입니다. ${i % 3 === 0 ? "소형 이사" : i % 3 === 1 ? "가정 이사" : "사무실 이사"} 전문입니다.`,
+      detailIntro: `${moverNames[i]}입니다. ${i % 3 === 0 ? "소형 이사" : i % 3 === 1 ? "가정 이사" : "사무실 이사"} 경험 ${5 + (i % 10)}년의 전문 기사입니다. 안전하고 신속하게 이사해드리겠습니다.`,
+      career: 5 + (i % 10), // 5~14년 경력
+      workedCount: Math.floor(Math.random() * 100) + 10, // 10~109건 완료
+      averageRating: 4.0 + Math.random() * 1.0, // 4.0~5.0 평점
+      totalReviewCount: Math.floor(Math.random() * 50) + 5, // 5~54개 리뷰
       totalFavoriteCount: 0,
+      serviceTypes: getRandom([
+        [MoveType.SMALL],
+        [MoveType.HOME],
+        [MoveType.OFFICE],
+        [MoveType.SMALL, MoveType.HOME],
+        [MoveType.HOME, MoveType.OFFICE],
+        [MoveType.SMALL, MoveType.HOME, MoveType.OFFICE],
+      ]),
+      currentAreas: getRandom([
+        [RegionType.SEOUL],
+        [RegionType.GYEONGGI],
+        [RegionType.BUSAN],
+        [RegionType.SEOUL, RegionType.GYEONGGI],
+        [RegionType.BUSAN, RegionType.DAEGU],
+        [RegionType.SEOUL, RegionType.GYEONGGI, RegionType.BUSAN],
+      ]),
+      isVeteran: i % 5 === 0, // 20% 확률로 베테랑
     });
   }
 

@@ -1,11 +1,4 @@
-import {
-  PrismaClient,
-  RequestStatus,
-  EstimateRequest,
-  UserType,
-  MoveType,
-  RegionType,
-} from "@prisma/client";
+import { PrismaClient, RequestStatus, EstimateRequest, UserType, MoveType, RegionType } from "@prisma/client";
 import { getCurrentDateString } from "../utils/dateUtils";
 import {
   IParsedAddressData,
@@ -17,10 +10,7 @@ import {
 
 const prisma = new PrismaClient();
 
-const createEstimateRequest = async (
-  data: TCreateEstimateRequestData,
-  userId: string
-): Promise<EstimateRequest> => {
+const createEstimateRequest = async (data: TCreateEstimateRequestData, userId: string): Promise<EstimateRequest> => {
   return await prisma.estimateRequest.create({
     data: {
       customerId: userId,
@@ -34,9 +24,7 @@ const createEstimateRequest = async (
   });
 };
 
-const getActiveEstimateRequestByUserId = async (
-  userId: string
-): Promise<IDatabaseEstimateRequest | null> => {
+const getActiveEstimateRequestByUserId = async (userId: string): Promise<IDatabaseEstimateRequest | null> => {
   const request = await prisma.estimateRequest.findFirst({
     where: {
       customerId: userId,
@@ -91,9 +79,7 @@ const getActiveEstimateRequestByUserId = async (
   return request;
 };
 
-const getEstimateRequestById = async (
-  id: string
-): Promise<IDatabaseEstimateRequest | null> => {
+const getEstimateRequestById = async (id: string): Promise<IDatabaseEstimateRequest | null> => {
   return await prisma.estimateRequest.findUnique({
     where: {
       id,
@@ -135,10 +121,7 @@ const getEstimateRequestById = async (
   });
 };
 
-const updateEstimateRequest = async (
-  id: string,
-  updateData: TUpdateEstimateRequestData
-): Promise<EstimateRequest> => {
+const updateEstimateRequest = async (id: string, updateData: TUpdateEstimateRequestData): Promise<EstimateRequest> => {
   const prismaUpdateData: {
     moveType?: MoveType;
     moveDate?: Date;
@@ -237,18 +220,46 @@ const hasEstimateFromMover = async (userId: string): Promise<boolean> => {
   return !!estimate;
 };
 
-const findOrCreateAddress = async (
-  addressData: IParsedAddressData
-): Promise<{ id: string }> => {
+const hasActiveRequestBeforeMoveDate = async (userId: string): Promise<boolean> => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const request = await prisma.estimateRequest.findFirst({
+    where: {
+      customerId: userId,
+      moveDate: {
+        gte: today, // 오늘 이후의 이사일
+      },
+      status: {
+        in: [RequestStatus.PENDING, RequestStatus.APPROVED], // PENDING 또는 APPROVED 상태
+      },
+      deletedAt: null,
+    },
+  });
+  return !!request;
+};
+
+const checkCustomerProfile = async (userId: string): Promise<boolean> => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isCustomer: true },
+  });
+
+  if (!user) {
+    throw new Error("사용자를 찾을 수 없습니다.");
+  }
+
+  return user.isCustomer === true;
+};
+
+const findOrCreateAddress = async (addressData: IParsedAddressData): Promise<{ id: string }> => {
   const createData = {
     zoneCode: addressData.zoneCode,
     city: addressData.city,
     district: addressData.district,
     region: addressData.region as RegionType,
     detail:
-      addressData.detail === null ||
-      addressData.detail === undefined ||
-      addressData.detail === ""
+      addressData.detail === null || addressData.detail === undefined || addressData.detail === ""
         ? null
         : addressData.detail,
   };
@@ -279,10 +290,8 @@ const checkUserType = async (userId: string): Promise<IUserTypeResult> => {
     throw new Error("사용자를 찾을 수 없습니다.");
   }
 
-  const isCustomer =
-    user.userType.includes(UserType.CUSTOMER) || user.isCustomer === true;
-  const isMover =
-    user.userType.includes(UserType.MOVER) || user.isMover === true;
+  const isCustomer = user.userType.includes(UserType.CUSTOMER) || user.isCustomer === true;
+  const isMover = user.userType.includes(UserType.MOVER) || user.isMover === true;
 
   return { isCustomer, isMover };
 };
@@ -308,9 +317,7 @@ const getEstimateRequestDetailForAction = async (estimateRequestId: string) => {
 };
 
 // 이사 완료 처리를 위한 견적 요청 상세 조회
-const getEstimateRequestDetailForCompletion = async (
-  estimateRequestId: string
-) => {
+const getEstimateRequestDetailForCompletion = async (estimateRequestId: string) => {
   const estimateRequest = await prisma.estimateRequest.findUnique({
     where: { id: estimateRequestId },
     select: {
@@ -447,9 +454,7 @@ const getEstimateRequestsForReviewRequests = async () => {
 };
 
 // 이사 완료 처리 함수
-const completeEstimateRequest = async (
-  id: string
-): Promise<EstimateRequest> => {
+const completeEstimateRequest = async (id: string): Promise<EstimateRequest> => {
   return await prisma.estimateRequest.update({
     where: { id },
     data: {
@@ -467,6 +472,8 @@ const estimateRequestRepository = {
   completeEstimateRequest,
   hasPendingRequest,
   hasEstimateFromMover,
+  hasActiveRequestBeforeMoveDate,
+  checkCustomerProfile,
   findOrCreateAddress,
   softDeleteAddress,
   checkUserType,

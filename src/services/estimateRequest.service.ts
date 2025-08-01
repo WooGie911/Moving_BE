@@ -25,17 +25,19 @@ class EstimateRequestService {
     return await estimateRequestRepository.hasEstimateFromMover(userId);
   }
 
-  async getActiveEstimateRequestByUserId(
-    userId: string
-  ): Promise<IDatabaseEstimateRequest | null> {
-    return await estimateRequestRepository.getActiveEstimateRequestByUserId(
-      userId
-    );
+  async hasActiveRequestBeforeMoveDate(userId: string): Promise<boolean> {
+    return await estimateRequestRepository.hasActiveRequestBeforeMoveDate(userId);
   }
 
-  private async processAddress(
-    addressInfo: IAddressInfoForService
-  ): Promise<{ id: string }> {
+  async checkCustomerProfile(userId: string): Promise<boolean> {
+    return await estimateRequestRepository.checkCustomerProfile(userId);
+  }
+
+  async getActiveEstimateRequestByUserId(userId: string): Promise<IDatabaseEstimateRequest | null> {
+    return await estimateRequestRepository.getActiveEstimateRequestByUserId(userId);
+  }
+
+  private async processAddress(addressInfo: IAddressInfoForService): Promise<{ id: string }> {
     const addressData: IParsedAddressData = parseAddress({
       roadAddress: addressInfo.roadAddress,
       detailAddress: addressInfo.detailAddress,
@@ -44,28 +46,21 @@ class EstimateRequestService {
     return await estimateRequestRepository.findOrCreateAddress(addressData);
   }
 
-  async createEstimateRequest(
-    params: TCreateEstimateRequest
-  ): Promise<EstimateRequest> {
-    const { userId, movingType, movingDate, departure, arrival, description } =
-      params;
+  async createEstimateRequest(params: TCreateEstimateRequest): Promise<EstimateRequest> {
+    const { userId, movingType, movingDate, departure, arrival, description } = params;
 
-    const [fromAddress, toAddress] = await Promise.all([
-      this.processAddress(departure),
-      this.processAddress(arrival),
-    ]);
+    const [fromAddress, toAddress] = await Promise.all([this.processAddress(departure), this.processAddress(arrival)]);
 
-    const estimateRequest =
-      await estimateRequestRepository.createEstimateRequest(
-        {
-          moveType: movingType.toUpperCase(),
-          moveDate: movingDate,
-          fromAddressId: fromAddress.id,
-          toAddressId: toAddress.id,
-          description,
-        },
-        userId
-      );
+    const estimateRequest = await estimateRequestRepository.createEstimateRequest(
+      {
+        moveType: movingType.toUpperCase(),
+        moveDate: movingDate,
+        fromAddressId: fromAddress.id,
+        toAddressId: toAddress.id,
+        description,
+      },
+      userId,
+    );
 
     // ESTIMATE_REQUEST_CREATE 액션 생성
     await actionService.createAction(
@@ -73,16 +68,13 @@ class EstimateRequestService {
       ActionType.ESTIMATE_REQUEST_CREATE,
       estimateRequest.id,
       "ESTIMATE_REQUEST",
-      {}
+      {},
     );
 
     return estimateRequest;
   }
 
-  async updateActiveEstimateRequest(
-    id: string,
-    updateData: TUpdateEstimateRequest
-  ): Promise<EstimateRequest> {
+  async updateActiveEstimateRequest(id: string, updateData: TUpdateEstimateRequest): Promise<EstimateRequest> {
     const updatePayload: {
       moveType?: string;
       moveDate?: Date;
@@ -102,8 +94,7 @@ class EstimateRequestService {
     }
 
     if (updateData.departure || updateData.arrival) {
-      const currentRequest =
-        await estimateRequestRepository.getEstimateRequestById(id);
+      const currentRequest = await estimateRequestRepository.getEstimateRequestById(id);
       if (!currentRequest) {
         throw new Error("견적 요청을 찾을 수 없습니다.");
       }
@@ -126,27 +117,18 @@ class EstimateRequestService {
         updatePayload.fromAddressId = processedAddresses[0].id;
       }
       if (updateData.arrival) {
-        updatePayload.toAddressId =
-          processedAddresses[updateData.departure ? 1 : 0].id;
+        updatePayload.toAddressId = processedAddresses[updateData.departure ? 1 : 0].id;
       }
 
-      const updatedRequest =
-        await estimateRequestRepository.updateEstimateRequest(
-          id,
-          updatePayload
-        );
+      const updatedRequest = await estimateRequestRepository.updateEstimateRequest(id, updatePayload);
 
       const deletePromises: Promise<void>[] = [];
 
       if (updateData.departure && oldFromAddressId) {
-        deletePromises.push(
-          estimateRequestRepository.softDeleteAddress(oldFromAddressId)
-        );
+        deletePromises.push(estimateRequestRepository.softDeleteAddress(oldFromAddressId));
       }
       if (updateData.arrival && oldToAddressId) {
-        deletePromises.push(
-          estimateRequestRepository.softDeleteAddress(oldToAddressId)
-        );
+        deletePromises.push(estimateRequestRepository.softDeleteAddress(oldToAddressId));
       }
 
       await Promise.all(deletePromises);
@@ -154,10 +136,7 @@ class EstimateRequestService {
       return updatedRequest;
     }
 
-    return await estimateRequestRepository.updateEstimateRequest(
-      id,
-      updatePayload
-    );
+    return await estimateRequestRepository.updateEstimateRequest(id, updatePayload);
   }
 
   async cancelActiveEstimateRequest(id: string): Promise<EstimateRequest> {
