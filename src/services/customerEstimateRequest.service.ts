@@ -128,7 +128,7 @@ const customerEstimateRequestService = {
     }
   },
 
-  // 완료된 견적요청 목록 조회
+  // 완료/확정된 견적요청 목록 조회 (EXPIRED, COMPLETED, APPROVED 상태 포함)
   getReceivedEstimateRequests: async (
     userId: string
   ): Promise<TReceivedQuoteResponse[]> => {
@@ -145,7 +145,8 @@ const customerEstimateRequestService = {
 
       if (!rawResult || rawResult.length === 0) {
         // 비즈니스 로직: 완료된 견적요청이 없을 때의 처리
-        throw new NotFoundError("완료된 견적요청이 없습니다.");
+        // APPROVED 상태도 포함되므로 빈 배열 반환으로 변경
+        return [];
       }
 
       // 비즈니스 로직: 데이터 변환 및 가공
@@ -490,35 +491,34 @@ const customerEstimateRequestService = {
     estimateId: string
   ): Promise<TCompleteEstimateResponse | null> => {
     try {
-      // 1. 진행중인 견적요청 확인
-      const activeEstimateRequestId =
-        await customerEstimateRequestRepository.getActiveEstimateRequest(
-          userId
-        );
-      if (!activeEstimateRequestId) {
-        throw new ServiceError("진행중인 견적요청이 없습니다.");
+      // 1. estimate로부터 estimateRequestId 조회
+      const estimateData =
+        await customerEstimateRequestRepository.getEstimateById(estimateId);
+      if (!estimateData) {
+        throw new NotFoundError("견적을 찾을 수 없습니다.");
       }
-      // 2. estimate가 해당 estimateRequest에 속하는지 확인
+
+      const estimateRequestId = estimateData.estimateRequestId;
+
+      // 2. 해당 견적요청이 사용자의 것인지 확인
+      const estimateRequestData =
+        await customerEstimateRequestRepository.getEstimateRequestById(
+          estimateRequestId
+        );
+      if (!estimateRequestData || estimateRequestData.customerId !== userId) {
+        throw new ServiceError("해당 견적요청에 대한 권한이 없습니다.");
+      }
+
+      // 3. estimate가 해당 estimateRequest에 속하는지 확인
       const estimate =
         await customerEstimateRequestRepository.getEstimateByIdAndRequestId(
           estimateId,
-          activeEstimateRequestId
+          estimateRequestId
         );
       if (!estimate) {
         throw new NotFoundError(
-          "현재 진행중인 견적요청에 대한 기사님들의 견적서가 존재하지 않습니다."
+          "해당 견적요청에 대한 기사님들의 견적서가 존재하지 않습니다."
         );
-      }
-      // 3. 확정된 견적요청인지 확인
-      const estimateRequest =
-        await customerEstimateRequestRepository.getEstimateRequestById(
-          activeEstimateRequestId
-        );
-      if (!estimateRequest) {
-        throw new NotFoundError("견적요청을 찾을 수 없습니다.");
-      }
-      if (estimateRequest.status !== "APPROVED") {
-        throw new ServiceValidationError("확정하지 않은 견적요청입니다.");
       }
 
       // 4. 견적 상세 정보 조회 (액션 생성용)
@@ -530,7 +530,7 @@ const customerEstimateRequestService = {
       // 5. 비즈니스 로직: 이사완료 처리
       const result =
         await customerEstimateRequestRepository.updateEstimateRequestStatus(
-          activeEstimateRequestId,
+          estimateRequestId,
           "COMPLETED"
         );
 
@@ -541,7 +541,7 @@ const customerEstimateRequestService = {
       // 주소 정보를 포함하여 반환
       const estimateRequestWithAddresses =
         await prisma.estimateRequest.findUnique({
-          where: { id: activeEstimateRequestId },
+          where: { id: estimateRequestId },
           include: {
             fromAddress: true,
             toAddress: true,
