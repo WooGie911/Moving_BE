@@ -122,6 +122,39 @@ const postLogout = async (req: Request, res: Response) => {
   }
 };
 
+// 역할 변경
+const postSwitchRole = async (req: Request, res: Response) => {
+  const { userId, userType: oldUserType } = req.user as {
+    userId: string;
+    userType: TUserRole;
+  };
+
+  const { userType } = req.body;
+
+  try {
+    const { accessToken, refreshToken } = await authService.switchRole(
+      userId,
+      userType
+    );
+
+    res.cookie(
+      "refreshToken",
+      refreshToken,
+      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "역할 변경 성공",
+      oldUserType,
+      newUserType: userType,
+      accessToken,
+    });
+  } catch (error: any) {
+    handleError(res, error);
+  }
+};
+
 // 토큰 갱신
 const postRefresh = async (req: Request, res: Response) => {
   const { userId, userType, exp } = req.refreshToken as {
@@ -256,6 +289,7 @@ export {
   postSignin,
   postSignup,
   postLogout,
+  postSwitchRole,
   postRefresh,
   getGoogleCallback,
   getKakaoCallback,
