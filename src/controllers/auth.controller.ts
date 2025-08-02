@@ -132,24 +132,42 @@ const postSwitchRole = async (req: Request, res: Response) => {
   const { userType } = req.body;
 
   try {
-    const { accessToken, refreshToken } = await authService.switchRole(
-      userId,
-      userType
-    );
+    const { accessToken, refreshToken, provider } =
+      await authService.switchRole(userId, userType);
 
-    res.cookie(
-      "refreshToken",
-      refreshToken,
-      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
-    );
+    if (provider === "LOCAL") {
+      res.cookie(
+        "refreshToken",
+        refreshToken,
+        authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
+      );
 
-    res.status(200).json({
-      success: true,
-      message: "역할 변경 성공",
-      oldUserType,
-      newUserType: userType,
-      accessToken,
-    });
+      res.status(200).json({
+        success: true,
+        message: "역할 변경 성공",
+        oldUserType,
+        newUserType: userType,
+        accessToken,
+      });
+    } else {
+      res.cookie(
+        "accessToken",
+        accessToken,
+        authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+      );
+      res.cookie(
+        "refreshToken",
+        refreshToken,
+        authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
+      );
+
+      res.status(200).json({
+        success: true,
+        message: "역할 변경 성공",
+        oldUserType,
+        newUserType: userType,
+      });
+    }
   } catch (error: any) {
     handleError(res, error);
   }

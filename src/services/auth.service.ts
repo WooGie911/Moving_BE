@@ -249,7 +249,11 @@ const switchRole = async (userId: string, userType: TUserRole) => {
     userType,
   ]);
 
-  return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+  return {
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
+    provider: user.provider,
+  };
 };
 
 // JWT 슬라이딩 세션 토큰 갱신
