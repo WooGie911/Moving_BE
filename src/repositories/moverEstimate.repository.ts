@@ -281,7 +281,7 @@ const moverEstimateRepository = {
         throw new RepositoryQueryError("유효하지 않은 기사 ID입니다");
       }
 
-      if (!price || typeof price !== "number" || price <= 0) {
+      if (typeof price !== "number" || price < 0) {
         throw new RepositoryQueryError("유효하지 않은 가격입니다");
       }
 
