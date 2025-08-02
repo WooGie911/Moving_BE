@@ -44,6 +44,7 @@ const userInfo = async (userId: string, userType: TUserRole) => {
       customerImage: user.customerImage || "",
       userType,
       provider: user.provider,
+      hasBothProfiles: !!user.isCustomer && !!user.isMover,
     };
   } else if (userType === "MOVER") {
     return {
@@ -57,6 +58,7 @@ const userInfo = async (userId: string, userType: TUserRole) => {
       moverImage: user.moverImage || "",
       userType,
       provider: user.provider,
+      hasBothProfiles: !!user.isCustomer && !!user.isMover,
     };
   }
 };
