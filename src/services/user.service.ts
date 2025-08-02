@@ -43,6 +43,7 @@ const userInfo = async (userId: string, userType: TUserRole) => {
       nickname: user.nickname,
       customerImage: user.customerImage || "",
       userType,
+      provider: user.provider,
     };
   } else if (userType === "MOVER") {
     return {
@@ -55,6 +56,7 @@ const userInfo = async (userId: string, userType: TUserRole) => {
       nickname: user.nickname,
       moverImage: user.moverImage || "",
       userType,
+      provider: user.provider,
     };
   }
 };
