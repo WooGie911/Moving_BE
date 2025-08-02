@@ -355,11 +355,6 @@ const moverEstimateRepository = {
             status: { in: ["PROPOSED", "REJECTED"] },
           },
         },
-        designatedMovers: {
-          none: {
-            moverId: moverId,
-          },
-        },
       };
 
       // currentAreas가 있으면 해당 지역만 필터링
