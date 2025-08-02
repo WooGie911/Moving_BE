@@ -50,14 +50,14 @@ const ENGLISH_TO_KOREAN: { [key: string]: string } = {
   ULSAN: "울산",
   SEJONG: "세종",
   GYEONGGI: "경기",
-  GANGWON: "강원특별자치도",
+  GANGWON: "강원",
   CHUNGBUK: "충북",
   CHUNGNAM: "충남",
-  JEONBUK: "전북특별자치도",
+  JEONBUK: "전북",
   JEONNAM: "전남",
   GYEONGBUK: "경북",
   GYEONGNAM: "경남",
-  JEJU: "제주특별자치도",
+  JEJU: "제주",
 };
 
 /**

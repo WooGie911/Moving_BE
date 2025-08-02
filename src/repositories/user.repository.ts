@@ -28,6 +28,7 @@ const getUserById = async (userId: string) => {
       moverImage: true,
       userType: true,
       refreshToken: true,
+      provider: true,
     },
   });
   return user;

@@ -59,13 +59,14 @@ export const isValidEmail = (email: string): boolean => {
 
 /**
  * 이름 유효성 검사
- * - 한글, 영문, 공백 허용
+ * - 한글, 영문, 중국어
  * 최소 2자이상
- * 최대 10자 이하
+ * 최대 15자 이하
  */
 export const isValidName = (name: string): boolean => {
-  const nameRegex = /^[가-힣a-zA-Z\s]{2,10}$/;
-  return nameRegex.test(name);
+  const allowed = /^[a-zA-Z가-힣\u4E00-\u9FFF]{1,15}$/;
+  const disallowed = /[ㄱ-ㅎㅏ-ㅣ]/;
+  return allowed.test(name) && !disallowed.test(name);
 };
 
 /**

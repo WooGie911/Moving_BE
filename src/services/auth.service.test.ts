@@ -16,6 +16,7 @@ import {
 import { TUserRole } from "../types/user.types";
 import { validateUserSignupInput } from "../utils/validators/userValidator";
 import * as authUtils from "../utils/authUtils";
+import actionRepository from "../repositories/action.repository";
 
 jest.mock("../repositories/auth.repository");
 jest.mock("bcrypt");
@@ -24,6 +25,7 @@ jest.mock("../utils/validators/userValidator");
 jest.mock("../utils/authUtils", () => ({
   mergeUserTypes: jest.fn(),
 }));
+jest.mock("../repositories/action.repository");
 
 describe("authService.signup", () => {
   // Teardown
@@ -37,7 +39,7 @@ describe("authService.signup", () => {
     // Setup
     // DB createUser 반환값 테스트용 객체
     const mockUser = {
-      id: 1,
+      id: "1",
       name: "홍길동",
       userType: ["CUSTOMER", "MOVER"],
       nickname: "홍길동",
@@ -63,6 +65,10 @@ describe("authService.signup", () => {
     // 유저 생성 로직 모킹
     const mockCreateUser = authRepository.createUser as jest.Mock;
     mockCreateUser.mockResolvedValue(mockUser);
+
+    // 추가
+    const mockCreateAction = actionRepository.createAction as jest.Mock;
+    mockCreateAction.mockResolvedValue({});
 
     // 토큰 생성용 로직 모킹
     const mockGenerateToken = generateToken as jest.Mock;
@@ -231,9 +237,9 @@ describe("authService.signup", () => {
 
     /**
      * 이름 유효성 검사
-     * - 한글, 영문, 공백 허용
+     * - 한글, 영문, 중국어
      * 최소 2자이상
-     * 최대 10자 이하
+     * 최대 15자 이하
      */
     await expect(
       authService.signup({
@@ -294,7 +300,7 @@ describe("authService.signup", () => {
   it("회원가입 실패 - 토큰 생성 실패시 ServerError(500) 발생", async () => {
     // Setup
     const mockUser = {
-      id: 1,
+      id: "1",
       name: "홍길동",
       userType: ["CUSTOMER", "MOVER"],
       nickname: "홍길동",
