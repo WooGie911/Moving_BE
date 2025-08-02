@@ -1,5 +1,6 @@
 import customerEstimateRequestService from "./customerEstimateRequest.service";
 import customerEstimateRequestRepository from "../repositories/customerEstimateRequest.repository";
+import actionService from "./action.service";
 import { NotFoundError } from "../types/commonError.types";
 import { ServiceError, ServiceValidationError } from "../types/errors.types";
 import {
@@ -8,6 +9,7 @@ import {
   MoveType,
   RegionType,
   UserType,
+  ActionType,
 } from "@prisma/client";
 import {
   TestEstimate,
@@ -20,33 +22,31 @@ import {
 // Repository 모킹
 jest.mock("../repositories/customerEstimateRequest.repository");
 
-// PrismaClient 모킹
-jest.mock("@prisma/client", () => {
-  const mockEstimateRequest = {
-    update: jest.fn(),
-    findUnique: jest.fn(),
-  };
+// ActionService 모킹
+jest.mock("./action.service");
 
-  const mockEstimate = {
-    update: jest.fn(),
-    updateMany: jest.fn(),
-  };
-
-  const mockTransaction = jest.fn();
-
-  return {
-    PrismaClient: jest.fn().mockImplementation(() => ({
-      estimateRequest: mockEstimateRequest,
-      estimate: mockEstimate,
-      $transaction: mockTransaction,
-    })),
-  };
-});
+// Prisma 모킹
+jest.mock("../db/prisma/prisma", () => ({
+  __esModule: true,
+  default: {
+    estimateRequest: {
+      update: jest.fn(),
+      findUnique: jest.fn(),
+    },
+    estimate: {
+      update: jest.fn(),
+      updateMany: jest.fn(),
+    },
+    $transaction: jest.fn(),
+  },
+}));
 
 const mockCustomerEstimateRequestRepository =
   customerEstimateRequestRepository as jest.Mocked<
     typeof customerEstimateRequestRepository
   >;
+
+const mockActionService = actionService as jest.Mocked<typeof actionService>;
 
 describe("고객 견적 요청 서비스", () => {
   beforeEach(() => {
@@ -405,7 +405,26 @@ describe("고객 견적 요청 서비스", () => {
       const mockTransactionResult = {
         estimateRequest: {
           id: "estimateRequest123",
+          customerId: "user123",
+          moveType: "HOME" as MoveType,
+          moveDate: new Date("2025-08-10"),
+          createdAt: new Date(),
+          description: "이사 견적 요청",
           status: "APPROVED" as RequestStatus,
+          fromAddress: {
+            zoneCode: "12345",
+            city: "서울시",
+            district: "강남구",
+            detail: "123-456",
+            region: "SEOUL" as RegionType,
+          },
+          toAddress: {
+            zoneCode: "12346",
+            city: "경기도",
+            district: "성남시",
+            detail: "789-012",
+            region: "GYEONGGI" as RegionType,
+          },
         },
         estimate: {
           id: "estimate123",
@@ -422,28 +441,54 @@ describe("고객 견적 요청 서비스", () => {
       mockCustomerEstimateRequestRepository.getEstimateRequestById.mockResolvedValue(
         mockEstimateRequest
       );
-
-      // Prisma 트랜잭션 모킹
-      const { PrismaClient } = require("@prisma/client");
-      const mockPrisma = new PrismaClient();
-      mockPrisma.$transaction.mockImplementation(
-        async (callback: TestTransactionCallback) => {
-          const mockTx = {
-            estimateRequest: {
-              update: jest
-                .fn()
-                .mockResolvedValue(mockTransactionResult.estimateRequest),
-            },
-            estimate: {
-              update: jest
-                .fn()
-                .mockResolvedValue(mockTransactionResult.estimate),
-              updateMany: jest.fn().mockResolvedValue({ count: 2 }),
-            },
-          };
-          return await callback(mockTx);
+      mockCustomerEstimateRequestRepository.getEstimateDetailForAction.mockResolvedValue(
+        {
+          id: "estimate123",
+          status: "PROPOSED" as EstimateStatus,
+          moverId: "mover123",
+          estimateRequestId: "estimateRequest123",
+          isDesignated: false,
+          mover: { id: "mover123", name: "이사업체A", nickname: null },
+          estimateRequest: {
+            id: "estimateRequest123",
+            customerId: "customer123",
+            moveType: "HOME" as MoveType,
+            moveDate: new Date("2025-08-10"),
+            customer: { id: "customer123", name: "고객A" },
+          },
         }
       );
+      mockCustomerEstimateRequestRepository.getAutoRejectedEstimates.mockResolvedValue(
+        []
+      );
+      mockActionService.createAction.mockResolvedValue({
+        id: "action123",
+        createdAt: new Date(),
+        deletedAt: null,
+        description: null,
+        userId: "mover123",
+        type: ActionType.ESTIMATE_ACCEPTED,
+        entityId: "estimate123",
+        entityType: "ESTIMATE",
+        metadata: {},
+      });
+
+      // Prisma 트랜잭션 모킹
+      const prisma = require("../db/prisma/prisma").default;
+      prisma.$transaction.mockImplementation(async (callback: any) => {
+        const mockTx = {
+          estimateRequest: {
+            update: jest
+              .fn()
+              .mockResolvedValue(mockTransactionResult.estimateRequest),
+          },
+          estimate: {
+            update: jest.fn().mockResolvedValue(mockTransactionResult.estimate),
+            updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+          },
+        };
+        return await callback(mockTx);
+      });
 
       // Act
       const result = await customerEstimateRequestService.confirmEstimate(
@@ -453,7 +498,8 @@ describe("고객 견적 요청 서비스", () => {
 
       // Assert
       expect(result).toEqual(mockTransactionResult);
-      expect(mockPrisma.$transaction).toHaveBeenCalled();
+      expect(prisma.$transaction).toHaveBeenCalled();
+      expect(mockActionService.createAction).toHaveBeenCalled();
     });
 
     it("진행중인 견적요청이 없을 때 ServiceError를 던진다", async () => {
@@ -551,7 +597,26 @@ describe("고객 견적 요청 서비스", () => {
       const mockTransactionResult = {
         estimateRequest: {
           id: "estimateRequest123",
+          customerId: "user123",
+          moveType: "HOME" as MoveType,
+          moveDate: new Date("2025-08-10"),
+          createdAt: new Date(),
+          description: "이사 견적 요청",
           status: "APPROVED" as RequestStatus,
+          fromAddress: {
+            zoneCode: "12345",
+            city: "서울시",
+            district: "강남구",
+            detail: "123-456",
+            region: "SEOUL" as RegionType,
+          },
+          toAddress: {
+            zoneCode: "12346",
+            city: "경기도",
+            district: "성남시",
+            detail: "789-012",
+            region: "GYEONGGI" as RegionType,
+          },
         },
         estimate: {
           id: "estimate123",
@@ -560,26 +625,21 @@ describe("고객 견적 요청 서비스", () => {
       };
 
       // Prisma 트랜잭션 모킹
-      const { PrismaClient } = require("@prisma/client");
-      const mockPrisma = new PrismaClient();
-      mockPrisma.$transaction.mockImplementation(
-        async (callback: TestTransactionCallback) => {
-          const mockTx = {
-            estimateRequest: {
-              update: jest
-                .fn()
-                .mockResolvedValue(mockTransactionResult.estimateRequest),
-            },
-            estimate: {
-              update: jest
-                .fn()
-                .mockResolvedValue(mockTransactionResult.estimate),
-              updateMany: jest.fn().mockResolvedValue({ count: 2 }),
-            },
-          };
-          return await callback(mockTx);
-        }
-      );
+      const prisma = require("../db/prisma/prisma").default;
+      prisma.$transaction.mockImplementation(async (callback: any) => {
+        const mockTx = {
+          estimateRequest: {
+            update: jest
+              .fn()
+              .mockResolvedValue(mockTransactionResult.estimateRequest),
+          },
+          estimate: {
+            update: jest.fn().mockResolvedValue(mockTransactionResult.estimate),
+            updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+          },
+        };
+        return await callback(mockTx);
+      });
 
       // Act
       const result =
@@ -590,7 +650,7 @@ describe("고객 견적 요청 서비스", () => {
 
       // Assert
       expect(result).toEqual(mockTransactionResult);
-      expect(mockPrisma.$transaction).toHaveBeenCalled();
+      expect(prisma.$transaction).toHaveBeenCalled();
     });
 
     it("트랜잭션 실패 시 ServiceError를 던진다", async () => {
@@ -600,9 +660,8 @@ describe("고객 견적 요청 서비스", () => {
       const mockError = new Error("Database error");
 
       // Prisma 트랜잭션 모킹
-      const { PrismaClient } = require("@prisma/client");
-      const mockPrisma = new PrismaClient();
-      mockPrisma.$transaction.mockRejectedValue(mockError);
+      const prisma = require("../db/prisma/prisma").default;
+      prisma.$transaction.mockRejectedValue(mockError);
 
       // Act & Assert
       await expect(
@@ -845,9 +904,8 @@ describe("고객 견적 요청 서비스", () => {
       );
 
       // Prisma findUnique 모킹 추가
-      const { PrismaClient } = require("@prisma/client");
-      const mockPrisma = new PrismaClient();
-      mockPrisma.estimateRequest.findUnique.mockResolvedValue({
+      const prisma = require("../db/prisma/prisma").default;
+      prisma.estimateRequest.findUnique.mockResolvedValue({
         id: "estimateRequest123",
         customerId: "user123",
         moveType: "SMALL",
