@@ -1,8 +1,40 @@
 import { Router } from "express";
 import customerEstimateRequestController from "../controllers/customerEstimateRequest.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
+import { createCustomTranslationMiddleware } from "../middlewares/translationMiddleware";
+import { defaultTranslationMiddleware } from "../middlewares/translationMiddleware";
 
 const customerEstimateRequestRouter = Router();
+
+// 견적 요청 관련 번역 미들웨어 (특정 필드만 번역)
+const estimateRequestTranslationMiddleware = createCustomTranslationMiddleware([
+  "id",
+  "uuid",
+  "createdAt",
+  "updatedAt",
+  "email",
+  "phone",
+  "url",
+  "link",
+  "name",
+  "nickname",
+  "customerId",
+  "moveType",
+  "moveDate",
+  "status",
+  "isDesignated",
+  "price",
+  "moverId",
+  "estimateRequestId",
+  "averageRating",
+  "totalReviewCount",
+  "workedCount",
+  "career",
+  "totalFavoriteCount",
+  "isFavorite",
+  "isVeteran",
+  "userType",
+]);
 
 /**
  * @swagger
@@ -298,6 +330,7 @@ const customerEstimateRequestRouter = Router();
 customerEstimateRequestRouter.get(
   "/pending",
   verifyAccessToken,
+  estimateRequestTranslationMiddleware,
   customerEstimateRequestController.getPendingEstimateRequest
 );
 
@@ -386,6 +419,7 @@ customerEstimateRequestRouter.get(
 customerEstimateRequestRouter.get(
   "/received",
   verifyAccessToken,
+  estimateRequestTranslationMiddleware,
   customerEstimateRequestController.getReceivedEstimateRequests
 );
 

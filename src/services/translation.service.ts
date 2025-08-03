@@ -127,6 +127,7 @@ export class TranslationService {
       if (!obj.trim() || /^\d+$/.test(obj)) {
         return obj;
       }
+
       return this.translateText(obj, targetLang);
     }
 
@@ -146,8 +147,10 @@ export class TranslationService {
       for (const [key, value] of Object.entries(obj)) {
         // 제외할 키인지 확인
         if (excludeKeys.includes(key)) {
+          console.log(`[Translation Debug] Excluding key: "${key}"`);
           translatedObj[key] = value;
         } else {
+          console.log(`[Translation Debug] Processing key: "${key}"`);
           translatedObj[key] = await this.recursiveTranslate(
             value,
             targetLang,
