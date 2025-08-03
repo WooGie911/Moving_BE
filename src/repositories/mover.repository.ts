@@ -81,8 +81,32 @@ export const getMoverList = async (filter: MoverListFilter) => {
     },
   });
 
-  const hasNext = movers.length > take;
-  const items = hasNext ? movers.slice(0, take) : movers;
+  // career가 NULL인 경우 0으로 처리하여 정렬
+  const sortedMovers = movers.map((mover) => ({
+    ...mover,
+    career: mover.career || 0,
+    workedCount: mover.workedCount || 0,
+    averageRating: mover.averageRating || 0,
+    totalReviewCount: mover.totalReviewCount || 0,
+  }));
+
+  // 정렬 처리 (NULL 값은 0으로 처리됨)
+  if (sort === "career") {
+    sortedMovers.sort((a, b) => (b.career || 0) - (a.career || 0));
+  } else if (sort === "confirmed") {
+    sortedMovers.sort((a, b) => (b.workedCount || 0) - (a.workedCount || 0));
+  } else if (sort === "rating") {
+    sortedMovers.sort(
+      (a, b) => (b.averageRating || 0) - (a.averageRating || 0)
+    );
+  } else if (sort === "review") {
+    sortedMovers.sort(
+      (a, b) => (b.totalReviewCount || 0) - (a.totalReviewCount || 0)
+    );
+  }
+
+  const hasNext = sortedMovers.length > take;
+  const items = hasNext ? sortedMovers.slice(0, take) : sortedMovers;
   const nextCursor = hasNext ? items[items.length - 1]?.id : null;
 
   if (items.length === 0 && cursor) {
