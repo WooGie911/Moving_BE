@@ -223,6 +223,39 @@ const logout = async (userId: string) => {
   await authRepository.updateUserToken(String(userId), null, user.userType);
 };
 
+// 역할 변경
+const switchRole = async (userId: string, userType: TUserRole) => {
+  const user = await authRepository.findUserById(String(userId));
+
+  if (!user) {
+    throw new NotFoundError("존재하지 않는 유저입니다");
+  }
+
+  const { newAccessToken, newRefreshToken } = generateToken({
+    id: String(user.id),
+    name: user.name,
+    userType: userType,
+    hasProfile:
+      userType === "CUSTOMER"
+        ? user.isCustomer || false
+        : user.isMover || false,
+  });
+
+  if (!newAccessToken || !newRefreshToken) {
+    throw new ServerError("유저 변환중 오류가 발생했습니다");
+  }
+
+  await authRepository.updateUserToken(String(user.id), newRefreshToken, [
+    userType,
+  ]);
+
+  return {
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
+    provider: user.provider,
+  };
+};
+
 // JWT 슬라이딩 세션 토큰 갱신
 const refresh = async (decoded: TDecodedToken) => {
   const user = await authRepository.findUserById(decoded.userId);
@@ -334,4 +367,11 @@ const oauthCrateOrUpdate = async (
   }
 };
 
-export default { signin, signup, logout, refresh, oauthCrateOrUpdate };
+export default {
+  signin,
+  signup,
+  logout,
+  switchRole,
+  refresh,
+  oauthCrateOrUpdate,
+};

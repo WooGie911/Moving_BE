@@ -7,8 +7,12 @@ import {
   getGoogleCallback,
   getKakaoCallback,
   getNaverCallback,
+  postSwitchRole,
 } from "../controllers/auth.controller";
-import { verifyAccessToken, verifyRefreshToken } from "../middlewares/verifyToken";
+import {
+  verifyAccessToken,
+  verifyRefreshToken,
+} from "../middlewares/verifyToken";
 import passport from "passport";
 import { TUserRole } from "../types/user.types";
 
@@ -343,6 +347,22 @@ authRouter.post("/sign-up", postSignup);
  */
 authRouter.post("/logout", verifyAccessToken, postLogout);
 
+// role 변경 엔드포인트
+/**
+ * @swagger
+ * /auth/switch-role:
+ *   post:
+ *     summary: 간단 로그인 역할 변경
+ *     description: 간단 로그인 역할을 변경합니다.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ */
+
+authRouter.post("/switch-role", verifyAccessToken, postSwitchRole);
+
 // refresh token 갱신 엔드포인트
 /**
  * @swagger
@@ -439,7 +459,11 @@ authRouter.post("/refresh-token", verifyRefreshToken, postRefresh);
  *               message: "구글 로그인에 실패했습니다"
  *               error: "AuthenticationError"
  */
-authRouter.get("/google/callback", passport.authenticate("google", { session: false }), getGoogleCallback);
+authRouter.get(
+  "/google/callback",
+  passport.authenticate("google", { session: false }),
+  getGoogleCallback
+);
 
 // 구글 로그인 엔드포인트
 /**
@@ -518,7 +542,11 @@ authRouter.get("/google", (req, res, next) => {
  *               message: "카카오 로그인에 실패했습니다"
  *               error: "AuthenticationError"
  */
-authRouter.get("/kakao/callback", passport.authenticate("kakao", { session: false }), getKakaoCallback);
+authRouter.get(
+  "/kakao/callback",
+  passport.authenticate("kakao", { session: false }),
+  getKakaoCallback
+);
 
 //카카오 로그인 엔드 포인트
 /**
@@ -668,7 +696,7 @@ authRouter.get("/naver", (req, res, next) => {
 authRouter.get(
   "/naver/callback",
   passport.authenticate("naver", { session: false }), // ✅ JWT 기반이므로 session: false
-  getNaverCallback, // 👈 이 핸들러 안에서 JWT 발급 처리
+  getNaverCallback // 👈 이 핸들러 안에서 JWT 발급 처리
 );
 
 export default authRouter;

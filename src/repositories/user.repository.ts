@@ -29,6 +29,8 @@ const getUserById = async (userId: string) => {
       userType: true,
       refreshToken: true,
       provider: true,
+      isCustomer: true,
+      isMover: true,
     },
   });
   return user;
