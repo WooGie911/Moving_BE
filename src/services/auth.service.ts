@@ -41,7 +41,7 @@ const signin = async (email: string, password: string, userType: TUserRole) => {
     }
 
     // 2. 소셜 로그인 유저 확인
-    if (existingUser.provider) {
+    if (existingUser.provider !== "LOCAL") {
       throw new AuthenticationError(
         "소셜 로그인 유저입니다. 소셜로그인으로 로그인 해주세요"
       );
