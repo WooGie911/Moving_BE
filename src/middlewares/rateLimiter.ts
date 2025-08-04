@@ -9,12 +9,7 @@ export const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
-    handleError(
-      res,
-      new TooManyRequestsError(
-        "로그인 요청이 너무 많습니다. 1분 후 다시 시도해주세요."
-      )
-    );
+    handleError(res, new TooManyRequestsError("로그인 요청이 너무 많습니다. 1분 후 다시 시도해주세요."));
   },
 });
 
@@ -25,11 +20,17 @@ export const signupLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
-    handleError(
-      res,
-      new TooManyRequestsError(
-        "회원가입 요청이 너무 많습니다. 30분 후 다시 시도해주세요."
-      )
-    );
+    handleError(res, new TooManyRequestsError("회원가입 요청이 너무 많습니다. 30분 후 다시 시도해주세요."));
+  },
+});
+
+// 견적요청 제한: 1시간동안 최대 5회
+export const estimateRequestLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1시간
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    handleError(res, new TooManyRequestsError("견적요청이 너무 많습니다. 1시간 후 다시 시도해주세요."));
   },
 });

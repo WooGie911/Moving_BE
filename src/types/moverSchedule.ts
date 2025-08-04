@@ -35,9 +35,9 @@ export type TMoverScheduleWithDetails = {
   requestStatus: string;
   customer: {
     id: string;
-    name: string;
-    customerImage: string | undefined;
-    nickname: string | undefined;
+    name: string | null;
+    customerImage: string | null;
+    nickname: string | null;
   };
   fromAddress: {
     id: string;

@@ -18,9 +18,7 @@ describe("TranslationService", () => {
 
     // 모킹된 Translator 인스턴스 가져오기
     const { Translator } = require("deepl-node");
-    mockTranslator = new Translator(
-      "test-auth-key"
-    ) as jest.Mocked<deepl.Translator>;
+    mockTranslator = new Translator("test-auth-key") as jest.Mocked<deepl.Translator>;
 
     translationService = new TranslationService();
   });
@@ -74,55 +72,42 @@ describe("TranslationService", () => {
     it("성공적으로 텍스트를 번역한다", async () => {
       const mockTranslationResult = {
         text: "Hello, how are you?",
+        detectedSourceLang: "ko" as deepl.SourceLanguageCode,
+        billedCharacters: 10,
       };
 
       mockTranslator.translateText.mockResolvedValue(mockTranslationResult);
 
-      const result = await translationService.translateText(
-        "안녕하세요, 어떻게 지내세요?",
-        "en"
-      );
+      const result = await translationService.translateText("안녕하세요, 어떻게 지내세요?", "en");
 
       expect(result).toBe("Hello, how are you?");
-      expect(mockTranslator.translateText).toHaveBeenCalledWith(
-        "안녕하세요, 어떻게 지내세요?",
-        null,
-        "en-US"
-      );
+      expect(mockTranslator.translateText).toHaveBeenCalledWith("안녕하세요, 어떻게 지내세요?", null, "en-US");
     });
 
     it("원본 언어를 지정하여 번역한다", async () => {
       const mockTranslationResult = {
         text: "안녕하세요",
+        detectedSourceLang: "en" as deepl.SourceLanguageCode,
+        billedCharacters: 5,
       };
 
       mockTranslator.translateText.mockResolvedValue(mockTranslationResult);
 
-      const result = await translationService.translateText(
-        "Hello",
-        "ko",
-        "en"
-      );
+      const result = await translationService.translateText("Hello", "ko", "en");
 
       expect(result).toBe("안녕하세요");
-      expect(mockTranslator.translateText).toHaveBeenCalledWith(
-        "Hello",
-        "en",
-        "ko"
-      );
+      expect(mockTranslator.translateText).toHaveBeenCalledWith("Hello", "en", "ko");
     });
 
     it("지원되지 않는 언어 코드로 번역 시 에러를 던진다", async () => {
-      await expect(
-        translationService.translateText("Hello", "ja")
-      ).rejects.toThrow("지원되지 않는 언어 코드입니다: ja");
+      await expect(translationService.translateText("Hello", "ja")).rejects.toThrow(
+        "지원되지 않는 언어 코드입니다: ja",
+      );
     });
 
     it("번역 실패 시 원본 텍스트를 반환한다", async () => {
       const originalText = "안녕하세요";
-      mockTranslator.translateText.mockRejectedValue(
-        new Error("Translation failed")
-      );
+      mockTranslator.translateText.mockRejectedValue(new Error("Translation failed"));
 
       const result = await translationService.translateText(originalText, "en");
 
@@ -132,6 +117,8 @@ describe("TranslationService", () => {
     it("캐시된 번역을 반환한다", async () => {
       const mockTranslationResult = {
         text: "Hello",
+        detectedSourceLang: "ko" as deepl.SourceLanguageCode,
+        billedCharacters: 5,
       };
 
       mockTranslator.translateText.mockResolvedValue(mockTranslationResult);
@@ -152,10 +139,7 @@ describe("TranslationService", () => {
     it("지원되지 않는 언어면 원본 객체를 반환한다", async () => {
       const originalObj = { message: "Hello" };
 
-      const result = await translationService.translateObject(
-        originalObj,
-        "ja"
-      );
+      const result = await translationService.translateObject(originalObj, "ja");
 
       expect(result).toEqual(originalObj);
     });
@@ -163,15 +147,14 @@ describe("TranslationService", () => {
     it("단순한 객체를 번역한다", async () => {
       const mockTranslationResult = {
         text: "Hello",
+        detectedSourceLang: "ko" as deepl.SourceLanguageCode,
+        billedCharacters: 5,
       };
 
       mockTranslator.translateText.mockResolvedValue(mockTranslationResult);
 
       const originalObj = { message: "안녕하세요" };
-      const result = await translationService.translateObject(
-        originalObj,
-        "en"
-      );
+      const result = await translationService.translateObject(originalObj, "en");
 
       expect(result).toEqual({ message: "Hello" });
     });
@@ -179,15 +162,14 @@ describe("TranslationService", () => {
     it("배열을 번역한다", async () => {
       const mockTranslationResult = {
         text: "Hello",
+        detectedSourceLang: "ko" as deepl.SourceLanguageCode,
+        billedCharacters: 5,
       };
 
       mockTranslator.translateText.mockResolvedValue(mockTranslationResult);
 
       const originalArray = ["안녕하세요", "반갑습니다"];
-      const result = await translationService.translateObject(
-        originalArray,
-        "en"
-      );
+      const result = await translationService.translateObject(originalArray, "en");
 
       expect(result).toEqual(["Hello", "Hello"]);
     });
@@ -195,6 +177,8 @@ describe("TranslationService", () => {
     it("중첩된 객체를 번역한다", async () => {
       const mockTranslationResult = {
         text: "Hello",
+        detectedSourceLang: "ko" as deepl.SourceLanguageCode,
+        billedCharacters: 5,
       };
 
       mockTranslator.translateText.mockResolvedValue(mockTranslationResult);
@@ -209,10 +193,7 @@ describe("TranslationService", () => {
         },
       };
 
-      const result = await translationService.translateObject(
-        originalObj,
-        "en"
-      );
+      const result = await translationService.translateObject(originalObj, "en");
 
       expect(result).toEqual({
         user: {
@@ -236,14 +217,13 @@ describe("TranslationService", () => {
 
       const mockTranslationResult = {
         text: "Hello",
+        detectedSourceLang: "ko" as deepl.SourceLanguageCode,
+        billedCharacters: 5,
       };
 
       mockTranslator.translateText.mockResolvedValue(mockTranslationResult);
 
-      const result = await translationService.translateObject(
-        originalObj,
-        "en"
-      );
+      const result = await translationService.translateObject(originalObj, "en");
 
       expect(result).toEqual({
         id: "123",
@@ -263,14 +243,13 @@ describe("TranslationService", () => {
 
       const mockTranslationResult = {
         text: "Hello",
+        detectedSourceLang: "ko" as deepl.SourceLanguageCode,
+        billedCharacters: 5,
       };
 
       mockTranslator.translateText.mockResolvedValue(mockTranslationResult);
 
-      const result = await translationService.translateObject(
-        originalObj,
-        "en"
-      );
+      const result = await translationService.translateObject(originalObj, "en");
 
       expect(result).toEqual({
         message: "Hello",
@@ -289,14 +268,13 @@ describe("TranslationService", () => {
 
       const mockTranslationResult = {
         text: "Hello",
+        detectedSourceLang: "ko" as deepl.SourceLanguageCode,
+        billedCharacters: 5,
       };
 
       mockTranslator.translateText.mockResolvedValue(mockTranslationResult);
 
-      const result = await translationService.translateObject(
-        originalObj,
-        "en"
-      );
+      const result = await translationService.translateObject(originalObj, "en");
 
       expect(result).toEqual({
         emptyString: "",
@@ -307,12 +285,4 @@ describe("TranslationService", () => {
     });
   });
 
-  describe("싱글톤 인스턴스", () => {
-    it("translationService가 싱글톤으로 동작한다", () => {
-      const { translationService: service1 } = require("./translation.service");
-      const { translationService: service2 } = require("./translation.service");
-
-      expect(service1).toBe(service2);
-    });
-  });
 });

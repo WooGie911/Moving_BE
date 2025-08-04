@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
-import moverScheduleService from "../services/moverSchedule.service";
+import moverScheduleService from "./moverSchedule.service";
 import moverScheduleRepository from "../repositories/moverSchedule.repository";
 import { ServiceValidationError, ServiceError } from "../types/errors.types";
 
 // Repository 모킹
-jest.mock("../../repositories/moverSchedule.repository");
+jest.mock("../repositories/moverSchedule.repository");
 
 describe("MoverScheduleService", () => {
   let mockRepository: jest.Mocked<typeof moverScheduleRepository>;
@@ -58,7 +58,7 @@ describe("MoverScheduleService", () => {
         {
           id: "request-1",
           customerName: "테스트 고객",
-          movingType: "소형이사",
+          movingType: "small",
           status: "confirmed",
           fromAddress: "서울 강남구 역삼동 123",
           toAddress: "서울 강남구 삼성동 456",
@@ -184,7 +184,7 @@ describe("MoverScheduleService", () => {
       // Then
       expect(result[0].fromAddress).toBe("서울 역삼동 테헤란로 123");
       expect(result[0].toAddress).toBe("서울 삼성동 영동대로 456");
-      expect(result[0].movingType).toBe("가정이사");
+      expect(result[0].movingType).toBe("home");
     });
 
     it("should handle different move types correctly", async () => {
@@ -232,8 +232,351 @@ describe("MoverScheduleService", () => {
       const result = await moverScheduleService.getMonthlySchedules(moverId, year, month);
 
       // Then
-      expect(result[0].movingType).toBe("사무실이사");
+      expect(result[0].movingType).toBe("office");
       expect(result[0].status).toBe("confirmed");
+    });
+
+    it("should handle empty schedule list", async () => {
+      // Given
+      const moverId = "test-mover-id";
+      const year = 2025;
+      const month = 7;
+
+      mockRepository.getMonthlySchedules.mockResolvedValue([]);
+
+      // When
+      const result = await moverScheduleService.getMonthlySchedules(moverId, year, month);
+
+      // Then
+      expect(result).toEqual([]);
+      expect(mockRepository.getMonthlySchedules).toHaveBeenCalledWith(moverId, year, month);
+    });
+
+    it("should handle multiple schedules", async () => {
+      // Given
+      const moverId = "test-mover-id";
+      const year = 2025;
+      const month = 7;
+      const mockRepositoryData = [
+        {
+          id: "estimate-1",
+          estimateRequestId: "request-1",
+          moverId: "test-mover-id",
+          status: "ACCEPTED",
+          estimateRequest: {
+            id: "request-1",
+            customerId: "customer-1",
+            moveDate: new Date("2025-07-15"),
+            status: "APPROVED",
+            moveType: "SMALL",
+            customer: {
+              id: "customer-1",
+              name: "고객1",
+            },
+            fromAddress: {
+              id: "address-1",
+              city: "",
+              district: "강남구",
+              detail: "역삼동 123",
+              region: "SEOUL",
+            },
+            toAddress: {
+              id: "address-2",
+              city: "",
+              district: "강남구",
+              detail: "삼성동 456",
+              region: "SEOUL",
+            },
+          },
+        },
+        {
+          id: "estimate-2",
+          estimateRequestId: "request-2",
+          moverId: "test-mover-id",
+          status: "ACCEPTED",
+          estimateRequest: {
+            id: "request-2",
+            customerId: "customer-2",
+            moveDate: new Date("2025-07-20"),
+            status: "PENDING",
+            moveType: "HOME",
+            customer: {
+              id: "customer-2",
+              name: "고객2",
+            },
+            fromAddress: {
+              id: "address-3",
+              city: "",
+              district: "서초구",
+              detail: "서초동 789",
+              region: "SEOUL",
+            },
+            toAddress: {
+              id: "address-4",
+              city: "",
+              district: "서초구",
+              detail: "반포동 101",
+              region: "SEOUL",
+            },
+          },
+        },
+      ];
+
+      mockRepository.getMonthlySchedules.mockResolvedValue(mockRepositoryData as any);
+
+      // When
+      const result = await moverScheduleService.getMonthlySchedules(moverId, year, month);
+
+      // Then
+      expect(result).toHaveLength(2);
+      expect(result[0].customerName).toBe("고객1");
+      expect(result[0].movingType).toBe("small");
+      expect(result[0].status).toBe("confirmed");
+      expect(result[1].customerName).toBe("고객2");
+      expect(result[1].movingType).toBe("home");
+      expect(result[1].status).toBe("pending");
+    });
+
+    it("should handle different status types", async () => {
+      // Given
+      const moverId = "test-mover-id";
+      const year = 2025;
+      const month = 7;
+      const mockRepositoryData = [
+        {
+          id: "estimate-1",
+          estimateRequestId: "request-1",
+          moverId: "test-mover-id",
+          status: "ACCEPTED",
+          estimateRequest: {
+            id: "request-1",
+            customerId: "customer-1",
+            moveDate: new Date("2025-07-15"),
+            status: "COMPLETED",
+            moveType: "OFFICE",
+            customer: {
+              id: "customer-1",
+              name: "테스트 고객",
+            },
+            fromAddress: {
+              id: "address-1",
+              city: "",
+              district: "강남구",
+              detail: "역삼동 123",
+              region: "SEOUL",
+            },
+            toAddress: {
+              id: "address-2",
+              city: "",
+              district: "강남구",
+              detail: "삼성동 456",
+              region: "SEOUL",
+            },
+          },
+        },
+      ];
+
+      mockRepository.getMonthlySchedules.mockResolvedValue(mockRepositoryData as any);
+
+      // When
+      const result = await moverScheduleService.getMonthlySchedules(moverId, year, month);
+
+      // Then
+      expect(result[0].status).toBe("completed");
+    });
+
+    it("should handle address with missing region", async () => {
+      // Given
+      const moverId = "test-mover-id";
+      const year = 2025;
+      const month = 7;
+      const mockRepositoryData = [
+        {
+          id: "estimate-1",
+          estimateRequestId: "request-1",
+          moverId: "test-mover-id",
+          status: "ACCEPTED",
+          estimateRequest: {
+            id: "request-1",
+            customerId: "customer-1",
+            moveDate: new Date("2025-07-15"),
+            status: "APPROVED",
+            moveType: "SMALL",
+            customer: {
+              id: "customer-1",
+              name: "테스트 고객",
+            },
+            fromAddress: {
+              id: "address-1",
+              city: "부산",
+              district: "해운대구",
+              detail: "우동 123",
+              region: null,
+            },
+            toAddress: {
+              id: "address-2",
+              city: "부산",
+              district: "동래구",
+              detail: "온천동 456",
+              region: null,
+            },
+          },
+        },
+      ];
+
+      mockRepository.getMonthlySchedules.mockResolvedValue(mockRepositoryData as any);
+
+      // When
+      const result = await moverScheduleService.getMonthlySchedules(moverId, year, month);
+
+      // Then
+      expect(result[0].fromAddress).toBe("부산 해운대구 우동 123");
+      expect(result[0].toAddress).toBe("부산 동래구 온천동 456");
+    });
+
+    it("should handle address with Korea suffix", async () => {
+      // Given
+      const moverId = "test-mover-id";
+      const year = 2025;
+      const month = 7;
+      const mockRepositoryData = [
+        {
+          id: "estimate-1",
+          estimateRequestId: "request-1",
+          moverId: "test-mover-id",
+          status: "ACCEPTED",
+          estimateRequest: {
+            id: "request-1",
+            customerId: "customer-1",
+            moveDate: new Date("2025-07-15"),
+            status: "APPROVED",
+            moveType: "SMALL",
+            customer: {
+              id: "customer-1",
+              name: "테스트 고객",
+            },
+            fromAddress: {
+              id: "address-1",
+              city: "",
+              district: "강남구",
+              detail: "역삼동 123, Korea",
+              region: "SEOUL",
+            },
+            toAddress: {
+              id: "address-2",
+              city: "",
+              district: "강남구",
+              detail: "삼성동 456, Korea",
+              region: "SEOUL",
+            },
+          },
+        },
+      ];
+
+      mockRepository.getMonthlySchedules.mockResolvedValue(mockRepositoryData as any);
+
+      // When
+      const result = await moverScheduleService.getMonthlySchedules(moverId, year, month);
+
+      // Then
+      expect(result[0].fromAddress).toBe("서울 강남구 역삼동 123");
+      expect(result[0].toAddress).toBe("서울 강남구 삼성동 456");
+    });
+
+    it("should handle unknown move type", async () => {
+      // Given
+      const moverId = "test-mover-id";
+      const year = 2025;
+      const month = 7;
+      const mockRepositoryData = [
+        {
+          id: "estimate-1",
+          estimateRequestId: "request-1",
+          moverId: "test-mover-id",
+          status: "ACCEPTED",
+          estimateRequest: {
+            id: "request-1",
+            customerId: "customer-1",
+            moveDate: new Date("2025-07-15"),
+            status: "APPROVED",
+            moveType: "UNKNOWN_TYPE",
+            customer: {
+              id: "customer-1",
+              name: "테스트 고객",
+            },
+            fromAddress: {
+              id: "address-1",
+              city: "",
+              district: "강남구",
+              detail: "역삼동 123",
+              region: "SEOUL",
+            },
+            toAddress: {
+              id: "address-2",
+              city: "",
+              district: "강남구",
+              detail: "삼성동 456",
+              region: "SEOUL",
+            },
+          },
+        },
+      ];
+
+      mockRepository.getMonthlySchedules.mockResolvedValue(mockRepositoryData as any);
+
+      // When
+      const result = await moverScheduleService.getMonthlySchedules(moverId, year, month);
+
+      // Then
+      expect(result[0].movingType).toBe("small"); // 기본값
+    });
+
+    it("should handle unknown status", async () => {
+      // Given
+      const moverId = "test-mover-id";
+      const year = 2025;
+      const month = 7;
+      const mockRepositoryData = [
+        {
+          id: "estimate-1",
+          estimateRequestId: "request-1",
+          moverId: "test-mover-id",
+          status: "ACCEPTED",
+          estimateRequest: {
+            id: "request-1",
+            customerId: "customer-1",
+            moveDate: new Date("2025-07-15"),
+            status: "UNKNOWN_STATUS",
+            moveType: "SMALL",
+            customer: {
+              id: "customer-1",
+              name: "테스트 고객",
+            },
+            fromAddress: {
+              id: "address-1",
+              city: "",
+              district: "강남구",
+              detail: "역삼동 123",
+              region: "SEOUL",
+            },
+            toAddress: {
+              id: "address-2",
+              city: "",
+              district: "강남구",
+              detail: "삼성동 456",
+              region: "SEOUL",
+            },
+          },
+        },
+      ];
+
+      mockRepository.getMonthlySchedules.mockResolvedValue(mockRepositoryData as any);
+
+      // When
+      const result = await moverScheduleService.getMonthlySchedules(moverId, year, month);
+
+      // Then
+      expect(result[0].status).toBe("pending"); // 기본값
     });
   });
 });
