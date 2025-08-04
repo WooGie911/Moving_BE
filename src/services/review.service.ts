@@ -1,6 +1,7 @@
 import reviewRepository from "../repositories/review.repository";
 import actionService from "./action.service";
 import { ActionType } from "@prisma/client";
+import { formatDateForAPI } from "../utils/dateUtils";
 
 const reviewService = {
   postReview: async (reviewId: string, rating: number, content: string) => {
@@ -47,7 +48,7 @@ const reviewService = {
           moverIntroduction: acceptedEstimate?.mover?.introduction ?? null,
           fromAddress: req.fromAddress ?? null,
           toAddress: req.toAddress ?? null,
-          moveDate: req.moveDate,
+          moveDate: formatDateForAPI(req.moveDate),
           price: acceptedEstimate?.price ?? null,
         };
       })
@@ -75,10 +76,10 @@ const reviewService = {
         isDesigned: acceptedEstimate?.isDesignated ?? false,
         fromAddress: review.request?.fromAddress ?? null,
         toAddress: review.request?.toAddress ?? null,
-        moveDate: review.request?.moveDate ?? null,
+        moveDate: formatDateForAPI(review.request?.moveDate) ?? null,
         rating: review.rating,
         content: review.content,
-        createdAt: review.createdAt,
+        createdAt: formatDateForAPI(review.createdAt),
       };
     });
     return { items: mappedItems, total, page, pageSize };
@@ -107,10 +108,10 @@ const reviewService = {
         moverIntroduction: review.writer?.introduction ?? null,
         fromAddress: review.request?.fromAddress ?? null,
         toAddress: review.request?.toAddress ?? null,
-        moveDate: review.request?.moveDate ?? null,
+        moveDate: formatDateForAPI(review.request?.moveDate) ?? null,
         rating: review.rating,
         content: review.content,
-        createdAt: review.createdAt,
+        createdAt: formatDateForAPI(review.createdAt),
         estimate: acceptedEstimate
           ? {
               id: acceptedEstimate.id,
@@ -118,12 +119,12 @@ const reviewService = {
               comment: acceptedEstimate.comment,
               status: acceptedEstimate.status,
               isDesignated: acceptedEstimate.isDesignated,
-              validUntil: acceptedEstimate.validUntil,
+              validUntil: formatDateForAPI(acceptedEstimate.validUntil),
               workingHours: acceptedEstimate.workingHours,
               includesPackaging: acceptedEstimate.includesPackaging,
               insuranceAmount: acceptedEstimate.insuranceAmount,
-              createdAt: acceptedEstimate.createdAt,
-              updatedAt: acceptedEstimate.updatedAt,
+              createdAt: formatDateForAPI(acceptedEstimate.createdAt),
+              updatedAt: formatDateForAPI(acceptedEstimate.updatedAt),
             }
           : null,
       };
