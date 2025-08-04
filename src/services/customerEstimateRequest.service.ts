@@ -375,7 +375,7 @@ const customerEstimateRequestService = {
               : "ESTIMATE",
             {
               customerName:
-                otherEstimateDetail.estimateRequest?.customer?.name || "",
+                otherEstimateDetail.estimateRequest?.customer?.nickname || "",
               moveType: otherEstimateDetail.estimateRequest?.moveType || "",
             }
           );
