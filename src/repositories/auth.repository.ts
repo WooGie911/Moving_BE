@@ -60,6 +60,7 @@ const findUserByEmailAndPassword = async (email: string) => {
       moverImage: true,
       isCustomer: true,
       isMover: true,
+      provider: true,
     },
   });
 };

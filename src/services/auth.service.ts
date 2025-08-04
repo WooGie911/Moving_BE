@@ -39,7 +39,15 @@ const signin = async (email: string, password: string, userType: TUserRole) => {
     if (!existingUser) {
       throw new AuthenticationError("존재하지 않는 유저입니다");
     }
-    // 2. 비밀번호 검증
+
+    // 2. 소셜 로그인 유저 확인
+    if (existingUser.provider) {
+      throw new AuthenticationError(
+        "소셜 로그인 유저입니다. 소셜로그인으로 로그인 해주세요"
+      );
+    }
+
+    // 3. 비밀번호 검증
     if (
       !existingUser.encryptedPassword ||
       !(await bcrypt.compare(password, existingUser.encryptedPassword))
@@ -48,7 +56,7 @@ const signin = async (email: string, password: string, userType: TUserRole) => {
     }
 
     let accessToken, refreshToken;
-    // 3. 유저 role에 따른 토큰 생성
+    // 4. 유저 role에 따른 토큰 생성
     if (userType === "CUSTOMER") {
       const { newAccessToken, newRefreshToken } = generateToken({
         id: String(existingUser.id),

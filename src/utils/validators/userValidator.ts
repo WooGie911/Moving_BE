@@ -60,7 +60,7 @@ export const isValidEmail = (email: string): boolean => {
 /**
  * 이름 유효성 검사
  * - 한글, 영문, 중국어
- * 최소 2자이상
+ * 최소 1자이상
  * 최대 15자 이하
  */
 export const isValidName = (name: string): boolean => {
