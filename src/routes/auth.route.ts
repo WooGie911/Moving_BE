@@ -15,6 +15,7 @@ import {
 } from "../middlewares/verifyToken";
 import passport from "passport";
 import { TUserRole } from "../types/user.types";
+import { loginLimiter, signupLimiter } from "../middlewares/rateLimiter";
 
 const authRouter = Router();
 
@@ -190,6 +191,17 @@ const authRouter = Router();
  *               success: false
  *               message: "이메일 형식이 올바르지 않습니다"
  *               error: "ValidationError"
+ *       429:
+ *         description: 요청 제한 초과
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthErrorResponse'
+ *             example:
+ *               status: 429
+ *               success: false
+ *               message: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."
+ *               error: "TooManyRequestsError"
  *       500:
  *         description: 서버 내부 오류 (데이터베이스 오류, 비밀번호 검증 오류, 토큰 생성 오류)
  *         content:
@@ -202,7 +214,7 @@ const authRouter = Router();
  *               message: "서버 내부 오류가 발생했습니다"
  *               error: "InternalServerError"
  */
-authRouter.post("/sign-in", postSignin);
+authRouter.post("/sign-in", loginLimiter, postSignin);
 
 // 회원가입 엔드포인트
 /**
@@ -277,6 +289,17 @@ authRouter.post("/sign-in", postSignin);
  *                   success: false
  *                   message: "회원가입 정보가 올바르지 않습니다"
  *                   error: "ValidationError"
+ *       429:
+ *         description: 요청 제한 초과
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthErrorResponse'
+ *             example:
+ *               status: 429
+ *               success: false
+ *               message: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."
+ *               error: "TooManyRequestsError"
  *       500:
  *         description: 서버 내부 오류 (데이터베이스 오류, 암호화 오류, 토큰 생성 오류)
  *         content:
@@ -296,7 +319,7 @@ authRouter.post("/sign-in", postSignin);
  *   "error": "ServerError"
  * }
  */
-authRouter.post("/sign-up", postSignup);
+authRouter.post("/sign-up", signupLimiter, postSignup);
 
 // 로그아웃 엔드포인트
 /**

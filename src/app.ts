@@ -16,18 +16,22 @@ import notificationIndexRoutes from "./routes/notificationIndex.routes";
 import businessRoutes from "./routes/index.routes";
 import passport from "./config/passport";
 
-
 const app = express();
 const PORT = process.env.PORT || 5050;
 
 // CORS 설정 - 환경변수에서 가져오거나 기본값 사용
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").map((origin) => origin.trim()) || [];
+const allowedOrigins =
+  process.env.ALLOWED_ORIGINS?.split(",").map((origin) => origin.trim()) || [];
 
 app.use(
   cors({
     origin: (origin, callback) => {
       // ngrok 테스트용 cors 설정
-      if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".ngrok-free.app")) {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".ngrok-free.app")
+      ) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
@@ -36,7 +40,7 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  }),
+  })
 );
 
 app.use(cookieParser());
