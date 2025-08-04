@@ -9,10 +9,38 @@ const mockDatabase = {
   user: {
     findMany: jest.fn(),
   },
+  $use: jest.fn(),
+  $connect: jest.fn(),
+  $disconnect: jest.fn(),
 };
 
 jest.mock("@prisma/client", () => ({
   PrismaClient: jest.fn().mockImplementation(() => mockDatabase),
+  NotificationType: {
+    WELCOME: "WELCOME",
+    ESTIMATE_REQUEST_ARRIVED: "ESTIMATE_REQUEST_ARRIVED",
+    ESTIMATE_ARRIVED: "ESTIMATE_ARRIVED",
+    ESTIMATE_STATUS_UPDATED: "ESTIMATE_STATUS_UPDATED",
+    DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED:
+      "DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED",
+    DESIGNATED_ESTIMATE_STATUS_UPDATED: "DESIGNATED_ESTIMATE_STATUS_UPDATED",
+    REVIEW_EVENT: "REVIEW_EVENT",
+    FAVORITE_EVENT: "FAVORITE_EVENT",
+    MOVE_DAY_REMINDER: "MOVE_DAY_REMINDER",
+  },
+  ActionType: {
+    WELCOME: "WELCOME",
+    ESTIMATE_REQUEST_CREATE: "ESTIMATE_REQUEST_CREATE",
+    ESTIMATE_SUBMITTED: "ESTIMATE_SUBMITTED",
+    ESTIMATE_ACCEPTED: "ESTIMATE_ACCEPTED",
+    ESTIMATE_REJECTED: "ESTIMATE_REJECTED",
+    DESIGNATED_ESTIMATE_REQUEST_SUBMITTED:
+      "DESIGNATED_ESTIMATE_REQUEST_SUBMITTED",
+    DESIGNATED_ESTIMATE_REQUEST_REJECTED:
+      "DESIGNATED_ESTIMATE_REQUEST_REJECTED",
+    FAVORITE_ADDED: "FAVORITE_ADDED",
+    FAVORITE_REMOVED: "FAVORITE_REMOVED",
+  },
 }));
 
 import favoriteRepository from "./favorite.repository";
@@ -172,6 +200,83 @@ describe("FavoriteRepository - 유닛 테스트", () => {
       const result = await favoriteRepository.getMoverFavoriteCount(moverId);
 
       expect(result).toBe(0);
+    });
+  });
+
+  describe("getFavoriteDetailForAction", () => {
+    it("찜하기 상세 정보를 성공적으로 조회한다", async () => {
+      const favoriteId = "favorite-1";
+      const mockFavoriteDetail = {
+        id: "favorite-1",
+        customerId: "customer-1",
+        moverId: "mover-1",
+        customer: {
+          id: "customer-1",
+          name: "김고객",
+        },
+        mover: {
+          id: "mover-1",
+          name: "김이사",
+        },
+      };
+
+      mockDatabase.favorite.findUnique.mockResolvedValue(mockFavoriteDetail);
+
+      const result =
+        await favoriteRepository.getFavoriteDetailForAction(favoriteId);
+
+      expect(mockDatabase.favorite.findUnique).toHaveBeenCalledWith({
+        where: { id: favoriteId },
+        select: {
+          id: true,
+          customerId: true,
+          moverId: true,
+          customer: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          mover: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+      expect(result).toEqual(mockFavoriteDetail);
+    });
+
+    it("찜하기가 존재하지 않을 때 null을 반환한다", async () => {
+      const favoriteId = "favorite-1";
+
+      mockDatabase.favorite.findUnique.mockResolvedValue(null);
+
+      const result =
+        await favoriteRepository.getFavoriteDetailForAction(favoriteId);
+
+      expect(mockDatabase.favorite.findUnique).toHaveBeenCalledWith({
+        where: { id: favoriteId },
+        select: {
+          id: true,
+          customerId: true,
+          moverId: true,
+          customer: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          mover: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+      expect(result).toBeNull();
     });
   });
 });

@@ -567,6 +567,237 @@ describe("이사업체 견적 서비스", () => {
         moverEstimateService.createEstimate(mockData)
       ).rejects.toThrow(MoverEstimateQuotaExceededError);
     });
+
+    test("지정 견적 개수 제한을 초과할 때 MoverEstimateQuotaExceededError를 던진다", async () => {
+      // Arrange
+      const mockEstimateRequest = {
+        status: REQUEST_STATUS.PENDING,
+        moveDate: new Date("2025-08-10"),
+      };
+      const mockExistingEstimates = Array(3).fill({ isDesignated: true });
+
+      mockedRepository.findEstimateRequestById.mockResolvedValue(
+        mockEstimateRequest
+      );
+      mockedRepository.findExistingEstimate.mockResolvedValue(null);
+      mockedRepository.findDesignatedRequest.mockResolvedValue({
+        id: "designated123",
+        createdAt: new Date(),
+        status: REQUEST_STATUS.PENDING,
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        message: null,
+        expiresAt: new Date(),
+      });
+      mockedRepository.countExistingEstimates.mockResolvedValue(
+        mockExistingEstimates
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.createEstimate(mockData)
+      ).rejects.toThrow(MoverEstimateQuotaExceededError);
+    });
+
+    test("액션 서비스 에러가 발생해도 견적 생성은 성공한다", async () => {
+      // Arrange
+      const mockEstimateRequest = {
+        status: REQUEST_STATUS.PENDING,
+        moveDate: new Date("2025-08-10"),
+      };
+
+      const mockEstimate = {
+        id: "estimate123",
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: "합리적인 가격으로 안전한 이사 서비스 제공",
+        status: ESTIMATE_STATUS.PROPOSED,
+        rejectReason: null,
+        isDesignated: false,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        mover: {
+          id: "mover123",
+          name: "김이사",
+          moverImage: null,
+          nickname: "김이사",
+          shortIntro: "5년 경력의 전문 이사업체",
+          detailIntro: "신중하고 안전한 이사 서비스",
+          career: 5,
+          workedCount: 120,
+          averageRating: 4.8,
+          totalReviewCount: 45,
+          serviceTypes: ["HOME", "SMALL"],
+        },
+        estimateRequest: {
+          id: "estimateRequest123",
+          customerId: "customer123",
+          moveType: "HOME" as const,
+          moveDate: new Date("2025-08-10"),
+          fromAddressId: "addr1",
+          toAddressId: "addr2",
+          description: "1인가구 이사",
+          status: REQUEST_STATUS.PENDING,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          customer: {
+            id: "customer123",
+            name: "김고객",
+            currentArea: "서울특별시",
+            customerImage: null,
+            nickname: "김고객",
+          },
+          fromAddress: {
+            id: "addr1",
+            zoneCode: "06123",
+            city: "서울특별시",
+            district: "강남구",
+            detail: "테헤란로 123",
+            region: REGION_TYPE.SEOUL,
+          },
+          toAddress: {
+            id: "addr2",
+            zoneCode: "06621",
+            city: "서울특별시",
+            district: "서초구",
+            detail: "서초대로 456",
+            region: REGION_TYPE.SEOUL,
+          },
+        },
+      };
+
+      mockedRepository.findEstimateRequestById.mockResolvedValue(
+        mockEstimateRequest
+      );
+      mockedRepository.findExistingEstimate.mockResolvedValue(null);
+      mockedRepository.findDesignatedRequest.mockResolvedValue(null);
+      mockedRepository.countExistingEstimates.mockResolvedValue([]);
+      mockedRepository.createEstimate.mockResolvedValue(mockEstimate);
+      mockedRepository.getEstimateDetailForAction.mockResolvedValue(null);
+      mockedActionService.createAction.mockRejectedValue(
+        new Error("Action service error")
+      );
+
+      // Act
+      const result = await moverEstimateService.createEstimate(mockData);
+
+      // Assert
+      expect(result).toEqual({
+        id: "estimate123",
+        estimateRequestId: "estimateRequest123",
+        moverId: "mover123",
+        price: 500000,
+        comment: "합리적인 가격으로 안전한 이사 서비스 제공",
+        status: "PROPOSED",
+        createdAt: mockEstimate.createdAt,
+      });
+    });
+
+    test("견적 상세 정보가 없을 때도 견적 생성이 성공한다", async () => {
+      // Arrange
+      const mockEstimateRequest = {
+        status: REQUEST_STATUS.PENDING,
+        moveDate: new Date("2025-08-10"),
+      };
+
+      const mockEstimate = {
+        id: "estimate123",
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: "합리적인 가격으로 안전한 이사 서비스 제공",
+        status: ESTIMATE_STATUS.PROPOSED,
+        rejectReason: null,
+        isDesignated: false,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        mover: {
+          id: "mover123",
+          name: "김이사",
+          moverImage: null,
+          nickname: "김이사",
+          shortIntro: "5년 경력의 전문 이사업체",
+          detailIntro: "신중하고 안전한 이사 서비스",
+          career: 5,
+          workedCount: 120,
+          averageRating: 4.8,
+          totalReviewCount: 45,
+          serviceTypes: ["HOME", "SMALL"],
+        },
+        estimateRequest: {
+          id: "estimateRequest123",
+          customerId: "customer123",
+          moveType: "HOME" as const,
+          moveDate: new Date("2025-08-10"),
+          fromAddressId: "addr1",
+          toAddressId: "addr2",
+          description: "1인가구 이사",
+          status: REQUEST_STATUS.PENDING,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          customer: {
+            id: "customer123",
+            name: "김고객",
+            currentArea: "서울특별시",
+            customerImage: null,
+            nickname: "김고객",
+          },
+          fromAddress: {
+            id: "addr1",
+            zoneCode: "06123",
+            city: "서울특별시",
+            district: "강남구",
+            detail: "테헤란로 123",
+            region: REGION_TYPE.SEOUL,
+          },
+          toAddress: {
+            id: "addr2",
+            zoneCode: "06621",
+            city: "서울특별시",
+            district: "서초구",
+            detail: "서초대로 456",
+            region: REGION_TYPE.SEOUL,
+          },
+        },
+      };
+
+      mockedRepository.findEstimateRequestById.mockResolvedValue(
+        mockEstimateRequest
+      );
+      mockedRepository.findExistingEstimate.mockResolvedValue(null);
+      mockedRepository.findDesignatedRequest.mockResolvedValue(null);
+      mockedRepository.countExistingEstimates.mockResolvedValue([]);
+      mockedRepository.createEstimate.mockResolvedValue(mockEstimate);
+      mockedRepository.getEstimateDetailForAction.mockResolvedValue(null);
+
+      // Act
+      const result = await moverEstimateService.createEstimate(mockData);
+
+      // Assert
+      expect(result).toEqual({
+        id: "estimate123",
+        estimateRequestId: "estimateRequest123",
+        moverId: "mover123",
+        price: 500000,
+        comment: "합리적인 가격으로 안전한 이사 서비스 제공",
+        status: "PROPOSED",
+        createdAt: mockEstimate.createdAt,
+      });
+      expect(mockedActionService.createAction).not.toHaveBeenCalled();
+    });
   });
 
   describe("지역 견적 요청 조회", () => {

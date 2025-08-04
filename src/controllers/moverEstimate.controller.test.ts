@@ -541,6 +541,27 @@ describe("이사업체 견적 컨트롤러", () => {
         data: mockData,
       });
     });
+
+    it("지정 견적 요청 조회 중 에러가 발생할 때 next(error)를 호출한다", async () => {
+      // Arrange
+      mockRequest.query = {
+        sortBy: "moveDate",
+        customerName: "김고객",
+        movingType: "SMALL",
+      };
+      const error = new Error("Service error");
+      mockedService.getDesignatedEstimateRequest.mockRejectedValue(error);
+
+      // Act
+      await moverEstimateController.getDesignatedEstimateRequest(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockNext).toHaveBeenCalledWith(error);
+    });
   });
 
   describe("전체 견적 요청 조회", () => {
@@ -646,6 +667,29 @@ describe("이사업체 견적 컨트롤러", () => {
         data: { regionEstimateRequests: [], designatedEstimateRequests: [] },
       });
     });
+
+    it("전체 견적 요청 조회 중 에러가 발생할 때 next(error)를 호출한다", async () => {
+      // Arrange
+      mockRequest.query = {
+        region: "true",
+        designated: "false",
+        sortBy: "createdAt",
+        customerName: "김고객",
+        movingType: "HOME",
+      };
+      const error = new Error("Service error");
+      mockedService.getAllEstimateRequests.mockRejectedValue(error);
+
+      // Act
+      await moverEstimateController.getAllEstimateRequests(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockNext).toHaveBeenCalledWith(error);
+    });
   });
 
   describe("내 견적서 조회", () => {
@@ -736,6 +780,22 @@ describe("이사업체 견적 컨트롤러", () => {
         message: "내가 보낸 견적서 조회 성공",
         data: mockData,
       });
+    });
+
+    it("내 견적서 조회 중 에러가 발생할 때 next(error)를 호출한다", async () => {
+      // Arrange
+      const error = new Error("Service error");
+      mockedService.getMyEstimate.mockRejectedValue(error);
+
+      // Act
+      await moverEstimateController.getMyEstimate(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockNext).toHaveBeenCalledWith(error);
     });
   });
 
@@ -829,6 +889,22 @@ describe("이사업체 견적 컨트롤러", () => {
         message: "내가 반려한 견적 조회 성공",
         data: mockData,
       });
+    });
+
+    it("내 반려 견적 조회 중 에러가 발생할 때 next(error)를 호출한다", async () => {
+      // Arrange
+      const error = new Error("Service error");
+      mockedService.getMyRejectedEstimates.mockRejectedValue(error);
+
+      // Act
+      await moverEstimateController.getMyRejectedEstimates(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockNext).toHaveBeenCalledWith(error);
     });
   });
 
@@ -1311,6 +1387,52 @@ describe("이사업체 견적 컨트롤러", () => {
 
       // Assert
       expect(mockNext).toHaveBeenCalledWith(error);
+    });
+  });
+
+  describe("견적 생성 시 잘못된 입력값으로 400 응답을 반환한다", () => {
+    it("견적 생성 시 잘못된 입력값으로 400 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.body = {
+        estimateRequestId: "",
+        price: -1000,
+        comment: "",
+      };
+
+      // Act
+      await moverEstimateController.createEstimate(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
+    });
+  });
+
+  describe("견적 반려 시 잘못된 입력값으로 400 응답을 반환한다", () => {
+    it("견적 반려 시 잘못된 입력값으로 400 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.body = {
+        estimateRequestId: "",
+        comment: "   ",
+      };
+
+      // Act
+      await moverEstimateController.rejectEstimate(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "유효하지 않은 견적 요청 ID입니다.",
+        code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
+      });
     });
   });
 });
