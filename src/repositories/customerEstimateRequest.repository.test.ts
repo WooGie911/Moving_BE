@@ -2,7 +2,7 @@ import customerEstimateRequestRepository from "./customerEstimateRequest.reposit
 import { RepositoryQueryError } from "../types/errors.types";
 import { EstimateStatus, RequestStatus, MoveType } from "@prisma/client";
 
-// PrismaClient 모킹
+// PrismaClient 모킹 - 타입 안전성 확보
 jest.mock("@prisma/client", () => {
   const mockEstimateRequest = {
     findFirst: jest.fn(),
@@ -16,10 +16,16 @@ jest.mock("@prisma/client", () => {
     findUnique: jest.fn(),
     update: jest.fn(),
     updateMany: jest.fn(),
+    findMany: jest.fn(),
   };
 
   const mockUser = {
     findUnique: jest.fn(),
+  };
+
+  const mockFavorite = {
+    count: jest.fn(),
+    groupBy: jest.fn(),
   };
 
   return {
@@ -27,16 +33,84 @@ jest.mock("@prisma/client", () => {
       estimateRequest: mockEstimateRequest,
       estimate: mockEstimate,
       user: mockUser,
+      favorite: mockFavorite,
+      $use: jest.fn(),
+      $connect: jest.fn(),
+      $disconnect: jest.fn(),
     })),
+    NotificationType: {
+      WELCOME: "WELCOME",
+      ESTIMATE_REQUEST_ARRIVED: "ESTIMATE_REQUEST_ARRIVED",
+      ESTIMATE_ARRIVED: "ESTIMATE_ARRIVED",
+      ESTIMATE_STATUS_UPDATED: "ESTIMATE_STATUS_UPDATED",
+      DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED:
+        "DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED",
+      DESIGNATED_ESTIMATE_STATUS_UPDATED: "DESIGNATED_ESTIMATE_STATUS_UPDATED",
+      REVIEW_EVENT: "REVIEW_EVENT",
+      FAVORITE_EVENT: "FAVORITE_EVENT",
+      MOVE_DAY_REMINDER: "MOVE_DAY_REMINDER",
+    },
+    ActionType: {
+      WELCOME: "WELCOME",
+      ESTIMATE_REQUEST_CREATE: "ESTIMATE_REQUEST_CREATE",
+      ESTIMATE_SUBMITTED: "ESTIMATE_SUBMITTED",
+      ESTIMATE_ACCEPTED: "ESTIMATE_ACCEPTED",
+      ESTIMATE_REJECTED: "ESTIMATE_REJECTED",
+      DESIGNATED_ESTIMATE_REQUEST_SUBMITTED:
+        "DESIGNATED_ESTIMATE_REQUEST_SUBMITTED",
+      DESIGNATED_ESTIMATE_REQUEST_REJECTED:
+        "DESIGNATED_ESTIMATE_REQUEST_REJECTED",
+    },
+    EstimateStatus: {
+      PROPOSED: "PROPOSED",
+      ACCEPTED: "ACCEPTED",
+      REJECTED: "REJECTED",
+      AUTO_REJECTED: "AUTO_REJECTED",
+    },
+    RequestStatus: {
+      PENDING: "PENDING",
+      APPROVED: "APPROVED",
+      COMPLETED: "COMPLETED",
+      REJECTED: "REJECTED",
+      CANCELLED: "CANCELLED",
+      EXPIRED: "EXPIRED",
+    },
   };
 });
 
-// 모킹된 객체들을 가져오기
+// 모킹된 객체들을 가져오기 - 타입 안전성 확보
 const { PrismaClient } = require("@prisma/client");
 const mockPrisma = new PrismaClient();
-const mockEstimateRequest = mockPrisma.estimateRequest;
-const mockEstimate = mockPrisma.estimate;
-const mockUser = mockPrisma.user;
+
+// 타입 안전한 모킹 객체 정의
+interface MockEstimateRequest {
+  findFirst: jest.Mock;
+  findMany: jest.Mock;
+  findUnique: jest.Mock;
+  update: jest.Mock;
+  updateMany: jest.Mock;
+}
+
+interface MockEstimate {
+  findUnique: jest.Mock;
+  update: jest.Mock;
+  updateMany: jest.Mock;
+  findMany: jest.Mock;
+}
+
+interface MockUser {
+  findUnique: jest.Mock;
+}
+
+interface MockFavorite {
+  count: jest.Mock;
+  groupBy: jest.Mock;
+}
+
+const mockEstimateRequest = mockPrisma.estimateRequest as MockEstimateRequest;
+const mockEstimate = mockPrisma.estimate as MockEstimate;
+const mockUser = mockPrisma.user as MockUser;
+const mockFavorite = mockPrisma.favorite as MockFavorite;
 
 // 테스트용 타입 정의
 type MockEstimateRequestData = {
@@ -120,10 +194,13 @@ describe("고객 견적 요청 레포지토리", () => {
 
       // Assert
       expect(result).toBe("estimateRequest123");
-      expect(mockPrisma.estimateRequest.findFirst).toHaveBeenCalledWith({
+      expect(mockEstimateRequest.findFirst).toHaveBeenCalledWith({
         where: {
           customerId: userId,
           status: { in: ["PENDING", "APPROVED"] },
+          moveDate: {
+            gte: expect.any(Date),
+          },
         },
         select: {
           id: true,
@@ -152,7 +229,7 @@ describe("고객 견적 요청 레포지토리", () => {
       const userId = "user123";
       const mockError = new Error("Database connection failed");
 
-      mockPrisma.estimateRequest.findFirst.mockRejectedValue(mockError);
+      mockEstimateRequest.findFirst.mockRejectedValue(mockError);
 
       // Act & Assert
       await expect(
@@ -171,14 +248,14 @@ describe("고객 견적 요청 레포지토리", () => {
         userType: ["MOVER"],
       };
 
-      mockPrisma.user.findUnique.mockResolvedValue(mockMover);
+      mockUser.findUnique.mockResolvedValue(mockMover);
 
       // Act
       const result = await customerEstimateRequestRepository.getMover(moverId);
 
       // Assert
       expect(result).toEqual(mockMover);
-      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+      expect(mockUser.findUnique).toHaveBeenCalledWith({
         where: {
           id: moverId,
         },
@@ -189,7 +266,7 @@ describe("고객 견적 요청 레포지토리", () => {
       // Arrange
       const moverId = "mover123";
 
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockUser.findUnique.mockResolvedValue(null);
 
       // Act
       const result = await customerEstimateRequestRepository.getMover(moverId);
@@ -256,7 +333,7 @@ describe("고객 견적 요청 레포지토리", () => {
         ],
       };
 
-      mockPrisma.estimateRequest.findFirst.mockResolvedValue(mockData);
+      mockEstimateRequest.findFirst.mockResolvedValue(mockData);
 
       // Act
       const result =
@@ -267,7 +344,7 @@ describe("고객 견적 요청 레포지토리", () => {
 
       // Assert
       expect(result).toEqual(mockData);
-      expect(mockPrisma.estimateRequest.findFirst).toHaveBeenCalledWith({
+      expect(mockEstimateRequest.findFirst).toHaveBeenCalledWith({
         where: {
           id: activeEstimateRequestId,
           status: { in: ["PENDING", "APPROVED"] },
@@ -283,7 +360,7 @@ describe("고객 견적 요청 레포지토리", () => {
       const activeEstimateRequestId = "estimateRequest123";
       const userId = "user123";
 
-      mockPrisma.estimateRequest.findFirst.mockResolvedValue(null);
+      mockEstimateRequest.findFirst.mockResolvedValue(null);
 
       // Act
       const result =
@@ -302,7 +379,7 @@ describe("고객 견적 요청 레포지토리", () => {
       const userId = "user123";
       const mockError = new Error("Database connection failed");
 
-      mockPrisma.estimateRequest.findFirst.mockRejectedValue(mockError);
+      mockEstimateRequest.findFirst.mockRejectedValue(mockError);
 
       // Act & Assert
       await expect(
@@ -359,7 +436,7 @@ describe("고객 견적 요청 레포지토리", () => {
         },
       ];
 
-      mockPrisma.estimateRequest.findMany.mockResolvedValue(mockData);
+      mockEstimateRequest.findMany.mockResolvedValue(mockData);
 
       // Act
       const result =
@@ -369,10 +446,13 @@ describe("고객 견적 요청 레포지토리", () => {
 
       // Assert
       expect(result).toEqual(mockData);
-      expect(mockPrisma.estimateRequest.findMany).toHaveBeenCalledWith({
+      expect(mockEstimateRequest.findMany).toHaveBeenCalledWith({
         where: {
           customerId: userId,
-          status: { in: ["EXPIRED", "COMPLETED"] },
+          status: { in: ["EXPIRED", "COMPLETED", "APPROVED"] },
+          moveDate: {
+            lt: expect.any(Date),
+          },
         },
         select: expect.objectContaining({
           id: true,
@@ -393,7 +473,7 @@ describe("고객 견적 요청 레포지토리", () => {
       // Arrange
       const userId = "user123";
 
-      mockPrisma.estimateRequest.findMany.mockResolvedValue([]);
+      mockEstimateRequest.findMany.mockResolvedValue([]);
 
       // Act
       const result =
@@ -410,7 +490,7 @@ describe("고객 견적 요청 레포지토리", () => {
     it("성공적으로 견적요청을 조회한다", async () => {
       // Arrange
       const estimateRequestId = "estimateRequest123";
-      const mockEstimateRequest = {
+      const mockEstimateRequestData = {
         id: "estimateRequest123",
         customerId: "user123",
         moveType: "HOME",
@@ -420,9 +500,7 @@ describe("고객 견적 요청 레포지토리", () => {
         status: "PENDING",
       };
 
-      mockPrisma.estimateRequest.findUnique.mockResolvedValue(
-        mockEstimateRequest
-      );
+      mockEstimateRequest.findUnique.mockResolvedValue(mockEstimateRequestData);
 
       // Act
       const result =
@@ -431,8 +509,8 @@ describe("고객 견적 요청 레포지토리", () => {
         );
 
       // Assert
-      expect(result).toEqual(mockEstimateRequest);
-      expect(mockPrisma.estimateRequest.findUnique).toHaveBeenCalledWith({
+      expect(result).toEqual(mockEstimateRequestData);
+      expect(mockEstimateRequest.findUnique).toHaveBeenCalledWith({
         where: { id: estimateRequestId },
       });
     });
@@ -441,7 +519,7 @@ describe("고객 견적 요청 레포지토리", () => {
       // Arrange
       const estimateRequestId = "estimateRequest123";
 
-      mockPrisma.estimateRequest.findUnique.mockResolvedValue(null);
+      mockEstimateRequest.findUnique.mockResolvedValue(null);
 
       // Act
       const result =
@@ -459,7 +537,7 @@ describe("고객 견적 요청 레포지토리", () => {
       // Arrange
       const estimateId = "estimate123";
       const estimateRequestId = "estimateRequest123";
-      const mockEstimate = {
+      const mockEstimateData = {
         id: "estimate123",
         estimateRequestId: "estimateRequest123",
         price: 500000,
@@ -469,7 +547,7 @@ describe("고객 견적 요청 레포지토리", () => {
         createdAt: new Date(),
       };
 
-      mockPrisma.estimate.findUnique.mockResolvedValue(mockEstimate);
+      mockEstimate.findUnique.mockResolvedValue(mockEstimateData);
 
       // Act
       const result =
@@ -479,8 +557,8 @@ describe("고객 견적 요청 레포지토리", () => {
         );
 
       // Assert
-      expect(result).toEqual(mockEstimate);
-      expect(mockPrisma.estimate.findUnique).toHaveBeenCalledWith({
+      expect(result).toEqual(mockEstimateData);
+      expect(mockEstimate.findUnique).toHaveBeenCalledWith({
         where: {
           id: estimateId,
           estimateRequestId: estimateRequestId,
@@ -493,7 +571,7 @@ describe("고객 견적 요청 레포지토리", () => {
       const estimateId = "estimate123";
       const estimateRequestId = "estimateRequest123";
 
-      mockPrisma.estimate.findUnique.mockResolvedValue(null);
+      mockEstimate.findUnique.mockResolvedValue(null);
 
       // Act
       const result =
@@ -517,9 +595,7 @@ describe("고객 견적 요청 레포지토리", () => {
         status: "APPROVED",
       };
 
-      mockPrisma.estimateRequest.update.mockResolvedValue(
-        mockUpdatedEstimateRequest
-      );
+      mockEstimateRequest.update.mockResolvedValue(mockUpdatedEstimateRequest);
 
       // Act
       const result =
@@ -530,7 +606,7 @@ describe("고객 견적 요청 레포지토리", () => {
 
       // Assert
       expect(result).toEqual(mockUpdatedEstimateRequest);
-      expect(mockPrisma.estimateRequest.update).toHaveBeenCalledWith({
+      expect(mockEstimateRequest.update).toHaveBeenCalledWith({
         where: { id: estimateRequestId },
         data: { status },
       });
@@ -547,7 +623,7 @@ describe("고객 견적 요청 레포지토리", () => {
         status: "REJECTED",
       };
 
-      mockPrisma.estimate.update.mockResolvedValue(mockUpdatedEstimate);
+      mockEstimate.update.mockResolvedValue(mockUpdatedEstimate);
 
       // Act
       const result =
@@ -558,7 +634,7 @@ describe("고객 견적 요청 레포지토리", () => {
 
       // Assert
       expect(result).toEqual(mockUpdatedEstimate);
-      expect(mockPrisma.estimate.update).toHaveBeenCalledWith({
+      expect(mockEstimate.update).toHaveBeenCalledWith({
         where: { id: estimateId },
         data: { status },
       });
@@ -572,7 +648,7 @@ describe("고객 견적 요청 레포지토리", () => {
       const status = "AUTO_REJECTED";
       const excludeEstimateId = "estimate123";
 
-      mockPrisma.estimate.updateMany.mockResolvedValue({ count: 2 });
+      mockEstimate.updateMany.mockResolvedValue({ count: 2 });
 
       // Act
       await customerEstimateRequestRepository.updateAllEstimatesStatus(
@@ -582,7 +658,7 @@ describe("고객 견적 요청 레포지토리", () => {
       );
 
       // Assert
-      expect(mockPrisma.estimate.updateMany).toHaveBeenCalledWith({
+      expect(mockEstimate.updateMany).toHaveBeenCalledWith({
         where: {
           estimateRequestId: estimateRequestId,
           id: { not: excludeEstimateId },
@@ -596,7 +672,7 @@ describe("고객 견적 요청 레포지토리", () => {
       const estimateRequestId = "estimateRequest123";
       const status = "AUTO_REJECTED";
 
-      mockPrisma.estimate.updateMany.mockResolvedValue({ count: 3 });
+      mockEstimate.updateMany.mockResolvedValue({ count: 3 });
 
       // Act
       await customerEstimateRequestRepository.updateAllEstimatesStatus(
@@ -605,12 +681,469 @@ describe("고객 견적 요청 레포지토리", () => {
       );
 
       // Assert
-      expect(mockPrisma.estimate.updateMany).toHaveBeenCalledWith({
+      expect(mockEstimate.updateMany).toHaveBeenCalledWith({
         where: {
           estimateRequestId: estimateRequestId,
         },
         data: { status },
       });
+    });
+  });
+
+  describe("견적 ID로 견적 조회", () => {
+    it("성공적으로 견적을 조회한다", async () => {
+      // Arrange
+      const estimateId = "estimate123";
+      const mockEstimateData = {
+        id: "estimate123",
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: "합리적인 가격",
+        status: "PROPOSED",
+        isDesignated: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      };
+
+      mockEstimate.findUnique.mockResolvedValue(mockEstimateData);
+
+      // Act
+      const result =
+        await customerEstimateRequestRepository.getEstimateById(estimateId);
+
+      // Assert
+      expect(result).toEqual(mockEstimateData);
+      expect(mockEstimate.findUnique).toHaveBeenCalledWith({
+        where: { id: estimateId },
+      });
+    });
+
+    it("견적이 없을 때 null을 반환한다", async () => {
+      // Arrange
+      const estimateId = "estimate123";
+
+      mockEstimate.findUnique.mockResolvedValue(null);
+
+      // Act
+      const result =
+        await customerEstimateRequestRepository.getEstimateById(estimateId);
+
+      // Assert
+      expect(result).toBeNull();
+    });
+
+    it("데이터베이스 에러 발생 시 RepositoryQueryError를 던진다", async () => {
+      // Arrange
+      const estimateId = "estimate123";
+      const mockError = new Error("Database error");
+
+      mockEstimate.findUnique.mockRejectedValue(mockError);
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestRepository.getEstimateById(estimateId)
+      ).rejects.toThrow(RepositoryQueryError);
+    });
+  });
+
+  describe("견적 상세 정보 조회", () => {
+    it("성공적으로 견적 상세 정보를 조회한다", async () => {
+      // Arrange
+      const estimateId = "estimate123";
+      const mockEstimateDetail = {
+        id: "estimate123",
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        status: "PROPOSED",
+        isDesignated: false,
+        mover: {
+          id: "mover123",
+          name: "이사업체A",
+          nickname: null,
+        },
+        estimateRequest: {
+          id: "estimateRequest123",
+          customerId: "customer123",
+          moveType: "HOME",
+          moveDate: new Date(),
+          customer: {
+            id: "customer123",
+            name: "고객A",
+          },
+        },
+      };
+
+      mockEstimate.findUnique.mockResolvedValue(mockEstimateDetail);
+
+      // Act
+      const result =
+        await customerEstimateRequestRepository.getEstimateDetailForAction(
+          estimateId
+        );
+
+      // Assert
+      expect(result).toEqual(mockEstimateDetail);
+      expect(mockEstimate.findUnique).toHaveBeenCalledWith({
+        where: { id: estimateId },
+        select: {
+          id: true,
+          moverId: true,
+          estimateRequestId: true,
+          status: true,
+          isDesignated: true,
+          mover: {
+            select: {
+              id: true,
+              name: true,
+              nickname: true,
+            },
+          },
+          estimateRequest: {
+            select: {
+              id: true,
+              customerId: true,
+              moveType: true,
+              moveDate: true,
+              customer: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    });
+
+    it("견적이 없을 때 null을 반환한다", async () => {
+      // Arrange
+      const estimateId = "estimate123";
+
+      mockEstimate.findUnique.mockResolvedValue(null);
+
+      // Act
+      const result =
+        await customerEstimateRequestRepository.getEstimateDetailForAction(
+          estimateId
+        );
+
+      // Assert
+      expect(result).toBeNull();
+    });
+
+    it("데이터베이스 에러 발생 시 RepositoryQueryError를 던진다", async () => {
+      // Arrange
+      const estimateId = "estimate123";
+      const mockError = new Error("Database error");
+
+      mockEstimate.findUnique.mockRejectedValue(mockError);
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestRepository.getEstimateDetailForAction(estimateId)
+      ).rejects.toThrow(RepositoryQueryError);
+    });
+  });
+
+  describe("다른 견적들 조회", () => {
+    it("성공적으로 다른 견적들을 조회한다", async () => {
+      // Arrange
+      const estimateRequestId = "estimateRequest123";
+      const excludeEstimateId = "estimate123";
+      const mockOtherEstimates = [
+        {
+          id: "estimate2",
+          moverId: "mover456",
+          status: "PROPOSED",
+          isDesignated: false,
+        },
+        {
+          id: "estimate3",
+          moverId: "mover789",
+          status: "ACCEPTED",
+          isDesignated: true,
+        },
+      ];
+
+      mockEstimate.findMany.mockResolvedValue(mockOtherEstimates);
+
+      // Act
+      const result = await customerEstimateRequestRepository.getOtherEstimates(
+        estimateRequestId,
+        excludeEstimateId
+      );
+
+      // Assert
+      expect(result).toEqual(mockOtherEstimates);
+      expect(mockEstimate.findMany).toHaveBeenCalledWith({
+        where: {
+          estimateRequestId: estimateRequestId,
+          id: { not: excludeEstimateId },
+          status: { in: ["PROPOSED", "ACCEPTED"] },
+        },
+        select: {
+          id: true,
+          moverId: true,
+          status: true,
+          isDesignated: true,
+        },
+      });
+    });
+
+    it("다른 견적이 없을 때 빈 배열을 반환한다", async () => {
+      // Arrange
+      const estimateRequestId = "estimateRequest123";
+      const excludeEstimateId = "estimate123";
+
+      mockEstimate.findMany.mockResolvedValue([]);
+
+      // Act
+      const result = await customerEstimateRequestRepository.getOtherEstimates(
+        estimateRequestId,
+        excludeEstimateId
+      );
+
+      // Assert
+      expect(result).toEqual([]);
+    });
+
+    it("데이터베이스 에러 발생 시 RepositoryQueryError를 던진다", async () => {
+      // Arrange
+      const estimateRequestId = "estimateRequest123";
+      const excludeEstimateId = "estimate123";
+      const mockError = new Error("Database error");
+
+      mockEstimate.findMany.mockRejectedValue(mockError);
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestRepository.getOtherEstimates(
+          estimateRequestId,
+          excludeEstimateId
+        )
+      ).rejects.toThrow(RepositoryQueryError);
+    });
+  });
+
+  describe("AUTO_REJECTED된 견적들 조회", () => {
+    it("성공적으로 AUTO_REJECTED된 견적들을 조회한다", async () => {
+      // Arrange
+      const estimateRequestId = "estimateRequest123";
+      const excludeEstimateId = "estimate123";
+      const mockAutoRejectedEstimates = [
+        {
+          id: "estimate2",
+          moverId: "mover456",
+          status: "AUTO_REJECTED",
+          isDesignated: false,
+        },
+        {
+          id: "estimate3",
+          moverId: "mover789",
+          status: "AUTO_REJECTED",
+          isDesignated: true,
+        },
+      ];
+
+      mockEstimate.findMany.mockResolvedValue(mockAutoRejectedEstimates);
+
+      // Act
+      const result =
+        await customerEstimateRequestRepository.getAutoRejectedEstimates(
+          estimateRequestId,
+          excludeEstimateId
+        );
+
+      // Assert
+      expect(result).toEqual(mockAutoRejectedEstimates);
+      expect(mockEstimate.findMany).toHaveBeenCalledWith({
+        where: {
+          estimateRequestId: estimateRequestId,
+          id: { not: excludeEstimateId },
+          status: { in: ["PROPOSED", "ACCEPTED", "AUTO_REJECTED"] },
+        },
+        select: {
+          id: true,
+          moverId: true,
+          status: true,
+          isDesignated: true,
+        },
+      });
+    });
+
+    it("AUTO_REJECTED된 견적이 없을 때 빈 배열을 반환한다", async () => {
+      // Arrange
+      const estimateRequestId = "estimateRequest123";
+      const excludeEstimateId = "estimate123";
+
+      mockEstimate.findMany.mockResolvedValue([]);
+
+      // Act
+      const result =
+        await customerEstimateRequestRepository.getAutoRejectedEstimates(
+          estimateRequestId,
+          excludeEstimateId
+        );
+
+      // Assert
+      expect(result).toEqual([]);
+    });
+
+    it("데이터베이스 에러 발생 시 RepositoryQueryError를 던진다", async () => {
+      // Arrange
+      const estimateRequestId = "estimateRequest123";
+      const excludeEstimateId = "estimate123";
+      const mockError = new Error("Database error");
+
+      mockEstimate.findMany.mockRejectedValue(mockError);
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestRepository.getAutoRejectedEstimates(
+          estimateRequestId,
+          excludeEstimateId
+        )
+      ).rejects.toThrow(RepositoryQueryError);
+    });
+  });
+
+  describe("기사님의 전체 찜 개수 조회", () => {
+    it("성공적으로 기사님의 찜 개수를 조회한다", async () => {
+      // Arrange
+      const moverId = "mover123";
+      const mockFavoriteCount = 15;
+
+      mockFavorite.count.mockResolvedValue(mockFavoriteCount);
+
+      // Act
+      const result =
+        await customerEstimateRequestRepository.getMoverFavoriteCount(moverId);
+
+      // Assert
+      expect(result).toBe(mockFavoriteCount);
+      expect(mockFavorite.count).toHaveBeenCalledWith({
+        where: {
+          moverId: moverId,
+          deletedAt: null,
+        },
+      });
+    });
+
+    it("찜이 없을 때 0을 반환한다", async () => {
+      // Arrange
+      const moverId = "mover123";
+
+      mockFavorite.count.mockResolvedValue(0);
+
+      // Act
+      const result =
+        await customerEstimateRequestRepository.getMoverFavoriteCount(moverId);
+
+      // Assert
+      expect(result).toBe(0);
+    });
+
+    it("데이터베이스 에러 발생 시 RepositoryQueryError를 던진다", async () => {
+      // Arrange
+      const moverId = "mover123";
+      const mockError = new Error("Database error");
+
+      mockFavorite.count.mockRejectedValue(mockError);
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestRepository.getMoverFavoriteCount(moverId)
+      ).rejects.toThrow(RepositoryQueryError);
+    });
+  });
+
+  describe("여러 기사님의 찜 개수 일괄 조회", () => {
+    it("성공적으로 여러 기사님의 찜 개수를 조회한다", async () => {
+      // Arrange
+      const moverIds = ["mover123", "mover456", "mover789"];
+      const mockFavoriteCounts = [
+        { moverId: "mover123", _count: { moverId: 15 } },
+        { moverId: "mover456", _count: { moverId: 8 } },
+        { moverId: "mover789", _count: { moverId: 22 } },
+      ];
+
+      mockFavorite.groupBy.mockResolvedValue(mockFavoriteCounts);
+
+      // Act
+      const result =
+        await customerEstimateRequestRepository.getMoversFavoriteCounts(
+          moverIds
+        );
+
+      // Assert
+      expect(result).toEqual({
+        mover123: 15,
+        mover456: 8,
+        mover789: 22,
+      });
+      expect(mockFavorite.groupBy).toHaveBeenCalledWith({
+        by: ["moverId"],
+        where: {
+          moverId: { in: moverIds },
+          deletedAt: null,
+        },
+        _count: {
+          moverId: true,
+        },
+      });
+    });
+
+    it("일부 기사님의 찜이 없을 때 0으로 설정한다", async () => {
+      // Arrange
+      const moverIds = ["mover123", "mover456", "mover789"];
+      const mockFavoriteCounts = [
+        { moverId: "mover123", _count: { moverId: 15 } },
+        { moverId: "mover789", _count: { moverId: 22 } },
+      ];
+
+      mockFavorite.groupBy.mockResolvedValue(mockFavoriteCounts);
+
+      // Act
+      const result =
+        await customerEstimateRequestRepository.getMoversFavoriteCounts(
+          moverIds
+        );
+
+      // Assert
+      expect(result).toEqual({
+        mover123: 15,
+        mover456: 0,
+        mover789: 22,
+      });
+    });
+
+    it("빈 배열일 때 빈 객체를 반환한다", async () => {
+      // Arrange
+      const moverIds: string[] = [];
+
+      // Act
+      const result =
+        await customerEstimateRequestRepository.getMoversFavoriteCounts(
+          moverIds
+        );
+
+      // Assert
+      expect(result).toEqual({});
+    });
+
+    it("데이터베이스 에러 발생 시 RepositoryQueryError를 던진다", async () => {
+      // Arrange
+      const moverIds = ["mover123", "mover456"];
+      const mockError = new Error("Database error");
+
+      mockFavorite.groupBy.mockRejectedValue(mockError);
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestRepository.getMoversFavoriteCounts(moverIds)
+      ).rejects.toThrow(RepositoryQueryError);
     });
   });
 });

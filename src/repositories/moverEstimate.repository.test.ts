@@ -31,7 +31,47 @@ jest.mock("@prisma/client", () => {
       user: mockUser,
       estimate: mockEstimate,
       designatedMover: mockDesignatedMover,
+      $use: jest.fn(),
+      $connect: jest.fn(),
+      $disconnect: jest.fn(),
     })),
+    NotificationType: {
+      WELCOME: "WELCOME",
+      ESTIMATE_REQUEST_ARRIVED: "ESTIMATE_REQUEST_ARRIVED",
+      ESTIMATE_ARRIVED: "ESTIMATE_ARRIVED",
+      ESTIMATE_STATUS_UPDATED: "ESTIMATE_STATUS_UPDATED",
+      DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED:
+        "DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED",
+      DESIGNATED_ESTIMATE_STATUS_UPDATED: "DESIGNATED_ESTIMATE_STATUS_UPDATED",
+      REVIEW_EVENT: "REVIEW_EVENT",
+      FAVORITE_EVENT: "FAVORITE_EVENT",
+      MOVE_DAY_REMINDER: "MOVE_DAY_REMINDER",
+    },
+    ActionType: {
+      WELCOME: "WELCOME",
+      ESTIMATE_REQUEST_CREATE: "ESTIMATE_REQUEST_CREATE",
+      ESTIMATE_SUBMITTED: "ESTIMATE_SUBMITTED",
+      ESTIMATE_ACCEPTED: "ESTIMATE_ACCEPTED",
+      ESTIMATE_REJECTED: "ESTIMATE_REJECTED",
+      DESIGNATED_ESTIMATE_REQUEST_SUBMITTED:
+        "DESIGNATED_ESTIMATE_REQUEST_SUBMITTED",
+      DESIGNATED_ESTIMATE_REQUEST_REJECTED:
+        "DESIGNATED_ESTIMATE_REQUEST_REJECTED",
+    },
+    EstimateStatus: {
+      PROPOSED: "PROPOSED",
+      ACCEPTED: "ACCEPTED",
+      REJECTED: "REJECTED",
+      AUTO_REJECTED: "AUTO_REJECTED",
+    },
+    RequestStatus: {
+      PENDING: "PENDING",
+      APPROVED: "APPROVED",
+      COMPLETED: "COMPLETED",
+      REJECTED: "REJECTED",
+      CANCELLED: "CANCELLED",
+      EXPIRED: "EXPIRED",
+    },
   };
 });
 
@@ -1391,6 +1431,67 @@ describe("이사업체 견적 레포지토리", () => {
       // Act & Assert
       await expect(
         moverEstimateRepository.updateEstimatePrice(estimateId, price, comment)
+      ).rejects.toThrow(RepositoryQueryError);
+    });
+  });
+
+  describe("견적 ID로 견적 조회", () => {
+    it("성공적으로 견적을 조회한다", async () => {
+      // Arrange
+      const estimateId = "estimate123";
+      const mockEstimateData = {
+        id: "estimate123",
+        estimateRequestId: "estimateRequest123",
+        moverId: "mover123",
+        price: 500000,
+        comment: "합리적인 가격",
+        status: "PROPOSED" as EstimateStatus,
+        rejectReason: null,
+        isDesignated: false,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      };
+
+      mockEstimate.findUnique.mockResolvedValue(mockEstimateData);
+
+      // Act
+      const result = await moverEstimateRepository.getEstimateById(estimateId);
+
+      // Assert
+      expect(result).toEqual(mockEstimateData);
+      expect(mockEstimate.findUnique).toHaveBeenCalledWith({
+        where: { id: estimateId },
+      });
+    });
+
+    it("견적이 없을 때 null을 반환한다", async () => {
+      // Arrange
+      const estimateId = "estimate123";
+
+      mockEstimate.findUnique.mockResolvedValue(null);
+
+      // Act
+      const result = await moverEstimateRepository.getEstimateById(estimateId);
+
+      // Assert
+      expect(result).toBeNull();
+    });
+
+    it("데이터베이스 에러 발생 시 RepositoryQueryError를 던진다", async () => {
+      // Arrange
+      const estimateId = "estimate123";
+      const mockError = new Error("Database error");
+
+      mockEstimate.findUnique.mockRejectedValue(mockError);
+
+      // Act & Assert
+      await expect(
+        moverEstimateRepository.getEstimateById(estimateId)
       ).rejects.toThrow(RepositoryQueryError);
     });
   });

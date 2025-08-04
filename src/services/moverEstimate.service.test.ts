@@ -1633,7 +1633,7 @@ describe("이사업체 견적 서비스", () => {
       };
 
       mockedRepository.checkEstimateOwnership.mockResolvedValue(true);
-      mockedRepository.findExistingEstimate.mockResolvedValue({
+      mockedRepository.getEstimateById.mockResolvedValue({
         id: "estimate123",
         status: ESTIMATE_STATUS.PROPOSED,
         createdAt: new Date(),
@@ -1688,7 +1688,7 @@ describe("이사업체 견적 서비스", () => {
     test("견적 상태가 PROPOSED가 아닐 때 MoverInvalidEstimateStatusError를 던진다", async () => {
       // Arrange
       mockedRepository.checkEstimateOwnership.mockResolvedValue(true);
-      mockedRepository.findExistingEstimate.mockResolvedValue({
+      mockedRepository.getEstimateById.mockResolvedValue({
         id: "estimate123",
         status: ESTIMATE_STATUS.ACCEPTED,
         createdAt: new Date(),

@@ -126,6 +126,11 @@ describe("고객 견적 요청 서비스", () => {
       mockCustomerEstimateRequestRepository.getPendingEstimateRequest.mockResolvedValue(
         mockRawData
       );
+      mockCustomerEstimateRequestRepository.getMoversFavoriteCounts.mockResolvedValue(
+        {
+          mover123: 5,
+        }
+      );
 
       // Act
       const result =
@@ -287,6 +292,11 @@ describe("고객 견적 요청 서비스", () => {
       mockCustomerEstimateRequestRepository.getReceivedEstimateRequests.mockResolvedValue(
         mockRawData
       );
+      mockCustomerEstimateRequestRepository.getMoversFavoriteCounts.mockResolvedValue(
+        {
+          mover123: 5,
+        }
+      );
 
       // Act
       const result =
@@ -351,7 +361,7 @@ describe("고객 견적 요청 서비스", () => {
       ]);
     });
 
-    it("완료된 견적요청이 없을 때 NotFoundError를 던진다", async () => {
+    it("완료된 견적요청이 없을 때 빈 배열을 반환한다", async () => {
       // Arrange
       const userId = "user123";
 
@@ -359,10 +369,14 @@ describe("고객 견적 요청 서비스", () => {
         []
       );
 
-      // Act & Assert
-      await expect(
-        customerEstimateRequestService.getReceivedEstimateRequests(userId)
-      ).rejects.toThrow(NotFoundError);
+      // Act
+      const result =
+        await customerEstimateRequestService.getReceivedEstimateRequests(
+          userId
+        );
+
+      // Assert
+      expect(result).toEqual([]);
     });
   });
 
@@ -736,6 +750,23 @@ describe("고객 견적 요청 서비스", () => {
       mockCustomerEstimateRequestRepository.getEstimateRequestById.mockResolvedValue(
         mockEstimateRequest
       );
+      mockCustomerEstimateRequestRepository.getEstimateDetailForAction.mockResolvedValue(
+        {
+          id: "estimate123",
+          status: "PROPOSED" as EstimateStatus,
+          moverId: "mover123",
+          estimateRequestId: "estimateRequest123",
+          isDesignated: false,
+          mover: { id: "mover123", name: "이사업체A", nickname: null },
+          estimateRequest: {
+            id: "estimateRequest123",
+            customerId: "customer123",
+            moveType: "HOME" as MoveType,
+            moveDate: new Date("2025-08-10"),
+            customer: { id: "customer123", name: "고객A" },
+          },
+        }
+      );
       mockCustomerEstimateRequestRepository.updateEstimateStatus.mockResolvedValue(
         mockCancelledEstimate
       );
@@ -890,14 +921,31 @@ describe("고객 견적 요청 서비스", () => {
         toAddressId: "addr2",
       };
 
-      mockCustomerEstimateRequestRepository.getActiveEstimateRequest.mockResolvedValue(
-        activeEstimateRequestId
-      );
-      mockCustomerEstimateRequestRepository.getEstimateByIdAndRequestId.mockResolvedValue(
+      mockCustomerEstimateRequestRepository.getEstimateById.mockResolvedValue(
         mockEstimate
       );
       mockCustomerEstimateRequestRepository.getEstimateRequestById.mockResolvedValue(
         mockEstimateRequest
+      );
+      mockCustomerEstimateRequestRepository.getEstimateByIdAndRequestId.mockResolvedValue(
+        mockEstimate
+      );
+      mockCustomerEstimateRequestRepository.getEstimateDetailForAction.mockResolvedValue(
+        {
+          id: "estimate123",
+          status: "ACCEPTED" as EstimateStatus,
+          moverId: "mover123",
+          estimateRequestId: "estimateRequest123",
+          isDesignated: false,
+          mover: { id: "mover123", name: "이사업체A", nickname: null },
+          estimateRequest: {
+            id: "estimateRequest123",
+            customerId: "customer123",
+            moveType: "HOME" as MoveType,
+            moveDate: new Date("2025-08-10"),
+            customer: { id: "customer123", name: "고객A" },
+          },
+        }
       );
       mockCustomerEstimateRequestRepository.updateEstimateRequestStatus.mockResolvedValue(
         mockCompletedEstimateRequest
@@ -966,19 +1014,19 @@ describe("고객 견적 요청 서비스", () => {
       ).toHaveBeenCalledWith(activeEstimateRequestId, "COMPLETED");
     });
 
-    it("진행중인 견적요청이 없을 때 ServiceError를 던진다", async () => {
+    it("견적이 존재하지 않을 때 NotFoundError를 던진다", async () => {
       // Arrange
       const userId = "user123";
       const estimateId = "estimate123";
 
-      mockCustomerEstimateRequestRepository.getActiveEstimateRequest.mockResolvedValue(
+      mockCustomerEstimateRequestRepository.getEstimateById.mockResolvedValue(
         null
       );
 
       // Act & Assert
       await expect(
         customerEstimateRequestService.completeEstimate(userId, estimateId)
-      ).rejects.toThrow(ServiceError);
+      ).rejects.toThrow(NotFoundError);
     });
 
     it("견적이 존재하지 않을 때 NotFoundError를 던진다", async () => {
@@ -1000,11 +1048,10 @@ describe("고객 견적 요청 서비스", () => {
       ).rejects.toThrow(NotFoundError);
     });
 
-    it("확정되지 않은 견적요청일 때 ServiceValidationError를 던진다", async () => {
+    it("견적요청에 대한 권한이 없을 때 ServiceError를 던진다", async () => {
       // Arrange
       const userId = "user123";
       const estimateId = "estimate123";
-      const activeEstimateRequestId = "estimateRequest123";
       const mockEstimate: TestEstimate = {
         id: "estimate123",
         status: "ACCEPTED" as EstimateStatus,
@@ -1024,8 +1071,8 @@ describe("고객 견적 요청 서비스", () => {
       };
       const mockEstimateRequest: TestEstimateRequest = {
         id: "estimateRequest123",
-        status: "PENDING" as RequestStatus,
-        customerId: "user123",
+        status: "APPROVED" as RequestStatus,
+        customerId: "otherUser", // 다른 사용자
         moveType: "HOME" as MoveType,
         moveDate: new Date("2025-08-10"),
         createdAt: new Date(),
@@ -1036,10 +1083,7 @@ describe("고객 견적 요청 서비스", () => {
         toAddressId: "addr2",
       };
 
-      mockCustomerEstimateRequestRepository.getActiveEstimateRequest.mockResolvedValue(
-        activeEstimateRequestId
-      );
-      mockCustomerEstimateRequestRepository.getEstimateByIdAndRequestId.mockResolvedValue(
+      mockCustomerEstimateRequestRepository.getEstimateById.mockResolvedValue(
         mockEstimate
       );
       mockCustomerEstimateRequestRepository.getEstimateRequestById.mockResolvedValue(
@@ -1049,12 +1093,12 @@ describe("고객 견적 요청 서비스", () => {
       // Act & Assert
       await expect(
         customerEstimateRequestService.completeEstimate(userId, estimateId)
-      ).rejects.toThrow(ServiceValidationError);
+      ).rejects.toThrow(ServiceError);
     });
   });
 
   describe("진행중인 견적 데이터 변환", () => {
-    it("성공적으로 진행중인 견적 데이터를 변환한다", () => {
+    it("성공적으로 진행중인 견적 데이터를 변환한다", async () => {
       // Arrange
       const mockRawData: TestEstimateRequestWithRelations = {
         id: "estimateRequest123",
@@ -1118,9 +1162,15 @@ describe("고객 견적 요청 서비스", () => {
         ],
       };
 
+      mockCustomerEstimateRequestRepository.getMoversFavoriteCounts.mockResolvedValue(
+        {
+          mover123: 5,
+        }
+      );
+
       // Act
       const result =
-        customerEstimateRequestService.transformPendingEstimateData(
+        await customerEstimateRequestService.transformPendingEstimateData(
           mockRawData
         );
 
@@ -1179,10 +1229,10 @@ describe("고객 견적 요청 서비스", () => {
       });
     });
 
-    it("빈 데이터일 때 빈 결과를 반환한다", () => {
+    it("빈 데이터일 때 빈 결과를 반환한다", async () => {
       // Act
       const result =
-        customerEstimateRequestService.transformPendingEstimateData(null);
+        await customerEstimateRequestService.transformPendingEstimateData(null);
 
       // Assert
       expect(result).toEqual({
@@ -1193,7 +1243,7 @@ describe("고객 견적 요청 서비스", () => {
   });
 
   describe("완료된 견적 데이터 변환", () => {
-    it("성공적으로 완료된 견적 데이터를 변환한다", () => {
+    it("성공적으로 완료된 견적 데이터를 변환한다", async () => {
       // Arrange
       const mockRawData: TestMultipleEstimateRequestWithRelations = [
         {
@@ -1249,9 +1299,15 @@ describe("고객 견적 요청 서비스", () => {
         },
       ];
 
+      mockCustomerEstimateRequestRepository.getMoversFavoriteCounts.mockResolvedValue(
+        {
+          mover123: 5,
+        }
+      );
+
       // Act
       const result =
-        customerEstimateRequestService.transformReceivedEstimateData(
+        await customerEstimateRequestService.transformReceivedEstimateData(
           mockRawData
         );
 
@@ -1302,10 +1358,10 @@ describe("고객 견적 요청 서비스", () => {
       ]);
     });
 
-    it("빈 데이터일 때 빈 배열을 반환한다", () => {
+    it("빈 데이터일 때 빈 배열을 반환한다", async () => {
       // Act
       const result =
-        customerEstimateRequestService.transformReceivedEstimateData([]);
+        await customerEstimateRequestService.transformReceivedEstimateData([]);
 
       // Assert
       expect(result).toEqual([]);
