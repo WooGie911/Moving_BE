@@ -1,4 +1,3 @@
-import { PrismaClient } from "@prisma/client";
 import customerEstimateRequestRepository from "../repositories/customerEstimateRequest.repository";
 import actionService from "./action.service";
 import { ActionType } from "@prisma/client";
@@ -23,8 +22,6 @@ import {
   TCancelEstimateResponse,
   TCompleteEstimateResponse,
 } from "../types/customerEstimateRequest";
-
-const prisma = new PrismaClient();
 
 const customerEstimateRequestService = {
   // 1. 진행중인 견적요청 조회
@@ -131,7 +128,7 @@ const customerEstimateRequestService = {
     }
   },
 
-  // 완료된 견적요청 목록 조회
+  // 완료/확정된 견적요청 목록 조회 (EXPIRED, COMPLETED, APPROVED 상태 포함)
   getReceivedEstimateRequests: async (
     userId: string
   ): Promise<TReceivedQuoteResponse[]> => {
@@ -148,7 +145,8 @@ const customerEstimateRequestService = {
 
       if (!rawResult || rawResult.length === 0) {
         // 비즈니스 로직: 완료된 견적요청이 없을 때의 처리
-        throw new NotFoundError("완료된 견적요청이 없습니다.");
+        // APPROVED 상태도 포함되므로 빈 배열 반환으로 변경
+        return [];
       }
 
       // 비즈니스 로직: 데이터 변환 및 가공
@@ -285,7 +283,10 @@ const customerEstimateRequestService = {
   ): Promise<TConfirmEstimateResponse> => {
     try {
       // 견적 상세 정보 조회 (액션 생성용)
-      const estimateDetail = await customerEstimateRequestRepository.getEstimateDetailForAction(estimateId);
+      const estimateDetail =
+        await customerEstimateRequestRepository.getEstimateDetailForAction(
+          estimateId
+        );
 
       // Prisma 트랜잭션으로 견적 확정 처리
       const result = await prisma.$transaction(async (tx) => {
@@ -330,30 +331,34 @@ const customerEstimateRequestService = {
         };
       });
 
-      
       // 4. AUTO_REJECTED된 견적들에 대한 액션 생성
-      const otherEstimates = await customerEstimateRequestRepository.getAutoRejectedEstimates(
-        estimateRequestId,
-        estimateId
-      );
+      const otherEstimates =
+        await customerEstimateRequestRepository.getAutoRejectedEstimates(
+          estimateRequestId,
+          estimateId
+        );
 
       for (const otherEstimate of otherEstimates) {
-        const otherEstimateDetail = await customerEstimateRequestRepository.getEstimateDetailForAction(
-          otherEstimate.id
-        );
-        
+        const otherEstimateDetail =
+          await customerEstimateRequestRepository.getEstimateDetailForAction(
+            otherEstimate.id
+          );
+
         if (otherEstimateDetail) {
           const otherActionType = otherEstimateDetail.isDesignated
             ? ActionType.DESIGNATED_ESTIMATE_REJECTED
             : ActionType.ESTIMATE_REJECTED;
-          
+
           await actionService.createAction(
             otherEstimateDetail.moverId,
             otherActionType,
             otherEstimate.id,
-            otherEstimateDetail.isDesignated ? "DESIGNATED_ESTIMATE" : "ESTIMATE",
+            otherEstimateDetail.isDesignated
+              ? "DESIGNATED_ESTIMATE"
+              : "ESTIMATE",
             {
-              customerName: otherEstimateDetail.estimateRequest?.customer?.name || "",
+              customerName:
+                otherEstimateDetail.estimateRequest?.customer?.name || "",
               moveType: otherEstimateDetail.estimateRequest?.moveType || "",
             }
           );
@@ -365,20 +370,20 @@ const customerEstimateRequestService = {
         const actionType = estimateDetail.isDesignated
           ? ActionType.DESIGNATED_ESTIMATE_ACCEPTED
           : ActionType.ESTIMATE_ACCEPTED;
-        
-                 await actionService.createAction(
-           estimateDetail.moverId,
-           actionType,
-           estimateId,
-           estimateDetail.isDesignated ? "DESIGNATED_ESTIMATE" : "ESTIMATE",
-           {
-             moverName: estimateDetail.mover?.name || "",
-             customerName: estimateDetail.estimateRequest?.customer?.name || "",
-             moveType: estimateDetail.estimateRequest?.moveType || "",
-             estimateRequestId: estimateDetail.estimateRequestId,
-             estimateId: estimateId,
-           }
-         );
+
+        await actionService.createAction(
+          estimateDetail.moverId,
+          actionType,
+          estimateId,
+          estimateDetail.isDesignated ? "DESIGNATED_ESTIMATE" : "ESTIMATE",
+          {
+            moverName: estimateDetail.mover?.name || "",
+            customerName: estimateDetail.estimateRequest?.customer?.name || "",
+            moveType: estimateDetail.estimateRequest?.moveType || "",
+            estimateRequestId: estimateDetail.estimateRequestId,
+            estimateId: estimateId,
+          }
+        );
       }
 
       return result;
@@ -432,8 +437,11 @@ const customerEstimateRequestService = {
       }
 
       // 4. 견적 상세 정보 조회 (액션 생성용)
-      const estimateDetail = await customerEstimateRequestRepository.getEstimateDetailForAction(estimateId);
-      
+      const estimateDetail =
+        await customerEstimateRequestRepository.getEstimateDetailForAction(
+          estimateId
+        );
+
       // 5. 비즈니스 로직: 견적 취소 처리
       const result =
         await customerEstimateRequestRepository.updateEstimateStatus(
@@ -450,7 +458,7 @@ const customerEstimateRequestService = {
         const actionType = estimateDetail.isDesignated
           ? ActionType.DESIGNATED_ESTIMATE_REJECTED
           : ActionType.ESTIMATE_REJECTED;
-        
+
         await actionService.createAction(
           estimateDetail.moverId,
           actionType,
@@ -483,44 +491,46 @@ const customerEstimateRequestService = {
     estimateId: string
   ): Promise<TCompleteEstimateResponse | null> => {
     try {
-      // 1. 진행중인 견적요청 확인
-      const activeEstimateRequestId =
-        await customerEstimateRequestRepository.getActiveEstimateRequest(
-          userId
-        );
-      if (!activeEstimateRequestId) {
-        throw new ServiceError("진행중인 견적요청이 없습니다.");
+      // 1. estimate로부터 estimateRequestId 조회
+      const estimateData =
+        await customerEstimateRequestRepository.getEstimateById(estimateId);
+      if (!estimateData) {
+        throw new NotFoundError("견적을 찾을 수 없습니다.");
       }
-      // 2. estimate가 해당 estimateRequest에 속하는지 확인
+
+      const estimateRequestId = estimateData.estimateRequestId;
+
+      // 2. 해당 견적요청이 사용자의 것인지 확인
+      const estimateRequestData =
+        await customerEstimateRequestRepository.getEstimateRequestById(
+          estimateRequestId
+        );
+      if (!estimateRequestData || estimateRequestData.customerId !== userId) {
+        throw new ServiceError("해당 견적요청에 대한 권한이 없습니다.");
+      }
+
+      // 3. estimate가 해당 estimateRequest에 속하는지 확인
       const estimate =
         await customerEstimateRequestRepository.getEstimateByIdAndRequestId(
           estimateId,
-          activeEstimateRequestId
+          estimateRequestId
         );
       if (!estimate) {
         throw new NotFoundError(
-          "현재 진행중인 견적요청에 대한 기사님들의 견적서가 존재하지 않습니다."
+          "해당 견적요청에 대한 기사님들의 견적서가 존재하지 않습니다."
         );
-      }
-      // 3. 확정된 견적요청인지 확인
-      const estimateRequest =
-        await customerEstimateRequestRepository.getEstimateRequestById(
-          activeEstimateRequestId
-        );
-      if (!estimateRequest) {
-        throw new NotFoundError("견적요청을 찾을 수 없습니다.");
-      }
-      if (estimateRequest.status !== "APPROVED") {
-        throw new ServiceValidationError("확정하지 않은 견적요청입니다.");
       }
 
       // 4. 견적 상세 정보 조회 (액션 생성용)
-      const estimateDetail = await customerEstimateRequestRepository.getEstimateDetailForAction(estimateId);
-      
+      const estimateDetail =
+        await customerEstimateRequestRepository.getEstimateDetailForAction(
+          estimateId
+        );
+
       // 5. 비즈니스 로직: 이사완료 처리
       const result =
         await customerEstimateRequestRepository.updateEstimateRequestStatus(
-          activeEstimateRequestId,
+          estimateRequestId,
           "COMPLETED"
         );
 
@@ -531,7 +541,7 @@ const customerEstimateRequestService = {
       // 주소 정보를 포함하여 반환
       const estimateRequestWithAddresses =
         await prisma.estimateRequest.findUnique({
-          where: { id: activeEstimateRequestId },
+          where: { id: estimateRequestId },
           include: {
             fromAddress: true,
             toAddress: true,
@@ -541,7 +551,7 @@ const customerEstimateRequestService = {
       if (!estimateRequestWithAddresses) {
         throw new NotFoundError("견적요청을 찾을 수 없습니다.");
       }
-      
+
       // 6. 이사 완료 후 리뷰 요청 액션 생성 (다음날 리뷰 요청)
       if (estimateDetail) {
         await actionService.createAction(
@@ -569,7 +579,6 @@ const customerEstimateRequestService = {
           toAddress: estimateRequestWithAddresses.toAddress,
         },
       };
-
     } catch (error) {
       if (error instanceof RepositoryError) {
         // Repository 에러를 Service 에러로 래핑

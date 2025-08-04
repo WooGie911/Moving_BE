@@ -127,6 +127,7 @@ export class TranslationService {
       if (!obj.trim() || /^\d+$/.test(obj)) {
         return obj;
       }
+
       return this.translateText(obj, targetLang);
     }
 
