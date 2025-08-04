@@ -148,6 +148,9 @@ const updateCustomerProfileCheck = async (
     }
   }
 
+  // 유효성 검사
+  await validateCustomerProfileData(updateData, userId);
+
   // 업데이트 데이터 준비
   const encryptedPhoneNumber = encryptPhoneNumber(updateData.phoneNumber!);
 
