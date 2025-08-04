@@ -335,7 +335,7 @@ describe("MoverRepository - 유닛 테스트", () => {
             Favorite: [
               { id: "favorite-1", deletedAt: null },
               { id: "favorite-2", deletedAt: null },
-              { id: "favorite-3", deletedAt: new Date() }, 
+              { id: "favorite-3", deletedAt: new Date() },
             ],
           },
         },
@@ -377,7 +377,7 @@ describe("MoverRepository - 유닛 테스트", () => {
       expect(result).toEqual([
         {
           ...mockFavorites[0].mover,
-          favoriteCount: 2, 
+          favoriteCount: 2,
         },
       ]);
     });
@@ -455,7 +455,7 @@ describe("MoverRepository - 유닛 테스트", () => {
       });
       expect(result).toEqual({
         ...mockMover,
-        favoriteCount: 2, 
+        favoriteCount: 2,
         isFavorited: true,
       });
     });
@@ -479,7 +479,7 @@ describe("MoverRepository - 유닛 테스트", () => {
         Favorite: [
           { id: "favorite-1", deletedAt: null },
           { id: "favorite-2", deletedAt: null },
-          { id: "favorite-3", deletedAt: new Date() }, 
+          { id: "favorite-3", deletedAt: new Date() },
         ],
       };
 
@@ -490,7 +490,7 @@ describe("MoverRepository - 유닛 테스트", () => {
 
       expect(result).toEqual({
         ...mockMover,
-        favoriteCount: 2, 
+        favoriteCount: 2,
         isFavorited: false,
       });
     });
@@ -525,7 +525,7 @@ describe("MoverRepository - 유닛 테스트", () => {
         Favorite: [
           { id: "favorite-1", deletedAt: null },
           { id: "favorite-2", deletedAt: null },
-          { id: "favorite-3", deletedAt: new Date() }, 
+          { id: "favorite-3", deletedAt: new Date() },
         ],
       };
 
@@ -554,7 +554,7 @@ describe("MoverRepository - 유닛 테스트", () => {
       expect(mockPrisma.favorite.findUnique).not.toHaveBeenCalled();
       expect(result).toEqual({
         ...mockMover,
-        favoriteCount: 2, 
+        favoriteCount: 2,
         isFavorited: false,
       });
     });

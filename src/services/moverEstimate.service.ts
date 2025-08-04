@@ -157,7 +157,6 @@ const moverEstimateService = {
         status: "PROPOSED",
         createdAt: estimate.createdAt,
       };
-
     } catch (error) {
       if (error instanceof RepositoryError) {
         throw new ServiceError(
@@ -289,7 +288,6 @@ const moverEstimateService = {
         status: "REJECTED",
         createdAt: estimate.createdAt,
       };
-
     } catch (error) {
       if (error instanceof RepositoryError) {
         throw new ServiceError(
@@ -653,11 +651,9 @@ const moverEstimateService = {
       }
 
       // 비즈니스 로직: 견적 상태 확인 (PROPOSED 상태만 수정 가능)
-      const existingEstimate =
-        await moverEstimateRepository.findExistingEstimate(
-          data.estimateId,
-          data.moverId
-        );
+      const existingEstimate = await moverEstimateRepository.getEstimateById(
+        data.estimateId
+      );
 
       if (existingEstimate && existingEstimate.status !== "PROPOSED") {
         throw new MoverInvalidEstimateStatusError();

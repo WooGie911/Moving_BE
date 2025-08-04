@@ -3,10 +3,10 @@ import { NotificationType } from "@prisma/client";
 import NotificationController from "./notification.controller";
 
 // 테스트용 Request 타입 정의
-interface TestRequest extends Omit<Request, 'user'> {
+interface TestRequest extends Omit<Request, "user"> {
   user?: {
     userId: string;
-    name: string;
+    name: string | null;
     userType: "CUSTOMER" | "MOVER";
     hasProfile: boolean;
   };

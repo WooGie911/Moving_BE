@@ -1,5 +1,11 @@
 import estimateRequestRepository from "./estimateRequest.repository";
-import { PrismaClient, RequestStatus, UserType, MoveType, RegionType } from "@prisma/client";
+import {
+  PrismaClient,
+  RequestStatus,
+  UserType,
+  MoveType,
+  RegionType,
+} from "@prisma/client";
 
 // Mock the module to return our mock
 jest.mock("@prisma/client", () => {
@@ -56,19 +62,27 @@ describe("EstimateRequest Repository 테스트", () => {
 
   // 1. 레포지토리 함수들이 존재하는지 확인
   it("1. 견적 요청 생성 함수가 존재한다", () => {
-    expect(typeof estimateRequestRepository.createEstimateRequest).toBe("function");
+    expect(typeof estimateRequestRepository.createEstimateRequest).toBe(
+      "function"
+    );
   });
 
   it("2. 활성 견적 요청 조회 함수가 존재한다", () => {
-    expect(typeof estimateRequestRepository.getActiveEstimateRequestByUserId).toBe("function");
+    expect(
+      typeof estimateRequestRepository.getActiveEstimateRequestByUserId
+    ).toBe("function");
   });
 
   it("3. 견적 요청 수정 함수가 존재한다", () => {
-    expect(typeof estimateRequestRepository.updateEstimateRequest).toBe("function");
+    expect(typeof estimateRequestRepository.updateEstimateRequest).toBe(
+      "function"
+    );
   });
 
   it("4. 견적 요청 취소 함수가 존재한다", () => {
-    expect(typeof estimateRequestRepository.cancelEstimateRequest).toBe("function");
+    expect(typeof estimateRequestRepository.cancelEstimateRequest).toBe(
+      "function"
+    );
   });
 
   it("5. 진행중인 요청 확인 함수가 존재한다", () => {
@@ -76,7 +90,9 @@ describe("EstimateRequest Repository 테스트", () => {
   });
 
   it("6. 기사님 견적 확인 함수가 존재한다", () => {
-    expect(typeof estimateRequestRepository.hasEstimateFromMover).toBe("function");
+    expect(typeof estimateRequestRepository.hasEstimateFromMover).toBe(
+      "function"
+    );
   });
 
   it("7. 사용자 타입 확인 함수가 존재한다", () => {
@@ -84,7 +100,9 @@ describe("EstimateRequest Repository 테스트", () => {
   });
 
   it("8. 주소 생성 함수가 존재한다", () => {
-    expect(typeof estimateRequestRepository.findOrCreateAddress).toBe("function");
+    expect(typeof estimateRequestRepository.findOrCreateAddress).toBe(
+      "function"
+    );
   });
 
   // 실제 함수 호출 테스트
@@ -107,9 +125,14 @@ describe("EstimateRequest Repository 테스트", () => {
         description: "이사 요청",
       };
 
-      mockPrisma.estimateRequest.create.mockResolvedValue(mockCreatedRequest as any);
+      mockPrisma.estimateRequest.create.mockResolvedValue(
+        mockCreatedRequest as any
+      );
 
-      const result = await estimateRequestRepository.createEstimateRequest(mockData, userId);
+      const result = await estimateRequestRepository.createEstimateRequest(
+        mockData,
+        userId
+      );
 
       expect(mockPrisma.estimateRequest.create).toHaveBeenCalledWith({
         data: {
@@ -154,9 +177,14 @@ describe("EstimateRequest Repository 테스트", () => {
         deletedAt: null,
       };
 
-      mockPrisma.estimateRequest.findFirst.mockResolvedValue(mockRequest as any);
+      mockPrisma.estimateRequest.findFirst.mockResolvedValue(
+        mockRequest as any
+      );
 
-      const result = await estimateRequestRepository.getActiveEstimateRequestByUserId(userId);
+      const result =
+        await estimateRequestRepository.getActiveEstimateRequestByUserId(
+          userId
+        );
 
       expect(mockPrisma.estimateRequest.findFirst).toHaveBeenCalledWith({
         where: {
@@ -216,9 +244,14 @@ describe("EstimateRequest Repository 테스트", () => {
         description: "수정된 이사",
       };
 
-      mockPrisma.estimateRequest.update.mockResolvedValue(mockUpdatedRequest as any);
+      mockPrisma.estimateRequest.update.mockResolvedValue(
+        mockUpdatedRequest as any
+      );
 
-      const result = await estimateRequestRepository.updateEstimateRequest(requestId, updateData);
+      const result = await estimateRequestRepository.updateEstimateRequest(
+        requestId,
+        updateData
+      );
 
       expect(mockPrisma.estimateRequest.update).toHaveBeenCalledWith({
         where: { id: requestId },
@@ -255,7 +288,8 @@ describe("EstimateRequest Repository 테스트", () => {
         });
       });
 
-      const result = await estimateRequestRepository.cancelEstimateRequest(requestId);
+      const result =
+        await estimateRequestRepository.cancelEstimateRequest(requestId);
 
       expect(mockPrisma.$transaction).toHaveBeenCalled();
       expect(result).toEqual(mockCancelledRequest);
@@ -269,7 +303,9 @@ describe("EstimateRequest Repository 테스트", () => {
         status: "PENDING",
       };
 
-      mockPrisma.estimateRequest.findFirst.mockResolvedValue(mockRequest as any);
+      mockPrisma.estimateRequest.findFirst.mockResolvedValue(
+        mockRequest as any
+      );
 
       const result = await estimateRequestRepository.hasPendingRequest(userId);
 
@@ -293,10 +329,13 @@ describe("EstimateRequest Repository 테스트", () => {
         estimateRequestId: "request-id",
       };
 
-      mockPrisma.estimateRequest.findFirst.mockResolvedValue(mockRequest as any);
+      mockPrisma.estimateRequest.findFirst.mockResolvedValue(
+        mockRequest as any
+      );
       mockPrisma.estimate.findFirst.mockResolvedValue(mockEstimate as any);
 
-      const result = await estimateRequestRepository.hasEstimateFromMover(userId);
+      const result =
+        await estimateRequestRepository.hasEstimateFromMover(userId);
 
       expect(mockPrisma.estimateRequest.findFirst).toHaveBeenCalledWith({
         where: {
@@ -348,7 +387,8 @@ describe("EstimateRequest Repository 테스트", () => {
 
       mockPrisma.address.create.mockResolvedValue(mockAddress as any);
 
-      const result = await estimateRequestRepository.findOrCreateAddress(addressData);
+      const result =
+        await estimateRequestRepository.findOrCreateAddress(addressData);
 
       expect(mockPrisma.address.create).toHaveBeenCalledWith({
         data: {
@@ -376,9 +416,9 @@ describe("EstimateRequest Repository 테스트", () => {
         });
       });
 
-      await expect(estimateRequestRepository.cancelEstimateRequest(requestId)).rejects.toThrow(
-        "견적 요청을 찾을 수 없습니다.",
-      );
+      await expect(
+        estimateRequestRepository.cancelEstimateRequest(requestId)
+      ).rejects.toThrow("견적 요청을 찾을 수 없습니다.");
     });
 
     it("사용자 타입 확인 시 사용자를 찾을 수 없는 경우", async () => {
@@ -386,7 +426,9 @@ describe("EstimateRequest Repository 테스트", () => {
 
       mockPrisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(estimateRequestRepository.checkUserType(userId)).rejects.toThrow("사용자를 찾을 수 없습니다.");
+      await expect(
+        estimateRequestRepository.checkUserType(userId)
+      ).rejects.toThrow("사용자를 찾을 수 없습니다.");
     });
 
     it("기사님 견적 확인 시 요청이 없는 경우", async () => {
@@ -394,7 +436,8 @@ describe("EstimateRequest Repository 테스트", () => {
 
       mockPrisma.estimateRequest.findFirst.mockResolvedValue(null);
 
-      const result = await estimateRequestRepository.hasEstimateFromMover(userId);
+      const result =
+        await estimateRequestRepository.hasEstimateFromMover(userId);
 
       expect(result).toBe(false);
     });
@@ -414,7 +457,10 @@ describe("EstimateRequest Repository 테스트", () => {
 
       mockPrisma.estimateRequest.findFirst.mockResolvedValue(null);
 
-      const result = await estimateRequestRepository.getActiveEstimateRequestByUserId(userId);
+      const result =
+        await estimateRequestRepository.getActiveEstimateRequestByUserId(
+          userId
+        );
 
       expect(result).toBe(null);
     });
@@ -433,7 +479,8 @@ describe("EstimateRequest Repository 테스트", () => {
 
       mockPrisma.address.create.mockResolvedValue(mockAddress as any);
 
-      const result = await estimateRequestRepository.findOrCreateAddress(addressData);
+      const result =
+        await estimateRequestRepository.findOrCreateAddress(addressData);
 
       expect(mockPrisma.address.create).toHaveBeenCalledWith({
         data: {
@@ -461,7 +508,8 @@ describe("EstimateRequest Repository 테스트", () => {
 
       mockPrisma.address.create.mockResolvedValue(mockAddress as any);
 
-      const result = await estimateRequestRepository.findOrCreateAddress(addressData);
+      const result =
+        await estimateRequestRepository.findOrCreateAddress(addressData);
 
       expect(mockPrisma.address.create).toHaveBeenCalledWith({
         data: {

@@ -62,7 +62,7 @@ const customerEstimateRequestService = {
       }
 
       // 비즈니스 로직: 데이터 변환 및 가공
-      return customerEstimateRequestService.transformPendingEstimateData(
+      return await customerEstimateRequestService.transformPendingEstimateData(
         rawData
       );
     } catch (error) {
@@ -79,9 +79,9 @@ const customerEstimateRequestService = {
   },
 
   // 비즈니스 로직: 진행중인 견적 데이터 변환
-  transformPendingEstimateData: (
+  transformPendingEstimateData: async (
     rawData: EstimateRequestWithRelations
-  ): TPendingQuoteResponse => {
+  ): Promise<TPendingQuoteResponse> => {
     try {
       if (!rawData) {
         return {
@@ -89,6 +89,14 @@ const customerEstimateRequestService = {
           estimates: [],
         };
       }
+
+      // 기사님들의 찜 개수 일괄 조회
+      const moverIds =
+        rawData.estimates?.map((estimate) => estimate.mover.id) ?? [];
+      const favoriteCounts =
+        await customerEstimateRequestRepository.getMoversFavoriteCounts(
+          moverIds
+        );
 
       return {
         estimateRequest: {
@@ -115,7 +123,7 @@ const customerEstimateRequestService = {
               // 비즈니스 로직: 찜 여부 계산
               isFavorite:
                 estimate.mover.Favorite && estimate.mover.Favorite.length > 0,
-              totalFavoriteCount: estimate.mover.totalFavoriteCount ?? 0,
+              totalFavoriteCount: favoriteCounts[estimate.mover.id] ?? 0,
               Favorite: estimate.mover.Favorite ?? [],
             },
           })) ?? [],
@@ -150,7 +158,7 @@ const customerEstimateRequestService = {
       }
 
       // 비즈니스 로직: 데이터 변환 및 가공
-      return customerEstimateRequestService.transformReceivedEstimateData(
+      return await customerEstimateRequestService.transformReceivedEstimateData(
         rawResult
       );
     } catch (error) {
@@ -167,11 +175,20 @@ const customerEstimateRequestService = {
   },
 
   // 비즈니스 로직: 완료된 견적 데이터 변환
-  transformReceivedEstimateData: (
+  transformReceivedEstimateData: async (
     rawData: MultipleEstimateRequestWithRelations
-  ): TReceivedQuoteResponse[] => {
+  ): Promise<TReceivedQuoteResponse[]> => {
     try {
       if (!rawData || rawData.length === 0) return [];
+
+      // 모든 기사님들의 찜 개수 일괄 조회
+      const allMoverIds = rawData.flatMap((request) =>
+        request.estimates.map((estimate) => estimate.mover.id)
+      );
+      const favoriteCounts =
+        await customerEstimateRequestRepository.getMoversFavoriteCounts(
+          allMoverIds
+        );
 
       return rawData.map((request) => ({
         estimateRequest: {
@@ -197,7 +214,7 @@ const customerEstimateRequestService = {
             // 비즈니스 로직: 찜 여부 계산
             isFavorite:
               estimate.mover.Favorite && estimate.mover.Favorite.length > 0,
-            totalFavoriteCount: estimate.mover.totalFavoriteCount ?? 0,
+            totalFavoriteCount: favoriteCounts[estimate.mover.id] ?? 0,
             Favorite: estimate.mover.Favorite ?? [],
           },
         })),
