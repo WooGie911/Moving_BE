@@ -49,10 +49,13 @@ export const validateScheduleInput = (moverId: string, year: number, month: numb
 export const formatAddressForTranslation = (address: AddressFormatInput): string => {
   const parts: string[] = [];
 
-  // 리전 (시/도) - region이 있으면 region을 사용, 없으면 city 사용
+  // 리전 (시/도)
   if (address.region) {
     parts.push(convertRegionToKorean(address.region));
-  } else if (address.city) {
+  }
+
+  // 시/군
+  if (address.city) {
     parts.push(address.city);
   }
 
