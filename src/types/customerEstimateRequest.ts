@@ -1,9 +1,4 @@
-import {
-  EstimateRequest,
-  Estimate,
-  User,
-  DesignatedMover,
-} from "@prisma/client";
+import { EstimateRequest, Estimate, User, DesignatedMover } from "@prisma/client";
 
 // 진행중인 견적 응답 타입
 export type TPendingQuoteResponse = {
@@ -59,7 +54,7 @@ export type TEstimateResponse = {
 
 export type TMoverInfo = {
   id: string;
-  name: string;
+  name: string | null;
   userType: string[];
   moverImage: string | null;
   nickname: string | null;
