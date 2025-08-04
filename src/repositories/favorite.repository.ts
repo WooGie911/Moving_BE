@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../db/prisma/prisma";
 
 // 찜하기 추가
 const addFavorite = async (customerId: string, moverId: string) => {

@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from "../db/prisma/prisma";
 import {
   TCreateMoverProfile,
   TCreateCustomerProfile,
@@ -9,8 +9,6 @@ import {
   TCustomerProfileUpdate,
   TMoverProfileUpdateInput,
 } from "../types/user.types";
-
-const prisma = new PrismaClient();
 
 // 사용자 정보 조회
 const getUserById = async (userId: string) => {
@@ -113,10 +111,7 @@ const createCustomerProfile = async (profileData: TCreateCustomerProfile) => {
 };
 
 // 일반 유저(CUSTOMER) 프로필 수정
-const updateCustomerProfile = async (
-  userId: string,
-  updateData: TCustomerProfileUpdate
-) => {
+const updateCustomerProfile = async (userId: string, updateData: TCustomerProfileUpdate) => {
   return await prisma.user.update({
     where: { id: userId },
     data: updateData,
@@ -161,10 +156,7 @@ const createMoverProfile = async (profileData: TCreateMoverProfile) => {
 };
 
 // 기사님 프로필 수정
-const updateMoverProfile = async (
-  userId: string,
-  updateData: TMoverProfileUpdateInput
-) => {
+const updateMoverProfile = async (userId: string, updateData: TMoverProfileUpdateInput) => {
   // currentAreas 배열을 그대로 사용
   const data = {
     ...updateData,
@@ -193,10 +185,7 @@ const updateMoverProfile = async (
 };
 
 // 닉네임 중복 확인
-const checkNicknameExists = async (
-  nickname: string,
-  excludeUserId?: string
-) => {
+const checkNicknameExists = async (nickname: string, excludeUserId?: string) => {
   const user = await prisma.user.findUnique({
     where: {
       nickname,
@@ -207,11 +196,7 @@ const checkNicknameExists = async (
 };
 
 // 사용자 프로필 업데이트
-const updateUserProfile = async (
-  userId: string,
-  updateData: TUpdateUserProfile,
-  serviceIds?: TServiceId[]
-) => {
+const updateUserProfile = async (userId: string, updateData: TUpdateUserProfile, serviceIds?: TServiceId[]) => {
   // 업데이트할 데이터 준비
   const updateFields: any = {};
 
