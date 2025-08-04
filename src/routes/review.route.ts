@@ -1,6 +1,6 @@
 import { Router } from "express";
 import reviewController from "../controllers/review.controller";
-import { defaultTranslationMiddleware } from "../middlewares/translationMiddleware";
+import { defaultTranslationMiddleware, createCustomTranslationMiddleware } from "../middlewares/translationMiddleware";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 
 const reviewRouter = Router();
@@ -200,6 +200,7 @@ const reviewRouter = Router();
 reviewRouter.patch(
   "/:reviewId",
   verifyAccessToken,
+  defaultTranslationMiddleware,
   reviewController.postReview
 );
 
@@ -261,7 +262,14 @@ reviewRouter.patch(
 reviewRouter.get(
   "/writable-estimateRequests",
   verifyAccessToken,
-  defaultTranslationMiddleware,
+  createCustomTranslationMiddleware([
+    "id",
+    "reviewId", 
+    "profileImage",
+    "nickname",
+    "isDesigned",
+    "price"
+  ]),
   reviewController.getWritableEstimateRequests
 );
 
@@ -421,7 +429,14 @@ reviewRouter.get(
 reviewRouter.get(
   "/customer/:customerId",
   verifyAccessToken,
-  defaultTranslationMiddleware,
+  createCustomTranslationMiddleware([
+    "id",
+    "moverId",
+    "profileImage", 
+    "nickname",
+    "isDesigned",
+    "rating"
+  ]),
   reviewController.getWrittenReviews
 );
 
@@ -584,7 +599,17 @@ reviewRouter.get(
  */
 reviewRouter.get(
   "/mover/:moverId",
-  defaultTranslationMiddleware,
+  createCustomTranslationMiddleware([
+    "id",
+    "estimateRequestId",
+    "customerId", 
+    "moverId",
+    "profileImage",
+    "nickname",
+    "isDesigned",
+    "rating",
+    "price",
+  ]),
   reviewController.getReceivedReviews
 );
 
