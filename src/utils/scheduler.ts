@@ -29,48 +29,44 @@ const generateMoveDayReminders = async () => {
 
   // 내일 이사 알림 생성
   for (const request of tomorrowRequests) {
-    for (const estimate of request.estimates) {
-      await actionService.createAction(
-        estimate.moverId,
-        ActionType.MOVE_DAY_REMINDER_TOMORROW,
-        estimate.id,
-        "DESIGNATED_ESTIMATE",
-        { moveType: request.moveType, estimateId: request.id }
-      );
+    await actionService.createAction(
+      request.estimates[0].moverId,
+      ActionType.MOVE_DAY_REMINDER_TOMORROW,
+      request.id,
+      "ESTIMATE_REQUEST",
+      { moveType: request.moveType }
+    );
 
-      await actionService.createAction(
-        request.customerId,
-        ActionType.MOVE_DAY_REMINDER_TOMORROW,
-        estimate.id,
-        "DESIGNATED_ESTIMATE",
-        { moveType: request.moveType, estimateId: request.id }
-      );
+    await actionService.createAction(
+      request.customerId,
+      ActionType.MOVE_DAY_REMINDER_TOMORROW,
+      request.id,
+      "ESTIMATE_REQUEST",
+      { moveType: request.moveType }
+    );
 
-      createdCount += 2;
-    }
+    createdCount += 2;
   }
 
   // 오늘 이사 알림 생성
   for (const request of todayRequests) {
-    for (const estimate of request.estimates) {
-      await actionService.createAction(
-        estimate.moverId,
-        ActionType.MOVE_DAY_REMINDER_TODAY,
-        estimate.id,
-        "DESIGNATED_ESTIMATE",
-        { moveType: request.moveType, estimateId: request.id }
-      );
+    await actionService.createAction(
+      request.estimates[0].moverId,
+      ActionType.MOVE_DAY_REMINDER_TODAY,
+      request.id,
+      "ESTIMATE_REQUEST",
+      { moveType: request.moveType }
+    );
 
-      await actionService.createAction(
-        request.customerId,
-        ActionType.MOVE_DAY_REMINDER_TODAY,
-        estimate.id,
-        "DESIGNATED_ESTIMATE",
-        { moveType: request.moveType, estimateId: request.id }
-      );
+    await actionService.createAction(
+      request.customerId,
+      ActionType.MOVE_DAY_REMINDER_TODAY,
+      request.id,
+      "ESTIMATE_REQUEST",
+      { moveType: request.moveType }
+    );
 
-      createdCount += 2;
-    }
+    createdCount += 2;
   }
 
   console.log(`이사일 알림 생성 완료: ${createdCount}개 알림 생성`);
