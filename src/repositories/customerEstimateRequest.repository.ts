@@ -1,17 +1,7 @@
-import {
-  EstimateRequest,
-  Estimate,
-  User,
-  EstimateStatus,
-} from "@prisma/client";
-import { PrismaClient } from "@prisma/client";
-import {
-  SingleEstimateRequestWithRelations,
-  MultipleEstimateRequestWithRelations,
-} from "../types/repository.types";
+import { EstimateRequest, Estimate, User, EstimateStatus } from "@prisma/client";
+import prisma from "../db/prisma/prisma";
+import { SingleEstimateRequestWithRelations, MultipleEstimateRequestWithRelations } from "../types/repository.types";
 import { RepositoryQueryError } from "../types/errors.types";
-
-const prisma = new PrismaClient();
 
 const customerEstimateRequestRepository = {
   // 활성상태인 견적 아이디 조회 (미래 이사일만)
@@ -33,10 +23,7 @@ const customerEstimateRequestRepository = {
       if (!EstimateRequest) return null;
       return EstimateRequest.id;
     } catch (error) {
-      throw new RepositoryQueryError(
-        `사용자 ${userId}의 활성 견적요청 조회 실패`,
-        error
-      );
+      throw new RepositoryQueryError(`사용자 ${userId}의 활성 견적요청 조회 실패`, error);
     }
   },
 
@@ -59,7 +46,7 @@ const customerEstimateRequestRepository = {
   // 진행중인 이사 견적들 조회
   getPendingEstimateRequest: async (
     activeEstimateRequestId: string,
-    userId: string
+    userId: string,
   ): Promise<SingleEstimateRequestWithRelations> => {
     try {
       const pendingEstimateRequest = await prisma.estimateRequest.findFirst({
@@ -160,15 +147,13 @@ const customerEstimateRequestRepository = {
     } catch (error) {
       throw new RepositoryQueryError(
         `진행중인 견적요청 조회 실패 - 활성ID: ${activeEstimateRequestId}, 사용자ID: ${userId}`,
-        error
+        error,
       );
     }
   },
 
   // 완료된 견적요청 목록 조회
-  getReceivedEstimateRequests: async (
-    userId: string
-  ): Promise<MultipleEstimateRequestWithRelations> => {
+  getReceivedEstimateRequests: async (userId: string): Promise<MultipleEstimateRequestWithRelations> => {
     try {
       const receivedEstimateRequests = await prisma.estimateRequest.findMany({
         where: {
@@ -267,27 +252,19 @@ const customerEstimateRequestRepository = {
       // Repository는 순수 데이터만 반환
       return receivedEstimateRequests;
     } catch (error) {
-      throw new RepositoryQueryError(
-        `사용자 ${userId}의 완료된 견적요청 목록 조회 실패`,
-        error
-      );
+      throw new RepositoryQueryError(`사용자 ${userId}의 완료된 견적요청 목록 조회 실패`, error);
     }
   },
 
   // 견적요청 ID로 견적요청 조회
-  getEstimateRequestById: async (
-    estimateRequestId: string
-  ): Promise<EstimateRequest | null> => {
+  getEstimateRequestById: async (estimateRequestId: string): Promise<EstimateRequest | null> => {
     try {
       const estimateRequest = await prisma.estimateRequest.findUnique({
         where: { id: estimateRequestId },
       });
       return estimateRequest;
     } catch (error) {
-      throw new RepositoryQueryError(
-        `견적요청 ID ${estimateRequestId} 조회 실패`,
-        error
-      );
+      throw new RepositoryQueryError(`견적요청 ID ${estimateRequestId} 조회 실패`, error);
     }
   },
 
@@ -304,10 +281,7 @@ const customerEstimateRequestRepository = {
   },
 
   // 견적 ID와 견적요청 ID로 견적 조회
-  getEstimateByIdAndRequestId: async (
-    estimateId: string,
-    estimateRequestId: string
-  ): Promise<Estimate | null> => {
+  getEstimateByIdAndRequestId: async (estimateId: string, estimateRequestId: string): Promise<Estimate | null> => {
     try {
       const estimate = await prisma.estimate.findUnique({
         where: {
@@ -324,7 +298,7 @@ const customerEstimateRequestRepository = {
   // 견적요청 상태 업데이트
   updateEstimateRequestStatus: async (
     estimateRequestId: string,
-    status: "PENDING" | "APPROVED" | "COMPLETED" | "EXPIRED"
+    status: "PENDING" | "APPROVED" | "COMPLETED" | "EXPIRED",
   ): Promise<EstimateRequest> => {
     try {
       const updatedEstimateRequest = await prisma.estimateRequest.update({
@@ -335,16 +309,13 @@ const customerEstimateRequestRepository = {
     } catch (error) {
       throw new RepositoryQueryError(
         `견적요청 상태 업데이트 실패 - 견적요청ID: ${estimateRequestId}, 상태: ${status}`,
-        error
+        error,
       );
     }
   },
 
   // 견적 상태 업데이트
-  updateEstimateStatus: async (
-    estimateId: string,
-    status: EstimateStatus
-  ): Promise<Estimate> => {
+  updateEstimateStatus: async (estimateId: string, status: EstimateStatus): Promise<Estimate> => {
     try {
       const updatedEstimate = await prisma.estimate.update({
         where: { id: estimateId },
@@ -352,10 +323,7 @@ const customerEstimateRequestRepository = {
       });
       return updatedEstimate;
     } catch (error) {
-      throw new RepositoryQueryError(
-        `견적 상태 업데이트 실패 - 견적ID: ${estimateId}, 상태: ${status}`,
-        error
-      );
+      throw new RepositoryQueryError(`견적 상태 업데이트 실패 - 견적ID: ${estimateId}, 상태: ${status}`, error);
     }
   },
 
@@ -363,7 +331,7 @@ const customerEstimateRequestRepository = {
   updateAllEstimatesStatus: async (
     estimateRequestId: string,
     status: EstimateStatus,
-    excludeEstimateId?: string
+    excludeEstimateId?: string,
   ): Promise<void> => {
     try {
       await prisma.estimate.updateMany({
@@ -376,7 +344,7 @@ const customerEstimateRequestRepository = {
     } catch (error) {
       throw new RepositoryQueryError(
         `견적 일괄 상태 업데이트 실패 - 견적요청ID: ${estimateRequestId}, 상태: ${status}`,
-        error
+        error,
       );
     }
   },
@@ -417,18 +385,12 @@ const customerEstimateRequestRepository = {
       });
       return estimate;
     } catch (error) {
-      throw new RepositoryQueryError(
-        `견적 상세 정보 조회 실패 - 견적ID: ${estimateId}`,
-        error
-      );
+      throw new RepositoryQueryError(`견적 상세 정보 조회 실패 - 견적ID: ${estimateId}`, error);
     }
   },
 
   // 다른 견적들 조회 (확정 시 반려용)
-  getOtherEstimates: async (
-    estimateRequestId: string,
-    excludeEstimateId: string
-  ) => {
+  getOtherEstimates: async (estimateRequestId: string, excludeEstimateId: string) => {
     try {
       const otherEstimates = await prisma.estimate.findMany({
         where: {
@@ -447,16 +409,13 @@ const customerEstimateRequestRepository = {
     } catch (error) {
       throw new RepositoryQueryError(
         `다른 견적들 조회 실패 - 견적요청ID: ${estimateRequestId}, 제외견적ID: ${excludeEstimateId}`,
-        error
+        error,
       );
     }
   },
 
   // AUTO_REJECTED된 견적들 조회 (액션 생성용)
-  getAutoRejectedEstimates: async (
-    estimateRequestId: string,
-    excludeEstimateId: string
-  ) => {
+  getAutoRejectedEstimates: async (estimateRequestId: string, excludeEstimateId: string) => {
     try {
       const autoRejectedEstimates = await prisma.estimate.findMany({
         where: {
@@ -475,7 +434,7 @@ const customerEstimateRequestRepository = {
     } catch (error) {
       throw new RepositoryQueryError(
         `AUTO_REJECTED 견적들 조회 실패 - 견적요청ID: ${estimateRequestId}, 제외견적ID: ${excludeEstimateId}`,
-        error
+        error,
       );
     }
   },

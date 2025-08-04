@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../db/prisma/prisma";
 
 // 리뷰 상세 정보 조회 (액션 메타데이터용)
 const getReviewDetailForAction = async (reviewId: string) => {
@@ -33,10 +31,7 @@ const reviewRepository = {
   },
 
   // 2. 리뷰 작성 가능한 견적 요청 리스트 조회
-  getWritableEstimateRequests: async (
-    customerId: string,
-    pageQuery: { page: number; pageSize: number }
-  ) => {
+  getWritableEstimateRequests: async (customerId: string, pageQuery: { page: number; pageSize: number }) => {
     const { page, pageSize } = pageQuery;
     const skip = (page - 1) * pageSize;
     const [items, total] = await Promise.all([
@@ -72,10 +67,7 @@ const reviewRepository = {
   },
 
   // 3. 내가 쓴 리뷰 목록 조회
-  getWrittenReviews: async (
-    customerId: string,
-    pageQuery: { page: number; pageSize: number }
-  ) => {
+  getWrittenReviews: async (customerId: string, pageQuery: { page: number; pageSize: number }) => {
     const { page, pageSize } = pageQuery;
     const skip = (page - 1) * pageSize;
     const [items, total] = await Promise.all([
@@ -100,10 +92,7 @@ const reviewRepository = {
   },
 
   // 4. 내가 받은 리뷰 목록 조회
-  getReceivedReviews: async (
-    moverId: string,
-    pageQuery: { page: number; pageSize: number }
-  ) => {
+  getReceivedReviews: async (moverId: string, pageQuery: { page: number; pageSize: number }) => {
     const { page, pageSize } = pageQuery;
     const skip = (page - 1) * pageSize;
 

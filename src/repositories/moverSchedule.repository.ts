@@ -1,8 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from "../db/prisma/prisma";
 import { TMoverScheduleWithDetails } from "../types/moverSchedule";
 import { RepositoryQueryError } from "../types/errors.types";
-
-const prisma = new PrismaClient();
 
 const moverScheduleRepository = {
   // 월별 스케줄 조회 (캘린더용)
