@@ -70,7 +70,7 @@ type MockEstimateRequestData = {
     createdAt: Date;
     mover: {
       id: string;
-      name: string;
+      name: string | null;
       userType: string[];
       moverImage: string | null;
       nickname: string | null;

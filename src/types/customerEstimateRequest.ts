@@ -59,7 +59,7 @@ export type TEstimateResponse = {
 
 export type TMoverInfo = {
   id: string;
-  name: string;
+  name: string | null;
   userType: string[];
   moverImage: string | null;
   nickname: string | null;
