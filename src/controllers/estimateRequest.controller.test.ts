@@ -12,6 +12,10 @@ const mockConvertRegionToKorean = convertRegionToKorean as jest.MockedFunction<t
 const mockIsBeforeKoreaToday = isBeforeKoreaToday as jest.MockedFunction<typeof isBeforeKoreaToday>;
 const mockFormatDateForAPI = formatDateForAPI as jest.MockedFunction<typeof formatDateForAPI>;
 
+// validateMoveDate 함수 모킹
+const { validateMoveDate } = require("../utils/dateUtils");
+const mockValidateMoveDate = validateMoveDate as jest.MockedFunction<typeof validateMoveDate>;
+
 // Mock EstimateRequestService
 jest.mock("../services/estimateRequest.service", () => {
   const mockMethods = {
@@ -22,6 +26,8 @@ jest.mock("../services/estimateRequest.service", () => {
     updateActiveEstimateRequest: jest.fn(),
     cancelActiveEstimateRequest: jest.fn(),
     hasEstimateFromMover: jest.fn(),
+    checkCustomerProfile: jest.fn(),
+    hasActiveRequestBeforeMoveDate: jest.fn(),
   };
   return jest.fn().mockImplementation(() => mockMethods);
 });
@@ -52,6 +58,11 @@ describe("EstimateRequest 유저 플로우 테스트", () => {
     mockConvertRegionToKorean.mockReturnValue("서울특별시");
     mockIsBeforeKoreaToday.mockReturnValue(false);
     mockFormatDateForAPI.mockReturnValue("2024-12-25");
+    mockValidateMoveDate.mockReturnValue({ isValid: true });
+
+    // Default service mock implementations
+    mockEstimateRequestService.checkCustomerProfile.mockResolvedValue(true);
+    mockEstimateRequestService.hasActiveRequestBeforeMoveDate.mockResolvedValue(false);
   });
 
   afterEach(() => {
@@ -148,7 +159,10 @@ describe("EstimateRequest 유저 플로우 테스트", () => {
 
     mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
     mockEstimateRequestService.hasPendingRequest.mockResolvedValue(false);
-    mockIsBeforeKoreaToday.mockReturnValue(true); // 과거 날짜임을 표시
+    mockValidateMoveDate.mockReturnValue({
+      isValid: false,
+      errorMessage: "이사일은 오늘 이후로 설정해주세요.",
+    });
 
     // Act
     await controller.createEstimateRequest(mockRequest as Request, mockResponse as Response);
@@ -441,6 +455,10 @@ describe("EstimateRequest 유저 플로우 테스트", () => {
 
       mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
       mockEstimateRequestService.hasPendingRequest.mockResolvedValue(false);
+      mockValidateMoveDate.mockReturnValue({
+        isValid: false,
+        errorMessage: "올바른 날짜 형식이 아닙니다. (YYYY-MM-DD 형식으로 입력해주세요)",
+      });
 
       // Act
       await controller.createEstimateRequest(mockRequest as Request, mockResponse as Response);
@@ -539,7 +557,7 @@ describe("EstimateRequest 유저 플로우 테스트", () => {
       };
 
       mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
-      mockEstimateRequestService.hasPendingRequest.mockResolvedValue(true); // 이미 진행중인 요청
+      mockEstimateRequestService.hasActiveRequestBeforeMoveDate.mockResolvedValue(true); // 이미 진행중인 요청
 
       // Act
       await controller.createEstimateRequest(mockRequest as Request, mockResponse as Response);
@@ -548,7 +566,7 @@ describe("EstimateRequest 유저 플로우 테스트", () => {
       expect(mockResponse.status).toHaveBeenCalledWith(409);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: false,
-        message: "이미 진행중인 견적 요청이 있습니다.",
+        message: "이사일이 지나지 않은 견적 요청이 있습니다.",
       });
     });
 
@@ -637,6 +655,7 @@ describe("EstimateRequest 유저 플로우 테스트", () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
         hasActive: false,
+        hasEstimate: false,
       });
     });
 
