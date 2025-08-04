@@ -5,6 +5,8 @@ dotenv.config();
 
 import express from "express";
 import cors from "cors";
+import morgan from "morgan";
+import helmet from "helmet";
 import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware";
 import { setupManualSwagger } from "./utils/swagger-manual";
 import cookieParser from "cookie-parser";
@@ -18,6 +20,24 @@ import passport from "./config/passport";
 
 const app = express();
 const PORT = process.env.PORT || 5050;
+
+// 보안 헤더 설정 (Helmet)
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:"],
+      },
+    },
+    crossOriginEmbedderPolicy: false, // CORS 호환성을 위해 비활성화
+  }),
+);
+
+// 로깅 설정 (Morgan)
+app.use(morgan("combined")); // 프로덕션용 로그 포맷
 
 // CORS 설정 - 환경변수에서 가져오거나 기본값 사용
 const allowedOrigins =
@@ -44,8 +64,8 @@ app.use(
 );
 
 app.use(cookieParser());
-app.use(express.json()); // JSON 파싱
-app.use(express.urlencoded({ extended: true })); // URL 인코딩 파싱
+app.use(express.json({ limit: "10mb" })); // JSON 파싱 (크기 제한 추가)
+app.use(express.urlencoded({ extended: true, limit: "10mb" })); // URL 인코딩 파싱 (크기 제한 추가)
 
 app.use(passport.initialize());
 
