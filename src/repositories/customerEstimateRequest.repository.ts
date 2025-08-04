@@ -404,7 +404,7 @@ const customerEstimateRequestRepository = {
               customer: {
                 select: {
                   id: true,
-                  name: true,
+                  nickname: true,
                 },
               },
             },

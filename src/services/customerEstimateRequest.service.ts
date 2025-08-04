@@ -394,8 +394,9 @@ const customerEstimateRequestService = {
           estimateId,
           estimateDetail.isDesignated ? "DESIGNATED_ESTIMATE" : "ESTIMATE",
           {
-            moverName: estimateDetail.mover?.name || "",
-            customerName: estimateDetail.estimateRequest?.customer?.name || "",
+            moverName: estimateDetail.mover?.nickname || "",
+            customerName:
+              estimateDetail.estimateRequest?.customer?.nickname || "",
             moveType: estimateDetail.estimateRequest?.moveType || "",
             estimateRequestId: estimateDetail.estimateRequestId,
             estimateId: estimateId,
@@ -482,7 +483,8 @@ const customerEstimateRequestService = {
           estimateId,
           estimateDetail.isDesignated ? "DESIGNATED_ESTIMATE" : "ESTIMATE",
           {
-            customerName: estimateDetail.estimateRequest?.customer?.name || "",
+            customerName:
+              estimateDetail.estimateRequest?.customer?.nickname || "",
             moveType: estimateDetail.estimateRequest?.moveType || "",
           }
         );
@@ -577,7 +579,7 @@ const customerEstimateRequestService = {
           estimateId,
           estimateDetail.isDesignated ? "DESIGNATED_ESTIMATE" : "ESTIMATE",
           {
-            moverName: estimateDetail.mover?.name || "",
+            moverName: estimateDetail.mover?.nickname || "",
             moveType: estimateDetail.estimateRequest?.moveType || "",
           }
         );

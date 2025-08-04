@@ -92,7 +92,7 @@ const generateMoveDayReviewRequests = async () => {
         ActionType.MOVE_DAY_REVIEW_REQUEST,
         estimate.id,
         "DESIGNATED_ESTIMATE",
-        { moverName: estimate.mover?.name || "" }
+        { moverName: estimate.mover?.nickname || "" }
       );
 
       createdCount++;
