@@ -1,4 +1,5 @@
-import { PrismaClient, RequestStatus, EstimateRequest, UserType, MoveType, RegionType } from "@prisma/client";
+import { RequestStatus, EstimateRequest, UserType, MoveType, RegionType } from "@prisma/client";
+import prisma from "../db/prisma/prisma";
 import { getCurrentDateString } from "../utils/dateUtils";
 import {
   IParsedAddressData,
@@ -7,8 +8,6 @@ import {
   TUpdateEstimateRequestData,
   IUserTypeResult,
 } from "../types/estimateRequest.types";
-
-const prisma = new PrismaClient();
 
 const createEstimateRequest = async (data: TCreateEstimateRequestData, userId: string): Promise<EstimateRequest> => {
   return await prisma.estimateRequest.create({

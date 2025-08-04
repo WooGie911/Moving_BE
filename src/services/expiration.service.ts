@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../db/prisma/prisma";
 
 const expirationService = {
   // 만료된 견적 요청 처리
@@ -49,7 +47,7 @@ const expirationService = {
             });
 
             console.log(
-              `🔄 [만료] 견적 요청 ${request.id} (${request.customer.name}님, 이사일: ${request.moveDate.toLocaleDateString()}) - 견적 ${updatedEstimates.count}개를 AUTO_REJECTED로 변경`
+              `🔄 [만료] 견적 요청 ${request.id} (${request.customer.name}님, 이사일: ${request.moveDate.toLocaleDateString()}) - 견적 ${updatedEstimates.count}개를 AUTO_REJECTED로 변경`,
             );
           });
         }
@@ -168,9 +166,7 @@ const expirationService = {
         });
 
         orphanedCount = updatedOrphanedEstimates.count;
-        console.log(
-          `🧹 [정리] 삭제/취소된 견적 요청의 orphaned 견적 ${orphanedCount}개를 AUTO_REJECTED로 변경`
-        );
+        console.log(`🧹 [정리] 삭제/취소된 견적 요청의 orphaned 견적 ${orphanedCount}개를 AUTO_REJECTED로 변경`);
       }
 
       if (totalProcessed === 0 && orphanedCount === 0) {

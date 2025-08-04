@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from "../db/prisma/prisma";
 import {
   EstimateWithRelations,
   TMyEstimateResponse,
@@ -67,7 +67,7 @@ const createPrismaOrderBy = (orderBy: PrismaOrderBy) => {
   return orderBy as any; // Prisma 타입과 호환성을 위해 임시로 any 사용
 };
 
-const prisma = new PrismaClient();
+// Prisma 클라이언트는 상단에서 import
 
 // 공통 select 옵션 - EstimateRequest용
 const estimateRequestSelectOptions = {
@@ -269,7 +269,7 @@ const moverEstimateRepository = {
     price: number,
     comment: string,
     status: "PROPOSED" | "REJECTED",
-    isDesignated: boolean
+    isDesignated: boolean,
   ): Promise<EstimateWithRelations | null> => {
     try {
       // 파라미터 검증
@@ -285,11 +285,7 @@ const moverEstimateRepository = {
         throw new RepositoryQueryError("유효하지 않은 가격입니다");
       }
 
-      if (
-        !comment ||
-        typeof comment !== "string" ||
-        comment.trim().length === 0
-      ) {
+      if (!comment || typeof comment !== "string" || comment.trim().length === 0) {
         throw new RepositoryQueryError("유효하지 않은 코멘트입니다");
       }
 
@@ -337,7 +333,7 @@ const moverEstimateRepository = {
     sortBy?: "moveDate" | "createdAt",
     customerName?: string,
     movingType?: "SMALL" | "HOME" | "OFFICE",
-    currentAreas?: string[]
+    currentAreas?: string[],
   ): Promise<TEstimateRequestResponse[]> => {
     try {
       let orderBy: PrismaOrderBy = {};
@@ -410,7 +406,7 @@ const moverEstimateRepository = {
             ...estimateRequest,
             isDesignated: !!designatedRequest,
           };
-        })
+        }),
       );
 
       return estimateRequestsWithDesignatedFlag;
@@ -424,7 +420,7 @@ const moverEstimateRepository = {
     moverId: string,
     sortBy?: "moveDate" | "createdAt",
     customerName?: string,
-    movingType?: "SMALL" | "HOME" | "OFFICE"
+    movingType?: "SMALL" | "HOME" | "OFFICE",
   ): Promise<TEstimateRequestResponse[]> => {
     try {
       let orderBy: PrismaOrderBy = {};
@@ -549,7 +545,7 @@ const moverEstimateRepository = {
             ...estimate,
             isDesignated: !!designatedRequest,
           };
-        })
+        }),
       );
 
       return estimatesWithDesignatedFlag as TMyEstimateResponse[];
@@ -559,9 +555,7 @@ const moverEstimateRepository = {
   },
 
   // 내가 반려한 견적들 조회
-  getMyRejectedEstimates: async (
-    moverId: string
-  ): Promise<TMyRejectedEstimateResponse[]> => {
+  getMyRejectedEstimates: async (moverId: string): Promise<TMyRejectedEstimateResponse[]> => {
     try {
       const rejectedEstimates = await prisma.estimate.findMany({
         where: {
@@ -589,7 +583,7 @@ const moverEstimateRepository = {
             ...estimate,
             isDesignated: !!designatedRequest,
           };
-        })
+        }),
       );
 
       return estimatesWithDesignatedFlag as TMyRejectedEstimateResponse[];
@@ -599,10 +593,7 @@ const moverEstimateRepository = {
   },
 
   // 견적 존재 여부 및 권한 확인
-  checkEstimateOwnership: async (
-    estimateId: string,
-    moverId: string
-  ): Promise<boolean> => {
+  checkEstimateOwnership: async (estimateId: string, moverId: string): Promise<boolean> => {
     try {
       const estimate = await prisma.estimate.findUnique({
         where: {
@@ -619,7 +610,7 @@ const moverEstimateRepository = {
   // 견적 상태 업데이트 (순수 데이터 업데이트)
   updateEstimateStatus: async (
     estimateId: string,
-    status: "PROPOSED" | "ACCEPTED" | "REJECTED" | "AUTO_REJECTED"
+    status: "PROPOSED" | "ACCEPTED" | "REJECTED" | "AUTO_REJECTED",
   ): Promise<EstimateWithRelations | null> => {
     try {
       const estimate = await prisma.estimate.update({
@@ -641,7 +632,7 @@ const moverEstimateRepository = {
   updateEstimatePrice: async (
     estimateId: string,
     price: number,
-    comment: string
+    comment: string,
   ): Promise<EstimateWithRelations | null> => {
     try {
       const estimate = await prisma.estimate.update({

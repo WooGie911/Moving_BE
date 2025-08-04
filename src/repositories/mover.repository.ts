@@ -1,22 +1,11 @@
-import { PrismaClient } from "@prisma/client";
-import type {
-  MoverListFilter,
-  DesignatedQuoteRequestDto,
-} from "../types/mover.types";
-const prisma = new PrismaClient();
+import prisma from "../db/prisma/prisma";
+import type { MoverListFilter, DesignatedQuoteRequestDto } from "../types/mover.types";
 
 /**
  * 기사님 리스트 조회
  */
 export const getMoverList = async (filter: MoverListFilter) => {
-  const {
-    region,
-    serviceType,
-    search,
-    sort = "review",
-    cursor,
-    take = 2,
-  } = filter;
+  const { region, serviceType, search, sort = "review", cursor, take = 2 } = filter;
 
   const getServiceTypeEnum = (serviceTypeId: string | number) => {
     const id = Number(serviceTypeId);
@@ -96,13 +85,9 @@ export const getMoverList = async (filter: MoverListFilter) => {
   } else if (sort === "confirmed") {
     sortedMovers.sort((a, b) => (b.workedCount || 0) - (a.workedCount || 0));
   } else if (sort === "rating") {
-    sortedMovers.sort(
-      (a, b) => (b.averageRating || 0) - (a.averageRating || 0)
-    );
+    sortedMovers.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
   } else if (sort === "review") {
-    sortedMovers.sort(
-      (a, b) => (b.totalReviewCount || 0) - (a.totalReviewCount || 0)
-    );
+    sortedMovers.sort((a, b) => (b.totalReviewCount || 0) - (a.totalReviewCount || 0));
   }
 
   const hasNext = sortedMovers.length > take;
@@ -162,9 +147,7 @@ export const getMoverDetail = async (id: string, userId?: string) => {
 
   if (!mover) return null;
 
-  const favoriteCount = mover.Favorite.filter(
-    (fav) => fav.deletedAt === null
-  ).length;
+  const favoriteCount = mover.Favorite.filter((fav) => fav.deletedAt === null).length;
 
   let isFavorited = false;
   if (userId) {
@@ -217,9 +200,7 @@ export const getFavoriteMovers = async (customerId: string) => {
   return favorites.map((fav) => {
     const mover = fav.mover;
     // 찜 개수 계산 (deletedAt이 null이 아닌 것 제외)
-    const favoriteCount = mover.Favorite.filter(
-      (fav) => fav.deletedAt === null
-    ).length;
+    const favoriteCount = mover.Favorite.filter((fav) => fav.deletedAt === null).length;
 
     return {
       ...mover,
@@ -231,9 +212,7 @@ export const getFavoriteMovers = async (customerId: string) => {
 /**
  * 지정 견적 요청 생성
  */
-export const createDesignatedEstimateRequest = async (
-  dto: DesignatedQuoteRequestDto
-) => {
+export const createDesignatedEstimateRequest = async (dto: DesignatedQuoteRequestDto) => {
   const { quoteId, moverId, message, expiresAt } = dto;
   const exists = await prisma.designatedMover.findFirst({
     where: { estimateRequestId: quoteId, moverId },
@@ -252,10 +231,7 @@ export const createDesignatedEstimateRequest = async (
 /**
  * 지정 견적 요청 여부 조회
  */
-export const checkDesignatedEstimateRequest = async (params: {
-  quoteId: string;
-  moverId: string;
-}) => {
+export const checkDesignatedEstimateRequest = async (params: { quoteId: string; moverId: string }) => {
   const { quoteId, moverId } = params;
   return await prisma.designatedMover.findFirst({
     where: {
