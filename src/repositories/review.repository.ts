@@ -157,6 +157,23 @@ const reviewRepository = {
     });
     return review;
   },
+
+  // 리뷰 조회 (스케줄러용)
+  getReview: async (estimateRequestId: string) => {
+    return prisma.review.findFirst({
+      where: {
+        estimateRequestId,
+      },
+      include: {
+        mover: {
+          select: {
+            id: true,
+            nickname: true,
+          },
+        },
+      },
+    });
+  },
 };
 
 export default reviewRepository;

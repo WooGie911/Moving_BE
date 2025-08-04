@@ -3,6 +3,7 @@ import expirationService from "../services/expiration.service";
 import actionService from "../services/action.service";
 import { ActionType } from "@prisma/client";
 import estimateRequestRepository from "../repositories/estimateRequest.repository";
+import reviewRepository from "../repositories/review.repository";
 
 // 이사일 알림 생성 함수
 const generateMoveDayReminders = async () => {
@@ -83,23 +84,22 @@ const generateMoveDayReviewRequests = async () => {
   const completedRequests =
     await estimateRequestRepository.getEstimateRequestsForReviewRequests();
 
-  let createdCount = 0;
-
   for (const request of completedRequests) {
-    for (const estimate of request.estimates) {
+    // 리뷰 조회 (견적 요청당 하나의 리뷰만 존재)
+    const review = await reviewRepository.getReview(request.id);
+
+    if (review) {
       await actionService.createAction(
         request.customerId,
         ActionType.MOVE_DAY_REVIEW_REQUEST,
-        estimate.id,
-        "DESIGNATED_ESTIMATE",
-        { moverName: estimate.mover?.nickname || "" }
+        review.id,
+        "REVIEW",
+        { moverName: review.mover?.nickname || "" }
       );
-
-      createdCount++;
     }
   }
 
-  console.log(`리뷰 요청 생성 완료: ${createdCount}개 요청 생성`);
+  console.log("리뷰 요청 생성 완료");
 };
 
 // 스케줄러 설정
