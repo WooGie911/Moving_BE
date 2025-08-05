@@ -207,7 +207,7 @@ class EstimateRequestController {
         },
         tags: {
           error_type: "estimate_request_creation",
-          user_type: req.user?.userType || "unknown",
+          user_type: req.user?.userType || "type_unknown",
         },
       });
 
