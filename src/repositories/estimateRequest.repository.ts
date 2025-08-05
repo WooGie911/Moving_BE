@@ -213,6 +213,7 @@ const hasEstimateFromMover = async (userId: string): Promise<boolean> => {
   const estimate = await prisma.estimate.findFirst({
     where: {
       estimateRequestId: request.id,
+      status: "PROPOSED", // PROPOSED 상태의 견적만 유효한 견적으로 인식
       deletedAt: null,
     },
   });

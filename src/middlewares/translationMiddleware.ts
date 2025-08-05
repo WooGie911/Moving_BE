@@ -37,18 +37,7 @@ interface TranslationOptions {
  */
 export function translationMiddleware(options: TranslationOptions = {}) {
   const {
-    excludeKeys = [
-      "id",
-      "uuid",
-      "createdAt",
-      "updatedAt",
-      "email",
-      "phone",
-      "url",
-      "link",
-      "name",
-      "nickname",
-    ],
+    excludeKeys = ["id", "uuid", "createdAt", "updatedAt", "email", "phone", "url", "link", "name", "nickname"],
     shouldTranslate,
     enableLogging = true,
   } = options;
@@ -58,19 +47,8 @@ export function translationMiddleware(options: TranslationOptions = {}) {
       // 쿼리 파라미터에서 언어 코드 추출
       const targetLang = req.query.lang as string;
 
-      console.log(
-        `[Translation Debug] Request: ${req.method} ${req.path}, lang: ${targetLang}`
-      );
-
       // 번역이 필요하지 않은 경우
-      if (
-        !targetLang ||
-        targetLang === "ko" ||
-        !translationService.isLanguageSupported(targetLang)
-      ) {
-        console.log(
-          `[Translation Debug] Skipping translation - lang: ${targetLang}, supported: ${translationService.isLanguageSupported(targetLang)}`
-        );
+      if (!targetLang || targetLang === "ko" || !translationService.isLanguageSupported(targetLang)) {
         return next();
       }
 
@@ -88,9 +66,6 @@ export function translationMiddleware(options: TranslationOptions = {}) {
         const startTime = Date.now();
 
         // 비동기 번역 처리
-        console.log(
-          `[Translation Debug] Starting translation for ${targetLang}`
-        );
         translationService
           .translateObject(data, targetLang, excludeKeys)
           .then((translatedData) => {
@@ -98,14 +73,9 @@ export function translationMiddleware(options: TranslationOptions = {}) {
             const translationTime = Date.now() - startTime;
 
             if (enableLogging) {
-              console.log(
-                `[Translation] ${req.method} ${req.path} -> ${targetLang} (${translationTime}ms)`
-              );
+              console.log(`[Translation] ${req.method} ${req.path} -> ${targetLang} (${translationTime}ms)`);
             }
 
-            console.log(
-              `[Translation Debug] Translation completed, original: ${JSON.stringify(data).substring(0, 100)}..., translated: ${JSON.stringify(translatedData).substring(0, 100)}...`
-            );
             // 번역된 데이터로 응답
             originalJson(translatedData);
           })
@@ -141,9 +111,7 @@ export const defaultTranslationMiddleware = translationMiddleware();
 /**
  * 특정 키들을 추가로 제외하는 번역 미들웨어
  */
-export function createCustomTranslationMiddleware(
-  additionalExcludeKeys: string[] = []
-) {
+export function createCustomTranslationMiddleware(additionalExcludeKeys: string[] = []) {
   const defaultExcludeKeys = [
     "id",
     "uuid",
