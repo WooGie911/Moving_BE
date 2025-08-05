@@ -86,7 +86,7 @@ const postProfile = async (req: Request, res: Response) => {
         res.cookie(
           "accessToken",
           accessToken,
-          authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE)
+          authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
         );
 
         res.cookie(
