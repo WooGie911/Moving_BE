@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import EstimateRequestService from "../services/estimateRequest.service";
 import { convertRegionToKorean } from "../utils/addressUtils";
 import { validateMoveDate, formatDateForAPI } from "../utils/dateUtils";
+import * as Sentry from "@sentry/node";
 import {
   TCreateEstimateRequest,
   TUpdateEstimateRequest,
@@ -196,7 +197,20 @@ class EstimateRequestController {
         data: createdRequest ? this.formatEstimateRequestResponse(createdRequest) : null,
       });
     } catch (error) {
-      console.error("견적 요청 생성 에러:", error);
+      // 센트리로 에러 전송
+      Sentry.captureException(error, {
+        extra: {
+          userId: req.user?.userId,
+          body: req.body,
+          url: req.url,
+          method: req.method,
+        },
+        tags: {
+          error_type: "estimate_request_creation",
+          user_type: req.user?.userType || "unknown",
+        },
+      });
+
       const message = error instanceof Error ? error.message : "서버 내부 오류가 발생했습니다.";
       const status = error instanceof Error && error.message.includes("인증") ? 401 : 500;
       return res.status(status).json({ success: false, message });
@@ -220,7 +234,19 @@ class EstimateRequestController {
         return res.status(200).json({ success: true, hasActive, hasEstimate });
       }
     } catch (error) {
-      console.error("활성 견적 요청 조회 에러:", error);
+      // 센트리로 에러 전송
+      Sentry.captureException(error, {
+        extra: {
+          userId: req.user?.userId,
+          url: req.url,
+          method: req.method,
+        },
+        tags: {
+          error_type: "estimate_request_get_active",
+          user_type: req.user?.userType || "unknown",
+        },
+      });
+
       const message = error instanceof Error ? error.message : "서버 내부 오류가 발생했습니다.";
       const status = error instanceof Error && error.message.includes("인증") ? 401 : 500;
       return res.status(status).json({ success: false, message });
@@ -297,7 +323,20 @@ class EstimateRequestController {
         data: updatedRequest ? this.formatEstimateRequestResponse(updatedRequest) : null,
       });
     } catch (error) {
-      console.error("견적 요청 수정 에러:", error);
+      // 센트리로 에러 전송
+      Sentry.captureException(error, {
+        extra: {
+          userId: req.user?.userId,
+          body: req.body,
+          url: req.url,
+          method: req.method,
+        },
+        tags: {
+          error_type: "estimate_request_update",
+          user_type: req.user?.userType || "unknown",
+        },
+      });
+
       const message = error instanceof Error ? error.message : "서버 내부 오류가 발생했습니다.";
       const status = error instanceof Error && error.message.includes("인증") ? 401 : 500;
       return res.status(status).json({ success: false, message });
@@ -342,7 +381,19 @@ class EstimateRequestController {
       await estimateRequestService.cancelActiveEstimateRequest(active.id);
       return res.status(204).send();
     } catch (error) {
-      console.error("견적 요청 취소 에러:", error);
+      // 센트리로 에러 전송
+      Sentry.captureException(error, {
+        extra: {
+          userId: req.user?.userId,
+          url: req.url,
+          method: req.method,
+        },
+        tags: {
+          error_type: "estimate_request_cancel",
+          user_type: req.user?.userType || "unknown",
+        },
+      });
+
       const message = error instanceof Error ? error.message : "서버 내부 오류가 발생했습니다.";
       const status = error instanceof Error && error.message.includes("인증") ? 401 : 500;
       return res.status(status).json({ success: false, message });
