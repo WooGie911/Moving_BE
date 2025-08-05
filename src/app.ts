@@ -11,16 +11,22 @@ import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware";
 import { setupManualSwagger } from "./utils/swagger-manual";
 import cookieParser from "cookie-parser";
 import { initializeScheduler } from "./utils/scheduler";
-import { generateCSRFToken, validateCSRFToken } from "./middlewares/csrfMiddleware";
+import { generateCSRFToken } from "./middlewares/csrfMiddleware";
 
 // 라우터 import
 import authIndexRoutes from "./routes/authIndex.routes";
 import notificationIndexRoutes from "./routes/notificationIndex.routes";
 import businessRoutes from "./routes/index.routes";
 import passport from "./config/passport";
+import "./instrument";
+import * as Sentry from "@sentry/node";
 
 const app = express();
 const PORT = process.env.PORT || 5050;
+
+app.get("/debug-sentry", function mainHandler(req, res) {
+  throw new Error("My first Sentry error!");
+});
 
 // 보안 헤더 설정 (Helmet)
 app.use(
@@ -34,20 +40,25 @@ app.use(
       },
     },
     crossOriginEmbedderPolicy: false, // CORS 호환성을 위해 비활성화
-  }),
+  })
 );
 
 // 로깅 설정 (Morgan)
 app.use(morgan("combined")); // 프로덕션용 로그 포맷
 
 // CORS 설정 - 환경변수에서 가져오거나 기본값 사용
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").map((origin) => origin.trim()) || [];
+const allowedOrigins =
+  process.env.ALLOWED_ORIGINS?.split(",").map((origin) => origin.trim()) || [];
 
 app.use(
   cors({
     origin: (origin, callback) => {
       // ngrok 테스트용 cors 설정
-      if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".ngrok-free.app")) {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".ngrok-free.app")
+      ) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
@@ -56,7 +67,7 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  }),
+  })
 );
 
 app.use(cookieParser());
@@ -84,6 +95,8 @@ app.use(errorHandler);
 
 // 스케줄러 초기화
 initializeScheduler();
+
+Sentry.setupExpressErrorHandler(app);
 
 // 서버 시작
 app.listen(PORT, () => {

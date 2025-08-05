@@ -182,26 +182,49 @@ const postRefresh = async (req: Request, res: Response) => {
   };
 
   try {
-    const { accessToken, refreshToken } = await authService.refresh({
+    const { accessToken, refreshToken, provider } = await authService.refresh({
       exp,
       userType,
       userId,
     });
 
-    // 리프레쉬 쿠키까지 재발급 된다면 저장
-    if (refreshToken) {
-      res.cookie(
-        "refreshToken",
-        refreshToken,
-        authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
-      );
-    }
+    if (provider === "LOCAL") {
+      // 리프레쉬 쿠키까지 재발급 된다면 저장
+      if (refreshToken) {
+        res.cookie(
+          "refreshToken",
+          refreshToken,
+          authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
+        );
+      }
 
-    res.status(200).json({
-      success: true,
-      message: "토큰 갱신 성공",
-      accessToken,
-    });
+      res.status(200).json({
+        success: true,
+        message: "토큰 갱신 성공",
+        accessToken,
+      });
+    } else {
+      // 소셜 로그인은 쿠키로 전달
+      // 리프레쉬 쿠키까지 재발급 된다면 저장
+      res.cookie(
+        "accessToken",
+        accessToken,
+        authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+      );
+
+      if (refreshToken) {
+        res.cookie(
+          "refreshToken",
+          refreshToken,
+          authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
+        );
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "토큰 갱신 성공",
+      });
+    }
   } catch (error: any) {
     handleError(res, error);
   }
