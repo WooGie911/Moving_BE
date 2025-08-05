@@ -464,7 +464,7 @@ const customerEstimateRequestService = {
       const result =
         await customerEstimateRequestRepository.updateEstimateStatus(
           estimateId,
-          "REJECTED"
+          "AUTO_REJECTED"
         );
 
       if (!result) {
