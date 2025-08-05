@@ -89,7 +89,7 @@ export type TUserLegacy = {
 // 토큰 생성용 타입
 export type TUserTokenCreate = {
   id: string; // 기존 코드 호환성
-  name: string;
+  name: string | null;
   userType: TUserRole; // 기존 코드 호환성
   hasProfile: boolean;
 };
