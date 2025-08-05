@@ -124,6 +124,7 @@ const createCustomerProfile = async (
     result,
     accessToken: newAccessToken,
     refreshToken: newRefreshToken,
+    provider: user.provider,
   };
 };
 
