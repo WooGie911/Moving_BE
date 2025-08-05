@@ -101,6 +101,14 @@ export const getCSRFToken = (req: Request, res: Response) => {
     // 토큰 저장
     csrfTokens.set(sessionId, { token, expires });
 
+    // 쿠키에도 토큰 설정
+    res.cookie("XSRF-TOKEN", token, {
+      httpOnly: false, // 프론트엔드에서 접근 가능하도록
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000, // 24시간
+    });
+
     res.json({
       success: true,
       message: "CSRF 토큰이 생성되었습니다.",
