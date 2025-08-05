@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { CustomError } from "../types/error.types";
+import * as Sentry from "@sentry/node";
 
 /**
  * 전역 에러 핸들링 미들웨어
@@ -11,6 +12,22 @@ export const errorHandler = (err: CustomError, req: Request, res: Response, next
     url: req.url,
     method: req.method,
     timestamp: new Date().toISOString(),
+  });
+
+  // 센트리로 에러 전송
+  Sentry.captureException(err, {
+    extra: {
+      url: req.url,
+      method: req.method,
+      body: req.body,
+      query: req.query,
+      params: req.params,
+      user: req.user,
+    },
+    tags: {
+      error_type: err.name || "UnknownError",
+      status_code: err.status || err.statusCode || 500,
+    },
   });
 
   const statusCode = err.status || err.statusCode || 500;
