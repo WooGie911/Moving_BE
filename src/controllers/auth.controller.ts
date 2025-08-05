@@ -13,9 +13,9 @@ const FRONTEND_URL =
 
 export const authCookieOptions = (
   maxAgeSeconds: number,
-  httpOnly?: boolean
+  httpOnly: boolean = true
 ): TCookieOptions => ({
-  httpOnly,
+  httpOnly: httpOnly,
   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 개발환경에서는 lax 사용
   secure: process.env.NODE_ENV === "production", // 개발환경에서는 false
   path: "/",
@@ -37,9 +37,15 @@ const postSignin = async (req: Request, res: Response) => {
     } = await authService.signin(email, password, userType);
 
     res.cookie(
+      "accessToken",
+      accessToken,
+      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+    );
+
+    res.cookie(
       "refreshToken",
       refreshToken,
-      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
+      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
     );
 
     res.status(200).json({
@@ -50,7 +56,6 @@ const postSignin = async (req: Request, res: Response) => {
         userName,
         userType: userTypeResponse,
       },
-      accessToken,
     });
   } catch (error: any) {
     console.error("로그인 에러:", error);
@@ -83,9 +88,15 @@ const postSignup = async (req: Request, res: Response) => {
     });
 
     res.cookie(
+      "accessToken",
+      accessToken,
+      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+    );
+
+    res.cookie(
       "refreshToken",
       refreshToken,
-      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
+      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
     );
 
     res.status(200).json({
@@ -96,7 +107,6 @@ const postSignup = async (req: Request, res: Response) => {
         name: userName,
         userType: userTypeResponse,
       },
-      accessToken,
     });
   } catch (error: any) {
     handleError(res, error);
@@ -135,39 +145,24 @@ const postSwitchRole = async (req: Request, res: Response) => {
     const { accessToken, refreshToken, provider } =
       await authService.switchRole(userId, userType);
 
-    if (provider === "LOCAL") {
-      res.cookie(
-        "refreshToken",
-        refreshToken,
-        authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
-      );
+    res.cookie(
+      "accessToken",
+      accessToken,
+      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+    );
 
-      res.status(200).json({
-        success: true,
-        message: "역할 변경 성공",
-        oldUserType,
-        newUserType: userType,
-        accessToken,
-      });
-    } else {
-      res.cookie(
-        "accessToken",
-        accessToken,
-        authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
-      );
-      res.cookie(
-        "refreshToken",
-        refreshToken,
-        authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
-      );
+    res.cookie(
+      "refreshToken",
+      refreshToken,
+      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
+    );
 
-      res.status(200).json({
-        success: true,
-        message: "역할 변경 성공",
-        oldUserType,
-        newUserType: userType,
-      });
-    }
+    res.status(200).json({
+      success: true,
+      message: "역할 변경 성공",
+      oldUserType,
+      newUserType: userType,
+    });
   } catch (error: any) {
     handleError(res, error);
   }
@@ -182,49 +177,30 @@ const postRefresh = async (req: Request, res: Response) => {
   };
 
   try {
-    const { accessToken, refreshToken, provider } = await authService.refresh({
+    const { accessToken, refreshToken } = await authService.refresh({
       exp,
       userType,
       userId,
     });
 
-    if (provider === "LOCAL") {
-      // 리프레쉬 쿠키까지 재발급 된다면 저장
-      if (refreshToken) {
-        res.cookie(
-          "refreshToken",
-          refreshToken,
-          authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
-        );
-      }
+    res.cookie(
+      "accessToken",
+      accessToken,
+      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+    );
 
-      res.status(200).json({
-        success: true,
-        message: "토큰 갱신 성공",
-        accessToken,
-      });
-    } else {
-      // 소셜 로그인은 쿠키로 전달
-      // 리프레쉬 쿠키까지 재발급 된다면 저장
+    if (refreshToken) {
       res.cookie(
-        "accessToken",
-        accessToken,
-        authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+        "refreshToken",
+        refreshToken,
+        authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
       );
-
-      if (refreshToken) {
-        res.cookie(
-          "refreshToken",
-          refreshToken,
-          authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
-        );
-      }
-
-      res.status(200).json({
-        success: true,
-        message: "토큰 갱신 성공",
-      });
     }
+
+    res.status(200).json({
+      success: true,
+      message: "토큰 갱신 성공",
+    });
   } catch (error: any) {
     handleError(res, error);
   }
@@ -244,7 +220,7 @@ const getGoogleCallback = async (req: Request, res: Response) => {
     res.cookie(
       "refreshToken",
       refreshToken,
-      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
+      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
     );
 
     res.redirect(`${FRONTEND_URL}/`);
@@ -276,7 +252,7 @@ const getKakaoCallback = async (req: Request, res: Response) => {
     res.cookie(
       "refreshToken",
       refreshToken,
-      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
+      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
     );
 
     res.redirect(`${FRONTEND_URL}/`);
@@ -308,7 +284,7 @@ const getNaverCallback = async (req: Request, res: Response) => {
     res.cookie(
       "refreshToken",
       refreshToken,
-      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE, true)
+      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
     );
 
     res.redirect(`${FRONTEND_URL}/`);

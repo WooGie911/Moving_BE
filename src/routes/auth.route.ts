@@ -127,7 +127,7 @@ const authRouter = Router();
  * /auth/sign-in:
  *   post:
  *     summary: 사용자 로그인
- *     description: 이메일과 비밀번호를 통해 사용자 로그인을 진행합니다. 성공 시 HTTP-only 쿠키에 액세스 토큰과 리프레시 토큰을 설정합니다.
+ *     description: 이메일과 비밀번호를 통해 사용자 로그인을 진행합니다. 성공 시 쿠키에 액세스 토큰과 리프레시 토큰을 설정합니다.
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -222,7 +222,7 @@ authRouter.post("/sign-in", loginLimiter, postSignin);
  * /auth/sign-up:
  *   post:
  *     summary: 사용자 회원가입
- *     description: 새로운 사용자를 등록합니다. 이메일 중복 확인 후 계정을 생성하고, HTTP-only 쿠키에 토큰을 설정합니다.
+ *     description: 새로운 사용자를 등록합니다. 이메일 중복 확인 후 계정을 생성하고, 쿠키에 액세스 토큰과 리프레시 토큰을 설정합니다.
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -376,7 +376,7 @@ authRouter.post("/logout", verifyAccessToken, postLogout);
  * /auth/switch-role:
  *   post:
  *     summary: 간단 로그인 역할 변경
- *     description: 간단 로그인 역할을 변경합니다.
+ *     description: 간단 로그인 역할을 변경합니다. 새로운 토큰은 쿠키에 저장됩니다.
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -392,7 +392,7 @@ authRouter.post("/switch-role", verifyAccessToken, postSwitchRole);
  * /auth/refresh-token:
  *   post:
  *     summary: 액세스 토큰 갱신
- *     description: 리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급합니다 (리프레쉬 토큰의 유효기간이 발급 만료 시간에 해당할 경우 리프레시 토큰도 갱신).
+ *     description: 리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급합니다. 토큰은 쿠키에 저장됩니다 (리프레쉬 토큰의 유효기간이 발급 만료 시간에 해당할 경우 리프레시 토큰도 갱신).
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -459,7 +459,7 @@ authRouter.post("/refresh-token", verifyRefreshToken, postRefresh);
  * /auth/google/callback:
  *   get:
  *     summary: 구글 로그인 콜백
- *     description: 구글 로그인을 처리합니다. 구글 로그인 후 토큰을 발급합니다.
+ *     description: 구글 로그인을 처리합니다. 구글 로그인 후 토큰을 쿠키에 저장합니다.
  *     tags: [Auth]
  *     responses:
  *       200:
@@ -542,7 +542,7 @@ authRouter.get("/google", (req, res, next) => {
  * /auth/kakao/callback:
  *   get:
  *     summary: 카카오 로그인 콜백
- *     description: 카카오 로그인을 처리합니다. 카카오 로그인 후 토큰을 발급합니다.
+ *     description: 카카오 로그인을 처리합니다. 카카오 로그인 후 토큰을 쿠키에 저장합니다.
  *     tags: [Auth]
  *     responses:
  *       200:
@@ -674,7 +674,7 @@ authRouter.get("/naver", (req, res, next) => {
  * /auth/naver/callback:
  *   get:
  *     summary: 네이버 로그인 콜백
- *     description: 네이버 로그인 완료 후 콜백을 처리합니다. 토큰을 발급합니다.
+ *     description: 네이버 로그인 완료 후 콜백을 처리합니다. 토큰을 쿠키에 저장합니다.
  *     tags: [Auth]
  *     responses:
  *       200:
@@ -682,21 +682,10 @@ authRouter.get("/naver", (req, res, next) => {
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   description: 성공 여부
- *                 accessToken:
- *                   type: string
- *                   description: 액세스 토큰
- *                 refreshToken:
- *                   type: string
- *                   description: 리프레시 토큰
+ *               $ref: '#/components/schemas/AuthSuccessResponse'
  *             example:
  *               success: true
- *               accessToken: "eyJhbGci..."
- *               refreshToken: "eyJhbGci..."
+ *               message: "네이버 로그인 성공"
  *       400:
  *         description: 잘못된 요청
  *         content:

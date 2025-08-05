@@ -69,32 +69,23 @@ const postProfile = async (req: Request, res: Response) => {
       const { result, accessToken, refreshToken, provider } =
         await createCustomerProfile(userId, profileData);
 
-      if (provider === "LOCAL") {
-        res.cookie(
-          "refreshToken",
-          refreshToken,
-          authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
-        );
+      res.cookie(
+        "accessToken",
+        accessToken,
+        authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+      );
 
-        res.json({
-          success: true,
-          message: PROFILE_SUCCESS_MESSAGES.CUSTOMER_PROFILE_CREATED,
-          data: result,
-          accessToken,
-        });
-      } else {
-        res.cookie(
-          "accessToken",
-          accessToken,
-          authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
-        );
+      res.cookie(
+        "refreshToken",
+        refreshToken,
+        authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
+      );
 
-        res.cookie(
-          "refreshToken",
-          refreshToken,
-          authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
-        );
-      }
+      res.json({
+        success: true,
+        message: PROFILE_SUCCESS_MESSAGES.CUSTOMER_PROFILE_CREATED,
+        data: result,
+      });
     } else if (userType === "MOVER") {
       // 기사님 프로필 등록
       const profileData: TMoverProfileInput = {
@@ -113,6 +104,12 @@ const postProfile = async (req: Request, res: Response) => {
       );
 
       res.cookie(
+        "accessToken",
+        accessToken,
+        authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+      );
+
+      res.cookie(
         "refreshToken",
         refreshToken,
         authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
@@ -122,7 +119,6 @@ const postProfile = async (req: Request, res: Response) => {
         success: true,
         message: PROFILE_SUCCESS_MESSAGES.MOVER_PROFILE_CREATED,
         data: result,
-        accessToken,
       });
     } else {
       res.status(400).json({

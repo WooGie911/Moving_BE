@@ -224,10 +224,6 @@ const logout = async (userId: string) => {
     throw new NotFoundError("존재하지 않는 유저입니다");
   }
 
-  if (!user.refreshToken) {
-    throw new AuthenticationError("이미 로그아웃된 상태입니다");
-  }
-
   await authRepository.updateUserToken(String(userId), null, user.userType);
 };
 
