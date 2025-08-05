@@ -2,11 +2,12 @@ import { Router } from "express";
 import authRouter from "./auth.route";
 import userRouter from "./user.route";
 import { getCSRFToken, getCSRFTokenStats } from "../middlewares/csrfMiddleware";
+import { verifyAccessToken } from "../middlewares/verifyToken";
 
 const authIndexRoutes = Router();
 
 // CSRF 토큰 관련 라우터
-authIndexRoutes.get("/csrf-token", getCSRFToken);
+authIndexRoutes.get("/csrf-token", verifyAccessToken, getCSRFToken);
 authIndexRoutes.get("/csrf-stats", getCSRFTokenStats);
 
 // 인증 관련 라우터
