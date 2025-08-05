@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import moverScheduleService from "../services/moverSchedule.service";
 import { NotFoundError } from "../types/commonError.types";
+import * as Sentry from "@sentry/node";
 import {
   HTTP_STATUS,
   ServiceError,
@@ -88,7 +89,21 @@ const moverScheduleController = {
         return;
       }
 
-      console.error("moverScheduleController.getMonthlySchedules 에러:", error);
+      // 센트리로 에러 전송
+      Sentry.captureException(error, {
+        extra: {
+          userId: req.user?.userId,
+          userType: req.user?.userType,
+          params: req.params,
+          url: req.url,
+          method: req.method,
+        },
+        tags: {
+          error_type: "mover_schedule_get_monthly",
+          user_type: req.user?.userType || "unknown",
+        },
+      });
+
       res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: "월별 스케줄 조회 중 예상치 못한 오류가 발생했습니다",

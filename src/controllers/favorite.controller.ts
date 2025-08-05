@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import favoriteService from "../services/favorite.service";
 import favoriteRepository from "../repositories/favorite.repository";
 import { IFavoriteRequest } from "../types/favorite.types";
+import * as Sentry from "@sentry/node";
 
 // 커스텀 Request 타입 정의
 interface IUserRequest extends Request {
@@ -55,7 +56,21 @@ class FavoriteController {
         return res.status(400).json(result);
       }
     } catch (error) {
-      console.error("찜하기 추가 컨트롤러 오류:", error);
+      // 센트리로 에러 전송
+      Sentry.captureException(error, {
+        extra: {
+          userId: req.user?.userId,
+          userType: req.user?.userType,
+          body: req.body,
+          url: req.url,
+          method: req.method,
+        },
+        tags: {
+          error_type: "favorite_add",
+          user_type: req.user?.userType || "unknown",
+        },
+      });
+
       return res.status(500).json({
         success: false,
         message: "서버 내부 오류가 발생했습니다.",
@@ -102,7 +117,21 @@ class FavoriteController {
         return res.status(400).json(result);
       }
     } catch (error) {
-      console.error("찜하기 제거 컨트롤러 오류:", error);
+      // 센트리로 에러 전송
+      Sentry.captureException(error, {
+        extra: {
+          userId: req.user?.userId,
+          userType: req.user?.userType,
+          params: req.params,
+          url: req.url,
+          method: req.method,
+        },
+        tags: {
+          error_type: "favorite_remove",
+          user_type: req.user?.userType || "unknown",
+        },
+      });
+
       return res.status(500).json({
         success: false,
         message: "서버 내부 오류가 발생했습니다.",
@@ -133,10 +162,7 @@ class FavoriteController {
         });
       }
 
-      const status = await favoriteRepository.getFavoriteStatus(
-        customerId!,
-        moverId
-      );
+      const status = await favoriteRepository.getFavoriteStatus(customerId!, moverId);
 
       return res.status(200).json({
         success: true,
@@ -144,7 +170,21 @@ class FavoriteController {
         data: status,
       });
     } catch (error) {
-      console.error("찜하기 상태 확인 컨트롤러 오류:", error);
+      // 센트리로 에러 전송
+      Sentry.captureException(error, {
+        extra: {
+          userId: req.user?.userId,
+          userType: req.user?.userType,
+          params: req.params,
+          url: req.url,
+          method: req.method,
+        },
+        tags: {
+          error_type: "favorite_get_status",
+          user_type: req.user?.userType || "unknown",
+        },
+      });
+
       return res.status(500).json({
         success: false,
         message: "서버 내부 오류가 발생했습니다.",
