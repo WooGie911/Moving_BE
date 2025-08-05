@@ -284,4 +284,62 @@ describe("ReviewRepository", () => {
       ).rejects.toThrow("Prisma 에러");
     });
   });
+
+  describe("getReview", () => {
+    it("성공적으로 견적 요청 ID로 리뷰를 조회한다", async () => {
+      // Setup
+      const mockReview = {
+        id: "review-1",
+        customerId: "user-1",
+        moverId: "mover-1",
+        estimateRequestId: "request-1",
+        status: "PENDING",
+        mover: {
+          id: "mover-1",
+          nickname: "기사님1",
+        },
+      };
+
+      (mockPrisma.review.findFirst as jest.Mock).mockResolvedValue(mockReview);
+
+      // Exercise
+      const result = await reviewRepository.getReview("request-1");
+
+      // Assertion
+      expect(mockPrisma.review.findFirst).toHaveBeenCalledWith({
+        where: {
+          estimateRequestId: "request-1",
+        },
+        include: {
+          mover: {
+            select: {
+              id: true,
+              nickname: true,
+            },
+          },
+        },
+      });
+      expect(result).toEqual(mockReview);
+    });
+
+    it("견적 요청 ID에 해당하는 리뷰가 없을 때 null을 반환한다", async () => {
+      // Setup
+      (mockPrisma.review.findFirst as jest.Mock).mockResolvedValue(null);
+
+      // Exercise
+      const result = await reviewRepository.getReview("request-1");
+
+      // Assertion
+      expect(result).toBeNull();
+    });
+
+    it("Prisma 에러 시 에러를 던진다", async () => {
+      // Setup
+      const error = new Error("Database error");
+      (mockPrisma.review.findFirst as jest.Mock).mockRejectedValue(error);
+
+      // Exercise & Assertion
+      await expect(reviewRepository.getReview("request-1")).rejects.toThrow("Database error");
+    });
+  });
 });

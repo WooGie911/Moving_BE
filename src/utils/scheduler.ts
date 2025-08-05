@@ -3,7 +3,11 @@ import expirationService from "../services/expiration.service";
 import actionService from "../services/action.service";
 import { ActionType } from "@prisma/client";
 import estimateRequestRepository from "../repositories/estimateRequest.repository";
-import { cleanupExpiredTokens, getCSRFTokenStats } from "../middlewares/csrfMiddleware";
+import reviewRepository from "../repositories/review.repository";
+import {
+  cleanupExpiredTokens,
+  getCSRFTokenStats,
+} from "../middlewares/csrfMiddleware";
 
 // 이사일 알림 생성 함수
 const generateMoveDayReminders = async () => {
@@ -14,57 +18,59 @@ const generateMoveDayReminders = async () => {
   tomorrow.setDate(tomorrow.getDate() + 1);
 
   // 내일 이사 예정인 견적 요청들 조회
-  const tomorrowRequests = await estimateRequestRepository.getEstimateRequestsForMoveDayReminders(tomorrow);
+  const tomorrowRequests =
+    await estimateRequestRepository.getEstimateRequestsForMoveDayReminders(
+      tomorrow
+    );
 
   // 오늘 이사 예정인 견적 요청들 조회
-  const todayRequests = await estimateRequestRepository.getEstimateRequestsForMoveDayReminders(today);
+  const todayRequests =
+    await estimateRequestRepository.getEstimateRequestsForMoveDayReminders(
+      today
+    );
 
   let createdCount = 0;
 
   // 내일 이사 알림 생성
   for (const request of tomorrowRequests) {
-    for (const estimate of request.estimates) {
-      await actionService.createAction(
-        estimate.moverId,
-        ActionType.MOVE_DAY_REMINDER_TOMORROW,
-        estimate.id,
-        "DESIGNATED_ESTIMATE",
-        { moveType: request.moveType, estimateId: request.id },
-      );
+    await actionService.createAction(
+      request.estimates[0].moverId,
+      ActionType.MOVE_DAY_REMINDER_TOMORROW,
+      request.id,
+      "ESTIMATE_REQUEST",
+      { moveType: request.moveType }
+    );
 
-      await actionService.createAction(
-        request.customerId,
-        ActionType.MOVE_DAY_REMINDER_TOMORROW,
-        estimate.id,
-        "DESIGNATED_ESTIMATE",
-        { moveType: request.moveType, estimateId: request.id },
-      );
+    await actionService.createAction(
+      request.customerId,
+      ActionType.MOVE_DAY_REMINDER_TOMORROW,
+      request.id,
+      "ESTIMATE_REQUEST",
+      { moveType: request.moveType }
+    );
 
-      createdCount += 2;
-    }
+    createdCount += 2;
   }
 
   // 오늘 이사 알림 생성
   for (const request of todayRequests) {
-    for (const estimate of request.estimates) {
-      await actionService.createAction(
-        estimate.moverId,
-        ActionType.MOVE_DAY_REMINDER_TODAY,
-        estimate.id,
-        "DESIGNATED_ESTIMATE",
-        { moveType: request.moveType, estimateId: request.id },
-      );
+    await actionService.createAction(
+      request.estimates[0].moverId,
+      ActionType.MOVE_DAY_REMINDER_TODAY,
+      request.id,
+      "ESTIMATE_REQUEST",
+      { moveType: request.moveType }
+    );
 
-      await actionService.createAction(
-        request.customerId,
-        ActionType.MOVE_DAY_REMINDER_TODAY,
-        estimate.id,
-        "DESIGNATED_ESTIMATE",
-        { moveType: request.moveType, estimateId: request.id },
-      );
+    await actionService.createAction(
+      request.customerId,
+      ActionType.MOVE_DAY_REMINDER_TODAY,
+      request.id,
+      "ESTIMATE_REQUEST",
+      { moveType: request.moveType }
+    );
 
-      createdCount += 2;
-    }
+    createdCount += 2;
   }
 
   console.log(`이사일 알림 생성 완료: ${createdCount}개 알림 생성`);
@@ -75,25 +81,25 @@ const generateMoveDayReviewRequests = async () => {
   console.log("리뷰 요청 생성 시작");
 
   // 이사 날짜가 지났으면서 COMPLETED 상태인 견적 요청들 조회
-  const completedRequests = await estimateRequestRepository.getEstimateRequestsForReviewRequests();
-
-  let createdCount = 0;
+  const completedRequests =
+    await estimateRequestRepository.getEstimateRequestsForReviewRequests();
 
   for (const request of completedRequests) {
-    for (const estimate of request.estimates) {
+    // 리뷰 조회 (견적 요청당 하나의 리뷰만 존재)
+    const review = await reviewRepository.getReview(request.id);
+
+    if (review) {
       await actionService.createAction(
         request.customerId,
         ActionType.MOVE_DAY_REVIEW_REQUEST,
-        estimate.id,
-        "DESIGNATED_ESTIMATE",
-        { moverName: estimate.mover?.name || "" },
+        review.id,
+        "REVIEW",
+        { moverName: review.mover?.nickname || "" }
       );
-
-      createdCount++;
     }
   }
 
-  console.log(`리뷰 요청 생성 완료: ${createdCount}개 요청 생성`);
+  console.log("리뷰 요청 생성 완료");
 };
 
 // 스케줄러 설정
@@ -105,12 +111,14 @@ const initializeScheduler = () => {
     "0 0 * * *",
     async () => {
       console.log("⏰ [일일 스케줄러] 만료된 견적 요청 처리 시작");
-      console.log("📋 PENDING 상태인 견적 요청의 이사일과 서버 시간을 비교하여 만료 처리");
+      console.log(
+        "📋 PENDING 상태인 견적 요청의 이사일과 서버 시간을 비교하여 만료 처리"
+      );
       try {
         const result = await expirationService.processExpiredEstimateRequests();
         if (result) {
           console.log(
-            `✅ [일일 스케줄러] 처리 완료: ${result.processedRequests}개 견적 요청 만료, ${result.orphanedEstimates}개 orphaned 견적 정리`,
+            `✅ [일일 스케줄러] 처리 완료: ${result.processedRequests}개 견적 요청 만료, ${result.orphanedEstimates}개 orphaned 견적 정리`
           );
         } else {
           console.log("ℹ️ [일일 스케줄러] 처리할 만료된 견적 요청이 없습니다.");
@@ -121,7 +129,7 @@ const initializeScheduler = () => {
     },
     {
       timezone: "Asia/Seoul", // 한국 시간 기준
-    },
+    }
   );
 
   // 매일 09시에 이사일 알림 및 리뷰 요청 생성
@@ -134,12 +142,15 @@ const initializeScheduler = () => {
         await generateMoveDayReviewRequests();
         console.log("[일일 스케줄러] 이사일 알림 및 리뷰 요청 생성 완료");
       } catch (error) {
-        console.error("[일일 스케줄러] 이사일 알림 및 리뷰 요청 생성 실패:", error);
+        console.error(
+          "[일일 스케줄러] 이사일 알림 및 리뷰 요청 생성 실패:",
+          error
+        );
       }
     },
     {
       timezone: "Asia/Seoul", // 한국 시간 기준
-    },
+    }
   );
 
   // 매시간 CSRF 토큰 정리 (매시 30분에 실행)
@@ -150,9 +161,11 @@ const initializeScheduler = () => {
       try {
         const cleanedCount = cleanupExpiredTokens();
         const stats = getCSRFTokenStats();
-        console.log(`✅ [시간별 스케줄러] CSRF 토큰 정리 완료: ${cleanedCount}개 삭제`);
         console.log(
-          `📊 CSRF 토큰 통계: 총 ${stats.totalTokens}개, 활성 ${stats.activeTokens}개, 만료 ${stats.expiredTokens}개`,
+          `✅ [시간별 스케줄러] CSRF 토큰 정리 완료: ${cleanedCount}개 삭제`
+        );
+        console.log(
+          `📊 CSRF 토큰 통계: 총 ${stats.totalTokens}개, 활성 ${stats.activeTokens}개, 만료 ${stats.expiredTokens}개`
         );
       } catch (error) {
         console.error("❌ [시간별 스케줄러] CSRF 토큰 정리 실패:", error);
@@ -160,7 +173,7 @@ const initializeScheduler = () => {
     },
     {
       timezone: "Asia/Seoul", // 한국 시간 기준
-    },
+    }
   );
 
   console.log("✅ 스케줄러 초기화 완료");
@@ -168,10 +181,18 @@ const initializeScheduler = () => {
   console.log("📅 매일 09시에 이사일 알림 및 리뷰 요청이 생성됩니다.");
   console.log("📅 매시 30분에 CSRF 토큰 정리가 실행됩니다.");
   console.log("🔄 PENDING → EXPIRED: 이사일이 지난 견적 요청을 만료 처리");
-  console.log("🔄 PROPOSED → AUTO_REJECTED: 만료된 견적 요청의 제안 견적들을 자동 거절");
+  console.log(
+    "🔄 PROPOSED → AUTO_REJECTED: 만료된 견적 요청의 제안 견적들을 자동 거절"
+  );
   console.log("🔄 이사일 알림: 내일/오늘 이사 예정인 고객과 기사님에게 알림");
-  console.log("🔄 리뷰 요청: 이사 날짜가 지났으면서 COMPLETED 상태인 고객에게 리뷰 요청");
+  console.log(
+    "🔄 리뷰 요청: 이사 날짜가 지났으면서 COMPLETED 상태인 고객에게 리뷰 요청"
+  );
   console.log("🧹 CSRF 토큰 정리: 만료된 CSRF 토큰을 정기적으로 삭제");
 };
 
-export { initializeScheduler, generateMoveDayReminders, generateMoveDayReviewRequests };
+export {
+  initializeScheduler,
+  generateMoveDayReminders,
+  generateMoveDayReviewRequests,
+};

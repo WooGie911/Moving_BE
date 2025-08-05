@@ -141,7 +141,7 @@ const moverEstimateService = {
           estimate.id,
           isDesignated ? "DESIGNATED_ESTIMATE" : "ESTIMATE",
           {
-            moverName: estimateDetail.mover?.name || "",
+            moverName: estimateDetail.mover?.nickname || "",
             moveType: estimateDetail.estimateRequest?.moveType || "",
           }
         );
