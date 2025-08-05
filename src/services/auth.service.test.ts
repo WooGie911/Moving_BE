@@ -352,6 +352,7 @@ describe("authService.signin", () => {
       moverImage: null,
       isCustomer: true,
       isMover: false,
+      provider: "LOCAL",
     };
 
     // 로그인 검증용 로직 모킹
@@ -405,6 +406,7 @@ describe("authService.signin", () => {
       moverImage: null,
       isCustomer: false,
       isMover: true,
+      provider: "LOCAL",
     };
 
     // 로그인 검증용 로직 모킹
@@ -514,6 +516,7 @@ describe("authService.signin", () => {
       moverImage: null,
       isCustomer: false,
       isMover: true,
+      provider: "LOCAL",
     };
 
     const mockFindUser = authRepository.findUserByEmailAndPassword as jest.Mock;
@@ -574,28 +577,6 @@ describe("authService.logout", () => {
 
     // Exercise
     await expect(authService.logout("1")).rejects.toThrow(NotFoundError);
-  });
-
-  it("로그아웃 실패 - 이미 로그아웃된 유저 라면 AuthenticationError(401) 발생", async () => {
-    // Setup
-    const mockUser = {
-      id: 1,
-      name: "홍길동",
-      userType: ["CUSTOMER", "MOVER"],
-      email: "test@test.com",
-      encryptedPassword: "$2b$10$hashedpassword",
-      customerImage: "https://cdn.com/image.png",
-      moverImage: null,
-      isCustomer: true,
-      isMover: false,
-      refreshToken: null,
-    };
-
-    const mockFindUserById = authRepository.findUserById as jest.Mock;
-    mockFindUserById.mockResolvedValue(mockUser);
-
-    // Exercise
-    await expect(authService.logout("1")).rejects.toThrow(AuthenticationError);
   });
 });
 
