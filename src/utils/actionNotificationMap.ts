@@ -463,7 +463,7 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
       return {
         title: `이사는 어떠셨나요? <span class="text-primary-400 font-bold">${moverName}</span> 기사님에 대한 <span class="font-bold">리뷰</span>를 남겨주세요.`,
         content: "기사님에 대한 리뷰를 남겨주세요.",
-        path: `/reviews/writable`, //TODO: 페이지 이동후 해당 모달 열리게  `/reviews/writable?writeModal=true&reviewId=asd` 로 변경
+        path: `/reviews/writable?modal=write&reviewId=${action.entityId}`,
       };
     },
   },

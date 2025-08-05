@@ -8,6 +8,7 @@ import {
   TMoverProfileInput,
   MoveType,
   RegionType,
+  TCustomerProfileUpdateInput,
 } from "../../types/user.types";
 import userRepository from "../../repositories/user.repository";
 
@@ -81,7 +82,7 @@ export const ensureNicknameUnique = async (
 
 // Customer 프로필 데이터 유효성 검사
 export const validateCustomerProfileData = async (
-  profileData: TCustomerProfileInput,
+  profileData: TCustomerProfileUpdateInput,
   userId?: string
 ): Promise<void> => {
   // 닉네임 유효성 검사 (선택사항)

@@ -6,6 +6,7 @@ import {
   ValidationError,
   ForbiddenError,
   NotFoundError,
+  TooManyRequestsError,
 } from "../types/commonError.types";
 
 /**
@@ -41,6 +42,11 @@ export const handleError = (
 
     case ValidationError:
       status = 422;
+      message = error.message;
+      break;
+
+    case TooManyRequestsError:
+      status = 429;
       message = error.message;
       break;
 

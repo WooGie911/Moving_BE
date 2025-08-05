@@ -163,7 +163,7 @@ export const requestDesignatedQuote = async (
         ActionType.DESIGNATED_ESTIMATE_REQUEST_SUBMITTED,
         dto.quoteId,
         "DESIGNATED_ESTIMATE_REQUEST",
-        { customerName: estimateRequest.customer?.name || "" }
+        { customerName: estimateRequest.customer?.nickname || "" }
       );
     }
   }

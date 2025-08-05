@@ -9,6 +9,7 @@ import {
 } from "../controllers/user.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 import generatePresignedUrls from "../middlewares/presignedUrl";
+import { validateCSRFToken } from "../middlewares/csrfMiddleware";
 
 const userRouter = Router();
 
@@ -658,7 +659,7 @@ userRouter.patch("/profile/mover", verifyAccessToken, patchMoverProfile);
  *               status: 500
  *               message: "서버 내부 오류가 발생했습니다"
  */
-userRouter.patch("/profile/mover/basic", verifyAccessToken, patchMoverBasicInfo);
+userRouter.patch("/profile/mover/basic", verifyAccessToken, validateCSRFToken, patchMoverBasicInfo);
 
 /**
  * @swagger

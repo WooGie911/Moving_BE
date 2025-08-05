@@ -297,7 +297,7 @@ const refresh = async (decoded: TDecodedToken) => {
   }
 
   // refreshToken은 optional
-  return { accessToken, refreshToken };
+  return { accessToken, refreshToken, provider: user.provider };
 };
 
 // 소셜 로그인
