@@ -82,8 +82,10 @@ enum NotificationType {
   ESTIMATE_REQUEST_ARRIVED // 견적 요청 도착  
   ESTIMATE_ARRIVED // 견적 도착
   ESTIMATE_STATUS_UPDATED // 견적 수락/거절
-  DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED // 지정 견적 요청 관련 상태 변경
-  DESIGNATED_ESTIMATE_STATUS_UPDATED // 지정 견적 관련 상태 변경
+  DESIGNATED_ESTIMATE_REQUEST_ARRIVED // 지정 견적 요청 도착
+  DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED // 지정 견적 요청 관련 상태 변경 - 거절만.
+  DESIGNATED_ESTIMATE_ARRIVED // 지정 견적 도착
+  DESIGNATED_ESTIMATE_STATUS_UPDATED // 지정 견적 수락/거절
   REVIEW_EVENT // 리뷰 관련
   FAVORITE_EVENT // 찜 관련
   MOVE_DAY_REMINDER // 이사 리마인더
@@ -92,7 +94,7 @@ enum NotificationType {
 // 사용자 활동 타입
 enum ActionType {
   WELCOME // 회원가입 환영
-  ESTIMATE_REQUEST_CREATE // 견적 요청 생성 
+  ESTIMATE_REQUEST_CREATE // 견적 요청 생성  
   ESTIMATE_SUBMITTED // 견적 제출
   ESTIMATE_ACCEPTED // 견적 수락
   ESTIMATE_REJECTED // 견적 거절
@@ -396,6 +398,7 @@ model Notification {
   id        String           @id @default(cuid())
   actionId  String // 연결된 Action ID
   userId    String // 수신자 ID
+  userType  UserType // 수신자 타입
   type      NotificationType // 알림 종류
   title     String // 알림 제목
   content   String // 알림 내용

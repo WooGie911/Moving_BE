@@ -1,302 +1,370 @@
 [
   {
-    "id": "notif_001",
-    "actionId": "action_001",
+    "id": "notification_001",
     "userId": "customer_001",
-    "type": "ESTIMATE_REQUEST_ARRIVED",
-    "title": "견적 요청이 도착했습니다",
-    "content": "새로운 견적 요청이 등록되었습니다. 확인해보세요.",
-    "path": "/estimate-requests",
-    "isRead": false
+    "type": "WELCOME",
+    "title": "회원가입을 환영합니다!",
+    "content": "안녕하세요! 이사 도우미에 오신 것을 환영합니다. 안전하고 편리한 이사 서비스를 이용해보세요.",
+    "isRead": false,
+    "metadata": {
+      "userType": "CUSTOMER"
+    }
   },
   {
-    "id": "notif_002",
-    "actionId": "action_002",
-    "userId": "customer_002",
-    "type": "ESTIMATE_ARRIVED",
-    "title": "새로운 견적이 도착했습니다",
-    "content": "기사님이 견적을 제출했습니다. 확인해보세요.",
-    "path": "/estimates",
-    "isRead": false
-  },
-  {
-    "id": "notif_003",
-    "actionId": "action_003",
-    "userId": "customer_003",
-    "type": "ESTIMATE_STATUS_UPDATED",
-    "title": "견적 상태가 업데이트되었습니다",
-    "content": "견적이 수락되었습니다. 이사 준비를 시작하세요.",
-    "path": "/estimates",
-    "isRead": true
-  },
-  {
-    "id": "notif_004",
-    "actionId": "action_004",
+    "id": "notification_002",
     "userId": "mover_001",
+    "type": "WELCOME",
+    "title": "기사님 등록을 환영합니다!",
+    "content": "안녕하세요! 이사 도우미에 기사님으로 등록되신 것을 환영합니다. 고객님들과 함께 성공적인 이사를 만들어가요.",
+    "isRead": false,
+    "metadata": {
+      "userType": "MOVER"
+    }
+  },
+  {
+    "id": "notification_003",
+    "userId": "customer_002",
     "type": "ESTIMATE_REQUEST_ARRIVED",
     "title": "새로운 견적 요청이 있습니다",
-    "content": "고객님이 견적을 요청했습니다. 확인해보세요.",
-    "path": "/estimate-requests",
-    "isRead": false
+    "content": "고객님이 견적을 요청하셨습니다. 빠른 견적 제출로 고객님의 만족도를 높여보세요.",
+    "isRead": false,
+    "metadata": {
+      "estimateRequestId": "est_req_001",
+      "moveType": "HOME"
+    }
   },
   {
-    "id": "notif_005",
-    "actionId": "action_005",
-    "userId": "mover_002",
-    "type": "ESTIMATE_STATUS_UPDATED",
-    "title": "견적이 수락되었습니다",
-    "content": "고객님이 견적을 수락했습니다. 이사 준비를 시작하세요.",
-    "path": "/estimates",
-    "isRead": true
-  },
-  {
-    "id": "notif_006",
-    "actionId": "action_006",
-    "userId": "customer_004",
-    "type": "REVIEW_EVENT",
-    "title": "리뷰 작성 기간이 시작되었습니다",
-    "content": "이사가 완료되었습니다. 리뷰를 작성해주세요.",
-    "path": "/reviews",
-    "isRead": false
-  },
-  {
-    "id": "notif_007",
-    "actionId": "action_007",
-    "userId": "mover_003",
-    "type": "REVIEW_EVENT",
-    "title": "새로운 리뷰가 작성되었습니다",
-    "content": "고객님이 리뷰를 작성했습니다. 확인해보세요.",
-    "path": "/reviews",
-    "isRead": false
-  },
-  {
-    "id": "notif_008",
-    "actionId": "action_008",
-    "userId": "customer_005",
-    "type": "FAVORITE_EVENT",
-    "title": "찜한 기사님이 업데이트되었습니다",
-    "content": "찜한 기사님의 정보가 업데이트되었습니다.",
-    "path": "/favorites",
-    "isRead": false
-  },
-  {
-    "id": "notif_009",
-    "actionId": "action_009",
-    "userId": "mover_004",
-    "type": "FAVORITE_EVENT",
-    "title": "새로운 찜이 추가되었습니다",
-    "content": "고객님이 당신을 찜했습니다.",
-    "path": "/profile",
-    "isRead": false
-  },
-  {
-    "id": "notif_010",
-    "actionId": "action_010",
-    "userId": "customer_006",
-    "type": "MOVE_DAY_REMINDER_TOMORROW",
-    "title": "내일 이사입니다",
-    "content": "내일 이사가 예정되어 있습니다. 준비사항을 확인해주세요.",
-    "path": "/schedule",
-    "isRead": false
-  },
-  {
-    "id": "notif_011",
-    "actionId": "action_011",
-    "userId": "customer_007",
-    "type": "MOVE_DAY_REMINDER_TODAY",
-    "title": "오늘 이사입니다",
-    "content": "오늘 이사가 예정되어 있습니다. 기사님이 곧 도착할 예정입니다.",
-    "path": "/schedule",
-    "isRead": false
-  },
-  {
-    "id": "notif_012",
-    "actionId": "action_012",
-    "userId": "customer_008",
-    "type": "MOVE_DAY_REVIEW_REQUEST",
-    "title": "리뷰를 작성해주세요",
-    "content": "이사가 완료되었습니다. 서비스에 대한 리뷰를 작성해주세요.",
-    "path": "/reviews",
-    "isRead": false
-  },
-  {
-    "id": "notif_013",
-    "actionId": "action_013",
-    "userId": "customer_009",
-    "type": "WELCOME",
-    "title": "환영합니다!",
-    "content": "이사 서비스에 가입해주셔서 감사합니다.",
-    "path": "/welcome",
-    "isRead": true
-  },
-  {
-    "id": "notif_014",
-    "actionId": "action_014",
-    "userId": "mover_005",
-    "type": "WELCOME",
-    "title": "기사님 등록이 완료되었습니다",
-    "content": "기사님으로 등록해주셔서 감사합니다.",
-    "path": "/welcome",
-    "isRead": true
-  },
-  {
-    "id": "notif_015",
-    "actionId": "action_015",
-    "userId": "customer_010",
-    "type": "DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED",
-    "title": "지정 견적 요청 상태가 변경되었습니다",
-    "content": "지정 견적 요청의 상태가 업데이트되었습니다.",
-    "path": "/designated-requests",
-    "isRead": false
-  },
-  {
-    "id": "notif_016",
-    "actionId": "action_016",
-    "userId": "mover_006",
-    "type": "DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED",
-    "title": "지정 견적 요청이 도착했습니다",
-    "content": "고객님이 지정 견적을 요청했습니다.",
-    "path": "/designated-requests",
-    "isRead": false
-  },
-  {
-    "id": "notif_017",
-    "actionId": "action_017",
-    "userId": "customer_011",
-    "type": "DESIGNATED_ESTIMATE_STATUS_UPDATED",
-    "title": "지정 견적 상태가 변경되었습니다",
-    "content": "지정 견적의 상태가 업데이트되었습니다.",
-    "path": "/designated-estimates",
-    "isRead": false
-  },
-  {
-    "id": "notif_018",
-    "actionId": "action_018",
-    "userId": "mover_007",
-    "type": "DESIGNATED_ESTIMATE_STATUS_UPDATED",
-    "title": "지정 견적이 수락되었습니다",
-    "content": "고객님이 지정 견적을 수락했습니다.",
-    "path": "/designated-estimates",
-    "isRead": true
-  },
-  {
-    "id": "notif_019",
-    "actionId": "action_019",
-    "userId": "customer_012",
+    "id": "notification_004",
+    "userId": "customer_003",
     "type": "ESTIMATE_ARRIVED",
     "title": "새로운 견적이 도착했습니다",
-    "content": "기사님이 견적을 제출했습니다. 확인해보세요.",
-    "path": "/estimates",
-    "isRead": false
+    "content": "<span>김기사</span>님이 견적을 제출하셨습니다. 견적 내용을 확인해보세요.",
+    "isRead": false,
+    "metadata": {
+      "moverName": "김기사",
+      "moveType": "HOME",
+      "estimateId": "est_001"
+    }
   },
   {
-    "id": "notif_020",
-    "actionId": "action_020",
-    "userId": "customer_013",
+    "id": "notification_005",
+    "userId": "mover_001",
+    "type": "ESTIMATE_STATUS_UPDATED",
+    "title": "견적이 수락되었습니다",
+    "content": "<span>이고객</span>님이 견적을 수락하셨습니다. 이사 일정을 확인하고 준비해주세요.",
+    "isRead": false,
+    "metadata": {
+      "customerName": "이고객",
+      "estimateId": "est_001",
+      "moveType": "HOME"
+    }
+  },
+  {
+    "id": "notification_006",
+    "userId": "customer_004",
     "type": "ESTIMATE_STATUS_UPDATED",
     "title": "견적이 거절되었습니다",
     "content": "견적이 거절되었습니다. 다른 견적을 확인해보세요.",
-    "path": "/estimates",
-    "isRead": true
+    "isRead": false,
+    "metadata": {
+      "moveType": "SMALL",
+      "reason": "가격이 높음"
+    }
   },
   {
-    "id": "notif_021",
-    "actionId": "action_021",
-    "userId": "mover_008",
-    "type": "ESTIMATE_STATUS_UPDATED",
-    "title": "견적이 거절되었습니다",
-    "content": "견적이 거절되었습니다. 다른 기회를 기다려주세요.",
-    "path": "/estimates",
-    "isRead": true
+    "id": "notification_007",
+    "userId": "mover_002",
+    "type": "DESIGNATED_ESTIMATE_REQUEST_ARRIVED",
+    "title": "지정 견적 요청이 도착했습니다",
+    "content": "<span>정고객</span>님이 지정 견적을 요청하셨습니다. 빠른 견적 제출 부탁드립니다.",
+    "isRead": false,
+    "metadata": {
+      "customerName": "정고객",
+      "estimateRequestId": "designated_req_001"
+    }
   },
   {
-    "id": "notif_022",
-    "actionId": "action_022",
-    "userId": "customer_014",
-    "type": "ESTIMATE_REQUEST_ARRIVED",
-    "title": "견적 요청이 도착했습니다",
-    "content": "새로운 견적 요청이 등록되었습니다. 확인해보세요.",
-    "path": "/estimate-requests",
-    "isRead": false
+    "id": "notification_008",
+    "userId": "customer_005",
+    "type": "DESIGNATED_ESTIMATE_ARRIVED",
+    "title": "지정 견적이 도착했습니다",
+    "content": "<span>박기사</span>님이 지정 견적을 제출하셨습니다. 견적 내용을 확인해보세요.",
+    "isRead": false,
+    "metadata": {
+      "moverName": "박기사",
+      "moveType": "HOME",
+      "estimateId": "designated_est_001"
+    }
   },
   {
-    "id": "notif_023",
-    "actionId": "action_023",
-    "userId": "mover_009",
-    "type": "ESTIMATE_REQUEST_ARRIVED",
-    "title": "새로운 견적 요청이 있습니다",
-    "content": "고객님이 견적을 요청했습니다. 확인해보세요.",
-    "path": "/estimate-requests",
-    "isRead": false
+    "id": "notification_009",
+    "userId": "customer_006",
+    "type": "DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED",
+    "title": "지정 견적 요청이 거절되었습니다",
+    "content": "지정 견적 요청이 거절되었습니다.",
+    "isRead": false,
+    "metadata": {
+      "moveType": "SMALL"
+    }
   },
   {
-    "id": "notif_024",
-    "actionId": "action_024",
-    "userId": "customer_015",
-    "type": "ESTIMATE_ARRIVED",
-    "title": "새로운 견적이 도착했습니다",
-    "content": "기사님이 견적을 제출했습니다. 확인해보세요.",
-    "path": "/estimates",
-    "isRead": false
+    "id": "notification_010",
+    "userId": "customer_007",
+    "type": "DESIGNATED_ESTIMATE_STATUS_UPDATED",
+    "title": "지정 견적이 수락되었습니다",
+    "content": "<span>이기사</span>님의 지정 견적이 수락되었습니다. 이사 일정을 확인해주세요.",
+    "isRead": false,
+    "metadata": {
+      "moverName": "이기사",
+      "customerName": "한고객",
+      "moveType": "OFFICE",
+      "estimateId": "designated_est_002"
+    }
   },
   {
-    "id": "notif_025",
-    "actionId": "action_025",
-    "userId": "mover_010",
-    "type": "ESTIMATE_STATUS_UPDATED",
-    "title": "견적이 수락되었습니다",
-    "content": "고객님이 견적을 수락했습니다. 이사 준비를 시작하세요.",
-    "path": "/estimates",
-    "isRead": true
+    "id": "notification_011",
+    "userId": "customer_008",
+    "type": "DESIGNATED_ESTIMATE_STATUS_UPDATED",
+    "title": "지정 견적이 거절되었습니다",
+    "content": "지정 견적이 거절되었습니다.",
+    "isRead": false,
+    "metadata": {
+      "customerName": "김고객",
+      "moveType": "HOME"
+    }
   },
   {
-    "id": "notif_026",
-    "actionId": "action_026",
-    "userId": "customer_016",
-    "type": "REVIEW_EVENT",
-    "title": "리뷰 작성 기간이 시작되었습니다",
-    "content": "이사가 완료되었습니다. 리뷰를 작성해주세요.",
-    "path": "/reviews",
-    "isRead": false
-  },
-  {
-    "id": "notif_027",
-    "actionId": "action_027",
-    "userId": "mover_011",
+    "id": "notification_012",
+    "userId": "mover_003",
     "type": "REVIEW_EVENT",
     "title": "새로운 리뷰가 작성되었습니다",
-    "content": "고객님이 리뷰를 작성했습니다. 확인해보세요.",
-    "path": "/reviews",
-    "isRead": false
+    "content": "<span>박고객</span>님이 리뷰를 작성하셨습니다. 리뷰 내용을 확인해보세요.",
+    "isRead": false,
+    "metadata": {
+      "customerName": "박고객",
+      "reviewId": "review_001",
+      "rating": 5
+    }
   },
   {
-    "id": "notif_028",
-    "actionId": "action_028",
-    "userId": "customer_017",
-    "type": "FAVORITE_EVENT",
-    "title": "찜한 기사님이 업데이트되었습니다",
-    "content": "찜한 기사님의 정보가 업데이트되었습니다.",
-    "path": "/favorites",
-    "isRead": false
-  },
-  {
-    "id": "notif_029",
-    "actionId": "action_029",
-    "userId": "mover_012",
+    "id": "notification_013",
+    "userId": "mover_004",
     "type": "FAVORITE_EVENT",
     "title": "새로운 찜이 추가되었습니다",
-    "content": "고객님이 당신을 찜했습니다.",
-    "path": "/profile",
-    "isRead": false
+    "content": "<span>정고객</span>님이 기사님을 찜하셨습니다.",
+    "isRead": false,
+    "metadata": {
+      "customerName": "정고객",
+      "favoriteId": "fav_001"
+    }
   },
   {
-    "id": "notif_030",
-    "actionId": "action_030",
+    "id": "notification_014",
+    "userId": "customer_009",
+    "type": "MOVE_DAY_REMINDER",
+    "title": "내일 이사 예정입니다",
+    "content": "내일 이사 예정입니다. 준비사항을 다시 한번 확인해주세요.",
+    "isRead": false,
+    "metadata": {
+      "moveType": "HOME",
+      "moveDate": "2025-08-15"
+    }
+  },
+  {
+    "id": "notification_015",
+    "userId": "customer_010",
+    "type": "MOVE_DAY_REMINDER",
+    "title": "오늘 이사 예정입니다",
+    "content": "오늘 이사 예정입니다. 기사님이 곧 도착하실 예정입니다.",
+    "isRead": false,
+    "metadata": {
+      "moveType": "SMALL",
+      "moveDate": "2025-08-14"
+    }
+  },
+  {
+    "id": "notification_016",
+    "userId": "customer_011",
+    "type": "MOVE_DAY_REMINDER",
+    "title": "리뷰 작성 기간이 시작되었습니다",
+    "content": "<span>최기사</span>님의 서비스에 대한 리뷰를 작성해주세요. 다른 고객님들에게 도움이 됩니다.",
+    "isRead": false,
+    "metadata": {
+      "moverName": "최기사",
+      "estimateRequestId": "est_req_004"
+    }
+  },
+  {
+    "id": "notification_017",
+    "userId": "customer_012",
+    "type": "ESTIMATE_REQUEST_ARRIVED",
+    "title": "새로운 견적 요청이 있습니다",
+    "content": "고객님이 견적을 요청하셨습니다. 빠른 견적 제출로 고객님의 만족도를 높여보세요.",
+    "isRead": false,
+    "metadata": {
+      "estimateRequestId": "est_req_002",
+      "moveType": "OFFICE"
+    }
+  },
+  {
+    "id": "notification_018",
+    "userId": "customer_013",
+    "type": "ESTIMATE_ARRIVED",
+    "title": "새로운 견적이 도착했습니다",
+    "content": "<span>강기사</span>님이 견적을 제출하셨습니다. 견적 내용을 확인해보세요.",
+    "isRead": false,
+    "metadata": {
+      "moverName": "강기사",
+      "moveType": "SMALL",
+      "estimateId": "est_002"
+    }
+  },
+  {
+    "id": "notification_019",
+    "userId": "mover_005",
+    "type": "ESTIMATE_STATUS_UPDATED",
+    "title": "견적이 수락되었습니다",
+    "content": "<span>윤고객</span>님이 견적을 수락하셨습니다. 이사 일정을 확인하고 준비해주세요.",
+    "isRead": false,
+    "metadata": {
+      "customerName": "윤고객",
+      "estimateId": "est_003",
+      "moveType": "HOME"
+    }
+  },
+  {
+    "id": "notification_020",
+    "userId": "customer_014",
+    "type": "ESTIMATE_STATUS_UPDATED",
+    "title": "견적이 거절되었습니다",
+    "content": "견적이 거절되었습니다. 다른 견적을 확인해보세요.",
+    "isRead": false,
+    "metadata": {
+      "moveType": "OFFICE",
+      "reason": "다른 견적 선택"
+    }
+  },
+  {
+    "id": "notification_021",
+    "userId": "mover_006",
+    "type": "DESIGNATED_ESTIMATE_REQUEST_ARRIVED",
+    "title": "지정 견적 요청이 도착했습니다",
+    "content": "<span>조고객</span>님이 지정 견적을 요청하셨습니다. 빠른 견적 제출 부탁드립니다.",
+    "isRead": false,
+    "metadata": {
+      "customerName": "조고객",
+      "estimateRequestId": "designated_req_002"
+    }
+  },
+  {
+    "id": "notification_022",
+    "userId": "customer_015",
+    "type": "DESIGNATED_ESTIMATE_ARRIVED",
+    "title": "지정 견적이 도착했습니다",
+    "content": "<span>한기사</span>님이 지정 견적을 제출하셨습니다. 견적 내용을 확인해보세요.",
+    "isRead": false,
+    "metadata": {
+      "moverName": "한기사",
+      "moveType": "OFFICE",
+      "estimateId": "designated_est_003"
+    }
+  },
+  {
+    "id": "notification_023",
+    "userId": "customer_016",
+    "type": "DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED",
+    "title": "지정 견적 요청이 거절되었습니다",
+    "content": "지정 견적 요청이 거절되었습니다.",
+    "isRead": false,
+    "metadata": {
+      "moveType": "HOME"
+    }
+  },
+  {
+    "id": "notification_024",
+    "userId": "customer_017",
+    "type": "DESIGNATED_ESTIMATE_STATUS_UPDATED",
+    "title": "지정 견적이 수락되었습니다",
+    "content": "<span>서기사</span>님의 지정 견적이 수락되었습니다. 이사 일정을 확인해주세요.",
+    "isRead": false,
+    "metadata": {
+      "moverName": "서기사",
+      "customerName": "백고객",
+      "moveType": "SMALL",
+      "estimateId": "designated_est_004"
+    }
+  },
+  {
+    "id": "notification_025",
     "userId": "customer_018",
-    "type": "MOVE_DAY_REMINDER_TOMORROW",
-    "title": "내일 이사입니다",
-    "content": "내일 이사가 예정되어 있습니다. 준비사항을 확인해주세요.",
-    "path": "/schedule",
-    "isRead": false
+    "type": "DESIGNATED_ESTIMATE_STATUS_UPDATED",
+    "title": "지정 견적이 거절되었습니다",
+    "content": "지정 견적이 거절되었습니다.",
+    "isRead": false,
+    "metadata": {
+      "customerName": "남고객",
+      "moveType": "OFFICE"
+    }
+  },
+  {
+    "id": "notification_026",
+    "userId": "mover_007",
+    "type": "REVIEW_EVENT",
+    "title": "새로운 리뷰가 작성되었습니다",
+    "content": "<span>도고객</span>님이 리뷰를 작성하셨습니다. 리뷰 내용을 확인해보세요.",
+    "isRead": false,
+    "metadata": {
+      "customerName": "도고객",
+      "reviewId": "review_002",
+      "rating": 4
+    }
+  },
+  {
+    "id": "notification_027",
+    "userId": "mover_008",
+    "type": "FAVORITE_EVENT",
+    "title": "새로운 찜이 추가되었습니다",
+    "content": "<span>카고객</span>님이 기사님을 찜하셨습니다.",
+    "isRead": false,
+    "metadata": {
+      "customerName": "카고객",
+      "favoriteId": "fav_002"
+    }
+  },
+  {
+    "id": "notification_028",
+    "userId": "customer_019",
+    "type": "MOVE_DAY_REMINDER",
+    "title": "내일 이사 예정입니다",
+    "content": "내일 이사 예정입니다. 준비사항을 다시 한번 확인해주세요.",
+    "isRead": false,
+    "metadata": {
+      "moveType": "OFFICE",
+      "moveDate": "2025-08-16"
+    }
+  },
+  {
+    "id": "notification_029",
+    "userId": "customer_020",
+    "type": "MOVE_DAY_REMINDER",
+    "title": "오늘 이사 예정입니다",
+    "content": "오늘 이사 예정입니다. 기사님이 곧 도착하실 예정입니다.",
+    "isRead": false,
+    "metadata": {
+      "moveType": "HOME",
+      "moveDate": "2025-08-15"
+    }
+  },
+  {
+    "id": "notification_030",
+    "userId": "customer_021",
+    "type": "MOVE_DAY_REMINDER",
+    "title": "리뷰 작성 기간이 시작되었습니다",
+    "content": "<span>구기사</span>님의 서비스에 대한 리뷰를 작성해주세요. 다른 고객님들에게 도움이 됩니다.",
+    "isRead": false,
+    "metadata": {
+      "moverName": "구기사",
+      "estimateRequestId": "est_req_005"
+    }
   }
 ]

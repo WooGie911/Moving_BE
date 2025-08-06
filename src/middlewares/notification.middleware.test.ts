@@ -94,6 +94,7 @@ describe("NotificationMiddleware", () => {
         id: "notification-1",
         actionId: "action-1",
         userId: "user-1",
+        userType: "CUSTOMER",
         type: "ESTIMATE_REQUEST_ARRIVED",
         title: "새로운 견적 요청",
         content: "새로운 견적 요청이 생성되었습니다.",
@@ -135,6 +136,7 @@ describe("NotificationMiddleware", () => {
       expect(mockPrisma.notification.create).toHaveBeenCalledWith({
         data: {
           userId: "user-1",
+          userType: "CUSTOMER",
           actionId: "action-1",
           type: "ESTIMATE_REQUEST_ARRIVED",
           title: "새로운 견적 요청",
