@@ -6,7 +6,6 @@ import prisma from "../db/prisma/prisma";
 
 const reviewService = {
   postReview: async (reviewId: string, rating: number, content: string) => {
-
     const review = await reviewRepository.postReview(reviewId, rating, content);
 
     // 리뷰 제출 액션 생성
@@ -25,8 +24,6 @@ const reviewService = {
 
       // 기사님의 리뷰 통계 업데이트
       await updateMoverReviewStats(reviewDetail.moverId);
-    } else {
-      console.error(`❌ 리뷰 상세 정보를 찾을 수 없음: reviewId=${review.id}`);
     }
 
     return review;
@@ -318,8 +315,6 @@ const reviewService = {
 // 기사님의 리뷰 통계 업데이트 함수
 const updateMoverReviewStats = async (moverId: string) => {
   try {
-    console.log(`📊 기사님 ${moverId}의 리뷰 통계 업데이트 시작`);
-
     // 해당 기사님의 모든 리뷰 조회 (삭제되지 않은 것만)
     const reviews = await prisma.review.findMany({
       where: {
@@ -332,40 +327,20 @@ const updateMoverReviewStats = async (moverId: string) => {
       },
     });
 
-    console.log(`📝 조회된 리뷰들:`, reviews);
-
     const totalReviews = reviews.length;
     const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
     const averageRating = totalReviews > 0 ? totalRating / totalReviews : 0;
 
-    console.log(
-      `🧮 계산된 통계: 총 리뷰=${totalReviews}, 총 평점=${totalRating}, 평균 평점=${averageRating}`
-    );
-
     // 기사님 정보 업데이트
-    const updatedMover = await prisma.user.update({
+    await prisma.user.update({
       where: { id: moverId },
       data: {
         totalReviewCount: totalReviews,
-        averageRating: Math.round(averageRating * 10) / 10, // 소수점 첫째자리까지 반올림
+        averageRating: Math.round(averageRating * 10) / 10,
       },
     });
-
-    console.log(
-      `✅ 기사님 ${moverId}의 리뷰 통계 업데이트 완료: 평점 ${averageRating}, 리뷰 수 ${totalReviews}`
-    );
-    console.log(`📋 업데이트된 기사님 정보:`, {
-      id: updatedMover.id,
-      name: updatedMover.name,
-      averageRating: updatedMover.averageRating,
-      totalReviewCount: updatedMover.totalReviewCount,
-    });
   } catch (error) {
-    console.error("❌ 기사님 리뷰 통계 업데이트 실패:", error);
-    console.error("에러 상세:", {
-      message: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
-    });
+    console.error("기사님 리뷰 통계 업데이트 실패:", error);
   }
 };
 
