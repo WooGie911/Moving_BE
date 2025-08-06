@@ -9,15 +9,8 @@ import {
   updateCustomerProfileCheck,
 } from "../services/user.service";
 import { handleError } from "../utils/handleError";
-import {
-  TCustomerProfileInput,
-  TMoverProfileInput,
-  TUserRole,
-} from "../types/user.types";
-import {
-  PROFILE_SUCCESS_MESSAGES,
-  PROFILE_ERROR_MESSAGES,
-} from "../constants/profile.constants";
+import { TCustomerProfileInput, TMoverProfileInput, TUserRole } from "../types/user.types";
+import { PROFILE_SUCCESS_MESSAGES, PROFILE_ERROR_MESSAGES } from "../constants/profile.constants";
 import { authCookieOptions } from "./auth.controller";
 import { TOKEN_EXPIRES } from "../constants/token.constants";
 
@@ -39,14 +32,18 @@ const getUser = async (req: Request, res: Response) => {
 
 // 프로필 조회
 const getProfile = async (req: Request, res: Response) => {
-  const { userId, userType } = req.user as {
-    userId: string;
-    userType: TUserRole;
-  };
+  try {
+    const { userId, userType } = req.user as {
+      userId: string;
+      userType: TUserRole;
+    };
 
-  const profile = await getProfileData(userId, userType);
+    const profile = await getProfileData(userId, userType);
 
-  res.json({ success: true, data: profile });
+    res.json({ success: true, data: profile });
+  } catch (error) {
+    handleError(res, error, "프로필 조회 중 오류가 발생했습니다.");
+  }
 };
 
 // 프로필 등록
@@ -66,20 +63,11 @@ const postProfile = async (req: Request, res: Response) => {
         preferredServices: req.body.preferredServices,
       };
 
-      const { result, accessToken, refreshToken, provider } =
-        await createCustomerProfile(userId, profileData);
+      const { result, accessToken, refreshToken, provider } = await createCustomerProfile(userId, profileData);
 
-      res.cookie(
-        "accessToken",
-        accessToken,
-        authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
-      );
+      res.cookie("accessToken", accessToken, authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false));
 
-      res.cookie(
-        "refreshToken",
-        refreshToken,
-        authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
-      );
+      res.cookie("refreshToken", refreshToken, authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE));
 
       res.json({
         success: true,
@@ -98,22 +86,11 @@ const postProfile = async (req: Request, res: Response) => {
         serviceTypes: req.body.serviceTypes,
       };
 
-      const { result, accessToken, refreshToken } = await createMoverProfile(
-        userId,
-        profileData
-      );
+      const { result, accessToken, refreshToken } = await createMoverProfile(userId, profileData);
 
-      res.cookie(
-        "accessToken",
-        accessToken,
-        authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
-      );
+      res.cookie("accessToken", accessToken, authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false));
 
-      res.cookie(
-        "refreshToken",
-        refreshToken,
-        authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
-      );
+      res.cookie("refreshToken", refreshToken, authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE));
 
       res.json({
         success: true,
@@ -207,11 +184,4 @@ const patchMoverProfile = async (req: Request, res: Response) => {
   }
 };
 
-export {
-  getUser,
-  postProfile,
-  getProfile,
-  patchCustomerProfile,
-  patchMoverBasicInfo,
-  patchMoverProfile,
-};
+export { getUser, postProfile, getProfile, patchCustomerProfile, patchMoverBasicInfo, patchMoverProfile };

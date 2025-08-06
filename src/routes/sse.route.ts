@@ -40,7 +40,10 @@ const sseRouter = Router();
 sseRouter.get("/", verifyAccessToken, (req: Request, res: Response) => {
   const userId = req.user?.userId;
   if (!userId) {
-    return res.status(401).json({ message: "Unauthorized" });
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized",
+    });
   }
 
   registerSSE(userId, res);

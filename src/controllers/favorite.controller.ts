@@ -3,6 +3,7 @@ import favoriteService from "../services/favorite.service";
 import favoriteRepository from "../repositories/favorite.repository";
 import { IFavoriteRequest } from "../types/favorite.types";
 import * as Sentry from "@sentry/node";
+import { handleError } from "../utils/handleError";
 
 // 커스텀 Request 타입 정의
 interface IUserRequest extends Request {
@@ -21,7 +22,7 @@ class FavoriteController {
   async addFavorite(req: IUserRequest, res: Response) {
     try {
       const customerId = req.user?.userId;
-      const { moverId }: IFavoriteRequest = req.body;
+      const moverId = req.params.moverId;
 
       // 입력 검증
       if (!moverId || typeof moverId !== "string") {
@@ -53,8 +54,7 @@ class FavoriteController {
       // success가 false인 경우도 정상적인 상황이므로 200 상태 코드로 반환
       return res.status(200).json(result);
     } catch (error) {
-      // 센트리로 에러 전송
-      Sentry.captureException(error, {
+      handleError(res, error, "찜하기 추가 중 오류가 발생했습니다.", {
         extra: {
           userId: req.user?.userId,
           userType: req.user?.userType,
@@ -66,11 +66,6 @@ class FavoriteController {
           error_type: "favorite_add",
           user_type: req.user?.userType || "unknown",
         },
-      });
-
-      return res.status(500).json({
-        success: false,
-        message: "서버 내부 오류가 발생했습니다.",
       });
     }
   }
@@ -111,8 +106,7 @@ class FavoriteController {
       // success가 false인 경우도 정상적인 상황이므로 200 상태 코드로 반환
       return res.status(200).json(result);
     } catch (error) {
-      // 센트리로 에러 전송
-      Sentry.captureException(error, {
+      handleError(res, error, "찜하기 제거 중 오류가 발생했습니다.", {
         extra: {
           userId: req.user?.userId,
           userType: req.user?.userType,
@@ -124,11 +118,6 @@ class FavoriteController {
           error_type: "favorite_remove",
           user_type: req.user?.userType || "unknown",
         },
-      });
-
-      return res.status(500).json({
-        success: false,
-        message: "서버 내부 오류가 발생했습니다.",
       });
     }
   }
@@ -157,11 +146,7 @@ class FavoriteController {
         });
       }
 
-      const result = await favoriteRepository.getFavoriteMovers(
-        customerId!,
-        limit,
-        cursor
-      );
+      const result = await favoriteRepository.getFavoriteMovers(customerId!, limit, cursor);
 
       return res.status(200).json({
         success: true,
@@ -169,8 +154,7 @@ class FavoriteController {
         data: result,
       });
     } catch (error) {
-      // 센트리로 에러 전송
-      Sentry.captureException(error, {
+      handleError(res, error, "찜한 기사님 목록 조회 중 오류가 발생했습니다.", {
         extra: {
           userId: req.user?.userId,
           userType: req.user?.userType,
@@ -182,11 +166,6 @@ class FavoriteController {
           error_type: "favorite_get_movers",
           user_type: req.user?.userType || "unknown",
         },
-      });
-
-      return res.status(500).json({
-        success: false,
-        message: "서버 내부 오류가 발생했습니다.",
       });
     }
   }
@@ -214,10 +193,7 @@ class FavoriteController {
         });
       }
 
-      const status = await favoriteRepository.getFavoriteStatus(
-        customerId!,
-        moverId
-      );
+      const status = await favoriteRepository.getFavoriteStatus(customerId!, moverId);
 
       return res.status(200).json({
         success: true,
@@ -225,8 +201,7 @@ class FavoriteController {
         data: status,
       });
     } catch (error) {
-      // 센트리로 에러 전송
-      Sentry.captureException(error, {
+      handleError(res, error, "찜하기 상태 확인 중 오류가 발생했습니다.", {
         extra: {
           userId: req.user?.userId,
           userType: req.user?.userType,
@@ -238,11 +213,6 @@ class FavoriteController {
           error_type: "favorite_get_status",
           user_type: req.user?.userType || "unknown",
         },
-      });
-
-      return res.status(500).json({
-        success: false,
-        message: "서버 내부 오류가 발생했습니다.",
       });
     }
   }

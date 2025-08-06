@@ -3,18 +3,13 @@ import authService from "../services/auth.service";
 import { TOKEN_EXPIRES } from "../constants/token.constants";
 
 import { handleError } from "../utils/handleError";
+import * as Sentry from "@sentry/node";
 import { TCookieOptions } from "../types/cookie.types";
 import { TUserRole } from "../types/user.types";
 
-const FRONTEND_URL =
-  process.env.NODE_ENV === "production"
-    ? process.env.FRONTEND_URL
-    : "http://localhost:3000";
+const FRONTEND_URL = process.env.NODE_ENV === "production" ? process.env.FRONTEND_URL : "http://localhost:3000";
 
-export const authCookieOptions = (
-  maxAgeSeconds: number,
-  httpOnly: boolean = true
-): TCookieOptions => ({
+export const authCookieOptions = (maxAgeSeconds: number, httpOnly: boolean = true): TCookieOptions => ({
   httpOnly: httpOnly,
   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 개발환경에서는 lax 사용
   secure: process.env.NODE_ENV === "production", // 개발환경에서는 false
@@ -36,17 +31,9 @@ const postSignin = async (req: Request, res: Response) => {
       refreshToken,
     } = await authService.signin(email, password, userType);
 
-    res.cookie(
-      "accessToken",
-      accessToken,
-      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
-    );
+    res.cookie("accessToken", accessToken, authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false));
 
-    res.cookie(
-      "refreshToken",
-      refreshToken,
-      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
-    );
+    res.cookie("refreshToken", refreshToken, authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE));
 
     res.status(200).json({
       success: true,
@@ -58,13 +45,19 @@ const postSignin = async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error("로그인 에러:", error);
-    console.error("에러 상세 정보:", {
-      message: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
-      name: error instanceof Error ? error.name : "Unknown",
+    // Sentry로 에러 추적
+    handleError(res, error, "로그인 중 오류가 발생했습니다.", {
+      extra: {
+        email,
+        userType,
+        url: req.url,
+        method: req.method,
+      },
+      tags: {
+        error_type: "auth_signin_error",
+        user_type: userType,
+      },
     });
-    handleError(res, error);
   }
 };
 
@@ -87,17 +80,9 @@ const postSignup = async (req: Request, res: Response) => {
       userType,
     });
 
-    res.cookie(
-      "accessToken",
-      accessToken,
-      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
-    );
+    res.cookie("accessToken", accessToken, authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false));
 
-    res.cookie(
-      "refreshToken",
-      refreshToken,
-      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
-    );
+    res.cookie("refreshToken", refreshToken, authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE));
 
     res.status(200).json({
       success: true,
@@ -142,20 +127,11 @@ const postSwitchRole = async (req: Request, res: Response) => {
   const { userType } = req.body;
 
   try {
-    const { accessToken, refreshToken, provider } =
-      await authService.switchRole(userId, userType);
+    const { accessToken, refreshToken, provider } = await authService.switchRole(userId, userType);
 
-    res.cookie(
-      "accessToken",
-      accessToken,
-      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
-    );
+    res.cookie("accessToken", accessToken, authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false));
 
-    res.cookie(
-      "refreshToken",
-      refreshToken,
-      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
-    );
+    res.cookie("refreshToken", refreshToken, authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE));
 
     res.status(200).json({
       success: true,
@@ -183,18 +159,10 @@ const postRefresh = async (req: Request, res: Response) => {
       userId,
     });
 
-    res.cookie(
-      "accessToken",
-      accessToken,
-      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
-    );
+    res.cookie("accessToken", accessToken, authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false));
 
     if (refreshToken) {
-      res.cookie(
-        "refreshToken",
-        refreshToken,
-        authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
-      );
+      res.cookie("refreshToken", refreshToken, authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE));
     }
 
     res.status(200).json({
@@ -211,17 +179,9 @@ const getGoogleCallback = async (req: Request, res: Response) => {
   const { accessToken, refreshToken, userType } = req.user as any;
 
   try {
-    res.cookie(
-      "accessToken",
-      accessToken,
-      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
-    );
+    res.cookie("accessToken", accessToken, authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false));
 
-    res.cookie(
-      "refreshToken",
-      refreshToken,
-      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
-    );
+    res.cookie("refreshToken", refreshToken, authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE));
 
     res.redirect(`${FRONTEND_URL}/`);
   } catch (error: any) {
@@ -243,17 +203,9 @@ const getKakaoCallback = async (req: Request, res: Response) => {
   const { accessToken, refreshToken, userType } = req.user as any;
 
   try {
-    res.cookie(
-      "accessToken",
-      accessToken,
-      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
-    );
+    res.cookie("accessToken", accessToken, authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false));
 
-    res.cookie(
-      "refreshToken",
-      refreshToken,
-      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
-    );
+    res.cookie("refreshToken", refreshToken, authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE));
 
     res.redirect(`${FRONTEND_URL}/`);
   } catch (error: any) {
@@ -275,17 +227,9 @@ const getNaverCallback = async (req: Request, res: Response) => {
   const { accessToken, refreshToken, userType } = req.user as any;
 
   try {
-    res.cookie(
-      "accessToken",
-      accessToken,
-      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
-    );
+    res.cookie("accessToken", accessToken, authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false));
 
-    res.cookie(
-      "refreshToken",
-      refreshToken,
-      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
-    );
+    res.cookie("refreshToken", refreshToken, authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE));
 
     res.redirect(`${FRONTEND_URL}/`);
   } catch (error: any) {
