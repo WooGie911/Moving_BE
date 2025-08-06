@@ -8,11 +8,11 @@ export const TIME = {
 
 export const TOKEN_EXPIRES = {
   // 토큰 만료 시간
-  ACCESS_TOKEN: "1m", // 1시간
+  ACCESS_TOKEN: "15m", // 15분
   REFRESH_TOKEN: "2w", // 2주
 
   // 쿠키 만료 시간
-  ACCESS_TOKEN_COOKIE: 1 * TIME.MINUTE, //  10분
+  ACCESS_TOKEN_COOKIE: 15 * TIME.MINUTE, //  15분
   REFRESH_TOKEN_COOKIE: 2 * TIME.WEEK, //  2주
 } as const;
 
