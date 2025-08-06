@@ -1,4 +1,4 @@
-import { PrismaClient, NotificationType } from "@prisma/client";
+import { PrismaClient, NotificationType, UserType } from "@prisma/client";
 
 // PrismaClient를 모킹
 jest.mock("@prisma/client", () => ({
@@ -22,6 +22,10 @@ jest.mock("@prisma/client", () => ({
     REVIEW_EVENT: "REVIEW_EVENT",
     FAVORITE_EVENT: "FAVORITE_EVENT",
     MOVE_DAY_REMINDER: "MOVE_DAY_REMINDER",
+  },
+  UserType: {
+    CUSTOMER: "CUSTOMER",
+    MOVER: "MOVER",
   },
 }));
 
@@ -57,6 +61,7 @@ describe("NotificationRepository", () => {
           id: "notification-1",
           actionId: "action-1",
           userId: "user-1",
+          userType: "CUSTOMER" as UserType,
           type: "ESTIMATE_REQUEST_ARRIVED",
           title: "새로운 견적 요청",
           content: "테스트 알림 1",
@@ -66,6 +71,7 @@ describe("NotificationRepository", () => {
           id: "notification-2",
           actionId: "action-2",
           userId: "user-1",
+          userType: "CUSTOMER" as UserType,
           type: "ESTIMATE_ARRIVED",
           title: "견적이 도착했습니다",
           content: "테스트 알림 2",
@@ -80,6 +86,7 @@ describe("NotificationRepository", () => {
 
       // Exercise
       const result = await notificationRepository.getNotifications(
+        "CUSTOMER" as UserType,
         "user-1",
         10,
         0
@@ -87,7 +94,7 @@ describe("NotificationRepository", () => {
 
       // Assertion
       expect(mockPrisma.notification.findMany).toHaveBeenCalledWith({
-        where: { userId: "user-1" },
+        where: { userType: "CUSTOMER", userId: "user-1" },
         orderBy: { createdAt: "desc" },
         skip: 0,
         take: 10,
@@ -110,7 +117,7 @@ describe("NotificationRepository", () => {
 
       // Exercise & Assertion
       await expect(
-        notificationRepository.getNotifications("user-1", 10, 0)
+        notificationRepository.getNotifications("CUSTOMER" as UserType, "user-1", 10, 0)
       ).rejects.toThrow("Prisma 에러");
     });
   });
@@ -124,11 +131,11 @@ describe("NotificationRepository", () => {
 
       // Exercise
       const result =
-        await notificationRepository.hasUnreadNotification("user-1");
+        await notificationRepository.hasUnreadNotification("CUSTOMER" as UserType, "user-1");
 
       // Assertion
       expect(mockPrisma.notification.findFirst).toHaveBeenCalledWith({
-        where: { userId: "user-1", isRead: false },
+        where: { userType: "CUSTOMER", userId: "user-1", isRead: false },
         select: { id: true },
       });
       expect(result).toBe(true);
@@ -140,7 +147,7 @@ describe("NotificationRepository", () => {
 
       // Exercise
       const result =
-        await notificationRepository.hasUnreadNotification("user-1");
+        await notificationRepository.hasUnreadNotification("CUSTOMER" as UserType, "user-1");
 
       // Assertion
       expect(result).toBe(false);
@@ -154,6 +161,7 @@ describe("NotificationRepository", () => {
         id: "notification-1",
         actionId: "action-1",
         userId: "user-1",
+        userType: "CUSTOMER" as UserType,
         type: "ESTIMATE_REQUEST_ARRIVED",
         title: "새로운 견적 요청",
         content: "테스트 알림 1",
