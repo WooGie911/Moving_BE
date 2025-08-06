@@ -43,9 +43,7 @@ export const getMoverList = async (filter: MoverListFilter) => {
       serviceTypes: { has: serviceTypeEnum },
     }),
     ...(region && {
-      serviceAreas: {
-        some: { region },
-      },
+      currentAreas: { has: region },
     }),
   };
 
@@ -121,7 +119,7 @@ export const getMoverList = async (filter: MoverListFilter) => {
         workedCount: true,
         averageRating: true,
         totalReviewCount: true,
-        serviceAreas: true,
+        currentAreas: true,
         serviceTypes: true,
         Favorite: true,
         moverImage: true,
