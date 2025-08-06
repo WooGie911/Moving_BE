@@ -50,11 +50,8 @@ class FavoriteController {
 
       const result = await favoriteService.addFavorite(customerId!, moverId);
 
-      if (result.success) {
-        return res.status(201).json(result);
-      } else {
-        return res.status(400).json(result);
-      }
+      // success가 false인 경우도 정상적인 상황이므로 200 상태 코드로 반환
+      return res.status(200).json(result);
     } catch (error) {
       // 센트리로 에러 전송
       Sentry.captureException(error, {
@@ -111,11 +108,8 @@ class FavoriteController {
 
       const result = await favoriteService.removeFavorite(customerId!, moverId);
 
-      if (result.success) {
-        return res.status(200).json(result);
-      } else {
-        return res.status(400).json(result);
-      }
+      // success가 false인 경우도 정상적인 상황이므로 200 상태 코드로 반환
+      return res.status(200).json(result);
     } catch (error) {
       // 센트리로 에러 전송
       Sentry.captureException(error, {
@@ -162,7 +156,10 @@ class FavoriteController {
         });
       }
 
-      const status = await favoriteRepository.getFavoriteStatus(customerId!, moverId);
+      const status = await favoriteRepository.getFavoriteStatus(
+        customerId!,
+        moverId
+      );
 
       return res.status(200).json({
         success: true,
