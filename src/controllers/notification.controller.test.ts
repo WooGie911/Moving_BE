@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { NotificationType } from "@prisma/client";
-import NotificationController from "./notification.controller";
+import { NotificationType, UserType } from "@prisma/client";
+import notificationController from "./notification.controller";
 
 // 테스트용 Request 타입 정의
 interface TestRequest extends Omit<Request, "user"> {
@@ -19,9 +19,9 @@ jest.mock("../services/notification.service", () => ({
   readAllNotifications: jest.fn(),
 }));
 
-import NotificationService from "../services/notification.service";
-const mockService = NotificationService as jest.Mocked<
-  typeof NotificationService
+import notificationService from "../services/notification.service";
+const mockService = notificationService as jest.Mocked<
+  typeof notificationService
 >;
 
 describe("NotificationController", () => {
@@ -54,6 +54,8 @@ describe("NotificationController", () => {
   describe("getNotifications", () => {
     it("성공적으로 알림 목록을 조회한다", async () => {
       // Setup
+      req.query = { userType: "CUSTOMER", limit: "10", offset: "0" };
+      
       const mockNotifications = {
         hasUnread: true,
         items: [
@@ -61,6 +63,7 @@ describe("NotificationController", () => {
             id: "notification-1",
             actionId: "action-1",
             userId: "user-1",
+            userType: "CUSTOMER" as UserType,
             type: "ESTIMATE_REQUEST_ARRIVED" as NotificationType,
             title: "새로운 견적 요청",
             content: "테스트 알림 1",
@@ -74,6 +77,7 @@ describe("NotificationController", () => {
             id: "notification-2",
             actionId: "action-2",
             userId: "user-1",
+            userType: "CUSTOMER" as UserType,
             type: "ESTIMATE_ARRIVED" as NotificationType,
             title: "견적이 도착했습니다",
             content: "테스트 알림 2",
@@ -92,14 +96,19 @@ describe("NotificationController", () => {
       mockService.getNotifications.mockResolvedValue(mockNotifications);
 
       // Exercise
-      await NotificationController.getNotifications(
+      await notificationController.getNotifications(
         req as Request,
         res as Response,
         next
       );
 
       // Assertion
-      expect(mockService.getNotifications).toHaveBeenCalledWith("user-1", 5, 0);
+      expect(mockService.getNotifications).toHaveBeenCalledWith(
+        "CUSTOMER",
+        "user-1",
+        10,
+        0
+      );
       expect(res.json).toHaveBeenCalledWith({
         success: true,
         message: "알림 목록입니다.",
@@ -107,13 +116,63 @@ describe("NotificationController", () => {
       });
     });
 
+    it("userId가 없으면 에러를 반환한다", async () => {
+      // Setup
+      req.user = undefined;
+
+      // Exercise
+      await notificationController.getNotifications(
+        req as Request,
+        res as Response,
+        next
+      );
+
+      // Assertion
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: "해당 유저를 찾을수 없습니다.",
+      });
+    });
+
+    it("기본값으로 limit과 offset을 사용한다", async () => {
+      // Setup
+      req.query = { userType: "CUSTOMER" };
+      
+      const mockNotifications = {
+        hasUnread: false,
+        items: [],
+        total: 0,
+        limit: 5,
+        offset: 0,
+      };
+
+      mockService.getNotifications.mockResolvedValue(mockNotifications);
+
+      // Exercise
+      await notificationController.getNotifications(
+        req as Request,
+        res as Response,
+        next
+      );
+
+      // Assertion
+      expect(mockService.getNotifications).toHaveBeenCalledWith(
+        "CUSTOMER",
+        "user-1",
+        5,
+        0
+      );
+    });
+
     it("서비스 에러 시 에러를 반환한다", async () => {
       // Setup
+      req.query = { userType: "CUSTOMER" };
       const error = new Error("서비스 에러");
       mockService.getNotifications.mockRejectedValue(error);
 
       // Exercise
-      await NotificationController.getNotifications(
+      await notificationController.getNotifications(
         req as Request,
         res as Response,
         next
@@ -133,6 +192,7 @@ describe("NotificationController", () => {
         id: "notification-1",
         actionId: "action-1",
         userId: "user-1",
+        userType: "CUSTOMER" as UserType,
         type: "ESTIMATE_REQUEST_ARRIVED" as NotificationType,
         title: "새로운 견적 요청",
         content: "테스트 알림 1",
@@ -146,7 +206,7 @@ describe("NotificationController", () => {
       mockService.readNotification.mockResolvedValue(mockNotification);
 
       // Exercise
-      await NotificationController.readNotification(
+      await notificationController.readNotification(
         req as Request,
         res as Response,
         next
@@ -163,6 +223,25 @@ describe("NotificationController", () => {
       });
     });
 
+    it("notificationId가 없으면 에러를 반환한다", async () => {
+      // Setup
+      req.params = {};
+
+      // Exercise
+      await notificationController.readNotification(
+        req as Request,
+        res as Response,
+        next
+      );
+
+      // Assertion
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: "해당 알림을 찾을수 없습니다.",
+      });
+    });
+
     it("서비스 에러 시 에러를 반환한다", async () => {
       // Setup
       req.params = { notificationId: "notification-1" };
@@ -170,7 +249,7 @@ describe("NotificationController", () => {
       mockService.readNotification.mockRejectedValue(error);
 
       // Exercise
-      await NotificationController.readNotification(
+      await notificationController.readNotification(
         req as Request,
         res as Response,
         next
@@ -187,7 +266,7 @@ describe("NotificationController", () => {
       mockService.readAllNotifications.mockResolvedValue(5);
 
       // Exercise
-      await NotificationController.readAllNotifications(
+      await notificationController.readAllNotifications(
         req as Request,
         res as Response,
         next
@@ -202,13 +281,32 @@ describe("NotificationController", () => {
       });
     });
 
+    it("userId가 없으면 에러를 반환한다", async () => {
+      // Setup
+      req.user = undefined;
+
+      // Exercise
+      await notificationController.readAllNotifications(
+        req as Request,
+        res as Response,
+        next
+      );
+
+      // Assertion
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: "해당 유저를 찾을수 없습니다.",
+      });
+    });
+
     it("서비스 에러 시 에러를 반환한다", async () => {
       // Setup
       const error = new Error("서비스 에러");
       mockService.readAllNotifications.mockRejectedValue(error);
 
       // Exercise
-      await NotificationController.readAllNotifications(
+      await notificationController.readAllNotifications(
         req as Request,
         res as Response,
         next

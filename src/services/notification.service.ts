@@ -1,14 +1,22 @@
+import { UserType } from "@prisma/client";
 import notificationRepository from "../repositories/notification.repository";
 import { formatDateForAPI } from "../utils/dateUtils";
 
 const notificationService = {
-  getNotifications: async (userId: string, limit: number, offset: number) => {
+  getNotifications: async (
+    userType: UserType,
+    userId: string,
+    limit: number,
+    offset: number
+  ) => {
     const notifications = await notificationRepository.getNotifications(
+      userType,
       userId as string,
       limit,
       offset
     );
     const hasUnread = await notificationRepository.hasUnreadNotification(
+      userType,
       userId as string
     );
 
