@@ -1,7 +1,6 @@
 import { Router } from "express";
 import moverEstimateController from "../controllers/moverEstimate.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
-import { validateCSRFToken } from "../middlewares/csrfMiddleware";
 import { createCustomTranslationMiddleware } from "../middlewares/translationMiddleware";
 
 const router = Router();
@@ -193,10 +192,8 @@ router.use(verifyAccessToken);
  */
 router.post(
   "/create",
-  verifyAccessToken,
-  validateCSRFToken,
   moverEstimateTranslationMiddleware,
-  moverEstimateController.createEstimate,
+  moverEstimateController.createEstimate
 );
 
 /**
@@ -264,10 +261,8 @@ router.post(
  */
 router.post(
   "/reject",
-  verifyAccessToken,
-  validateCSRFToken,
   moverEstimateTranslationMiddleware,
-  moverEstimateController.rejectEstimate,
+  moverEstimateController.rejectEstimate
 );
 
 /**
@@ -382,7 +377,11 @@ router.post(
  *               success: false
  *               message: "권한이 없습니다"
  */
-router.get("/region", moverEstimateTranslationMiddleware, moverEstimateController.getRegionEstimateRequest);
+router.get(
+  "/region",
+  moverEstimateTranslationMiddleware,
+  moverEstimateController.getRegionEstimateRequest
+);
 
 /**
  * @swagger
@@ -566,7 +565,11 @@ router.get("/region", moverEstimateTranslationMiddleware, moverEstimateControlle
  *               success: false
  *               message: "권한이 없습니다."
  */
-router.get("/designated", moverEstimateTranslationMiddleware, moverEstimateController.getDesignatedEstimateRequest);
+router.get(
+  "/designated",
+  moverEstimateTranslationMiddleware,
+  moverEstimateController.getDesignatedEstimateRequest
+);
 
 /**
  * @swagger
@@ -689,7 +692,11 @@ router.get("/designated", moverEstimateTranslationMiddleware, moverEstimateContr
  *               success: false
  *               message: "권한이 없습니다."
  */
-router.get("/list", moverEstimateTranslationMiddleware, moverEstimateController.getAllEstimateRequests);
+router.get(
+  "/list",
+  moverEstimateTranslationMiddleware,
+  moverEstimateController.getAllEstimateRequests
+);
 
 /**
  * @swagger
@@ -852,7 +859,11 @@ router.get("/list", moverEstimateTranslationMiddleware, moverEstimateController.
  *               success: false
  *               message: "권한이 없습니다."
  */
-router.get("/my-estimates", moverEstimateTranslationMiddleware, moverEstimateController.getMyEstimate);
+router.get(
+  "/my-estimates",
+  moverEstimateTranslationMiddleware,
+  moverEstimateController.getMyEstimate
+);
 
 /**
  * @swagger
@@ -1011,7 +1022,11 @@ router.get("/my-estimates", moverEstimateTranslationMiddleware, moverEstimateCon
  *               success: false
  *               message: "권한이 없습니다."
  */
-router.get("/my-rejected", moverEstimateTranslationMiddleware, moverEstimateController.getMyRejectedEstimates);
+router.get(
+  "/my-rejected",
+  moverEstimateTranslationMiddleware,
+  moverEstimateController.getMyRejectedEstimates
+);
 
 /**
  * @swagger
@@ -1131,10 +1146,8 @@ router.get("/my-rejected", moverEstimateTranslationMiddleware, moverEstimateCont
  */
 router.patch(
   "/status",
-  verifyAccessToken,
-  validateCSRFToken,
   moverEstimateTranslationMiddleware,
-  moverEstimateController.updateEstimateStatus,
+  moverEstimateController.updateEstimateStatus
 );
 
 /**
@@ -1263,10 +1276,8 @@ router.patch(
  */
 router.patch(
   "/estimate",
-  verifyAccessToken,
-  validateCSRFToken,
   moverEstimateTranslationMiddleware,
-  moverEstimateController.updateEstimate,
+  moverEstimateController.updateEstimate
 );
 
 export default router;
