@@ -1,6 +1,7 @@
 import { Router } from "express";
 import customerEstimateRequestController from "../controllers/customerEstimateRequest.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
+import { validateCSRFToken } from "../middlewares/csrfMiddleware";
 import { createCustomTranslationMiddleware } from "../middlewares/translationMiddleware";
 import { defaultTranslationMiddleware } from "../middlewares/translationMiddleware";
 
@@ -331,7 +332,7 @@ customerEstimateRequestRouter.get(
   "/pending",
   verifyAccessToken,
   estimateRequestTranslationMiddleware,
-  customerEstimateRequestController.getPendingEstimateRequest
+  customerEstimateRequestController.getPendingEstimateRequest,
 );
 
 /**
@@ -420,7 +421,7 @@ customerEstimateRequestRouter.get(
   "/received",
   verifyAccessToken,
   estimateRequestTranslationMiddleware,
-  customerEstimateRequestController.getReceivedEstimateRequests
+  customerEstimateRequestController.getReceivedEstimateRequests,
 );
 
 /**
@@ -481,11 +482,7 @@ customerEstimateRequestRouter.get(
  *               success: false
  *               message: "진행중인 견적요청이 없습니다"
  */
-customerEstimateRequestRouter.patch(
-  "/confirm",
-  verifyAccessToken,
-  customerEstimateRequestController.confirmEstimate
-);
+customerEstimateRequestRouter.patch("/confirm", verifyAccessToken, customerEstimateRequestController.confirmEstimate);
 
 /**
  * @swagger
@@ -553,7 +550,8 @@ customerEstimateRequestRouter.patch(
 customerEstimateRequestRouter.patch(
   "/cancel",
   verifyAccessToken,
-  customerEstimateRequestController.cancelEstimate
+  validateCSRFToken,
+  customerEstimateRequestController.cancelEstimate,
 );
 
 /**
@@ -632,7 +630,8 @@ customerEstimateRequestRouter.patch(
 customerEstimateRequestRouter.patch(
   "/complete",
   verifyAccessToken,
-  customerEstimateRequestController.completeEstimate
+  validateCSRFToken,
+  customerEstimateRequestController.completeEstimate,
 );
 
 export default customerEstimateRequestRouter;

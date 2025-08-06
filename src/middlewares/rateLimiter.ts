@@ -1,5 +1,4 @@
 import rateLimit from "express-rate-limit";
-import { handleError } from "../utils/handleError";
 import { TooManyRequestsError } from "../types/commonError.types";
 
 // 로그인 요청 제한: 1분간 최대 10회
@@ -9,7 +8,10 @@ export const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
-    handleError(res, new TooManyRequestsError("로그인 요청이 너무 많습니다. 1분 후 다시 시도해주세요."));
+    res.status(429).json({
+      success: false,
+      message: "로그인 요청이 너무 많습니다. 1분 후 다시 시도해주세요.",
+    });
   },
 });
 
@@ -20,7 +22,10 @@ export const signupLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
-    handleError(res, new TooManyRequestsError("회원가입 요청이 너무 많습니다. 30분 후 다시 시도해주세요."));
+    res.status(429).json({
+      success: false,
+      message: "회원가입 요청이 너무 많습니다. 30분 후 다시 시도해주세요.",
+    });
   },
 });
 
@@ -31,6 +36,9 @@ export const estimateRequestLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
-    handleError(res, new TooManyRequestsError("견적요청이 너무 많습니다. 1시간 후 다시 시도해주세요."));
+    res.status(429).json({
+      success: false,
+      message: "견적요청이 너무 많습니다. 1시간 후 다시 시도해주세요.",
+    });
   },
 });
