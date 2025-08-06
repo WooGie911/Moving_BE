@@ -20,27 +20,37 @@ export const notificationMiddleware: Prisma.Middleware = async (
       return result;
     }
 
-    const receivers = await mapping.getReceivers(action);
+    try {
+      const receivers = await mapping.getReceivers(action);
 
-    const notifications = await Promise.all(
-      receivers.map(async (receiver) => {
-        const message = mapping.buildMessage(action, receiver.userType);
-        return prisma.notification.create({
-          data: {
-            userId: receiver.id,
-            actionId: action.id,
-            type: mapping.type,
-            title: message.title,
-            content: message.content,
-            path: message.path,
-          },
-        });
-      })
-    );
+      const notifications = await Promise.all(
+        receivers.map(async (receiver) => {
+          const message = mapping.buildMessage(action, receiver.userType);
+          return prisma.notification.create({
+            data: {
+              userId: receiver.id,
+              userType: receiver.userType,
+              actionId: action.id,
+              type: mapping.type,
+              title: message.title,
+              content: message.content,
+              path: message.path,
+            },
+          });
+        })
+      );
 
-    // 실시간 알림 SSE 전송
-    for (const notification of notifications) {
-      emitNotificationSSE(notification.userId, notification);
+      // 실시간 알림 SSE 전송
+      for (const notification of notifications) {
+        try {
+          emitNotificationSSE(notification.userId, notification);
+        } catch (error) {
+          console.error("SSE 이벤트 발송 실패:", error);
+        }
+      }
+    } catch (error) {
+      console.error("알림 생성 실패:", error);
+      // 알림 생성 실패해도 Action 생성은 계속 진행
     }
   }
 

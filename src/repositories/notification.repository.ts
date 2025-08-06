@@ -1,10 +1,16 @@
+import { UserType } from "@prisma/client";
 import prisma from "../db/prisma/prisma";
 
 const notificationRepository = {
-  getNotifications: async (userId: string, limit: number, offset: number) => {
+  getNotifications: async (
+    userType: UserType,
+    userId: string,
+    limit: number,
+    offset: number
+  ) => {
     const [items, total] = await Promise.all([
       prisma.notification.findMany({
-        where: { userId },
+        where: { userType, userId },
         orderBy: { createdAt: "desc" },
         skip: offset,
         take: limit,
@@ -14,9 +20,9 @@ const notificationRepository = {
     return { items, total, limit, offset };
   },
   // 안읽은 알림 존재 여부 반환
-  hasUnreadNotification: async (userId: string) => {
+  hasUnreadNotification: async (userType: UserType, userId: string) => {
     const unread = await prisma.notification.findFirst({
-      where: { userId, isRead: false },
+      where: { userType, userId, isRead: false },
       select: { id: true },
     });
     return !!unread;
