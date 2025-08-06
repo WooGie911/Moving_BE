@@ -1,6 +1,7 @@
 import { Router } from "express";
 import favoriteController from "../controllers/favorite.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
+import { defaultTranslationMiddleware } from "../middlewares/translationMiddleware";
 
 const router = Router();
 
@@ -271,7 +272,7 @@ router.post("/", verifyAccessToken, favoriteController.addFavorite);
  *               success: false
  *               message: "서버 내부 오류가 발생했습니다"
  */
-router.get("/movers", verifyAccessToken, favoriteController.getFavoriteMovers);
+router.get("/movers", verifyAccessToken, defaultTranslationMiddleware, favoriteController.getFavoriteMovers);
 
 /**
  * @swagger
@@ -339,7 +340,7 @@ router.get("/movers", verifyAccessToken, favoriteController.getFavoriteMovers);
  *               success: false
  *               message: "서버 내부 오류가 발생했습니다"
  */
-router.get("/:moverId/status", verifyAccessToken, favoriteController.getFavoriteStatus);
+router.get("/:moverId/status", verifyAccessToken, defaultTranslationMiddleware, favoriteController.getFavoriteStatus);
 
 /**
  * @swagger
