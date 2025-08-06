@@ -57,7 +57,10 @@ const reviewRepository = {
     const skip = (page - 1) * pageSize;
     const [items, total] = await Promise.all([
       prisma.review.findMany({
-        where: { customerId },
+        where: {
+          customerId,
+          status: "COMPLETED",
+        },
         include: {
           request: {
             include: {
@@ -71,7 +74,12 @@ const reviewRepository = {
         skip,
         take: pageSize,
       }),
-      prisma.review.count({ where: { customerId } }),
+      prisma.review.count({
+        where: {
+          customerId,
+          status: "COMPLETED",
+        },
+      }),
     ]);
     return { items, total, page, pageSize };
   },
