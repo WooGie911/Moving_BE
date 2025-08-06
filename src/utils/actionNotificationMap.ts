@@ -27,9 +27,10 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
   //회원가입 -> 회원, 기사님
   WELCOME: {
     type: NotificationType.WELCOME,
-    getReceivers: async (action: Action) => [
-      { id: action.userId, userType: "CUSTOMER" },
-    ],
+    getReceivers: async (action: Action) => {
+      const { userType } = action.metadata as IActionMetadata;
+      return [{ id: action.userId, userType }];
+    },
     buildMessage: (action: Action, userType: "CUSTOMER" | "MOVER") => ({
       title: '<span class="font-bold">회원가입</span>을 환영합니다!',
       content: "서비스 이용을 시작해보세요.",
