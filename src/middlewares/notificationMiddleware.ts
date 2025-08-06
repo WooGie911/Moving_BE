@@ -23,9 +23,14 @@ export const notificationMiddleware: Prisma.Middleware = async (
     try {
       const receivers = await mapping.getReceivers(action);
 
+      if (receivers.length === 0) {
+        return result;
+      }
+
       const notifications = await Promise.all(
         receivers.map(async (receiver) => {
           const message = mapping.buildMessage(action, receiver.userType);
+          
           return prisma.notification.create({
             data: {
               userId: receiver.id,

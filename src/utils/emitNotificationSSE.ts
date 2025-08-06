@@ -44,7 +44,9 @@ export async function emitNotificationSSE(
   notification: Notification
 ) {
   const client = sseClients.get(userId);
-  if (!client) return;
+  if (!client) {
+    return;
+  }
 
   // 안읽은 알림 개수와 hasUnread 동시 계산
   const unreadCount = await prisma.notification.count({
