@@ -73,10 +73,10 @@ export const getMoverList = async (filter: MoverListFilter) => {
       workedCount: true,
       averageRating: true,
       totalReviewCount: true,
-      serviceAreas: true,
       serviceTypes: true,
       Favorite: true,
       moverImage: true,
+      currentAreas: true,
     },
   });
 
@@ -152,10 +152,10 @@ export const getMoverDetail = async (id: string, userId?: string) => {
       workedCount: true,
       averageRating: true,
       totalReviewCount: true,
-      serviceAreas: true,
       serviceTypes: true,
       moverImage: true,
       Favorite: true,
+      currentAreas: true,
     },
   });
 
