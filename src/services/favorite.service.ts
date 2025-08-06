@@ -18,7 +18,7 @@ const favoriteService = {
 
       if (currentStatus.isFavorited) {
         return {
-          success: true,
+          success: false,
           message: "이미 찜한 기사님입니다.",
           data: currentStatus,
         };
@@ -78,7 +78,7 @@ const favoriteService = {
 
       if (!currentStatus.isFavorited) {
         return {
-          success: true,
+          success: false,
           message: "찜하지 않은 기사님입니다.",
           data: currentStatus,
         };
