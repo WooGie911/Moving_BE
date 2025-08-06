@@ -397,13 +397,7 @@ const reviewRouter = Router();
  *                 status: "COMPLETED"
  *                 createdAt: "2025-07-10T00:33:16.456Z"
  */
-reviewRouter.patch(
-  "/:reviewId",
-  verifyAccessToken,
-  validateCSRFToken,
-  defaultTranslationMiddleware,
-  reviewController.postReview,
-);
+reviewRouter.patch("/:reviewId", verifyAccessToken, defaultTranslationMiddleware, reviewController.postReview);
 
 /**
  * @swagger

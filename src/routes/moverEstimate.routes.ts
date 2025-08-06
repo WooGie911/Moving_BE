@@ -191,13 +191,7 @@ router.use(verifyAccessToken);
  *               success: false
  *               message: "권한이 없습니다"
  */
-router.post(
-  "/create",
-  verifyAccessToken,
-  validateCSRFToken,
-  moverEstimateTranslationMiddleware,
-  moverEstimateController.createEstimate,
-);
+router.post("/create", verifyAccessToken, moverEstimateTranslationMiddleware, moverEstimateController.createEstimate);
 
 /**
  * @swagger
@@ -262,13 +256,7 @@ router.post(
  *               success: false
  *               message: "권한이 없습니다"
  */
-router.post(
-  "/reject",
-  verifyAccessToken,
-  validateCSRFToken,
-  moverEstimateTranslationMiddleware,
-  moverEstimateController.rejectEstimate,
-);
+router.post("/reject", verifyAccessToken, moverEstimateTranslationMiddleware, moverEstimateController.rejectEstimate);
 
 /**
  * @swagger
@@ -1132,7 +1120,6 @@ router.get("/my-rejected", moverEstimateTranslationMiddleware, moverEstimateCont
 router.patch(
   "/status",
   verifyAccessToken,
-  validateCSRFToken,
   moverEstimateTranslationMiddleware,
   moverEstimateController.updateEstimateStatus,
 );
@@ -1264,7 +1251,6 @@ router.patch(
 router.patch(
   "/estimate",
   verifyAccessToken,
-  validateCSRFToken,
   moverEstimateTranslationMiddleware,
   moverEstimateController.updateEstimate,
 );

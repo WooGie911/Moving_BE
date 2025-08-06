@@ -303,7 +303,7 @@ const estimateRequestController = new EstimateRequestController();
  *               success: false
  *               message: "서버 내부 오류가 발생했습니다."
  */
-router.post("/create", verifyAccessToken, validateCSRFToken, estimateRequestLimiter, (req, res) =>
+router.post("/create", verifyAccessToken, estimateRequestLimiter, (req, res) =>
   estimateRequestController.createEstimateRequest(req, res),
 );
 
@@ -522,7 +522,7 @@ router.get("/active", verifyAccessToken, defaultTranslationMiddleware, (req, res
  *               success: false
  *               message: "서버 내부 오류가 발생했습니다."
  */
-router.patch("/active", verifyAccessToken, validateCSRFToken, estimateRequestLimiter, (req, res) =>
+router.patch("/active", verifyAccessToken, estimateRequestLimiter, (req, res) =>
   estimateRequestController.updateActiveEstimateRequest(req, res),
 );
 
@@ -593,7 +593,7 @@ router.patch("/active", verifyAccessToken, validateCSRFToken, estimateRequestLim
  *               success: false
  *               message: "서버 내부 오류가 발생했습니다."
  */
-router.delete("/active", verifyAccessToken, validateCSRFToken, (req, res) =>
+router.delete("/active", verifyAccessToken, (req, res) =>
   estimateRequestController.cancelActiveEstimateRequest(req, res),
 );
 

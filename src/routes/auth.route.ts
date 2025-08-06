@@ -366,7 +366,7 @@ authRouter.post("/sign-up", signupLimiter, postSignup);
  *               message: "서버 내부 오류가 발생했습니다"
  *               error: "InternalServerError"
  */
-authRouter.post("/logout", verifyAccessToken, validateCSRFToken, postLogout);
+authRouter.post("/logout", verifyAccessToken, postLogout);
 
 // role 변경 엔드포인트
 /**
@@ -382,7 +382,7 @@ authRouter.post("/logout", verifyAccessToken, validateCSRFToken, postLogout);
  *         application/json:
  */
 
-authRouter.post("/switch-role", verifyAccessToken, validateCSRFToken, postSwitchRole);
+authRouter.post("/switch-role", verifyAccessToken, postSwitchRole);
 
 // refresh token 갱신 엔드포인트
 /**

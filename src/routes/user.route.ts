@@ -388,7 +388,7 @@ userRouter.get("/profile", verifyAccessToken, getProfile);
  *               status: 500
  *               message: "서버 내부 오류가 발생했습니다"
  */
-userRouter.post("/profile", verifyAccessToken, validateCSRFToken, postProfile);
+userRouter.post("/profile", verifyAccessToken, postProfile);
 
 /**
  * @swagger
@@ -461,7 +461,7 @@ userRouter.post("/profile", verifyAccessToken, validateCSRFToken, postProfile);
  *               status: 500
  *               message: "서버 내부 오류가 발생했습니다"
  */
-userRouter.patch("/profile/customer", verifyAccessToken, validateCSRFToken, patchCustomerProfile);
+userRouter.patch("/profile/customer", verifyAccessToken, patchCustomerProfile);
 
 /**
  * @swagger
@@ -582,7 +582,7 @@ userRouter.patch("/profile/customer", verifyAccessToken, validateCSRFToken, patc
  *               status: 500
  *               message: "서버 내부 오류가 발생했습니다"
  */
-userRouter.patch("/profile/mover", verifyAccessToken, validateCSRFToken, patchMoverProfile);
+userRouter.patch("/profile/mover", verifyAccessToken, patchMoverProfile);
 
 /**
  * @swagger
@@ -659,7 +659,7 @@ userRouter.patch("/profile/mover", verifyAccessToken, validateCSRFToken, patchMo
  *               status: 500
  *               message: "서버 내부 오류가 발생했습니다"
  */
-userRouter.patch("/profile/mover/basic", verifyAccessToken, validateCSRFToken, patchMoverBasicInfo);
+userRouter.patch("/profile/mover/basic", verifyAccessToken, patchMoverBasicInfo);
 
 /**
  * @swagger
