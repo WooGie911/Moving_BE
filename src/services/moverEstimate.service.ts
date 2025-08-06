@@ -259,18 +259,15 @@ const moverEstimateService = {
         throw new ServiceError("견적 반려에 실패했습니다");
       }
 
-      // 견적 거절 액션 생성
+      // 지정 견적 요청 거절 액션 생성
       const estimateDetail =
         await moverEstimateRepository.getEstimateDetailForAction(estimate.id);
-      if (estimateDetail) {
-        const actionType = isDesignated
-          ? ActionType.DESIGNATED_ESTIMATE_REQUEST_REJECTED
-          : ActionType.ESTIMATE_REJECTED;
+      if (estimateDetail && isDesignated) {
         await actionService.createAction(
           data.moverId,
-          actionType,
+          ActionType.DESIGNATED_ESTIMATE_REQUEST_REJECTED,
           estimate.id,
-          isDesignated ? "DESIGNATED_ESTIMATE" : "ESTIMATE",
+          "DESIGNATED_ESTIMATE",
           {
             moveType: estimateDetail.estimateRequest?.moveType || "",
             estimateRequestId: data.estimateRequestId,
