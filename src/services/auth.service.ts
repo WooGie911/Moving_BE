@@ -272,7 +272,10 @@ const refresh = async (decoded: TDecodedToken) => {
     id: user.id,
     name: user.name,
     userType: decoded.userType,
-    hasProfile: user.isCustomer || false,
+    hasProfile:
+      decoded.userType === "CUSTOMER"
+        ? user.isCustomer || false
+        : user.isMover || false,
   });
 
   let refreshToken = undefined;
@@ -282,7 +285,10 @@ const refresh = async (decoded: TDecodedToken) => {
       id: user.id,
       name: user.name,
       userType: decoded.userType,
-      hasProfile: user.isCustomer || false,
+      hasProfile:
+        decoded.userType === "CUSTOMER"
+          ? user.isCustomer || false
+          : user.isMover || false,
     });
 
     await authRepository.updateUserToken(
