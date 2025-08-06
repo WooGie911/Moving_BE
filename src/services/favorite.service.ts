@@ -30,17 +30,22 @@ const favoriteService = {
         moverId
       );
 
-      // FAVORITE_ADDED 액션 생성
-      const favoriteDetail =
-        await favoriteRepository.getFavoriteDetailForAction(favorite.id);
-      if (favoriteDetail) {
-        await actionService.createAction(
-          customerId,
-          ActionType.FAVORITE_ADDED,
-          favorite.id,
-          "FAVORITE",
-          { moverId: moverId }
-        );
+      // FAVORITE_ADDED 액션 생성 (실패해도 찜하기는 성공)
+      try {
+        const favoriteDetail =
+          await favoriteRepository.getFavoriteDetailForAction(favorite.id);
+        if (favoriteDetail) {
+          await actionService.createAction(
+            customerId,
+            ActionType.FAVORITE_ADDED,
+            favorite.id,
+            "FAVORITE",
+            { moverId: moverId }
+          );
+        }
+      } catch (actionError) {
+        console.error("액션 생성 실패 (찜하기는 성공):", actionError);
+        // 액션 생성 실패는 무시하고 찜하기는 성공으로 처리
       }
 
       // 새로운 상태 조회
@@ -90,17 +95,22 @@ const favoriteService = {
         moverId
       );
 
-      // FAVORITE_REMOVED 액션 생성
-      const favoriteDetail =
-        await favoriteRepository.getFavoriteDetailForAction(favorite.id);
-      if (favoriteDetail) {
-        await actionService.createAction(
-          customerId,
-          ActionType.FAVORITE_REMOVED,
-          favorite.id,
-          "FAVORITE",
-          { moverId: moverId }
-        );
+      // FAVORITE_REMOVED 액션 생성 (실패해도 찜하기 제거는 성공)
+      try {
+        const favoriteDetail =
+          await favoriteRepository.getFavoriteDetailForAction(favorite.id);
+        if (favoriteDetail) {
+          await actionService.createAction(
+            customerId,
+            ActionType.FAVORITE_REMOVED,
+            favorite.id,
+            "FAVORITE",
+            { moverId: moverId }
+          );
+        }
+      } catch (actionError) {
+        console.error("액션 생성 실패 (찜하기 제거는 성공):", actionError);
+        // 액션 생성 실패는 무시하고 찜하기 제거는 성공으로 처리
       }
 
       // 새로운 상태 조회

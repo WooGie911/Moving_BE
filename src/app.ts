@@ -3,6 +3,9 @@ import dotenv from "dotenv";
 // 환경변수 로드
 dotenv.config();
 
+// Sentry 초기화를 먼저 실행 (Express import 전에)
+import "./instrument";
+
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
@@ -19,7 +22,6 @@ import authIndexRoutes from "./routes/authIndex.routes";
 import notificationIndexRoutes from "./routes/notificationIndex.routes";
 import businessRoutes from "./routes/index.routes";
 import passport from "./config/passport";
-import "./instrument";
 
 const app = express();
 const PORT = process.env.PORT || 5050;
@@ -62,7 +64,7 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token"],
-  })
+  }),
 );
 
 app.use(cookieParser());

@@ -139,6 +139,64 @@ class FavoriteController {
     }
   }
 
+  // 찜한 기사님 목록 조회 (페이지네이션)
+  async getFavoriteMovers(req: IUserRequest, res: Response) {
+    try {
+      const customerId = req.user?.userId;
+      const limit = parseInt(req.query.limit as string) || 3; // 기본값을 3으로 변경
+      const cursor = req.query.cursor as string;
+
+      // 입력 검증
+      if (limit < 1 || limit > 50) {
+        return res.status(400).json({
+          success: false,
+          message: "limit은 1-50 사이의 값이어야 합니다.",
+        });
+      }
+
+      // 사용자 역할 검증 (일반 유저만 찜하기 가능)
+      const userType = req.user?.userType;
+      if (userType !== "CUSTOMER") {
+        return res.status(403).json({
+          success: false,
+          message: "일반 유저만 찜하기를 사용할 수 있습니다.",
+        });
+      }
+
+      const result = await favoriteRepository.getFavoriteMovers(
+        customerId!,
+        limit,
+        cursor
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "찜한 기사님 목록을 성공적으로 조회했습니다.",
+        data: result,
+      });
+    } catch (error) {
+      // 센트리로 에러 전송
+      Sentry.captureException(error, {
+        extra: {
+          userId: req.user?.userId,
+          userType: req.user?.userType,
+          query: req.query,
+          url: req.url,
+          method: req.method,
+        },
+        tags: {
+          error_type: "favorite_get_movers",
+          user_type: req.user?.userType || "unknown",
+        },
+      });
+
+      return res.status(500).json({
+        success: false,
+        message: "서버 내부 오류가 발생했습니다.",
+      });
+    }
+  }
+
   // 찜하기 상태 확인
   async getFavoriteStatus(req: IUserRequest, res: Response) {
     try {
