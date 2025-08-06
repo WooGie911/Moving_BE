@@ -18,8 +18,7 @@ const generatePresignedUrl = async (req: Request, res: Response) => {
 
     if (!filename || !contentType) {
       return res.status(400).json({
-        success: false,
-        message: "filename과 contentType은 필수입니다.",
+        error: "filename과 contentType은 필수입니다.",
       });
     }
 
@@ -37,16 +36,11 @@ const generatePresignedUrl = async (req: Request, res: Response) => {
 
     const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.ap-northeast-2.amazonaws.com/${key}`;
 
-    return res.status(200).json({
-      success: true,
-      message: "Presigned URL이 성공적으로 생성되었습니다.",
-      data: { uploadUrl, fileUrl, key },
-    });
+    return res.status(200).json({ uploadUrl, fileUrl, key });
   } catch (error) {
     console.error("❌ Presigned URL 생성 실패:", error);
     return res.status(500).json({
-      success: false,
-      message: "Presigned URL 생성 중 오류가 발생했습니다.",
+      error: "Presigned URL 생성 중 오류가 발생했습니다.",
     });
   }
 };

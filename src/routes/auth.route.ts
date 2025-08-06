@@ -9,8 +9,10 @@ import {
   getNaverCallback,
   postSwitchRole,
 } from "../controllers/auth.controller";
-import { verifyAccessToken, verifyRefreshToken } from "../middlewares/verifyToken";
-import { validateCSRFToken } from "../middlewares/csrfMiddleware";
+import {
+  verifyAccessToken,
+  verifyRefreshToken,
+} from "../middlewares/verifyToken";
 import passport from "passport";
 import { TUserRole } from "../types/user.types";
 import { loginLimiter, signupLimiter } from "../middlewares/rateLimiter";
@@ -366,7 +368,7 @@ authRouter.post("/sign-up", signupLimiter, postSignup);
  *               message: "서버 내부 오류가 발생했습니다"
  *               error: "InternalServerError"
  */
-authRouter.post("/logout", verifyAccessToken, validateCSRFToken, postLogout);
+authRouter.post("/logout", verifyAccessToken, postLogout);
 
 // role 변경 엔드포인트
 /**
@@ -382,7 +384,7 @@ authRouter.post("/logout", verifyAccessToken, validateCSRFToken, postLogout);
  *         application/json:
  */
 
-authRouter.post("/switch-role", verifyAccessToken, validateCSRFToken, postSwitchRole);
+authRouter.post("/switch-role", verifyAccessToken, postSwitchRole);
 
 // refresh token 갱신 엔드포인트
 /**
@@ -480,7 +482,11 @@ authRouter.post("/refresh-token", verifyRefreshToken, postRefresh);
  *               message: "구글 로그인에 실패했습니다"
  *               error: "AuthenticationError"
  */
-authRouter.get("/google/callback", passport.authenticate("google", { session: false }), getGoogleCallback);
+authRouter.get(
+  "/google/callback",
+  passport.authenticate("google", { session: false }),
+  getGoogleCallback
+);
 
 // 구글 로그인 엔드포인트
 /**
@@ -559,7 +565,11 @@ authRouter.get("/google", (req, res, next) => {
  *               message: "카카오 로그인에 실패했습니다"
  *               error: "AuthenticationError"
  */
-authRouter.get("/kakao/callback", passport.authenticate("kakao", { session: false }), getKakaoCallback);
+authRouter.get(
+  "/kakao/callback",
+  passport.authenticate("kakao", { session: false }),
+  getKakaoCallback
+);
 
 //카카오 로그인 엔드 포인트
 /**
@@ -698,7 +708,7 @@ authRouter.get("/naver", (req, res, next) => {
 authRouter.get(
   "/naver/callback",
   passport.authenticate("naver", { session: false }), // ✅ JWT 기반이므로 session: false
-  getNaverCallback, // 👈 이 핸들러 안에서 JWT 발급 처리
+  getNaverCallback // 👈 이 핸들러 안에서 JWT 발급 처리
 );
 
 export default authRouter;
