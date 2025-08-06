@@ -111,6 +111,87 @@ export const captureAuthError = (
 };
 
 /**
+ * 알림 생성 관련 에러를 센트리로 전송
+ * @param error 에러 객체
+ * @param context 추가 컨텍스트 정보
+ */
+export const captureNotificationError = (
+  error: Error,
+  context: {
+    operation: string;
+    actionType?: string;
+    userId?: string;
+    userType?: string;
+    notificationType?: string;
+  },
+) => {
+  Sentry.captureException(error, {
+    extra: {
+      userId: context.userId,
+      actionType: context.actionType,
+      notificationType: context.notificationType,
+    },
+    tags: {
+      error_type: "notification_error",
+      operation: context.operation,
+      user_type: context.userType || "unknown",
+    },
+  });
+};
+
+/**
+ * SSE 관련 에러를 센트리로 전송
+ * @param error 에러 객체
+ * @param context 추가 컨텍스트 정보
+ */
+export const captureSSEError = (
+  error: Error,
+  context: {
+    operation: string;
+    userId?: string;
+    notificationId?: string;
+  },
+) => {
+  Sentry.captureException(error, {
+    extra: {
+      userId: context.userId,
+      notificationId: context.notificationId,
+    },
+    tags: {
+      error_type: "sse_error",
+      operation: context.operation,
+    },
+  });
+};
+
+/**
+ * 알림 액션 매핑 관련 에러를 센트리로 전송
+ * @param error 에러 객체
+ * @param context 추가 컨텍스트 정보
+ */
+export const captureActionMappingError = (
+  error: Error,
+  context: {
+    operation: string;
+    actionType?: string;
+    entityId?: string;
+    entityType?: string;
+  },
+) => {
+  Sentry.captureException(error, {
+    extra: {
+      actionType: context.actionType,
+      entityId: context.entityId,
+      entityType: context.entityType,
+    },
+    tags: {
+      error_type: "action_mapping_error",
+      operation: context.operation,
+    },
+  });
+};
+
+/**
  * 사용자 컨텍스트 설정
  * @param userId 사용자 ID
  * @param userType 사용자 타입

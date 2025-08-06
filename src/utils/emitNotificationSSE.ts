@@ -1,6 +1,7 @@
 import { Notification } from "@prisma/client";
 import { Response } from "express";
 import prisma from "../db/prisma/prisma";
+import { captureSSEError } from "./sentryUtils";
 
 // NotificationEvent 타입에 hasUnread 추가
 export type NotificationEvent = {
@@ -18,20 +19,28 @@ const sseClients = new Map<string, Response>();
  * @param res SSE Response 객체
  */
 export function registerSSE(userId: string, res: Response) {
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive",
-  });
+  try {
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    });
 
-  res.write("\n"); // 연결 초기화
+    res.write("\n"); // 연결 초기화
 
-  sseClients.set(userId, res);
+    sseClients.set(userId, res);
 
-  // 연결 끊김 감지
-  res.on("close", () => {
-    sseClients.delete(userId);
-  });
+    // 연결 끊김 감지
+    res.on("close", () => {
+      sseClients.delete(userId);
+    });
+  } catch (error) {
+    captureSSEError(error as Error, {
+      operation: "register_sse",
+      userId,
+    });
+    throw error;
+  }
 }
 
 /**
@@ -43,26 +52,35 @@ export async function emitNotificationSSE(
   userId: string,
   notification: Notification
 ) {
-  const client = sseClients.get(userId);
-  if (!client) {
-    return;
-  }
+  try {
+    const client = sseClients.get(userId);
+    if (!client) {
+      return;
+    }
 
-  // 안읽은 알림 개수와 hasUnread 동시 계산
-  const unreadCount = await prisma.notification.count({
-    where: {
+    // 안읽은 알림 개수와 hasUnread 동시 계산
+    const unreadCount = await prisma.notification.count({
+      where: {
+        userId,
+        isRead: false,
+      },
+    });
+    const hasUnread = unreadCount > 0;
+
+    const payload: NotificationEvent = {
+      notification,
+      unreadCount,
+      hasUnread,
+    };
+
+    client.write(`event: notification\n`);
+    client.write(`data: ${JSON.stringify(payload)}\n\n`);
+  } catch (error) {
+    captureSSEError(error as Error, {
+      operation: "emit_notification_sse",
       userId,
-      isRead: false,
-    },
-  });
-  const hasUnread = unreadCount > 0;
-
-  const payload: NotificationEvent = {
-    notification,
-    unreadCount,
-    hasUnread,
-  };
-
-  client.write(`event: notification\n`);
-  client.write(`data: ${JSON.stringify(payload)}\n\n`);
+      notificationId: notification.id,
+    });
+    throw error;
+  }
 }
