@@ -28,8 +28,8 @@ export const fetchMoverList = async (filter: MoverListFilter) => {
     introduction: mover.shortIntro || "",
     description: mover.detailIntro || "",
     completedCount: mover.workedCount || 0,
-    avgRating: mover.averageRating || 0,
-    reviewCount: mover.totalReviewCount || 0,
+    averageRating: mover.averageRating || 0,
+    totalReviewCount: mover.totalReviewCount || 0,
     favoriteCount: (mover.Favorite || []).filter(
       (fav) => fav.deletedAt === null
     ).length,
@@ -75,8 +75,8 @@ export const fetchFavoriteMovers = async (customerId: string) => {
     introduction: mover.shortIntro || "",
     description: mover.detailIntro || "",
     completedCount: mover.workedCount || 0,
-    avgRating: mover.averageRating || 0,
-    reviewCount: mover.totalReviewCount || 0,
+    averageRating: mover.averageRating || 0,
+    totalReviewCount: mover.totalReviewCount || 0,
     favoriteCount: mover.favoriteCount || 0,
     lastActivityAt: null,
     user: {
@@ -117,8 +117,8 @@ export const fetchMoverDetail = async (id: string, userId?: string) => {
     introduction: mover.shortIntro || "",
     description: mover.detailIntro || "",
     completedCount: mover.workedCount || 0,
-    avgRating: mover.averageRating || 0,
-    reviewCount: mover.totalReviewCount || 0,
+    averageRating: mover.averageRating || 0,
+    totalReviewCount: mover.totalReviewCount || 0,
     favoriteCount: mover.favoriteCount || 0,
     isFavorited: mover.isFavorited || false,
     lastActivityAt: null,

@@ -2,6 +2,7 @@ import reviewRepository from "../repositories/review.repository";
 import actionService from "./action.service";
 import { ActionType } from "@prisma/client";
 import { formatDateForAPI } from "../utils/dateUtils";
+import prisma from "../db/prisma/prisma";
 
 const reviewService = {
   postReview: async (reviewId: string, rating: number, content: string) => {
@@ -11,6 +12,7 @@ const reviewService = {
     const reviewDetail = await reviewRepository.getReviewDetailForAction(
       review.id
     );
+
     if (reviewDetail) {
       await actionService.createAction(
         reviewDetail.customerId,
@@ -19,6 +21,9 @@ const reviewService = {
         "REVIEW",
         { moverId: reviewDetail.moverId }
       );
+
+      // 기사님의 리뷰 통계 업데이트
+      await updateMoverReviewStats(reviewDetail.moverId);
     }
 
     return review;
@@ -305,6 +310,38 @@ const reviewService = {
       },
     };
   },
+};
+
+// 기사님의 리뷰 통계 업데이트 함수
+const updateMoverReviewStats = async (moverId: string) => {
+  try {
+    // 해당 기사님의 모든 리뷰 조회 (삭제되지 않은 것만)
+    const reviews = await prisma.review.findMany({
+      where: {
+        moverId,
+        deletedAt: null,
+        status: "COMPLETED",
+      },
+      select: {
+        rating: true,
+      },
+    });
+
+    const totalReviews = reviews.length;
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const averageRating = totalReviews > 0 ? totalRating / totalReviews : 0;
+
+    // 기사님 정보 업데이트
+    await prisma.user.update({
+      where: { id: moverId },
+      data: {
+        totalReviewCount: totalReviews,
+        averageRating: Math.round(averageRating * 10) / 10,
+      },
+    });
+  } catch (error) {
+    console.error("기사님 리뷰 통계 업데이트 실패:", error);
+  }
 };
 
 export default reviewService;
