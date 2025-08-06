@@ -249,9 +249,11 @@ const switchRole = async (userId: string, userType: TUserRole) => {
     throw new ServerError("유저 변환중 오류가 발생했습니다");
   }
 
-  await authRepository.updateUserToken(String(user.id), newRefreshToken, [
-    userType,
-  ]);
+  await authRepository.updateUserToken(
+    String(user.id),
+    newRefreshToken,
+    user.userType
+  );
 
   return {
     accessToken: newAccessToken,
@@ -272,7 +274,10 @@ const refresh = async (decoded: TDecodedToken) => {
     id: user.id,
     name: user.name,
     userType: decoded.userType,
-    hasProfile: user.isCustomer || false,
+    hasProfile:
+      decoded.userType === "CUSTOMER"
+        ? user.isCustomer || false
+        : user.isMover || false,
   });
 
   let refreshToken = undefined;
@@ -282,7 +287,10 @@ const refresh = async (decoded: TDecodedToken) => {
       id: user.id,
       name: user.name,
       userType: decoded.userType,
-      hasProfile: user.isCustomer || false,
+      hasProfile:
+        decoded.userType === "CUSTOMER"
+          ? user.isCustomer || false
+          : user.isMover || false,
     });
 
     await authRepository.updateUserToken(
