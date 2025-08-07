@@ -1,6 +1,6 @@
 import reviewRepository from "../repositories/review.repository";
 import actionService from "./action.service";
-import { ActionType } from "@prisma/client";
+import { ActionType, ReviewStatus } from "@prisma/client";
 import { formatDateForAPI } from "../utils/dateUtils";
 import prisma from "../db/prisma/prisma";
 
@@ -320,7 +320,7 @@ const updateMoverReviewStats = async (moverId: string) => {
       where: {
         moverId,
         deletedAt: null,
-        status: "COMPLETED",
+        status: ReviewStatus.COMPLETED,
       },
       select: {
         rating: true,
