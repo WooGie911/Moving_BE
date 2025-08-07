@@ -245,15 +245,8 @@ export const createDesignatedEstimateRequest = async (
   });
 
   if (existingRequest) {
-    // REJECTED(반려)된 경우 기존 요청 삭제 후 새로 생성
-    if (existingRequest.status === "REJECTED") {
-      await prisma.designatedMover.delete({
-        where: { id: existingRequest.id },
-      });
-    } else {
-      // 다른 상태(PENDING, APPROVED 등)인 경우 생성 불가
-      return null;
-    }
+    // 모든 상태(PENDING, APPROVED, REJECTED 등)에서 생성 불가
+    return null;
   }
 
   return await prisma.designatedMover.create({
@@ -295,9 +288,9 @@ export const checkDesignatedEstimateRequest = async (params: {
     return null;
   }
 
-  // REJECTED(반려)된 경우는 다시 요청 가능
+  // REJECTED(반려)된 경우도 다시 요청 불가
   if (designatedRequest && designatedRequest.status === "REJECTED") {
-    return null;
+    return designatedRequest;
   }
 
   return designatedRequest;
