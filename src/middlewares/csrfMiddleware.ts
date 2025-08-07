@@ -79,13 +79,22 @@ export const generateCSRFToken = async (req: Request, res: Response, next: NextF
     // 응답 헤더에 CSRF 토큰 추가
     res.setHeader("X-CSRF-Token", token);
 
-    // 쿠키에도 토큰 설정
-    res.cookie("XSRF-TOKEN", token, {
+    // 쿠키에도 토큰 설정 (CORS 호환성을 위해 수정)
+    const cookieOptions: any = {
       httpOnly: false, // 프론트엔드에서 접근 가능하도록
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 15 * 60 * 1000, // 15분
-    });
+    };
+
+    // 프로덕션 환경에서만 추가 설정
+    if (process.env.NODE_ENV === "production") {
+      cookieOptions.secure = true; // HTTPS에서만 전송
+      cookieOptions.sameSite = "none"; // CORS 호환성
+      cookieOptions.domain = ".gomoving.site"; // 서브도메인 공유
+    } else {
+      cookieOptions.sameSite = "lax"; // 개발환경
+    }
+
+    res.cookie("XSRF-TOKEN", token, cookieOptions);
 
     next();
   } catch (error) {
@@ -136,13 +145,22 @@ export const getCSRFToken = async (req: Request, res: Response) => {
     // Redis에 토큰 저장
     await storeToken(token, expires);
 
-    // 쿠키에도 토큰 설정
-    res.cookie("XSRF-TOKEN", token, {
+    // 쿠키에도 토큰 설정 (CORS 호환성을 위해 수정)
+    const cookieOptions: any = {
       httpOnly: false, // 프론트엔드에서 접근 가능하도록
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 15 * 60 * 1000, // 15분
-    });
+    };
+
+    // 프로덕션 환경에서만 추가 설정
+    if (process.env.NODE_ENV === "production") {
+      cookieOptions.secure = true; // HTTPS에서만 전송
+      cookieOptions.sameSite = "none"; // CORS 호환성
+      cookieOptions.domain = ".gomoving.site"; // 서브도메인 공유
+    } else {
+      cookieOptions.sameSite = "lax"; // 개발환경
+    }
+
+    res.cookie("XSRF-TOKEN", token, cookieOptions);
 
     res.json({
       success: true,
