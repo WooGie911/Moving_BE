@@ -19,11 +19,32 @@ jest.mock('@prisma/client', () => ({
     ESTIMATE_REQUEST_ARRIVED: 'ESTIMATE_REQUEST_ARRIVED',
     ESTIMATE_ARRIVED: 'ESTIMATE_ARRIVED',
     ESTIMATE_STATUS_UPDATED: 'ESTIMATE_STATUS_UPDATED',
+    DESIGNATED_ESTIMATE_REQUEST_ARRIVED: 'DESIGNATED_ESTIMATE_REQUEST_ARRIVED',
     DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED: 'DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED',
+    DESIGNATED_ESTIMATE_ARRIVED: 'DESIGNATED_ESTIMATE_ARRIVED',
     DESIGNATED_ESTIMATE_STATUS_UPDATED: 'DESIGNATED_ESTIMATE_STATUS_UPDATED',
     REVIEW_EVENT: 'REVIEW_EVENT',
     FAVORITE_EVENT: 'FAVORITE_EVENT',
     MOVE_DAY_REMINDER: 'MOVE_DAY_REMINDER',
+  },
+  ActionType: {
+    WELCOME: 'WELCOME',
+    ESTIMATE_REQUEST_CREATE: 'ESTIMATE_REQUEST_CREATE',
+    ESTIMATE_CREATE: 'ESTIMATE_CREATE',
+    ESTIMATE_ACCEPT: 'ESTIMATE_ACCEPT',
+    ESTIMATE_REJECT: 'ESTIMATE_REJECT',
+    DESIGNATED_ESTIMATE_REQUEST_CREATE: 'DESIGNATED_ESTIMATE_REQUEST_CREATE',
+    DESIGNATED_ESTIMATE_REQUEST_REJECT: 'DESIGNATED_ESTIMATE_REQUEST_REJECT',
+    DESIGNATED_ESTIMATE_CREATE: 'DESIGNATED_ESTIMATE_CREATE',
+    DESIGNATED_ESTIMATE_ACCEPT: 'DESIGNATED_ESTIMATE_ACCEPT',
+    DESIGNATED_ESTIMATE_REJECT: 'DESIGNATED_ESTIMATE_REJECT',
+    REVIEW_SUBMITTED: 'REVIEW_SUBMITTED',
+    FAVORITE_ADD: 'FAVORITE_ADD',
+    FAVORITE_REMOVE: 'FAVORITE_REMOVE',
+  },
+  ReviewStatus: {
+    PENDING: 'PENDING',
+    COMPLETED: 'COMPLETED',
   },
 }));
 
@@ -288,10 +309,80 @@ describe('ReviewMiddleware', () => {
 
       const next = jest.fn().mockResolvedValue(mockEstimateRequest);
       
+      // 에러가 발생해도 미들웨어는 계속 진행되어야 함
       await reviewPrismaMiddleware(params, next);
 
       // Assertion
       expect(next).toHaveBeenCalledWith(params);
+      // 리뷰 생성 시도는 했지만 실패했으므로 create가 호출되었는지 확인
+      expect(mockCreate).toHaveBeenCalled();
+    });
+
+    it('다른 모델의 업데이트는 리뷰 생성 로직을 실행하지 않는다', async () => {
+      // Setup
+      const mockUser = {
+        id: 'user-1',
+        name: '테스트 유저',
+      };
+
+      // Exercise
+      const params: Prisma.MiddlewareParams = {
+        model: 'User',
+        action: 'update',
+        args: {
+          where: { id: 'user-1' },
+          data: { name: '새로운 이름' },
+        },
+        dataPath: [],
+        runInTransaction: false,
+      };
+
+      const next = jest.fn().mockResolvedValue(mockUser);
+      
+      await reviewPrismaMiddleware(params, next);
+
+      // Assertion
+      expect(next).toHaveBeenCalledWith(params);
+      expect(mockFindUnique).not.toHaveBeenCalled();
+      expect(mockCreate).not.toHaveBeenCalled();
+    });
+
+    it('EstimateRequest의 다른 필드 업데이트는 리뷰 생성 로직을 실행하지 않는다', async () => {
+      // Setup
+      const mockEstimateRequest = {
+        id: 'request-1',
+        status: 'COMPLETED',
+        customerId: 'user-1',
+        estimates: [
+          {
+            id: 'estimate-1',
+            moverId: 'mover-1',
+            status: 'ACCEPTED',
+          },
+        ],
+        review: null,
+      };
+
+      // Exercise
+      const params: Prisma.MiddlewareParams = {
+        model: 'EstimateRequest',
+        action: 'update',
+        args: {
+          where: { id: 'request-1' },
+          data: { description: '새로운 설명' },
+        },
+        dataPath: [],
+        runInTransaction: false,
+      };
+
+      const next = jest.fn().mockResolvedValue(mockEstimateRequest);
+      
+      await reviewPrismaMiddleware(params, next);
+
+      // Assertion
+      expect(next).toHaveBeenCalledWith(params);
+      expect(mockFindUnique).not.toHaveBeenCalled();
+      expect(mockCreate).not.toHaveBeenCalled();
     });
   });
 });
