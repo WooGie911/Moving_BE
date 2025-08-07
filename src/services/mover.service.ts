@@ -149,6 +149,7 @@ export const fetchMoverDetail = async (id: string, userId?: string) => {
                 : "기타",
       },
     })),
+    activeEstimateRequest: mover.activeEstimateRequest,
   };
 };
 

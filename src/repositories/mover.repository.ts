@@ -164,6 +164,8 @@ export const getMoverDetail = async (id: string, userId?: string) => {
   ).length;
 
   let isFavorited = false;
+  let activeEstimateRequest = null;
+
   if (userId) {
     const favorite = await prisma.favorite.findFirst({
       where: {
@@ -173,12 +175,28 @@ export const getMoverDetail = async (id: string, userId?: string) => {
       },
     });
     isFavorited = !!favorite;
+
+    // 활성 견적 요청 조회
+    activeEstimateRequest = await prisma.estimateRequest.findFirst({
+      where: {
+        customerId: userId,
+        status: { in: ["PENDING", "APPROVED"] },
+        moveDate: { gte: new Date() }, 
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        status: true,
+        moveDate: true,
+      },
+    });
   }
 
   return {
     ...mover,
     favoriteCount,
     isFavorited,
+    activeEstimateRequest,
   };
 };
 
@@ -254,7 +272,7 @@ export const checkDesignatedEstimateRequest = async (params: {
   moverId: string;
 }) => {
   const { quoteId, moverId } = params;
-  return await prisma.designatedMover.findFirst({
+  const designatedRequest = await prisma.designatedMover.findFirst({
     where: {
       estimateRequestId: quoteId,
       moverId,
@@ -265,8 +283,17 @@ export const checkDesignatedEstimateRequest = async (params: {
       message: true,
       expiresAt: true,
       createdAt: true,
+      status: true,
     },
   });
+
+  // 지정견적요청이 한 번이라도 있으면 (PENDING, REJECTED, APPROVED 등) 요청한 것으로 간주
+  // 오직 이사 완료(COMPLETED) 상태가 아니면 계속 비활성화
+  if (designatedRequest && designatedRequest.status === "COMPLETED") {
+    return null;
+  }
+
+  return designatedRequest;
 };
 
 const moverRepository = {
