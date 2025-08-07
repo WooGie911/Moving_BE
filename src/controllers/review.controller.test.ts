@@ -2,6 +2,11 @@ import { Request, Response } from "express";
 import { ReviewStatus } from "@prisma/client";
 import ReviewController from "./review.controller";
 
+// Sentry 모킹
+jest.mock("../utils/sentryUtils", () => ({
+  captureReviewError: jest.fn(),
+}));
+
 // 테스트용 Request 타입 정의
 interface TestRequest extends Omit<Request, "user"> {
   user?: {
@@ -89,6 +94,26 @@ describe("ReviewController", () => {
         message: "리뷰가 작성되었습니다.",
         data: mockReview,
       });
+    });
+
+    it("필수 파라미터가 누락된 경우 400 에러를 반환한다", async () => {
+      // Setup
+      req.params = { reviewId: "review-1" };
+      req.body = {
+        rating: 5,
+        // content 누락
+      };
+
+      // Exercise
+      await ReviewController.postReview(req as Request, res as Response, next);
+
+      // Assertion
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: "reviewId, rating, content required",
+      });
+      expect(mockService.postReview).not.toHaveBeenCalled();
     });
 
     it("서비스 에러 시 에러를 반환한다", async () => {
@@ -184,6 +209,26 @@ describe("ReviewController", () => {
         { page: 1, pageSize: 4 }
       );
       expect(res.json).toHaveBeenCalledWith(mockRequests);
+    });
+
+    it("유저 정보가 없을 때 400 에러를 반환한다", async () => {
+      // Setup
+      req.user = undefined;
+
+      // Exercise
+      await ReviewController.getWritableEstimateRequests(
+        req as Request,
+        res as Response,
+        next
+      );
+
+      // Assertion
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: "유저를 찾을 수 없습니다.",
+      });
+      expect(mockService.getWritableEstimateRequests).not.toHaveBeenCalled();
     });
 
     it("서비스 에러 시 에러를 반환한다", async () => {
@@ -288,6 +333,26 @@ describe("ReviewController", () => {
       expect(res.json).toHaveBeenCalledWith(mockReviews);
     });
 
+    it("customerId가 없을 때 400 에러를 반환한다", async () => {
+      // Setup
+      req.params = {};
+
+      // Exercise
+      await ReviewController.getWrittenReviews(
+        req as Request,
+        res as Response,
+        next
+      );
+
+      // Assertion
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: "유저를 찾을 수 없습니다.",
+      });
+      expect(mockService.getWrittenReviews).not.toHaveBeenCalled();
+    });
+
     it("서비스 에러 시 에러를 반환한다", async () => {
       // Setup
       req.params = { customerId: "user-1" };
@@ -389,6 +454,26 @@ describe("ReviewController", () => {
         pageSize: 5,
       });
       expect(res.json).toHaveBeenCalledWith(mockReviews);
+    });
+
+    it("moverId가 없을 때 400 에러를 반환한다", async () => {
+      // Setup
+      req.params = {};
+
+      // Exercise
+      await ReviewController.getReceivedReviews(
+        req as Request,
+        res as Response,
+        next
+      );
+
+      // Assertion
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: "기사님 ID가 필요합니다.",
+      });
+      expect(mockService.getReceivedReviews).not.toHaveBeenCalled();
     });
 
     it("서비스 에러 시 에러를 반환한다", async () => {

@@ -139,3 +139,38 @@ export const setSentryTags = (tags: Record<string, string>) => {
 export const setSentryContext = (name: string, context: Record<string, any>) => {
   Sentry.setContext(name, context);
 };
+
+/**
+ * 리뷰 관련 에러를 센트리로 전송
+ * @param error 에러 객체
+ * @param context 추가 컨텍스트 정보
+ */
+export const captureReviewError = (
+  error: Error,
+  context: {
+    operation: string;
+    userId?: string;
+    reviewId?: string;
+    moverId?: string;
+    customerId?: string;
+    requestBody?: any;
+    url?: string;
+    method?: string;
+  },
+) => {
+  Sentry.captureException(error, {
+    extra: {
+      userId: context.userId,
+      reviewId: context.reviewId,
+      moverId: context.moverId,
+      customerId: context.customerId,
+      body: context.requestBody,
+      url: context.url,
+      method: context.method,
+    },
+    tags: {
+      error_type: "review_error",
+      operation: context.operation,
+    },
+  });
+};
