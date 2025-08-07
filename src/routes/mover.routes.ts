@@ -3,6 +3,7 @@ import * as moverController from "../controllers/mover.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 import { optionalAuth } from "../middlewares/optionalAuth";
 import { defaultTranslationMiddleware } from "../middlewares/translationMiddleware";
+import { validateCSRFToken } from "../middlewares/csrfMiddleware";
 
 const moverRouter = Router();
 
@@ -721,6 +722,7 @@ moverRouter.get(
 moverRouter.post(
   "/:moverId/quote-request",
   verifyAccessToken,
+  validateCSRFToken,
   moverController.postDesignatedQuoteRequestController
 );
 
