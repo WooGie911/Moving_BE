@@ -841,4 +841,61 @@ moverRouter.get(
   moverController.getDesignatedQuoteRequestCheckController
 );
 
+/**
+ * @swagger
+ * /movers/active-estimate-request/check:
+ *   get:
+ *     summary: 이사일이 지나지 않은 견적 확인
+ *     description: 현재 사용자에게 이사일이 지나지 않은 견적이 있는지 확인합니다.
+ *     tags: [Mover]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 이사일이 지나지 않은 견적 확인 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: 성공 여부
+ *                 message:
+ *                   type: string
+ *                   description: 응답 메시지
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     hasActiveRequest:
+ *                       type: boolean
+ *                       description: 이사일이 지나지 않은 견적 존재 여부
+ *             example:
+ *               success: true
+ *               message: "이사일이 지나지 않은 견적 확인 성공"
+ *               data:
+ *                 hasActiveRequest: true
+ *       401:
+ *         description: 인증 실패
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: 성공 여부
+ *                 message:
+ *                   type: string
+ *                   description: 에러 메시지
+ *             example:
+ *               success: false
+ *               message: "인증이 필요합니다."
+ */
+moverRouter.get(
+  "/active-estimate-request/check",
+  verifyAccessToken,
+  moverController.checkActiveEstimateRequestController
+);
+
 export default moverRouter;

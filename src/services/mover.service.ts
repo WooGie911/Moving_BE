@@ -8,6 +8,7 @@ import {
   getMoverDetail,
   createDesignatedEstimateRequest,
   checkDesignatedEstimateRequest,
+  checkEstimateRequestStatus,
 } from "../repositories/mover.repository";
 import actionService from "./action.service";
 import { ActionType } from "@prisma/client";
@@ -159,6 +160,12 @@ export const fetchMoverDetail = async (id: string, userId?: string) => {
 export const requestDesignatedQuote = async (
   dto: DesignatedQuoteRequestDto
 ) => {
+  // 견적 상태 확인
+  const statusCheck = await checkEstimateRequestStatus(dto.quoteId);
+  if (!statusCheck.isValid) {
+    throw new Error(statusCheck.reason);
+  }
+
   const designatedRequest = await createDesignatedEstimateRequest(dto);
 
   // 지정 견적 요청 액션 생성

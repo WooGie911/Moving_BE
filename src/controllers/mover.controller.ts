@@ -195,14 +195,62 @@ export const getDesignatedQuoteRequestCheckController = async (
       moverId: String(moverId),
     });
 
+    // 반려된 경우는 다시 요청 가능하도록 hasRequested를 false로 설정
+    const hasRequested = request && request.status !== "REJECTED";
+
     res.json({
       success: true,
       message: "지정 견적 요청 여부 조회 성공",
       data: {
-        hasRequested: !!request,
+        hasRequested: hasRequested,
         requestId: request?.id || null,
         message: request?.message || null,
         expiresAt: request?.expiresAt || null,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * 이사일이 지나지 않은 견적 확인
+ */
+export const checkActiveEstimateRequestController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const user = req.user as {
+      userId: string;
+      name: string;
+      userType: string | string[];
+    };
+
+    // userType이 문자열이거나 배열일 수 있으므로 둘 다 처리
+    const userTypes = Array.isArray(user.userType)
+      ? user.userType
+      : [user.userType];
+
+    if (!user || !userTypes.includes("CUSTOMER")) {
+      return res.status(401).json({
+        success: false,
+        message: "회원만 확인이 가능합니다.",
+      });
+    }
+
+    const estimateRequestService = new (
+      await import("../services/estimateRequest.service")
+    ).default();
+    const hasActiveRequest =
+      await estimateRequestService.hasActiveRequestBeforeMoveDate(user.userId);
+
+    res.json({
+      success: true,
+      message: "이사일이 지나지 않은 견적 확인 성공",
+      data: {
+        hasActiveRequest,
       },
     });
   } catch (err) {
@@ -216,4 +264,5 @@ export default {
   getMoverDetailController,
   postDesignatedQuoteRequestController,
   getDesignatedQuoteRequestCheckController,
+  checkActiveEstimateRequestController,
 };
