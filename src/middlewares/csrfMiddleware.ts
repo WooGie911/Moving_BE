@@ -1,44 +1,80 @@
 import { Request, Response, NextFunction } from "express";
 import crypto from "crypto";
+import redisClient from "../config/redis";
 
-// CSRF 토큰 저장소 (실제 프로덕션에서는 Redis 등을 사용)
-const csrfTokens = new Map<string, { token: string; expires: number }>();
+// CSRF 토큰 키 접두사
+const CSRF_TOKEN_PREFIX = "csrf:";
 
 // CSRF 토큰 생성 함수
 const generateToken = (): string => {
   return crypto.randomBytes(32).toString("hex");
 };
 
-// CSRF 토큰 검증 함수
-const validateToken = (sessionId: string, token: string): boolean => {
-  const stored = csrfTokens.get(sessionId);
-  if (!stored) return false;
+// Redis에 CSRF 토큰 저장
+const storeToken = async (token: string, expires: number): Promise<void> => {
+  try {
+    const key = `${CSRF_TOKEN_PREFIX}${token}`;
+    const expiresInSeconds = Math.floor((expires - Date.now()) / 1000);
 
-  // 토큰 만료 확인
-  if (Date.now() > stored.expires) {
-    csrfTokens.delete(sessionId);
-    return false;
+    await redisClient.setEx(key, expiresInSeconds, JSON.stringify({ token, expires }));
+  } catch (error) {
+    console.error("Redis 토큰 저장 실패:", error);
+    throw error;
   }
-
-  return stored.token === token;
 };
 
-// 세션 ID 생성 함수
-const getSessionId = (req: Request): string => {
-  // JWT 토큰에서 사용자 ID를 세션 ID로 사용
-  const userId = (req.user as any)?.userId;
-  return userId || req.ip || "anonymous";
+// Redis에서 CSRF 토큰 조회
+const getStoredToken = async (token: string): Promise<{ token: string; expires: number } | null> => {
+  try {
+    const key = `${CSRF_TOKEN_PREFIX}${token}`;
+    const data = await redisClient.get(key);
+
+    if (!data) return null;
+
+    return JSON.parse(data);
+  } catch (error) {
+    console.error("Redis 토큰 조회 실패:", error);
+    return null;
+  }
+};
+
+// Redis에서 CSRF 토큰 삭제
+const deleteToken = async (token: string): Promise<void> => {
+  try {
+    const key = `${CSRF_TOKEN_PREFIX}${token}`;
+    await redisClient.del(key);
+  } catch (error) {
+    console.error("Redis 토큰 삭제 실패:", error);
+  }
+};
+
+// CSRF 토큰 검증 함수
+const validateToken = async (token: string): Promise<boolean> => {
+  try {
+    const stored = await getStoredToken(token);
+    if (!stored) return false;
+
+    // 토큰 만료 확인
+    if (Date.now() > stored.expires) {
+      await deleteToken(token);
+      return false;
+    }
+
+    return stored.token === token;
+  } catch (error) {
+    console.error("토큰 검증 실패:", error);
+    return false;
+  }
 };
 
 // CSRF 토큰 생성 미들웨어
-export const generateCSRFToken = (req: Request, res: Response, next: NextFunction) => {
+export const generateCSRFToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const sessionId = getSessionId(req);
     const token = generateToken();
-    const expires = Date.now() + 15 * 60 * 1000; // 15분 (Access Token과 동일)
+    const expires = Date.now() + 15 * 60 * 1000; // 15분
 
-    // 토큰 저장
-    csrfTokens.set(sessionId, { token, expires });
+    // Redis에 토큰 저장
+    await storeToken(token, expires);
 
     // 응답 헤더에 CSRF 토큰 추가
     res.setHeader("X-CSRF-Token", token);
@@ -48,7 +84,7 @@ export const generateCSRFToken = (req: Request, res: Response, next: NextFunctio
       httpOnly: false, // 프론트엔드에서 접근 가능하도록
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 15 * 60 * 1000, // 15분 (Access Token과 동일)
+      maxAge: 15 * 60 * 1000, // 15분
     });
 
     next();
@@ -62,9 +98,8 @@ export const generateCSRFToken = (req: Request, res: Response, next: NextFunctio
 };
 
 // CSRF 검증 미들웨어
-export const validateCSRFToken = (req: Request, res: Response, next: NextFunction) => {
+export const validateCSRFToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const sessionId = getSessionId(req);
     const token = (req.headers["x-csrf-token"] as string) || req.cookies["XSRF-TOKEN"];
 
     if (!token) {
@@ -74,7 +109,8 @@ export const validateCSRFToken = (req: Request, res: Response, next: NextFunctio
       });
     }
 
-    if (!validateToken(sessionId, token)) {
+    const isValid = await validateToken(token);
+    if (!isValid) {
       return res.status(403).json({
         success: false,
         message: "CSRF 토큰이 유효하지 않습니다. 페이지를 새로고침해주세요.",
@@ -92,21 +128,20 @@ export const validateCSRFToken = (req: Request, res: Response, next: NextFunctio
 };
 
 // CSRF 토큰 조회 API
-export const getCSRFToken = (req: Request, res: Response) => {
+export const getCSRFToken = async (req: Request, res: Response) => {
   try {
-    const sessionId = getSessionId(req);
     const token = generateToken();
-    const expires = Date.now() + 15 * 60 * 1000; // 15분 (Access Token과 동일)
+    const expires = Date.now() + 15 * 60 * 1000; // 15분
 
-    // 토큰 저장
-    csrfTokens.set(sessionId, { token, expires });
+    // Redis에 토큰 저장
+    await storeToken(token, expires);
 
     // 쿠키에도 토큰 설정
     res.cookie("XSRF-TOKEN", token, {
       httpOnly: false, // 프론트엔드에서 접근 가능하도록
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 15 * 60 * 1000, // 15분 (Access Token과 동일)
+      maxAge: 15 * 60 * 1000, // 15분
     });
 
     res.json({
@@ -126,26 +161,35 @@ export const getCSRFToken = (req: Request, res: Response) => {
 };
 
 // 만료된 토큰 정리 함수 (스케줄러에서 호출)
-export const cleanupExpiredTokens = () => {
-  const now = Date.now();
-  let cleanedCount = 0;
-
-  for (const [sessionId, data] of csrfTokens.entries()) {
-    if (now > data.expires) {
-      csrfTokens.delete(sessionId);
-      cleanedCount++;
-    }
+export const cleanupExpiredTokens = async (): Promise<number> => {
+  try {
+    // Redis는 자동으로 만료된 키를 삭제하므로 별도 정리 로직이 필요하지 않음
+    console.log("🧹 Redis는 자동으로 만료된 CSRF 토큰을 정리합니다.");
+    return 0;
+  } catch (error) {
+    console.error("CSRF 토큰 정리 실패:", error);
+    return 0;
   }
-
-  console.log(`🧹 CSRF 토큰 정리 완료: ${cleanedCount}개 만료된 토큰 삭제`);
-  return cleanedCount;
 };
 
 // 토큰 저장소 상태 조회 함수
-export const getCSRFTokenStats = () => {
-  return {
-    totalTokens: csrfTokens.size,
-    activeTokens: Array.from(csrfTokens.values()).filter((data) => Date.now() <= data.expires).length,
-    expiredTokens: Array.from(csrfTokens.values()).filter((data) => Date.now() > data.expires).length,
-  };
+export const getCSRFTokenStats = async () => {
+  try {
+    // Redis에서 CSRF 토큰 패턴으로 키 개수 조회
+    const pattern = `${CSRF_TOKEN_PREFIX}*`;
+    const keys = await redisClient.keys(pattern);
+
+    return {
+      totalTokens: keys.length,
+      activeTokens: keys.length, // Redis는 자동으로 만료된 키를 삭제하므로 모든 키가 활성 상태
+      expiredTokens: 0, // Redis가 자동으로 처리
+    };
+  } catch (error) {
+    console.error("CSRF 토큰 통계 조회 실패:", error);
+    return {
+      totalTokens: 0,
+      activeTokens: 0,
+      expiredTokens: 0,
+    };
+  }
 };
