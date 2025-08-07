@@ -220,11 +220,7 @@ const moverRouter = Router();
  *               success: false
  *               message: "기사님을 찾을 수 없습니다"
  */
-moverRouter.get(
-  "/",
-  defaultTranslationMiddleware,
-  moverController.getMoverListController
-);
+moverRouter.get("/", defaultTranslationMiddleware, moverController.getMoverListController);
 
 /**
  * @swagger
@@ -416,7 +412,7 @@ moverRouter.get(
   "/favorite",
   verifyAccessToken,
   defaultTranslationMiddleware,
-  moverController.getFavoriteMoversController
+  moverController.getFavoriteMoversController,
 );
 
 /**
@@ -592,12 +588,7 @@ moverRouter.get(
  *               status: 404
  *               message: "기사님을 찾을 수 없습니다."
  */
-moverRouter.get(
-  "/:moverId",
-  optionalAuth,
-  defaultTranslationMiddleware,
-  moverController.getMoverDetailController
-);
+moverRouter.get("/:moverId", optionalAuth, defaultTranslationMiddleware, moverController.getMoverDetailController);
 
 /**
  * @swagger
@@ -836,7 +827,7 @@ moverRouter.post(
 moverRouter.get(
   "/:moverId/quote-request/check",
   verifyAccessToken,
-  moverController.getDesignatedQuoteRequestCheckController
+  moverController.getDesignatedQuoteRequestCheckController,
 );
 
 /**
@@ -893,7 +884,7 @@ moverRouter.get(
 moverRouter.get(
   "/active-estimate-request/check",
   verifyAccessToken,
-  moverController.checkActiveEstimateRequestController
+  moverController.checkActiveEstimateRequestController,
 );
 
 export default moverRouter;

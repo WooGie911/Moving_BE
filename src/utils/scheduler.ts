@@ -4,7 +4,6 @@ import actionService from "../services/action.service";
 import { ActionType } from "@prisma/client";
 import estimateRequestRepository from "../repositories/estimateRequest.repository";
 import reviewRepository from "../repositories/review.repository";
-import { cleanupExpiredTokens, getCSRFTokenStats } from "../middlewares/csrfMiddleware";
 
 // 이사일 알림 생성 함수
 const generateMoveDayReminders = async () => {
@@ -134,36 +133,13 @@ const initializeScheduler = () => {
     },
   );
 
-  // 매시간 CSRF 토큰 정리 (매시 30분에 실행)
-  cron.schedule(
-    "30 * * * *",
-    async () => {
-      console.log("⏰ [시간별 스케줄러] CSRF 토큰 정리 시작");
-      try {
-        const cleanedCount = cleanupExpiredTokens();
-        const stats = await getCSRFTokenStats();
-        console.log(`✅ [시간별 스케줄러] CSRF 토큰 정리 완료: ${cleanedCount}개 삭제`);
-        console.log(
-          `📊 CSRF 토큰 통계: 총 ${stats.totalTokens}개, 활성 ${stats.activeTokens}개, 만료 ${stats.expiredTokens}개`,
-        );
-      } catch (error) {
-        console.error("❌ [시간별 스케줄러] CSRF 토큰 정리 실패:", error);
-      }
-    },
-    {
-      timezone: "Asia/Seoul", // 한국 시간 기준
-    },
-  );
-
   console.log("✅ 스케줄러 초기화 완료");
   console.log("📅 매일 00시에 만료된 견적 요청 처리가 실행됩니다.");
   console.log("📅 매일 09시에 이사일 알림 및 리뷰 요청이 생성됩니다.");
-  console.log("📅 매시 30분에 CSRF 토큰 정리가 실행됩니다.");
   console.log("🔄 PENDING → EXPIRED: 이사일이 지난 견적 요청을 만료 처리");
   console.log("🔄 PROPOSED → AUTO_REJECTED: 만료된 견적 요청의 제안 견적들을 자동 거절");
   console.log("🔄 이사일 알림: 내일/오늘 이사 예정인 고객과 기사님에게 알림");
   console.log("🔄 리뷰 요청: 이사 날짜가 지났으면서 COMPLETED 상태인 고객에게 리뷰 요청");
-  console.log("🧹 CSRF 토큰 정리: 만료된 CSRF 토큰을 정기적으로 삭제");
 };
 
 export { initializeScheduler, generateMoveDayReminders, generateMoveDayReviewRequests };
