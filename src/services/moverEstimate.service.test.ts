@@ -203,7 +203,7 @@ describe("이사업체 견적 서비스", () => {
         "estimate123",
         "ESTIMATE",
         {
-          moverName: "김이사",
+          moverName: "",
           moveType: "HOME",
         }
       );
@@ -348,7 +348,7 @@ describe("이사업체 견적 서비스", () => {
         "estimate123",
         "DESIGNATED_ESTIMATE",
         {
-          moverName: "김이사",
+          moverName: "",
           moveType: "HOME",
         }
       );
@@ -1367,16 +1367,8 @@ describe("이사업체 견적 서비스", () => {
         ESTIMATE_STATUS.REJECTED,
         false
       );
-      expect(mockedActionService.createAction).toHaveBeenCalledWith(
-        "mover123",
-        ActionType.ESTIMATE_REJECTED,
-        "estimate123",
-        "ESTIMATE",
-        {
-          moveType: "HOME",
-          estimateRequestId: "estimateRequest123",
-        }
-      );
+      // 일반 견적 반려에서는 액션이 생성되지 않음 (isDesignated가 false이므로)
+      expect(mockedActionService.createAction).not.toHaveBeenCalled();
     });
 
     test("지정 견적을 성공적으로 반려한다", async () => {
