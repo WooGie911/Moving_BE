@@ -16,6 +16,7 @@ import cookieParser from "cookie-parser";
 import { initializeScheduler } from "./utils/scheduler";
 import { generateCSRFToken } from "./middlewares/csrfMiddleware";
 import * as Sentry from "@sentry/node";
+import { connectRedis } from "./config/redis";
 
 // 라우터 import
 import authIndexRoutes from "./routes/authIndex.routes";
@@ -49,7 +50,12 @@ app.use(
 app.use(morgan("combined")); // 프로덕션용 로그 포맷
 
 // CORS 설정 - 환경변수에서 가져오거나 기본값 사용
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").map((origin) => origin.trim()) || [];
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").map((origin) => origin.trim()) || [
+  "https://gomoving.site",
+  "https://www.gomoving.site",
+  "http://localhost:3000",
+  "http://localhost:3001",
+];
 
 app.use(
   cors({
@@ -58,12 +64,14 @@ app.use(
       if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".ngrok-free.app")) {
         callback(null, true);
       } else {
+        console.warn(`CORS 차단된 origin: ${origin}`);
         callback(new Error("Not allowed by CORS"));
       }
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token", "XSRF-TOKEN"],
+    exposedHeaders: ["X-CSRF-Token"],
   }),
 );
 
@@ -99,8 +107,20 @@ initializeScheduler();
 Sentry.setupExpressErrorHandler(app);
 
 // 서버 시작
-app.listen(PORT, () => {
-  console.log(`서버가 실행되었습니다. 포트번호 ${PORT} 에서 실행중입니다.`);
-});
+const startServer = async () => {
+  try {
+    // Redis 연결 초기화
+    await connectRedis();
+
+    app.listen(PORT, () => {
+      console.log(`서버가 실행되었습니다. 포트번호 ${PORT} 에서 실행중입니다.`);
+    });
+  } catch (error) {
+    console.error("서버 시작 실패:", error);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 export default app;
