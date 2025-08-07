@@ -16,7 +16,8 @@ const storeToken = async (token: string, expires: number): Promise<void> => {
     const key = `${CSRF_TOKEN_PREFIX}${token}`;
     const expiresInSeconds = Math.floor((expires - Date.now()) / 1000);
 
-    await redisClient.setEx(key, expiresInSeconds, JSON.stringify({ token, expires }));
+    // ioredis에서는 setex를 사용 (소문자)
+    await redisClient.setex(key, expiresInSeconds, JSON.stringify({ token, expires }));
   } catch (error) {
     console.error("Redis 토큰 저장 실패:", error);
     throw error;

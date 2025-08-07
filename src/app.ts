@@ -14,7 +14,7 @@ import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware";
 import { setupManualSwagger } from "./utils/swagger-manual";
 import cookieParser from "cookie-parser";
 import { initializeScheduler } from "./utils/scheduler";
-import { generateCSRFToken } from "./middlewares/csrfMiddleware";
+
 import * as Sentry from "@sentry/node";
 import { connectRedis } from "./config/redis";
 
@@ -78,9 +78,6 @@ app.use(
 app.use(cookieParser());
 app.use(express.json({ limit: "10mb" })); // JSON 파싱 (크기 제한 추가)
 app.use(express.urlencoded({ extended: true, limit: "10mb" })); // URL 인코딩 파싱 (크기 제한 추가)
-
-// CSRF 토큰 생성 미들웨어 (모든 요청에 대해)
-app.use(generateCSRFToken);
 
 app.use(passport.initialize());
 
