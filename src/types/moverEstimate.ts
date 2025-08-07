@@ -56,7 +56,7 @@ export type TAddress = {
 // 고객 타입 정의
 export type TCustomer = {
   id: string;
-  name: string;
+  name: string | null;
   currentArea: string | null;
   customerImage: string | null;
   nickname: string | null;
@@ -65,7 +65,7 @@ export type TCustomer = {
 // 기사님 타입 정의
 export type TMover = {
   id: string;
-  name: string;
+  name: string | null;
   moverImage: string | null;
   nickname: string | null;
   shortIntro: string | null;
@@ -192,7 +192,7 @@ export type EstimateWithRelations = {
   deletedAt: Date | null;
   mover: {
     id: string;
-    name: string;
+    name: string | null;
     moverImage: string | null;
     nickname: string | null;
     shortIntro: string | null;
@@ -216,7 +216,7 @@ export type EstimateWithRelations = {
     updatedAt: Date;
     customer: {
       id: string;
-      name: string;
+      name: string | null;
       currentArea: string | null;
       customerImage: string | null;
       nickname: string | null;

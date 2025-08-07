@@ -808,7 +808,7 @@ describe("고객 견적 요청 레포지토리", () => {
               customer: {
                 select: {
                   id: true,
-                  name: true,
+                  nickname: true,
                 },
               },
             },
@@ -1143,6 +1143,244 @@ describe("고객 견적 요청 레포지토리", () => {
       // Act & Assert
       await expect(
         customerEstimateRequestRepository.getMoversFavoriteCounts(moverIds)
+      ).rejects.toThrow(RepositoryQueryError);
+    });
+  });
+
+  describe("견적 ID로 기사 조회", () => {
+    it("성공적으로 견적 ID로 기사를 조회한다", async () => {
+      // Arrange
+      const estimateId = "estimate123";
+      const mockEstimateData = {
+        moverId: "mover123",
+      };
+
+      mockEstimate.findUnique.mockResolvedValue(mockEstimateData);
+
+      // Act
+      const result =
+        await customerEstimateRequestRepository.getMoverByEstimateId(
+          estimateId
+        );
+
+      // Assert
+      expect(result).toEqual(mockEstimateData);
+      expect(mockEstimate.findUnique).toHaveBeenCalledWith({
+        where: { id: estimateId },
+        select: {
+          moverId: true,
+        },
+      });
+    });
+
+    it("견적이 존재하지 않을 때 null을 반환한다", async () => {
+      // Arrange
+      const estimateId = "nonexistent";
+
+      mockEstimate.findUnique.mockResolvedValue(null);
+
+      // Act
+      const result =
+        await customerEstimateRequestRepository.getMoverByEstimateId(
+          estimateId
+        );
+
+      // Assert
+      expect(result).toBeNull();
+    });
+
+    it("데이터베이스 에러 발생 시 RepositoryQueryError를 던진다", async () => {
+      // Arrange
+      const estimateId = "estimate123";
+      const mockError = new Error("Database error");
+
+      mockEstimate.findUnique.mockRejectedValue(mockError);
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestRepository.getMoverByEstimateId(estimateId)
+      ).rejects.toThrow(RepositoryQueryError);
+    });
+  });
+
+  describe("견적 상세 정보 조회 (액션 메타데이터용)", () => {
+    it("성공적으로 견적 상세 정보를 조회한다", async () => {
+      // Arrange
+      const estimateId = "estimate123";
+      const mockEstimateDetail = {
+        id: "estimate123",
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        status: "PROPOSED",
+        isDesignated: false,
+        mover: {
+          id: "mover123",
+          name: "이사업체A",
+          nickname: "기사A",
+        },
+        estimateRequest: {
+          id: "estimateRequest123",
+          customerId: "customer123",
+          moveType: "HOME",
+          moveDate: new Date("2025-08-10"),
+          customer: {
+            id: "customer123",
+            nickname: "고객A",
+          },
+        },
+      };
+
+      mockEstimate.findUnique.mockResolvedValue(mockEstimateDetail);
+
+      // Act
+      const result =
+        await customerEstimateRequestRepository.getEstimateDetailForAction(
+          estimateId
+        );
+
+      // Assert
+      expect(result).toEqual(mockEstimateDetail);
+      expect(mockEstimate.findUnique).toHaveBeenCalledWith({
+        where: { id: estimateId },
+        select: {
+          id: true,
+          moverId: true,
+          estimateRequestId: true,
+          status: true,
+          isDesignated: true,
+          mover: {
+            select: {
+              id: true,
+              name: true,
+              nickname: true,
+            },
+          },
+          estimateRequest: {
+            select: {
+              id: true,
+              customerId: true,
+              moveType: true,
+              moveDate: true,
+              customer: {
+                select: {
+                  id: true,
+                  nickname: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    });
+
+    it("견적이 존재하지 않을 때 null을 반환한다", async () => {
+      // Arrange
+      const estimateId = "nonexistent";
+
+      mockEstimate.findUnique.mockResolvedValue(null);
+
+      // Act
+      const result =
+        await customerEstimateRequestRepository.getEstimateDetailForAction(
+          estimateId
+        );
+
+      // Assert
+      expect(result).toBeNull();
+    });
+
+    it("데이터베이스 에러 발생 시 RepositoryQueryError를 던진다", async () => {
+      // Arrange
+      const estimateId = "estimate123";
+      const mockError = new Error("Database error");
+
+      mockEstimate.findUnique.mockRejectedValue(mockError);
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestRepository.getEstimateDetailForAction(estimateId)
+      ).rejects.toThrow(RepositoryQueryError);
+    });
+  });
+
+  describe("AUTO_REJECTED된 견적들 조회 (액션 생성용)", () => {
+    it("성공적으로 AUTO_REJECTED된 견적들을 조회한다", async () => {
+      // Arrange
+      const estimateRequestId = "estimateRequest123";
+      const excludeEstimateId = "estimate123";
+      const mockAutoRejectedEstimates = [
+        {
+          id: "otherEstimate1",
+          moverId: "mover456",
+          status: "AUTO_REJECTED",
+          isDesignated: false,
+        },
+        {
+          id: "otherEstimate2",
+          moverId: "mover789",
+          status: "AUTO_REJECTED",
+          isDesignated: true,
+        },
+      ];
+
+      mockEstimate.findMany.mockResolvedValue(mockAutoRejectedEstimates);
+
+      // Act
+      const result =
+        await customerEstimateRequestRepository.getAutoRejectedEstimates(
+          estimateRequestId,
+          excludeEstimateId
+        );
+
+      // Assert
+      expect(result).toEqual(mockAutoRejectedEstimates);
+      expect(mockEstimate.findMany).toHaveBeenCalledWith({
+        where: {
+          estimateRequestId: estimateRequestId,
+          id: { not: excludeEstimateId },
+          status: { in: ["PROPOSED", "ACCEPTED", "AUTO_REJECTED"] },
+        },
+        select: {
+          id: true,
+          moverId: true,
+          status: true,
+          isDesignated: true,
+        },
+      });
+    });
+
+    it("AUTO_REJECTED된 견적이 없을 때 빈 배열을 반환한다", async () => {
+      // Arrange
+      const estimateRequestId = "estimateRequest123";
+      const excludeEstimateId = "estimate123";
+
+      mockEstimate.findMany.mockResolvedValue([]);
+
+      // Act
+      const result =
+        await customerEstimateRequestRepository.getAutoRejectedEstimates(
+          estimateRequestId,
+          excludeEstimateId
+        );
+
+      // Assert
+      expect(result).toEqual([]);
+    });
+
+    it("데이터베이스 에러 발생 시 RepositoryQueryError를 던진다", async () => {
+      // Arrange
+      const estimateRequestId = "estimateRequest123";
+      const excludeEstimateId = "estimate123";
+      const mockError = new Error("Database error");
+
+      mockEstimate.findMany.mockRejectedValue(mockError);
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestRepository.getAutoRejectedEstimates(
+          estimateRequestId,
+          excludeEstimateId
+        )
       ).rejects.toThrow(RepositoryQueryError);
     });
   });
