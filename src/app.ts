@@ -16,7 +16,6 @@ import cookieParser from "cookie-parser";
 import { initializeScheduler } from "./utils/scheduler";
 
 import * as Sentry from "@sentry/node";
-import { connectRedis } from "./config/redis";
 
 // 라우터 import
 import authIndexRoutes from "./routes/authIndex.routes";
@@ -106,9 +105,6 @@ Sentry.setupExpressErrorHandler(app);
 // 서버 시작
 const startServer = async () => {
   try {
-    // Redis 연결 초기화
-    await connectRedis();
-
     app.listen(PORT, () => {
       console.log(`서버가 실행되었습니다. 포트번호 ${PORT} 에서 실행중입니다.`);
     });
