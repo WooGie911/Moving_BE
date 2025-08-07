@@ -1,6 +1,11 @@
 import ReviewService from './review.service';
 import { ReviewStatus } from '@prisma/client';
 
+// Sentry 모킹
+jest.mock('../utils/sentryUtils', () => ({
+  captureReviewError: jest.fn(),
+}));
+
 // 레포지토리 모듈 전체를 모킹
 jest.mock('../repositories/review.repository', () => ({
   postReview: jest.fn(),

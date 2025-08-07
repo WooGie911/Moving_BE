@@ -158,15 +158,6 @@ const signup = async ({
     throw new DatabaseError("유저 생성 실패로 인한 회원가입 실패");
   }
 
-  // WELCOME 액션 생성
-  await actionService.createAction(
-    user.id,
-    ActionType.WELCOME,
-    user.id,
-    "USER",
-    {}
-  );
-
   let accessToken, refreshToken;
 
   // 유저 타입 배열에 CUSTOMER가 먼저 있는지 확인 없다면 현재 타입은 MOVER

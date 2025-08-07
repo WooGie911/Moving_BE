@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import reviewService from "../services/review.service";
+import { captureReviewError } from "../utils/sentryUtils";
 
 const reviewController = {
   // 1. 리뷰 작성 (PATCH)
@@ -25,6 +26,14 @@ const reviewController = {
         data: review,
       });
     } catch (error) {
+      captureReviewError(error as Error, {
+        operation: "post_review",
+        userId: req.user?.userId,
+        reviewId: req.params.reviewId,
+        requestBody: req.body,
+        url: req.url,
+        method: req.method,
+      });
       next(error);
     }
   },
@@ -52,6 +61,14 @@ const reviewController = {
       );
       res.json(result);
     } catch (error) {
+      captureReviewError(error as Error, {
+        operation: "get_writable_estimate_requests",
+        userId: req.user?.userId,
+        customerId: req.user?.userId,
+        requestBody: req.body,
+        url: req.url,
+        method: req.method,
+      });
       next(error);
     }
   },
@@ -79,6 +96,14 @@ const reviewController = {
       });
       res.json(result);
     } catch (error) {
+      captureReviewError(error as Error, {
+        operation: "get_written_reviews",
+        userId: req.user?.userId,
+        customerId: req.params.customerId,
+        requestBody: req.body,
+        url: req.url,
+        method: req.method,
+      });
       next(error);
     }
   },
@@ -109,6 +134,14 @@ const reviewController = {
 
       res.json(result);
     } catch (error) {
+      captureReviewError(error as Error, {
+        operation: "get_received_reviews",
+        userId: req.user?.userId,
+        moverId: req.params.moverId,
+        requestBody: req.body,
+        url: req.url,
+        method: req.method,
+      });
       next(error);
     }
   },

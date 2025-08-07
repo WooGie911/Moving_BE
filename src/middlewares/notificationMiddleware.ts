@@ -3,6 +3,7 @@ import prisma from "../db/prisma/prisma";
 import { actionNotificationMap } from "../utils/actionNotificationMap";
 import { emitNotificationSSE } from "../utils/emitNotificationSSE";
 import { Action } from "@prisma/client";
+import { captureNotificationError, captureActionMappingError } from "../utils/sentryUtils";
 
 // Prisma 미들웨어: actionCreate 함수에서 새로운 액션이 생성될 때 notification 자동 생성.
 export const notificationMiddleware: Prisma.Middleware = async (
@@ -23,9 +24,14 @@ export const notificationMiddleware: Prisma.Middleware = async (
     try {
       const receivers = await mapping.getReceivers(action);
 
+      if (receivers.length === 0) {
+        return result;
+      }
+
       const notifications = await Promise.all(
         receivers.map(async (receiver) => {
           const message = mapping.buildMessage(action, receiver.userType);
+          
           return prisma.notification.create({
             data: {
               userId: receiver.id,
@@ -46,10 +52,23 @@ export const notificationMiddleware: Prisma.Middleware = async (
           emitNotificationSSE(notification.userId, notification);
         } catch (error) {
           console.error("SSE 이벤트 발송 실패:", error);
+          captureNotificationError(error as Error, {
+            operation: "sse_emit",
+            userId: notification.userId,
+            userType: notification.userType,
+            notificationType: notification.type,
+            actionType: action.type,
+          });
         }
       }
     } catch (error) {
       console.error("알림 생성 실패:", error);
+      captureActionMappingError(error as Error, {
+        operation: "notification_creation",
+        actionType: action.type,
+        entityId: action.entityId,
+        entityType: action.entityType,
+      });
       // 알림 생성 실패해도 Action 생성은 계속 진행
     }
   }

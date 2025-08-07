@@ -471,25 +471,6 @@ const customerEstimateRequestService = {
         throw new NotFoundError("견적 취소에 실패했습니다.");
       }
 
-      // 6. 견적 취소 액션 생성
-      if (estimateDetail) {
-        const actionType = estimateDetail.isDesignated
-          ? ActionType.DESIGNATED_ESTIMATE_REJECTED
-          : ActionType.ESTIMATE_REJECTED;
-
-        await actionService.createAction(
-          estimateDetail.moverId,
-          actionType,
-          estimateId,
-          estimateDetail.isDesignated ? "DESIGNATED_ESTIMATE" : "ESTIMATE",
-          {
-            customerName:
-              estimateDetail.estimateRequest?.customer?.nickname || "",
-            moveType: estimateDetail.estimateRequest?.moveType || "",
-          }
-        );
-      }
-
       return result;
     } catch (error) {
       if (error instanceof RepositoryError) {
