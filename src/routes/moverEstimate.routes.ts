@@ -190,11 +190,13 @@ router.use(verifyAccessToken);
  *               success: false
  *               message: "권한이 없습니다"
  */
+
 router.post(
   "/create",
   moverEstimateTranslationMiddleware,
   moverEstimateController.createEstimate
 );
+
 
 /**
  * @swagger
@@ -259,11 +261,13 @@ router.post(
  *               success: false
  *               message: "권한이 없습니다"
  */
+
 router.post(
   "/reject",
   moverEstimateTranslationMiddleware,
   moverEstimateController.rejectEstimate
 );
+
 
 /**
  * @swagger
@@ -1146,6 +1150,7 @@ router.get(
  */
 router.patch(
   "/status",
+
   moverEstimateTranslationMiddleware,
   moverEstimateController.updateEstimateStatus
 );
@@ -1276,6 +1281,7 @@ router.patch(
  */
 router.patch(
   "/estimate",
+
   moverEstimateTranslationMiddleware,
   moverEstimateController.updateEstimate
 );
