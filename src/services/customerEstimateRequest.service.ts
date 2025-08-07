@@ -1,6 +1,6 @@
 import customerEstimateRequestRepository from "../repositories/customerEstimateRequest.repository";
 import actionService from "./action.service";
-import { ActionType } from "@prisma/client";
+import { ActionType, User } from "@prisma/client";
 import prisma from "../db/prisma/prisma";
 import { NotFoundError } from "../types/commonError.types";
 import {
@@ -471,6 +471,21 @@ const customerEstimateRequestService = {
         throw new NotFoundError("견적 취소에 실패했습니다.");
       }
 
+      // 6. 견적 취소 액션 생성
+      if (estimateDetail) {
+        await actionService.createAction(
+          estimateDetail.moverId,
+          ActionType.ESTIMATE_REJECTED,
+          estimateId,
+          estimateDetail.isDesignated ? "DESIGNATED_ESTIMATE" : "ESTIMATE",
+          {
+            customerName:
+              estimateDetail.estimateRequest?.customer?.nickname || "",
+            moveType: estimateDetail.estimateRequest?.moveType || "",
+          }
+        );
+      }
+
       return result;
     } catch (error) {
       if (error instanceof RepositoryError) {
@@ -527,16 +542,35 @@ const customerEstimateRequestService = {
           estimateId
         );
 
-      // 5. 비즈니스 로직: 이사완료 처리
-      const result =
-        await customerEstimateRequestRepository.updateEstimateRequestStatus(
-          estimateRequestId,
-          "COMPLETED"
-        );
+      // 5. 트랜잭션으로 이사완료 처리 및 확정견적 수 증가
+      const result = await prisma.$transaction(async (tx) => {
+        // 5-1. 이사완료 처리
+        const updatedEstimateRequest = await tx.estimateRequest.update({
+          where: { id: estimateRequestId },
+          data: { status: "COMPLETED" },
+        });
 
-      if (!result) {
-        throw new NotFoundError("이사완료에 실패했습니다.");
-      }
+        if (!updatedEstimateRequest) {
+          throw new NotFoundError("이사완료에 실패했습니다.");
+        }
+
+        // 5-2. 완료된 이사의 기사에 대하여 확정견적 수 증가
+        const confirmedMover =
+          await customerEstimateRequestRepository.getMoverByEstimateId(
+            estimateId //
+          );
+
+        if (!confirmedMover) {
+          throw new NotFoundError("기사님을 찾을 수 없습니다.");
+        }
+
+        await tx.user.update({
+          where: { id: confirmedMover.moverId },
+          data: { workedCount: { increment: 1 } },
+        });
+
+        return updatedEstimateRequest;
+      });
 
       // 주소 정보를 포함하여 반환
       const estimateRequestWithAddresses =

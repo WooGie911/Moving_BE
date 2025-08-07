@@ -622,7 +622,7 @@ describe("고객 견적 요청 서비스", () => {
             customerId: "customer123",
             moveType: "HOME" as MoveType,
             moveDate: new Date("2025-08-10"),
-            customer: { id: "customer123", name: "고객A" },
+            customer: { id: "customer123", nickname: "고객A" },
           },
         }
       );
@@ -868,7 +868,7 @@ describe("고객 견적 요청 서비스", () => {
             customerId: "customer123",
             moveType: "HOME" as MoveType,
             moveDate: new Date("2025-08-10"),
-            customer: { id: "customer123", name: "고객A" },
+            customer: { id: "customer123", nickname: "고객A" },
           },
         }
       );
@@ -1156,7 +1156,7 @@ describe("고객 견적 요청 서비스", () => {
             customerId: "customer123",
             moveType: "HOME" as MoveType,
             moveDate: new Date("2025-08-10"),
-            customer: { id: "customer123", name: "고객A" },
+            customer: { id: "customer123", nickname: "고객A" },
           },
         }
       );
@@ -1176,7 +1176,7 @@ describe("고객 견적 요청 서비스", () => {
             customerId: "customer123",
             moveType: "HOME" as MoveType,
             moveDate: new Date("2025-08-10"),
-            customer: { id: "customer123", name: "고객A" },
+            customer: { id: "customer123", nickname: "고객A" },
           },
         })
         .mockResolvedValueOnce({
@@ -1191,7 +1191,7 @@ describe("고객 견적 요청 서비스", () => {
             customerId: "customer123",
             moveType: "HOME" as MoveType,
             moveDate: new Date("2025-08-10"),
-            customer: { id: "customer123", name: "고객A" },
+            customer: { id: "customer123", nickname: "고객A" },
           },
         })
         .mockResolvedValueOnce({
@@ -1206,7 +1206,7 @@ describe("고객 견적 요청 서비스", () => {
             customerId: "customer123",
             moveType: "HOME" as MoveType,
             moveDate: new Date("2025-08-10"),
-            customer: { id: "customer123", name: "고객A" },
+            customer: { id: "customer123", nickname: "고객A" },
           },
         });
 
@@ -1329,7 +1329,7 @@ describe("고객 견적 요청 서비스", () => {
             customerId: "customer123",
             moveType: "HOME" as MoveType,
             moveDate: new Date("2025-08-10"),
-            customer: { id: "customer123", name: "고객A" },
+            customer: { id: "customer123", nickname: "고객A" },
           },
         }
       );
@@ -1347,7 +1347,7 @@ describe("고객 견적 요청 서비스", () => {
       expect(result).toEqual(mockCancelledEstimate);
       expect(
         mockCustomerEstimateRequestRepository.updateEstimateStatus
-      ).toHaveBeenCalledWith(estimateId, "REJECTED");
+      ).toHaveBeenCalledWith(estimateId, "AUTO_REJECTED");
     });
 
     it("진행중인 견적요청이 없을 때 ServiceError를 던진다", async () => {
@@ -1548,7 +1548,7 @@ describe("고객 견적 요청 서비스", () => {
             customerId: "customer123",
             moveType: "HOME" as MoveType,
             moveDate: new Date("2025-08-10"),
-            customer: { id: "customer123", name: "고객A" },
+            customer: { id: "customer123", nickname: "고객A" },
           },
         }
       );
@@ -1637,7 +1637,7 @@ describe("고객 견적 요청 서비스", () => {
             customerId: "customer123",
             moveType: "HOME" as MoveType,
             moveDate: new Date("2025-08-10"),
-            customer: { id: "customer123", name: "고객A" },
+            customer: { id: "customer123", nickname: "고객A" },
           },
         }
       );
@@ -1666,7 +1666,7 @@ describe("고객 견적 요청 서비스", () => {
       expect(result).toEqual(mockCancelledEstimate);
       expect(
         mockCustomerEstimateRequestRepository.updateEstimateStatus
-      ).toHaveBeenCalledWith(estimateId, "REJECTED");
+      ).toHaveBeenCalledWith(estimateId, "AUTO_REJECTED");
       expect(mockActionService.createAction).toHaveBeenCalledWith(
         "mover123",
         ActionType.ESTIMATE_REJECTED,
@@ -1746,22 +1746,60 @@ describe("고객 견적 요청 서비스", () => {
           moverId: "mover123",
           estimateRequestId: "estimateRequest123",
           isDesignated: false,
-          mover: { id: "mover123", name: "이사업체A", nickname: null },
+          mover: { id: "mover123", name: "이사업체A", nickname: "기사A" },
           estimateRequest: {
             id: "estimateRequest123",
             customerId: "customer123",
             moveType: "HOME" as MoveType,
             moveDate: new Date("2025-08-10"),
-            customer: { id: "customer123", name: "고객A" },
+            customer: { id: "customer123", nickname: "고객A" },
           },
         }
       );
-      mockCustomerEstimateRequestRepository.updateEstimateRequestStatus.mockResolvedValue(
-        mockCompletedEstimateRequest
+      mockCustomerEstimateRequestRepository.getMoverByEstimateId.mockResolvedValue(
+        {
+          moverId: "mover123",
+        }
       );
 
-      // Prisma findUnique 모킹 추가
+      // Prisma 트랜잭션 모킹
       const prisma = require("../db/prisma/prisma").default;
+      prisma.$transaction.mockImplementation(async (callback: any) => {
+        const mockTx = {
+          estimateRequest: {
+            update: jest.fn().mockResolvedValue({
+              id: "estimateRequest123",
+              customerId: "user123",
+              moveType: "HOME" as MoveType,
+              moveDate: new Date("2025-08-10"),
+              createdAt: new Date(),
+              description: "이사 견적 요청",
+              status: "COMPLETED" as RequestStatus,
+            }),
+          },
+          user: {
+            update: jest.fn().mockResolvedValue({
+              id: "mover123",
+              workedCount: 5,
+            }),
+          },
+        };
+        return await callback(mockTx);
+      });
+
+      mockActionService.createAction.mockResolvedValue({
+        id: "action123",
+        createdAt: new Date(),
+        deletedAt: null,
+        description: null,
+        userId: "mover123",
+        type: ActionType.MOVE_DAY_REVIEW_REQUEST,
+        entityId: "estimate123",
+        entityType: "ESTIMATE",
+        metadata: {},
+      });
+
+      // Prisma findUnique 모킹 추가
       prisma.estimateRequest.findUnique.mockResolvedValue({
         id: "estimateRequest123",
         customerId: "user123",
@@ -1818,9 +1856,20 @@ describe("고객 견적 요청 서비스", () => {
           },
         },
       });
+      expect(prisma.$transaction).toHaveBeenCalled();
       expect(
-        mockCustomerEstimateRequestRepository.updateEstimateRequestStatus
-      ).toHaveBeenCalledWith(activeEstimateRequestId, "COMPLETED");
+        mockCustomerEstimateRequestRepository.getMoverByEstimateId
+      ).toHaveBeenCalledWith(estimateId);
+      expect(mockActionService.createAction).toHaveBeenCalledWith(
+        "mover123",
+        ActionType.MOVE_DAY_REVIEW_REQUEST,
+        "estimate123",
+        "ESTIMATE",
+        {
+          moverName: "기사A",
+          moveType: "HOME",
+        }
+      );
     });
 
     it("견적이 존재하지 않을 때 NotFoundError를 던진다", async () => {
@@ -1977,7 +2026,7 @@ describe("고객 견적 요청 서비스", () => {
             customerId: "customer123",
             moveType: "HOME" as MoveType,
             moveDate: new Date("2025-08-10"),
-            customer: { id: "customer123", name: "고객A" },
+            customer: { id: "customer123", nickname: "고객A" },
           },
         }
       );
@@ -2052,7 +2101,7 @@ describe("고객 견적 요청 서비스", () => {
             customerId: "customer123",
             moveType: "HOME" as MoveType,
             moveDate: new Date("2025-08-10"),
-            customer: { id: "customer123", name: "고객A" },
+            customer: { id: "customer123", nickname: "고객A" },
           },
         }
       );
@@ -2130,13 +2179,13 @@ describe("고객 견적 요청 서비스", () => {
           moverId: "mover123",
           estimateRequestId: "estimateRequest123",
           isDesignated: false,
-          mover: { id: "mover123", name: "이사업체A", nickname: null },
+          mover: { id: "mover123", name: "이사업체A", nickname: "이사업체A" },
           estimateRequest: {
             id: "estimateRequest123",
             customerId: "customer123",
             moveType: "HOME" as MoveType,
             moveDate: new Date("2025-08-10"),
-            customer: { id: "customer123", name: "고객A" },
+            customer: { id: "customer123", nickname: "고객A" },
           },
         }
       );
@@ -2214,9 +2263,7 @@ describe("고객 견적 요청 서비스", () => {
           },
         },
       });
-      expect(
-        mockCustomerEstimateRequestRepository.updateEstimateRequestStatus
-      ).toHaveBeenCalledWith("estimateRequest123", "COMPLETED");
+      // updateEstimateRequestStatus는 트랜잭션 내에서 호출되므로 여기서는 확인하지 않음
       expect(mockActionService.createAction).toHaveBeenCalledWith(
         "mover123",
         ActionType.MOVE_DAY_REVIEW_REQUEST,

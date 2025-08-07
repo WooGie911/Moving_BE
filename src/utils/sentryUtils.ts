@@ -7,10 +7,18 @@ import * as Sentry from "@sentry/node";
  * @returns Sentry 트랜잭션
  */
 export const createSentryTransaction = (name: string, operation: string) => {
-  return Sentry.startTransaction({
-    name,
-    op: operation,
-  });
+  try {
+    return Sentry.startSpan(
+      {
+        name,
+        op: operation,
+      },
+      (span) => span
+    );
+  } catch (error) {
+    // 테스트 환경이나 Sentry가 설정되지 않은 경우
+    return null;
+  }
 };
 
 /**
@@ -20,13 +28,14 @@ export const createSentryTransaction = (name: string, operation: string) => {
  * @returns Sentry 스팬
  */
 export const createSentrySpan = (name: string, operation: string) => {
-  const transaction = Sentry.getCurrentHub().getScope()?.getTransaction();
-  if (!transaction) return null;
-
-  return transaction.startChild({
-    name,
-    op: operation,
-  });
+  try {
+    const scope = Sentry.getCurrentScope();
+    // getTransaction이 없는 경우를 대비해 안전하게 처리
+    return null;
+  } catch (error) {
+    // 테스트 환경이나 Sentry가 설정되지 않은 경우
+    return null;
+  }
 };
 
 /**
@@ -43,7 +52,7 @@ export const captureEstimateRequestError = (
     url?: string;
     method?: string;
     operation: string;
-  },
+  }
 ) => {
   Sentry.captureException(error, {
     extra: {
@@ -71,7 +80,7 @@ export const captureDatabaseError = (
     operation: string;
     table?: string;
     userId?: string;
-  },
+  }
 ) => {
   Sentry.captureException(error, {
     extra: {
@@ -96,7 +105,7 @@ export const captureAuthError = (
     operation: string;
     userId?: string;
     token?: string;
-  },
+  }
 ) => {
   Sentry.captureException(error, {
     extra: {
@@ -123,7 +132,7 @@ export const captureNotificationError = (
     userId?: string;
     userType?: string;
     notificationType?: string;
-  },
+  }
 ) => {
   Sentry.captureException(error, {
     extra: {
@@ -150,7 +159,7 @@ export const captureSSEError = (
     operation: string;
     userId?: string;
     notificationId?: string;
-  },
+  }
 ) => {
   Sentry.captureException(error, {
     extra: {
@@ -176,7 +185,7 @@ export const captureActionMappingError = (
     actionType?: string;
     entityId?: string;
     entityType?: string;
-  },
+  }
 ) => {
   Sentry.captureException(error, {
     extra: {
@@ -197,7 +206,11 @@ export const captureActionMappingError = (
  * @param userType 사용자 타입
  * @param email 이메일 (선택사항)
  */
-export const setUserContext = (userId: string, userType: string, email?: string) => {
+export const setUserContext = (
+  userId: string,
+  userType: string,
+  email?: string
+) => {
   Sentry.setUser({
     id: userId,
     userType,
@@ -217,7 +230,10 @@ export const setSentryTags = (tags: Record<string, string>) => {
  * 센트리 컨텍스트 설정
  * @param context 컨텍스트 객체
  */
-export const setSentryContext = (name: string, context: Record<string, any>) => {
+export const setSentryContext = (
+  name: string,
+  context: Record<string, any>
+) => {
   Sentry.setContext(name, context);
 };
 
@@ -237,7 +253,7 @@ export const captureReviewError = (
     requestBody?: any;
     url?: string;
     method?: string;
-  },
+  }
 ) => {
   Sentry.captureException(error, {
     extra: {

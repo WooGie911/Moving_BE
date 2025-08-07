@@ -529,5 +529,23 @@ const customerEstimateRequestRepository = {
       throw new RepositoryQueryError(`기사님들 찜 개수 일괄 조회 실패`, error);
     }
   },
+
+  // 견적 id로 기사 조회
+  getMoverByEstimateId: async (estimateId: string) => {
+    try {
+      const mover = await prisma.estimate.findUnique({
+        where: { id: estimateId },
+        select: {
+          moverId: true,
+        },
+      });
+      return mover;
+    } catch (error) {
+      throw new RepositoryQueryError(
+        `견적으로 기사 조회 실패 - 견적ID: ${estimateId}`,
+        error
+      );
+    }
+  },
 };
 export default customerEstimateRequestRepository;
