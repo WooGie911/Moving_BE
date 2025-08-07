@@ -243,7 +243,7 @@ const reviewService = {
 
   getReceivedReviews: async (
     moverId: string,
-    pageQuery: { page: number; pageSize: number }
+    pageQuery: { page: number; pageSize: number; status?: string }
   ) => {
     try {
       const { items, total, page, pageSize } =

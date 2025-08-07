@@ -238,10 +238,24 @@ export const createDesignatedEstimateRequest = async (
   dto: DesignatedQuoteRequestDto
 ) => {
   const { quoteId, moverId, message, expiresAt } = dto;
-  const exists = await prisma.designatedMover.findFirst({
+
+  // 기존 요청 확인
+  const existingRequest = await prisma.designatedMover.findFirst({
     where: { estimateRequestId: quoteId, moverId },
   });
-  if (exists) return null;
+
+  if (existingRequest) {
+    // REJECTED(반려)된 경우 기존 요청 삭제 후 새로 생성
+    if (existingRequest.status === "REJECTED") {
+      await prisma.designatedMover.delete({
+        where: { id: existingRequest.id },
+      });
+    } else {
+      // 다른 상태(PENDING, APPROVED 등)인 경우 생성 불가
+      return null;
+    }
+  }
+
   return await prisma.designatedMover.create({
     data: {
       estimateRequestId: quoteId,
@@ -275,13 +289,49 @@ export const checkDesignatedEstimateRequest = async (params: {
     },
   });
 
-  // 지정견적요청이 한 번이라도 있으면 (PENDING, REJECTED, APPROVED 등) 요청한 것으로 간주
-  // 오직 이사 완료(COMPLETED) 상태가 아니면 계속 비활성화
+  // 지정견적요청이 있고, 상태가 COMPLETED가 아니면 요청한 것으로 간주
+  // REJECTED(반려)된 경우는 다시 요청 가능하도록 null 반환
   if (designatedRequest && designatedRequest.status === "COMPLETED") {
     return null;
   }
 
+  // REJECTED(반려)된 경우는 다시 요청 가능
+  if (designatedRequest && designatedRequest.status === "REJECTED") {
+    return null;
+  }
+
   return designatedRequest;
+};
+
+/**
+ * 견적 상태 확인 (확정/완료된 견적은 지정 견적 요청 불가)
+ */
+export const checkEstimateRequestStatus = async (quoteId: string) => {
+  const estimateRequest = await prisma.estimateRequest.findUnique({
+    where: { id: quoteId },
+    select: {
+      id: true,
+      status: true,
+      moveDate: true,
+    },
+  });
+
+  if (!estimateRequest) {
+    return { isValid: false, reason: "견적을 찾을 수 없습니다." };
+  }
+
+  // 견적이 확정(APPROVED) 또는 완료(COMPLETED)된 경우만 제한
+  if (
+    estimateRequest.status === "APPROVED" ||
+    estimateRequest.status === "COMPLETED"
+  ) {
+    return {
+      isValid: false,
+      reason: "확정되거나 완료된 견적에는 지정 견적을 요청할 수 없습니다.",
+    };
+  }
+
+  return { isValid: true };
 };
 
 const moverRepository = {
@@ -290,6 +340,7 @@ const moverRepository = {
   getMoverDetail,
   createDesignatedEstimateRequest,
   checkDesignatedEstimateRequest,
+  checkEstimateRequestStatus,
 };
 
 export default moverRepository;

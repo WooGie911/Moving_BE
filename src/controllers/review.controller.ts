@@ -125,10 +125,11 @@ const reviewController = {
       }
       const page = Number(req.query.page) || 1;
       const pageSize = Number(req.query.pageSize) || 5;
-
+      const status = req.query.status as string;
       const result = await reviewService.getReceivedReviews(moverId, {
         page,
         pageSize,
+        status,
       });
 
       res.json(result);

@@ -88,17 +88,24 @@ const reviewRepository = {
   // 4. 내가 받은 리뷰 목록 조회
   getReceivedReviews: async (
     moverId: string,
-    pageQuery: { page: number; pageSize: number }
+    pageQuery: { page: number; pageSize: number; status?: string }
   ) => {
-    const { page, pageSize } = pageQuery;
+    const { page, pageSize, status } = pageQuery;
     const skip = (page - 1) * pageSize;
+
+    const whereCondition: any = {
+      moverId,
+      deletedAt: null,
+    };
+
+    // status가 제공된 경우 조건 추가
+    if (status) {
+      whereCondition.status = status;
+    }
 
     const [items, total] = await Promise.all([
       prisma.review.findMany({
-        where: {
-          moverId,
-          deletedAt: null,
-        },
+        where: whereCondition,
         select: {
           id: true,
           customerId: true,
@@ -136,10 +143,7 @@ const reviewRepository = {
         take: pageSize,
       }),
       prisma.review.count({
-        where: {
-          moverId,
-          deletedAt: null,
-        },
+        where: whereCondition,
       }),
     ]);
 
