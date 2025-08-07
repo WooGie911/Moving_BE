@@ -550,11 +550,13 @@ customerEstimateRequestRouter.patch(
  *               success: false
  *               message: "진행중인 견적요청이 없습니다"
  */
+
 customerEstimateRequestRouter.patch(
   "/cancel",
   verifyAccessToken,
   customerEstimateRequestController.cancelEstimate
 );
+
 
 /**
  * @swagger
@@ -629,10 +631,12 @@ customerEstimateRequestRouter.patch(
  *               success: false
  *               message: "진행중인 견적요청이 없습니다"
  */
+
 customerEstimateRequestRouter.patch(
   "/complete",
   verifyAccessToken,
   customerEstimateRequestController.completeEstimate
 );
+
 
 export default customerEstimateRequestRouter;
