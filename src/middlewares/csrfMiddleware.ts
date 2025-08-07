@@ -35,7 +35,7 @@ export const generateCSRFToken = (req: Request, res: Response, next: NextFunctio
   try {
     const sessionId = getSessionId(req);
     const token = generateToken();
-    const expires = Date.now() + 24 * 60 * 60 * 1000; // 24시간
+    const expires = Date.now() + 15 * 60 * 1000; // 15분 (Access Token과 동일)
 
     // 토큰 저장
     csrfTokens.set(sessionId, { token, expires });
@@ -48,7 +48,7 @@ export const generateCSRFToken = (req: Request, res: Response, next: NextFunctio
       httpOnly: false, // 프론트엔드에서 접근 가능하도록
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 24 * 60 * 60 * 1000, // 24시간
+      maxAge: 15 * 60 * 1000, // 15분 (Access Token과 동일)
     });
 
     next();
@@ -96,7 +96,7 @@ export const getCSRFToken = (req: Request, res: Response) => {
   try {
     const sessionId = getSessionId(req);
     const token = generateToken();
-    const expires = Date.now() + 24 * 60 * 60 * 1000; // 24시간
+    const expires = Date.now() + 15 * 60 * 1000; // 15분 (Access Token과 동일)
 
     // 토큰 저장
     csrfTokens.set(sessionId, { token, expires });
@@ -106,7 +106,7 @@ export const getCSRFToken = (req: Request, res: Response) => {
       httpOnly: false, // 프론트엔드에서 접근 가능하도록
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 24 * 60 * 60 * 1000, // 24시간
+      maxAge: 15 * 60 * 1000, // 15분 (Access Token과 동일)
     });
 
     res.json({
