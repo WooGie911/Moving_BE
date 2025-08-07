@@ -1,11 +1,12 @@
 import prisma from "../db/prisma/prisma";
+import { ReviewStatus } from "@prisma/client";
 
 const reviewRepository = {
   // 1. 리뷰 작성 (PATCH)
   postReview: async (reviewId: string, rating: number, content: string) => {
     return prisma.review.update({
       where: { id: reviewId },
-      data: { rating, content, status: "COMPLETED" },
+      data: { rating, content, status: ReviewStatus.COMPLETED },
     });
   },
 
@@ -41,7 +42,7 @@ const reviewRepository = {
         where: {
           customerId,
           status: "COMPLETED",
-          review: { is: { status: "PENDING" } },
+          review: { is: { status: ReviewStatus.PENDING } },
         },
       }),
     ]);

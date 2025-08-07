@@ -3,10 +3,7 @@ import { CustomError } from "../types/error.types";
 import * as Sentry from "@sentry/node";
 
 /**
- * 전역 에러 핸들링 미들웨어 (Express 전역 에러 처리용)
- *
- * Express 앱에서 발생하는 모든 예외를 처리하며,
- * Sentry로 에러를 추적하고 일관된 에러 응답을 제공합니다.
+ * 전역 에러 핸들링 미들웨어
  */
 export const errorHandler = (err: CustomError, req: Request, res: Response, next: NextFunction): void => {
   console.error("Error:", {
@@ -52,7 +49,7 @@ export const errorHandler = (err: CustomError, req: Request, res: Response, next
 };
 
 /**
- * 404 에러 핸들링 미들웨어 (라우트를 찾을 수 없는 경우)
+ * 404 에러 핸들링 미들웨어
  */
 export const notFoundHandler = (req: Request, res: Response, next: NextFunction): void => {
   res.status(404).json({

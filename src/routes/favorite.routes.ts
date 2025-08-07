@@ -1,7 +1,6 @@
 import { Router } from "express";
 import favoriteController from "../controllers/favorite.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
-import { validateCSRFToken } from "../middlewares/csrfMiddleware";
 import { defaultTranslationMiddleware } from "../middlewares/translationMiddleware";
 
 const router = Router();

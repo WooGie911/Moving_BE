@@ -3,7 +3,11 @@ import reviewService from "../services/review.service";
 
 const reviewController = {
   // 1. 리뷰 작성 (PATCH)
-  postReview: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  postReview: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const reviewId = req.params.reviewId;
       const { rating, content } = req.body;
@@ -26,7 +30,11 @@ const reviewController = {
   },
 
   // 2. 리뷰 작성 가능한 estimateRequests 리스트 조회
-  getWritableEstimateRequests: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getWritableEstimateRequests: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const customerId = req.user?.userId;
       if (!customerId) {
@@ -38,19 +46,22 @@ const reviewController = {
       }
       const page = Number(req.query.page) || 1;
       const pageSize = Number(req.query.pageSize) || 4;
-      const result = await reviewService.getWritableEstimateRequests(customerId, { page, pageSize });
-      res.json({
-        success: true,
-        message: "리뷰 작성 가능한 견적 요청 목록을 성공적으로 조회했습니다.",
-        data: result,
-      });
+      const result = await reviewService.getWritableEstimateRequests(
+        customerId,
+        { page, pageSize }
+      );
+      res.json(result);
     } catch (error) {
       next(error);
     }
   },
 
   // 3. 내가 쓴 리뷰 목록 조회
-  getWrittenReviews: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getWrittenReviews: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const customerId = req.params.customerId;
       if (!customerId) {
@@ -66,18 +77,18 @@ const reviewController = {
         page,
         pageSize,
       });
-      res.json({
-        success: true,
-        message: "내가 쓴 리뷰 목록을 성공적으로 조회했습니다.",
-        data: result,
-      });
+      res.json(result);
     } catch (error) {
       next(error);
     }
   },
 
   // 4. 내가 받은 리뷰 목록 조회
-  getReceivedReviews: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getReceivedReviews: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const moverId = req.params.moverId;
       if (!moverId) {
@@ -95,11 +106,7 @@ const reviewController = {
         pageSize,
       });
 
-      res.json({
-        success: true,
-        message: "내가 받은 리뷰 목록을 성공적으로 조회했습니다.",
-        data: result,
-      });
+      res.json(result);
     } catch (error) {
       next(error);
     }
