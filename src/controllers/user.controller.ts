@@ -44,9 +44,13 @@ const getProfile = async (req: Request, res: Response) => {
     userType: TUserRole;
   };
 
-  const profile = await getProfileData(userId, userType);
+  try {
+    const profile = await getProfileData(userId, userType);
 
-  res.json({ success: true, data: profile });
+    res.json({ success: true, data: profile });
+  } catch (error) {
+    handleError(res, error);
+  }
 };
 
 // 프로필 등록
