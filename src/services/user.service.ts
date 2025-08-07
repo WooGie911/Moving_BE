@@ -23,6 +23,8 @@ import {
 } from "../utils/validators/profileValidator";
 import { generateToken } from "../utils/generateToken";
 import { validateMoverProfileUpdate } from "../utils/validators/userValidator";
+import actionService from "./action.service";
+import { ActionType } from "@prisma/client";
 
 // 유저 정보 조회
 const userInfo = async (userId: string, userType: TUserRole) => {
@@ -120,6 +122,16 @@ const createCustomerProfile = async (
   });
 
   const result = await userRepository.createCustomerProfile(createProfileData);
+
+  // WELCOME 액션 생성 (프로필 등록 시점)
+  await actionService.createAction(
+    userId,
+    ActionType.WELCOME,
+    userId,
+    "WELCOME",
+    { userType: "CUSTOMER" }
+  );
+
   return {
     result,
     accessToken: newAccessToken,
@@ -212,6 +224,16 @@ const createMoverProfile = async (
   });
 
   const result = await userRepository.createMoverProfile(createProfileData);
+
+  // WELCOME 액션 생성 (프로필 등록 시점)
+  await actionService.createAction(
+    userId,
+    ActionType.WELCOME,
+    userId,
+    "WELCOME",
+    { userType: "MOVER" }
+  );
+
   return {
     result,
     accessToken: newAccessToken,

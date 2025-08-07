@@ -27,9 +27,10 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
   //회원가입 -> 회원, 기사님
   WELCOME: {
     type: NotificationType.WELCOME,
-    getReceivers: async (action: Action) => [
-      { id: action.userId, userType: "CUSTOMER" },
-    ],
+    getReceivers: async (action: Action) => {
+      const { userType } = action.metadata as IActionMetadata;
+      return [{ id: action.userId, userType }];
+    },
     buildMessage: (action: Action, userType: "CUSTOMER" | "MOVER") => ({
       title: '<span class="font-bold">회원가입</span>을 환영합니다!',
       content: "서비스 이용을 시작해보세요.",
@@ -127,8 +128,8 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
       return {
         title:
           userType === "CUSTOMER"
-            ? `<span class="font-bold">${moverName}</span> 기사님의 <span class="text-primary-400 font-bold">견적</span>이 <span class="text-primary-400 font-bold">확정</span>되었어요.`
-            : `<span class="font-bold">${customerName}</span> 고객님의 <span class="text-primary-400 font-bold">견적</span>이 <span class="text-primary-400 font-bold">확정</span>되었어요.`,
+            ? `<span class="font-bold">${moverName}</span> 기사님의 견적이 <span class="text-primary-400 font-bold">확정</span>되었어요.`
+            : `<span class="font-bold">${customerName}</span> 고객님의 견적이 <span class="text-primary-400 font-bold">확정</span>되었어요.`,
         content: "내 견적 관리 > 확정 견적에서 확인할 수 있어요.",
         path:
           userType === "CUSTOMER"
@@ -269,8 +270,8 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
       return {
         title:
           userType === "CUSTOMER"
-            ? `<span class="font-bold">${moverName}</span> 기사님의 <span class="text-primary-400 font-bold">${moveTypeMap[moveType]}에 대한 지정 견적</span>이 <span class="text-primary-400 font-bold">확정</span>되었어요.`
-            : `<span class="font-bold">${customerName}</span> 고객님의 <span class="text-primary-400 font-bold">${moveTypeMap[moveType]}에 대한 지정 견적</span>이 <span class="text-primary-400 font-bold">확정</span>되었어요.`,
+            ? `<span class="font-bold">${moverName}</span> 기사님의 <span class="font-bold">${moveTypeMap[moveType]}</span>에 대한 <span class="text-primary-400 font-bold">지정 견적</span>이 <span class="text-primary-400 font-bold">확정</span>되었어요.`
+            : `<span class="font-bold">${customerName}</span> 고객님의 <span class="font-bold">${moveTypeMap[moveType]}</span>에 대한 <span class="text-primary-400 font-bold">지정 견적</span>이 <span class="text-primary-400 font-bold">확정</span>되었어요.`,
         content: "내 견적 관리 > 확정 견적에서 확인할 수 있어요.",
         path:
           userType === "CUSTOMER"
@@ -295,7 +296,7 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
       const { customerName = "", moveType = "" } =
         (action.metadata as IActionMetadata) || {};
       return {
-        title: `<span class="font-bold">${customerName}</span> 고객님의 <span class="text-primary-400 font-bold">${moveTypeMap[moveType]}에 대한 지정 견적</span>이 <span class="text-primary-400 font-bold">반려</span>되었어요.`,
+        title: `<span class="font-bold">${customerName}</span> 고객님의 <span class="font-bold">${moveTypeMap[moveType]}</span>에 대한 <span class="text-primary-400 font-bold">지정 견적</span>이 <span class="text-primary-400 font-bold">반려</span>되었어요.`,
         content: "반려된 견적 상세를 확인하세요.",
         path: `/estimate/request/${action.entityId}`,
       };
@@ -396,7 +397,7 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
     buildMessage: (action: Action, userType: "CUSTOMER" | "MOVER") => {
       const { moveType = "" } = (action.metadata as IActionMetadata) || {};
       return {
-        title: `내일은 <span class="font-bold">${moveTypeMap[moveType]}</span>의 이사 예정일이에요.`,
+        title: `내일은 <span class="font-bold">${moveTypeMap[moveType]}</span> 예정일이에요.`,
         content: "이사 준비를 미리 확인해보세요.",
         path:
           userType === "CUSTOMER"
@@ -440,7 +441,7 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
     buildMessage: (action: Action, userType: "CUSTOMER" | "MOVER") => {
       const { moveType = "" } = (action.metadata as IActionMetadata) || {};
       return {
-        title: `오늘은 <span class="font-bold">${moveTypeMap[moveType]}</span>의 이사 예정일이에요.`,
+        title: `오늘은 <span class="font-bold">${moveTypeMap[moveType]}</span> 예정일이에요.`,
         content: "이사 준비를 미리 확인해보세요.",
         path:
           userType === "CUSTOMER"
