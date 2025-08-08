@@ -64,13 +64,12 @@ describe("NotificationController", () => {
             actionId: "action-1",
             userId: "user-1",
             userType: "CUSTOMER" as UserType,
-            type: "ESTIMATE_REQUEST_ARRIVED" as NotificationType,
-            title: "새로운 견적 요청",
-            content: "테스트 알림 1",
-            path: null,
+            type: "ESTIMATE_STATUS_UPDATED" as NotificationType,
+            message: "<span class=\"font-bold\">성민기사</span> 기사님의 견적이 <span class=\"text-primary-400 font-bold\">확정</span>되었어요.",
+            path: "/estimateRequest/pending/test-id",
             isRead: false,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: "2025-08-09",
+            updatedAt: "2025-08-09",
             deletedAt: null,
           },
           {
@@ -78,13 +77,12 @@ describe("NotificationController", () => {
             actionId: "action-2",
             userId: "user-1",
             userType: "CUSTOMER" as UserType,
-            type: "ESTIMATE_ARRIVED" as NotificationType,
-            title: "견적이 도착했습니다",
-            content: "테스트 알림 2",
-            path: null,
+            type: "WELCOME" as NotificationType,
+            message: "<span class=\"font-bold\">회원가입</span>을 환영합니다!",
+            path: "/",
             isRead: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: "2025-08-09",
+            updatedAt: "2025-08-09",
             deletedAt: null,
           },
         ],
@@ -107,7 +105,8 @@ describe("NotificationController", () => {
         "CUSTOMER",
         "user-1",
         10,
-        0
+        0,
+        "ko" // 기본 언어
       );
       expect(res.json).toHaveBeenCalledWith({
         success: true,
@@ -161,7 +160,8 @@ describe("NotificationController", () => {
         "CUSTOMER",
         "user-1",
         5,
-        0
+        0,
+        "ko" // 기본 언어
       );
     });
 
@@ -180,6 +180,68 @@ describe("NotificationController", () => {
 
       // Assertion
       expect(next).toHaveBeenCalledWith(error);
+    });
+
+    it("언어 파라미터를 올바르게 전달한다", async () => {
+      // Setup
+      req.query = { userType: "CUSTOMER", lang: "en" };
+      
+      const mockNotifications = {
+        hasUnread: false,
+        items: [],
+        total: 0,
+        limit: 5,
+        offset: 0,
+      };
+
+      mockService.getNotifications.mockResolvedValue(mockNotifications);
+
+      // Exercise
+      await notificationController.getNotifications(
+        req as Request,
+        res as Response,
+        next
+      );
+
+      // Assertion
+      expect(mockService.getNotifications).toHaveBeenCalledWith(
+        "CUSTOMER",
+        "user-1",
+        5,
+        0,
+        "en" // 영어 언어
+      );
+    });
+
+    it("중국어 언어 파라미터를 올바르게 전달한다", async () => {
+      // Setup
+      req.query = { userType: "CUSTOMER", lang: "zh" };
+      
+      const mockNotifications = {
+        hasUnread: false,
+        items: [],
+        total: 0,
+        limit: 5,
+        offset: 0,
+      };
+
+      mockService.getNotifications.mockResolvedValue(mockNotifications);
+
+      // Exercise
+      await notificationController.getNotifications(
+        req as Request,
+        res as Response,
+        next
+      );
+
+      // Assertion
+      expect(mockService.getNotifications).toHaveBeenCalledWith(
+        "CUSTOMER",
+        "user-1",
+        5,
+        0,
+        "zh" // 중국어 언어
+      );
     });
   });
 
