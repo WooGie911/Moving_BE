@@ -11,16 +11,29 @@ export interface INotificationPayload {
     action: Action,
     userType: "CUSTOMER" | "MOVER"
   ) => {
-    title: string;
-    content: string;
+    messageKo: string;
+    messageEn: string;
+    messageZh: string;
     path: string;
   };
 }
 
-const moveTypeMap: Record<string, string> = {
+const moveTypeMapKo: Record<string, string> = {
   SMALL: "소형이사",
   HOME: "가정이사",
   OFFICE: "사무실이사",
+};
+
+const moveTypeMapEn: Record<string, string> = {
+  SMALL: "Small Move",
+  HOME: "Home Move",
+  OFFICE: "Office Move",
+};
+
+const moveTypeMapZh: Record<string, string> = {
+  SMALL: "小型搬家",
+  HOME: "家庭搬家",
+  OFFICE: "办公室搬家",
 };
 
 export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
@@ -32,8 +45,9 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
       return [{ id: action.userId, userType }];
     },
     buildMessage: (action: Action, userType: "CUSTOMER" | "MOVER") => ({
-      title: '<span class="font-bold">회원가입</span>을 환영합니다!',
-      content: "서비스 이용을 시작해보세요.",
+      messageKo: '<span class="font-bold">회원가입</span>을 환영합니다!',
+      messageEn: '<span class="font-bold">Registration</span> welcome!',
+      messageZh: '<span class="font-bold">注册</span>欢迎！',
       path: "/",
     }),
   },
@@ -69,8 +83,9 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
       return movers.map((mover) => ({ id: mover.id, userType: "MOVER" }));
     },
     buildMessage: (action: Action, userType: "CUSTOMER" | "MOVER") => ({
-      title: "새 견적 요청이 등록되었습니다.",
-      content: "새로운 견적 요청이 등록되었습니다.",
+      messageKo: "새 견적 요청이 등록되었습니다.",
+      messageEn: "New estimate request has been registered.",
+      messageZh: "新估价请求已注册。",
       path: `/estimate/received`,
     }),
   },
@@ -84,8 +99,9 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
     buildMessage: (action: Action, userType: "CUSTOMER" | "MOVER") => {
       const { moverName = "" } = (action.metadata as IActionMetadata) || {};
       return {
-        title: `<span class="font-bold">${moverName}</span> 기사님의 <span class="text-primary-400 font-bold">견적</span>이 도착했어요.`,
-        content: "새로운 견적이 도착했습니다.",
+        messageKo: `<span class="font-bold">${moverName}</span> 기사님의 <span class="text-primary-400 font-bold">견적</span>이 도착했어요.`,
+        messageEn: `<span class="font-bold">${moverName}</span> mover's <span class="text-primary-400 font-bold">estimate</span> has arrived.`,
+        messageZh: `<span class="font-bold">${moverName}</span> 搬家师傅的 <span class="text-primary-400 font-bold">估价</span>已到达。`,
         path: `/estimateRequest/pending/${action.entityId}`,
       };
     },
@@ -126,11 +142,18 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
       const { moverName = "", customerName = "" } =
         (action.metadata as IActionMetadata) || {};
       return {
-        title:
+        messageKo:
           userType === "CUSTOMER"
             ? `<span class="font-bold">${moverName}</span> 기사님의 견적이 <span class="text-primary-400 font-bold">확정</span>되었어요.`
             : `<span class="font-bold">${customerName}</span> 고객님의 견적이 <span class="text-primary-400 font-bold">확정</span>되었어요.`,
-        content: "내 견적 관리 > 확정 견적에서 확인할 수 있어요.",
+        messageEn:
+          userType === "CUSTOMER"
+            ? `<span class="font-bold">${moverName}</span> mover's estimate has been <span class="text-primary-400 font-bold">confirmed</span>.`
+            : `<span class="font-bold">${customerName}</span> customer's estimate has been <span class="text-primary-400 font-bold">confirmed</span>.`,
+        messageZh:
+          userType === "CUSTOMER"
+            ? `<span class="font-bold">${moverName}</span> 搬家师傅的估价已 <span class="text-primary-400 font-bold">确定</span>。`
+            : `<span class="font-bold">${customerName}</span> 客户的估价已 <span class="text-primary-400 font-bold">确定</span>。`,
         path:
           userType === "CUSTOMER"
             ? `/estimateRequest/pending/${action.entityId}`
@@ -153,8 +176,9 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
       const { moveType = "", customerName = "" } =
         (action.metadata as IActionMetadata) || {};
       return {
-        title: `<span class="font-bold">${customerName}</span> 고객님의 <span class="text-primary-400 font-bold">${moveTypeMap[moveType]}</span>에 대한 견적이 <span class="text-primary-400 font-bold">반려</span>되었어요.`,
-        content: "반려된 견적 상세를 확인하세요.",
+        messageKo: `<span class="font-bold">${customerName}</span> 고객님의 <span class="text-primary-400 font-bold">${moveTypeMapKo[moveType]}</span>에 대한 견적이 <span class="text-primary-400 font-bold">반려</span>되었어요.`,
+        messageEn: `<span class="font-bold">${customerName}</span> customer's <span class="text-primary-400 font-bold">${moveTypeMapEn[moveType]}</span> estimate has been <span class="text-primary-400 font-bold">rejected</span>.`,
+        messageZh: `<span class="font-bold">${customerName}</span> 客户的 <span class="text-primary-400 font-bold">${moveTypeMapZh[moveType]}</span> 估价已 <span class="text-primary-400 font-bold">拒绝</span>。`,
         path: `/estimate/request/${action.entityId}`,
       };
     },
@@ -176,8 +200,9 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
     buildMessage: (action: Action, userType: "CUSTOMER" | "MOVER") => {
       const { customerName = "" } = (action.metadata as IActionMetadata) || {};
       return {
-        title: `<span class="font-bold">${customerName}</span> 고객님의 <span class="text-primary-400 font-bold">지정 견적</span>이 요청되었어요.`,
-        content: "지정 견적이 요청되었습니다.",
+        messageKo: `<span class="font-bold">${customerName}</span> 고객님의 <span class="text-primary-400 font-bold">지정 견적</span>이 요청되었어요.`,
+        messageEn: `<span class="font-bold">${customerName}</span> customer's <span class="text-primary-400 font-bold">designated estimate</span> has been requested.`,
+        messageZh: `<span class="font-bold">${customerName}</span> 客户的 <span class="text-primary-400 font-bold">指定估价</span>已请求。`,
         path: `/estimate/received`, // TODO: 페이지 이동후 해당 모달 열리게  `/estimate/received?writeModal=true&estimateId=asd` 로 변경
       };
     },
@@ -200,8 +225,9 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
       const { moverName = "", moveType = "" } =
         (action.metadata as IActionMetadata) || {};
       return {
-        title: `<span class="font-bold">${moverName}</span> 기사님의 <span class="text-primary-400 font-bold">${moveTypeMap[moveType]}</span>에 대한 <span class="font-bold">지정 견적</span>이 도착했어요.`,
-        content: "요청한 지정 견적에 대한 새로운 견적이 도착했습니다.",
+        messageKo: `<span class="font-bold">${moverName}</span> 기사님의 <span class="text-primary-400 font-bold">${moveTypeMapKo[moveType]}</span>에 대한 <span class="font-bold">지정 견적</span>이 도착했어요.`,
+        messageEn: `<span class="font-bold">${moverName}</span> mover's <span class="text-primary-400 font-bold">${moveTypeMapEn[moveType]}</span> <span class="font-bold">designated estimate</span> has arrived.`,
+        messageZh: `<span class="font-bold">${moverName}</span> 搬家师傅的 <span class="text-primary-400 font-bold">${moveTypeMapZh[moveType]}</span> <span class="font-bold">指定估价</span>已到达。`,
         path: `/estimateRequest/pending/${action.entityId}`,
       };
     },
@@ -223,8 +249,9 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
     buildMessage: (action: Action, userType: "CUSTOMER" | "MOVER") => {
       const { moveType = "" } = (action.metadata as IActionMetadata) || {};
       return {
-        title: `<span class="font-bold">${moveTypeMap[moveType]}</span>에 대한 <span class="text-primary-400 font-bold">지정 견적 요청</span>이 <span class="text-primary-400 font-bold">반려</span>되었어요.`,
-        content: "지정 견적 요청이 반려 되었습니다.",
+        messageKo: `<span class="font-bold">${moveTypeMapKo[moveType]}</span>에 대한 <span class="text-primary-400 font-bold">지정 견적 요청</span>이 <span class="text-primary-400 font-bold">반려</span>되었어요.`,
+        messageEn: `<span class="font-bold">${moveTypeMapEn[moveType]}</span> <span class="text-primary-400 font-bold">designated estimate request</span> has been <span class="text-primary-400 font-bold">rejected</span>.`,
+        messageZh: `<span class="font-bold">${moveTypeMapZh[moveType]}</span> <span class="text-primary-400 font-bold">指定估价请求</span>已 <span class="text-primary-400 font-bold">拒绝</span>。`,
         path: `/estimateRequest/pending`,
       };
     },
@@ -268,11 +295,18 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
         moveType = "",
       } = (action.metadata as IActionMetadata) || {};
       return {
-        title:
+        messageKo:
           userType === "CUSTOMER"
-            ? `<span class="font-bold">${moverName}</span> 기사님의 <span class="font-bold">${moveTypeMap[moveType]}</span>에 대한 <span class="text-primary-400 font-bold">지정 견적</span>이 <span class="text-primary-400 font-bold">확정</span>되었어요.`
-            : `<span class="font-bold">${customerName}</span> 고객님의 <span class="font-bold">${moveTypeMap[moveType]}</span>에 대한 <span class="text-primary-400 font-bold">지정 견적</span>이 <span class="text-primary-400 font-bold">확정</span>되었어요.`,
-        content: "내 견적 관리 > 확정 견적에서 확인할 수 있어요.",
+            ? `<span class="font-bold">${moverName}</span> 기사님의 <span class="font-bold">${moveTypeMapKo[moveType]}</span>에 대한 <span class="text-primary-400 font-bold">지정 견적</span>이 <span class="text-primary-400 font-bold">확정</span>되었어요.`
+            : `<span class="font-bold">${customerName}</span> 고객님의 <span class="font-bold">${moveTypeMapKo[moveType]}</span>에 대한 <span class="text-primary-400 font-bold">지정 견적</span>이 <span class="text-primary-400 font-bold">확정</span>되었어요.`,
+        messageEn:
+          userType === "CUSTOMER"
+            ? `<span class="font-bold">${moverName}</span> mover's <span class="font-bold">${moveTypeMapEn[moveType]}</span> <span class="text-primary-400 font-bold">designated estimate</span> has been <span class="text-primary-400 font-bold">confirmed</span>.`
+            : `<span class="font-bold">${customerName}</span> customer's <span class="font-bold">${moveTypeMapEn[moveType]}</span> <span class="text-primary-400 font-bold">designated estimate</span> has been <span class="text-primary-400 font-bold">confirmed</span>.`,
+        messageZh:
+          userType === "CUSTOMER"
+            ? `<span class="font-bold">${moverName}</span> 搬家师傅的 <span class="font-bold">${moveTypeMapZh[moveType]}</span> <span class="text-primary-400 font-bold">指定估价</span>已 <span class="text-primary-400 font-bold">确定</span>。`
+            : `<span class="font-bold">${customerName}</span> 客户的 <span class="font-bold">${moveTypeMapZh[moveType]}</span> <span class="text-primary-400 font-bold">指定估价</span>已 <span class="text-primary-400 font-bold">确定</span>。`,
         path:
           userType === "CUSTOMER"
             ? `/estimateRequest/pending/${action.entityId}`
@@ -296,8 +330,9 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
       const { customerName = "", moveType = "" } =
         (action.metadata as IActionMetadata) || {};
       return {
-        title: `<span class="font-bold">${customerName}</span> 고객님의 <span class="font-bold">${moveTypeMap[moveType]}</span>에 대한 <span class="text-primary-400 font-bold">지정 견적</span>이 <span class="text-primary-400 font-bold">반려</span>되었어요.`,
-        content: "반려된 견적 상세를 확인하세요.",
+        messageKo: `<span class="font-bold">${customerName}</span> 고객님의 <span class="font-bold">${moveTypeMapKo[moveType]}</span>에 대한 <span class="text-primary-400 font-bold">지정 견적</span>이 <span class="text-primary-400 font-bold">반려</span>되었어요.`,
+        messageEn: `<span class="font-bold">${customerName}</span> customer's <span class="font-bold">${moveTypeMapEn[moveType]}</span> <span class="text-primary-400 font-bold">designated estimate</span> has been <span class="text-primary-400 font-bold">rejected</span>.`,
+        messageZh: `<span class="font-bold">${customerName}</span> 客户 <span class="font-bold">${moveTypeMapZh[moveType]}</span> <span class="text-primary-400 font-bold">指定估价</span>已 <span class="text-primary-400 font-bold">拒绝</span>。`,
         path: `/estimate/request/${action.entityId}`,
       };
     },
@@ -316,8 +351,9 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
     },
     buildMessage: (action: Action, userType: "CUSTOMER" | "MOVER") => {
       return {
-        title: "리뷰가 등록되었어요.",
-        content: "리뷰가 등록되었어요.",
+        messageKo: "리뷰가 등록되었어요.",
+        messageEn: "Review has been registered.",
+        messageZh: "评论已注册。",
         path: `/moverMyPage`,
       };
     },
@@ -336,8 +372,9 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
     },
     buildMessage: (action: Action, userType: "CUSTOMER" | "MOVER") => {
       return {
-        title: "찜이 추가되었어요.",
-        content: "찜이 추가되었어요.",
+        messageKo: "찜이 추가되었어요.",
+        messageEn: "Favorite has been added.",
+        messageZh: "收藏已添加。",
         path: `/moverMyPage`,
       };
     },
@@ -356,8 +393,9 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
     },
     buildMessage: (action: Action, userType: "CUSTOMER" | "MOVER") => {
       return {
-        title: "찜이 제거되었어요.",
-        content: "찜이 제거되었어요.",
+        messageKo: "찜이 제거되었어요.",
+        messageEn: "Favorite has been removed.",
+        messageZh: "收藏已移除。",
         path: `/moverMyPage`,
       };
     },
@@ -397,8 +435,9 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
     buildMessage: (action: Action, userType: "CUSTOMER" | "MOVER") => {
       const { moveType = "" } = (action.metadata as IActionMetadata) || {};
       return {
-        title: `내일은 <span class="font-bold">${moveTypeMap[moveType]}</span> 예정일이에요.`,
-        content: "이사 준비를 미리 확인해보세요.",
+        messageKo: `내일은 <span class="font-bold">${moveTypeMapKo[moveType]}</span> 예정일이에요.`,
+        messageEn: `Tomorrow is the scheduled move date for <span class="font-bold">${moveTypeMapEn[moveType]}</span>.`,
+        messageZh: `明天是 <span class="font-bold">${moveTypeMapZh[moveType]}</span> 预定日期。`,
         path:
           userType === "CUSTOMER"
             ? `/estimateRequest/pending/${action.entityId}`
@@ -441,8 +480,9 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
     buildMessage: (action: Action, userType: "CUSTOMER" | "MOVER") => {
       const { moveType = "" } = (action.metadata as IActionMetadata) || {};
       return {
-        title: `오늘은 <span class="font-bold">${moveTypeMap[moveType]}</span> 예정일이에요.`,
-        content: "이사 준비를 미리 확인해보세요.",
+        messageKo: `오늘은 <span class="font-bold">${moveTypeMapKo[moveType]}</span> 예정일이에요.`,
+        messageEn: `Today is the scheduled move date for <span class="font-bold">${moveTypeMapEn[moveType]}</span>.`,
+        messageZh: `今天是 <span class="font-bold">${moveTypeMapZh[moveType]}</span> 预定日期。`,
         path:
           userType === "CUSTOMER"
             ? `/estimateRequest/pending/${action.entityId}`
@@ -468,8 +508,9 @@ export const actionNotificationMap: Record<ActionType, INotificationPayload> = {
     buildMessage: (action: Action, userType: "CUSTOMER" | "MOVER") => {
       const { moverName = "" } = (action.metadata as IActionMetadata) || {};
       return {
-        title: `이사는 어떠셨나요? <span class="text-primary-400 font-bold">${moverName}</span> 기사님에 대한 <span class="font-bold">리뷰</span>를 남겨주세요.`,
-        content: "기사님에 대한 리뷰를 남겨주세요.",
+        messageKo: `이사는 어떠셨나요? <span class="text-primary-400 font-bold">${moverName}</span> 기사님에 대한 <span class="font-bold">리뷰</span>를 남겨주세요.`,
+        messageEn: `How was your move? Please leave a <span class="font-bold">review</span> for <span class="text-primary-400 font-bold">${moverName}</span> mover.`,
+        messageZh: `搬家如何？请为 <span class="text-primary-400 font-bold">${moverName}</span> 搬家师傅留下 <span class="font-bold">评论</span>。`,
         path: `/reviews/writable?modal=write&reviewId=${action.entityId}`,
       };
     },
