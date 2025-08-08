@@ -139,6 +139,7 @@ const reviewRepository = {
             },
           },
         },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         skip,
         take: pageSize,
       }),
