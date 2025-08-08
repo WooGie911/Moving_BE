@@ -709,7 +709,11 @@ moverRouter.get("/:moverId", optionalAuth, defaultTranslationMiddleware, moverCo
  *               success: false
  *               message: "필수값 누락"
  */
-moverRouter.post("/:moverId/quote-request", verifyAccessToken, moverController.postDesignatedQuoteRequestController);
+moverRouter.post(
+  "/:moverId/quote-request",
+  verifyAccessToken,
+  moverController.postDesignatedQuoteRequestController
+);
 
 /**
  * @swagger

@@ -195,14 +195,15 @@ export const getDesignatedQuoteRequestCheckController = async (
       moverId: String(moverId),
     });
 
-    // 반려된 경우는 다시 요청 가능하도록 hasRequested를 false로 설정
-    const hasRequested = request && request.status !== "REJECTED";
+    // 반려된 경우도 요청한 것으로 간주
+    const hasRequested = !!request;
 
     res.json({
       success: true,
       message: "지정 견적 요청 여부 조회 성공",
       data: {
         hasRequested: hasRequested,
+        status: request?.status || null,
         requestId: request?.id || null,
         message: request?.message || null,
         expiresAt: request?.expiresAt || null,
