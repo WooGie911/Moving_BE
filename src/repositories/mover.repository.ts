@@ -209,6 +209,7 @@ export const getFavoriteMovers = async (customerId: string) => {
           averageRating: true,
           totalReviewCount: true,
           serviceAreas: true,
+          currentAreas: true, // serviceAreas 대신 currentAreas 사용
           serviceTypes: true,
           moverImage: true,
           Favorite: true, // 찜받은 관계 (moverId로 연결)

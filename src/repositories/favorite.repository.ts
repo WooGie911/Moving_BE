@@ -65,7 +65,11 @@ const getFavoriteStatus = async (customerId: string, moverId: string) => {
 };
 
 // 찜한 기사님 목록 조회 (페이지네이션)
-const getFavoriteMovers = async (customerId: string, limit: number = 3, cursor?: string) => {
+const getFavoriteMovers = async (
+  customerId: string,
+  limit: number = 3,
+  cursor?: string
+) => {
   const where = {
     customerId,
     deletedAt: null,
@@ -104,6 +108,7 @@ const getFavoriteMovers = async (customerId: string, limit: number = 3, cursor?:
           isVeteran: true,
           createdAt: true,
           updatedAt: true,
+          Favorite: true,
         },
       },
     },
@@ -133,18 +138,26 @@ const getFavoriteMovers = async (customerId: string, limit: number = 3, cursor?:
       averageRating: favorite.mover.averageRating,
       totalReviewCount: favorite.mover.totalReviewCount,
       totalFavoriteCount: favorite.mover.totalFavoriteCount,
-      serviceAreas: [], // 빈 배열로 설정 (필요시 별도 조회)
+      currentAreas: favorite.mover.currentAreas,
       serviceTypes: favorite.mover.serviceTypes.map((type) => ({
         service: {
           name:
-            type === "SMALL" ? "소형이사" : type === "HOME" ? "가정이사" : type === "OFFICE" ? "사무실이사" : "기타",
+            type === "SMALL"
+              ? "소형이사"
+              : type === "HOME"
+                ? "가정이사"
+                : type === "OFFICE"
+                  ? "사무실이사"
+                  : "기타",
         },
       })),
       // 추가 속성들
       description: favorite.mover.detailIntro,
       introduction: favorite.mover.shortIntro,
       completedCount: favorite.mover.workedCount,
-      favoriteCount: favorite.mover.totalFavoriteCount,
+      favoriteCount: (favorite.mover.Favorite || []).filter(
+        (fav: { deletedAt: Date | null }) => fav.deletedAt === null
+      ).length,
       experience: favorite.mover.career,
       reviewCount: favorite.mover.totalReviewCount,
       avgRating: favorite.mover.averageRating,
