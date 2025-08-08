@@ -88,8 +88,14 @@ const moverScheduleRepository = {
         moveType: estimate.estimateRequest.moveType as "SMALL" | "HOME" | "OFFICE",
         requestStatus: estimate.estimateRequest.status,
         customer: estimate.estimateRequest.customer,
-        fromAddress: estimate.estimateRequest.fromAddress,
-        toAddress: estimate.estimateRequest.toAddress,
+        fromAddress: {
+          ...estimate.estimateRequest.fromAddress,
+          detail: estimate.estimateRequest.fromAddress.detail || undefined,
+        },
+        toAddress: {
+          ...estimate.estimateRequest.toAddress,
+          detail: estimate.estimateRequest.toAddress.detail || undefined,
+        },
         createdAt: estimate.createdAt,
         updatedAt: estimate.updatedAt,
       }));
