@@ -400,8 +400,9 @@ model Notification {
   userId    String // 수신자 ID
   userType  UserType // 수신자 타입
   type      NotificationType // 알림 종류
-  title     String // 알림 제목
-  content   String // 알림 내용
+  messageKo String // 한국어 알림 메시지
+  messageEn String // 영어 알림 메시지
+  messageZh String // 중국어 알림 메시지
   path      String? // 클릭 시 이동 경로
   isRead    Boolean          @default(false) // 읽음 여부
   createdAt DateTime         @default(now())

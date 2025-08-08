@@ -15,12 +15,16 @@ const notificationController = {
       const userType = req.query.userType as UserType;
       const limit = Number(req.query.limit) || 5;
       const offset = Number(req.query.offset) || 0;
+      const lang = (req.query.lang as string) || 'ko'; // 기본값은 한국어
+      
       const notifications = await notificationService.getNotifications(
         userType,
         userId as string,
         limit,
-        offset
+        offset,
+        lang
       );
+
       res.json({
         success: true,
         message: "알림 목록입니다.",
