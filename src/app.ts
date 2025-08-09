@@ -15,8 +15,6 @@ import { setupManualSwagger } from "./utils/swagger-manual";
 import cookieParser from "cookie-parser";
 import { initializeScheduler } from "./utils/scheduler";
 
-import * as Sentry from "@sentry/node";
-
 // 라우터 import
 import authIndexRoutes from "./routes/authIndex.routes";
 import notificationIndexRoutes from "./routes/notificationIndex.routes";
@@ -25,10 +23,6 @@ import passport from "./config/passport";
 
 const app = express();
 const PORT = process.env.PORT || 5050;
-
-app.get("/debug-sentry", function mainHandler(req, res) {
-  throw new Error("My first Sentry error!");
-});
 
 // 보안 헤더 설정 (Helmet)
 app.use(
@@ -88,19 +82,14 @@ app.use("/", authIndexRoutes); // 인증/인가 관련 라우터
 app.use("/", notificationIndexRoutes); // 알림 관련 라우터
 app.use("/", businessRoutes); // 일반 비즈니스 로직 라우터 (헬스 체크 포함)
 
-// 404 에러 핸들링
+// 404 에러 핸들링 (전역 에러 핸들러로 전달)
 app.use(notFoundHandler);
 
-// 센트리 에러 핸들러 (모든 에러를 센트리로 전송)
-app.use(Sentry.captureException);
-
-// 전역 에러 핸들링
+// 전역 에러 핸들링 (모든 에러를 통합 처리)
 app.use(errorHandler);
 
 // 스케줄러 초기화
 initializeScheduler();
-
-Sentry.setupExpressErrorHandler(app);
 
 // 서버 시작
 const startServer = async () => {

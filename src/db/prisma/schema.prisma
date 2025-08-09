@@ -168,7 +168,7 @@ model User {
   notifications      Notification[] // 받은 알림들
   Favorite           Favorite[]
 
-  @@index([email])
+  // 최적화된 인덱스: email은 unique이므로 별도 인덱스 불필요
   @@index([deletedAt])
   @@map("users")
 }
@@ -190,9 +190,8 @@ model Address {
   requestsTo    EstimateRequest[] @relation("RequestTo") // 도착지로 사용된 견적 요청들
   userAddresses UserAddress[] // 사용자별 주소 연결
 
-  @@index([region])
-  @@index([city])
-  @@index([district])
+  // 복합 인덱스로 최적화: 지역별 검색이 가장 빈번
+  @@index([region, city, district])
   @@index([deletedAt])
   @@map("addresses")
 }
@@ -213,9 +212,9 @@ model UserAddress {
   address Address @relation(fields: [addressId], references: [id])
 
   @@unique([userId, addressId, role]) // 같은 사용자가 동일 주소를 같은 역할로 중복 등록 불가
+  // 복합 인덱스로 최적화: 사용자별 주소 조회가 가장 빈번
+  @@index([userId, role])
   @@index([deletedAt])
-  @@index([userId])
-  @@index([addressId])
   @@map("user_addresses")
 }
 
@@ -233,8 +232,8 @@ model MoverServiceArea {
   user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, region, district]) // 같은 기사님이 동일 지역 중복 등록 불가
-  @@index([region])
-  @@index([district])
+  // 복합 인덱스로 최적화: 지역별 기사님 검색이 가장 빈번
+  @@index([region, district])
   @@index([deletedAt])
   @@map("mover_service_areas")
 }
@@ -261,10 +260,10 @@ model EstimateRequest {
   review           Review? // 작성된 리뷰 (1개만)
   designatedMovers DesignatedMover[] // 지정 요청한 기사님들
 
-  @@index([customerId])
-  @@index([status])
-  @@index([moveDate])
-  @@index([moveType])
+  // 복합 인덱스로 최적화: 고객별 상태 조회가 가장 빈번
+  @@index([customerId, status])
+  // 복합 인덱스로 최적화: 날짜별 이사 유형 조회가 빈번
+  @@index([moveDate, moveType])
   @@index([deletedAt])
   @@map("estimate_requests")
 }
@@ -286,9 +285,10 @@ model DesignatedMover {
   mover           User            @relation(fields: [moverId], references: [id])
 
   @@unique([estimateRequestId, moverId]) // 한 요청에 동일 기사님 중복 지정 불가
-  @@index([estimateRequestId])
-  @@index([moverId])
-  @@index([status])
+  // 복합 인덱스로 최적화: 기사님별 상태 조회가 가장 빈번
+  @@index([moverId, status])
+  // 복합 인덱스로 최적화: 요청별 상태 조회가 빈번
+  @@index([estimateRequestId, status])
   @@index([deletedAt])
   @@map("designated_movers")
 }
@@ -316,10 +316,14 @@ model Estimate {
   estimateRequest EstimateRequest @relation(fields: [estimateRequestId], references: [id])
 
   @@unique([estimateRequestId, moverId]) // 한 요청에 동일 기사님 중복 견적 불가
-  @@index([moverId])
-  @@index([status])
-  @@index([price])
-  @@index([isDesignated])
+  // 복합 인덱스로 최적화: 기사님별 상태 조회가 가장 빈번
+  @@index([moverId, status])
+  // 복합 인덱스로 최적화: 요청별 상태 조회가 빈번
+  @@index([estimateRequestId, status])
+  // 복합 인덱스로 최적화: 가격 범위 검색이 빈번
+  @@index([status, price])
+  // 복합 인덱스로 최적화: 지정 기사 여부와 상태 조회
+  @@index([isDesignated, status])
   @@index([deletedAt])
   @@map("estimates")
 }
@@ -343,8 +347,8 @@ model Review {
   request EstimateRequest @relation(fields: [estimateRequestId], references: [id])
 
   @@unique([estimateRequestId]) // 한 견적 요청당 리뷰 1개만
-  @@index([moverId])
-  @@index([rating])
+  // 복합 인덱스로 최적화: 기사님별 평점 조회가 가장 빈번
+  @@index([moverId, rating])
   @@index([deletedAt])
   @@map("reviews")
 }
@@ -363,8 +367,10 @@ model Favorite {
   mover    User @relation(fields: [moverId], references: [id])
 
   @@unique([customerId, moverId]) // 중복 찜 방지
-  @@index([customerId])
-  @@index([moverId])
+  // 복합 인덱스로 최적화: 고객별 찜 목록 조회가 가장 빈번
+  @@index([customerId, createdAt])
+  // 복합 인덱스로 최적화: 기사님별 찜 받은 수 조회가 빈번
+  @@index([moverId, createdAt])
   @@index([deletedAt])
   @@map("favorites")
 }
@@ -385,10 +391,12 @@ model Action {
   user          User           @relation(fields: [userId], references: [id])
   notifications Notification[] // 이 활동으로 생성된 알림들
 
-  @@index([userId])
-  @@index([type])
+  // 복합 인덱스로 최적화: 사용자별 활동 타입 조회가 가장 빈번
+  @@index([userId, type])
+  // 복합 인덱스로 최적화: 엔티티별 활동 조회가 빈번
   @@index([entityId, entityType])
-  @@index([createdAt])
+  // 복합 인덱스로 최적화: 시간순 활동 조회가 빈번
+  @@index([createdAt, type])
   @@index([deletedAt])
   @@map("actions")
 }
@@ -413,10 +421,10 @@ model Notification {
   action Action @relation(fields: [actionId], references: [id])
   user   User   @relation(fields: [userId], references: [id])
 
-  @@index([userId, isRead])
-  @@index([actionId])
-  @@index([type])
-  @@index([createdAt])
+  // 복합 인덱스로 최적화: 사용자별 읽음 상태 조회가 가장 빈번
+  @@index([userId, isRead, createdAt])
+  // 복합 인덱스로 최적화: 알림 타입별 조회가 빈번
+  @@index([type, createdAt])
   @@index([deletedAt])
   @@map("notifications")
 }
