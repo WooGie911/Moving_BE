@@ -1,6 +1,115 @@
 import EstimateRequestService from "./estimateRequest.service";
+
+jest.mock("../repositories/estimateRequest.repository", () => ({
+  __esModule: true,
+  default: {
+    checkUserType: jest.fn(),
+    hasPendingRequest: jest.fn(),
+    hasEstimateFromMover: jest.fn(),
+    hasActiveRequestBeforeMoveDate: jest.fn(),
+    checkCustomerProfile: jest.fn(),
+    getActiveEstimateRequestByUserId: jest.fn(),
+    findOrCreateAddress: jest.fn(),
+    createEstimateRequest: jest.fn(),
+    updateEstimateRequest: jest.fn(),
+    getEstimateRequestById: jest.fn(),
+    softDeleteAddress: jest.fn(),
+    cancelEstimateRequest: jest.fn(),
+    completeEstimateRequest: jest.fn(),
+  },
+}));
+
+jest.mock("./action.service", () => ({
+  __esModule: true,
+  default: {
+    createAction: jest.fn(),
+  },
+}));
+
 import estimateRequestRepository from "../repositories/estimateRequest.repository";
 import actionService from "./action.service";
+
+describe("EstimateRequestService (compact)", () => {
+  const service = new EstimateRequestService();
+  const repo = estimateRequestRepository as jest.Mocked<typeof estimateRequestRepository>;
+  const action = actionService as jest.Mocked<typeof actionService>;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("createEstimateRequest: 주소 처리, 생성, 액션 호출까지 수행한다", async () => {
+    repo.findOrCreateAddress.mockResolvedValueOnce({ id: "addr-from" });
+    repo.findOrCreateAddress.mockResolvedValueOnce({ id: "addr-to" });
+    repo.createEstimateRequest.mockResolvedValue({ id: "er1" } as any);
+
+    const params = {
+      userId: "u1",
+      movingType: "home",
+      movingDate: new Date("2025-07-20"),
+      departure: { roadAddress: "경기 성남시 분당구 대왕판교로 364", detailAddress: "", zoneCode: "13561" },
+      arrival: { roadAddress: "서울 강남구 역삼동 테헤란로 123", detailAddress: "", zoneCode: "06236" },
+      description: "desc",
+    } as any;
+
+    const result = await service.createEstimateRequest(params);
+
+    expect(repo.findOrCreateAddress).toHaveBeenCalledTimes(2);
+    expect(repo.createEstimateRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ moveType: "HOME", fromAddressId: "addr-from", toAddressId: "addr-to" }),
+      "u1",
+    );
+    expect(action.createAction).toHaveBeenCalledWith("u1", expect.any(String), "er1", "ESTIMATE_REQUEST", {});
+    expect(result).toEqual({ id: "er1" });
+  });
+
+  it("updateActiveEstimateRequest: 주소 변경 없는 경우 페이로드만 업데이트한다", async () => {
+    repo.updateEstimateRequest.mockResolvedValue({ id: "er1" } as any);
+    const result = await service.updateActiveEstimateRequest("er1", {
+      movingType: "small",
+      movingDate: "2025-08-01",
+      description: "d",
+    } as any);
+    expect(repo.updateEstimateRequest).toHaveBeenCalledWith(
+      "er1",
+      expect.objectContaining({ moveType: "SMALL", description: "d" }),
+    );
+    expect(result).toEqual({ id: "er1" });
+  });
+
+  it("updateActiveEstimateRequest: 주소 변경이 있으면 현재 요청 조회, 주소 처리, 기존 주소 소프트 삭제", async () => {
+    repo.getEstimateRequestById.mockResolvedValue({ id: "er1", fromAddressId: "oldFrom", toAddressId: "oldTo" } as any);
+    repo.findOrCreateAddress.mockResolvedValueOnce({ id: "newFrom" });
+    repo.findOrCreateAddress.mockResolvedValueOnce({ id: "newTo" });
+    repo.updateEstimateRequest.mockResolvedValue({ id: "er1" } as any);
+
+    await service.updateActiveEstimateRequest("er1", {
+      departure: { roadAddress: "경기 성남시 분당구 대왕판교로 364", detailAddress: "", zoneCode: "13561" },
+      arrival: { roadAddress: "서울 강남구 역삼동 테헤란로 123", detailAddress: "", zoneCode: "06236" },
+    } as any);
+
+    expect(repo.findOrCreateAddress).toHaveBeenCalledTimes(2);
+    expect(repo.updateEstimateRequest).toHaveBeenCalledWith(
+      "er1",
+      expect.objectContaining({ fromAddressId: "newFrom", toAddressId: "newTo" }),
+    );
+    expect(repo.softDeleteAddress).toHaveBeenCalledWith("oldFrom");
+    expect(repo.softDeleteAddress).toHaveBeenCalledWith("oldTo");
+  });
+
+  it("cancel/complete: 위임 호출", async () => {
+    repo.cancelEstimateRequest.mockResolvedValue({ id: "er1" } as any);
+    repo.completeEstimateRequest.mockResolvedValue({ id: "er1" } as any);
+    await service.cancelActiveEstimateRequest("er1");
+    await service.completeEstimateRequest("er1");
+    expect(repo.cancelEstimateRequest).toHaveBeenCalledWith("er1");
+    expect(repo.completeEstimateRequest).toHaveBeenCalledWith("er1");
+  });
+});
+
+import EstimateRequestService2 from "./estimateRequest.service";
+import estimateRequestRepository2 from "../repositories/estimateRequest.repository";
+import actionService2 from "./action.service";
 import { parseAddress } from "../utils/addressUtils";
 
 // Mock the repository, service and utils
@@ -8,15 +117,15 @@ jest.mock("../repositories/estimateRequest.repository");
 jest.mock("../utils/addressUtils");
 jest.mock("./action.service");
 
-const mockEstimateRequestRepository = estimateRequestRepository as jest.Mocked<typeof estimateRequestRepository>;
-const mockActionService = actionService as jest.Mocked<typeof actionService>;
+const mockEstimateRequestRepository = estimateRequestRepository2 as jest.Mocked<typeof estimateRequestRepository2>;
+const mockActionService = actionService2 as jest.Mocked<typeof actionService2>;
 const mockParseAddress = parseAddress as jest.MockedFunction<typeof parseAddress>;
 
-describe("EstimateRequestService", () => {
-  let service: EstimateRequestService;
+describe("EstimateRequestService (detailed)", () => {
+  let service: EstimateRequestService2;
 
   beforeEach(() => {
-    service = new EstimateRequestService();
+    service = new EstimateRequestService2();
     jest.clearAllMocks();
 
     // Default actionService mock

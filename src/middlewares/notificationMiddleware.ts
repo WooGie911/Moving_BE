@@ -6,10 +6,7 @@ import { Action } from "@prisma/client";
 import { captureNotificationError, captureActionMappingError } from "../utils/sentryUtils";
 
 // Prisma 미들웨어: actionCreate 함수에서 새로운 액션이 생성될 때 notification 자동 생성.
-export const notificationMiddleware: Prisma.Middleware = async (
-  params,
-  next
-) => {
+export const notificationMiddleware: Prisma.Middleware = async (params, next) => {
   const result = await next(params);
 
   // 액션 생성 감지
@@ -31,7 +28,7 @@ export const notificationMiddleware: Prisma.Middleware = async (
       const notifications = await Promise.all(
         receivers.map(async (receiver) => {
           const message = mapping.buildMessage(action, receiver.userType);
-          
+
           return prisma.notification.create({
             data: {
               userId: receiver.id,
@@ -42,9 +39,9 @@ export const notificationMiddleware: Prisma.Middleware = async (
               messageEn: message.messageEn,
               messageZh: message.messageZh,
               path: message.path,
-            },
+            } as any,
           });
-        })
+        }),
       );
 
       // 실시간 알림 SSE 전송

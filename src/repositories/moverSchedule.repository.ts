@@ -100,7 +100,6 @@ const moverScheduleRepository = {
         updatedAt: estimate.updatedAt,
       }));
     } catch (error) {
-      console.error("moverScheduleRepository.getMonthlySchedules 에러:", error);
       throw new RepositoryQueryError("월별 스케줄 조회 중 데이터베이스 오류가 발생했습니다");
     }
   },

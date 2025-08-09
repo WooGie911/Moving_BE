@@ -1,5 +1,6 @@
 import moverScheduleRepository from "../repositories/moverSchedule.repository";
-import { TMoverScheduleResponse, TMoverScheduleWithDetails } from "../types/moverSchedule";
+import * as Sentry from "@sentry/node";
+import { TMoverScheduleResponse } from "../types/moverSchedule";
 import { ServiceError, ServiceValidationError, RepositoryError } from "../types/errors.types";
 import { validateScheduleInput, transformToScheduleResponse, handleScheduleError } from "../utils/scheduleUtils";
 
@@ -20,9 +21,17 @@ const moverScheduleService = {
       }
 
       if (error instanceof RepositoryError) {
+        Sentry.captureException(error, {
+          extra: { moverId, year, month },
+          tags: { error_type: "schedule_error", operation: "get_monthly_schedules_repo_error" },
+        });
         throw new ServiceError("월별 스케줄 조회 중 오류가 발생했습니다");
       }
 
+      Sentry.captureException(error as Error, {
+        extra: { moverId, year, month },
+        tags: { error_type: "schedule_error", operation: "get_monthly_schedules_unknown_error" },
+      });
       return handleScheduleError(error, "월별 스케줄 조회 중 예상치 못한 오류가 발생했습니다");
     }
   },

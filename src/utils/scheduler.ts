@@ -1,4 +1,5 @@
 import * as cron from "node-cron";
+import * as Sentry from "@sentry/node";
 import expirationService from "../services/expiration.service";
 import actionService from "../services/action.service";
 import { ActionType } from "@prisma/client";
@@ -107,7 +108,9 @@ const initializeScheduler = () => {
           console.log("ℹ️ [일일 스케줄러] 처리할 만료된 견적 요청이 없습니다.");
         }
       } catch (error) {
-        console.error("❌ [일일 스케줄러] 만료된 견적 요청 처리 실패:", error);
+        Sentry.captureException(error as Error, {
+          tags: { error_type: "scheduler_error", operation: "expire_requests_daily" },
+        });
       }
     },
     {
@@ -125,7 +128,9 @@ const initializeScheduler = () => {
         await generateMoveDayReviewRequests();
         console.log("[일일 스케줄러] 이사일 알림 및 리뷰 요청 생성 완료");
       } catch (error) {
-        console.error("[일일 스케줄러] 이사일 알림 및 리뷰 요청 생성 실패:", error);
+        Sentry.captureException(error as Error, {
+          tags: { error_type: "scheduler_error", operation: "notifications_and_reviews_daily" },
+        });
       }
     },
     {

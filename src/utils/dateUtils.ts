@@ -13,13 +13,30 @@ const getKoreaToday = (): Date => {
 };
 
 /**
+ * 입력 날짜를 한국 시간 기준 자정으로 변환합니다.
+ */
+const toKoreaMidnight = (date: Date): Date => {
+  const koreaTime = new Date(new Date(date).toLocaleString("en-US", { timeZone: KOREA_TIMEZONE }));
+  koreaTime.setHours(0, 0, 0, 0);
+  return koreaTime;
+};
+
+/**
+ * 입력 날짜를 한국 시간 기준 시각으로 변환합니다 (자정으로 내리지 않음).
+ */
+const toKoreaDateTime = (date: Date): Date => {
+  return new Date(new Date(date).toLocaleString("en-US", { timeZone: KOREA_TIMEZONE }));
+};
+
+/**
  * 주어진 날짜가 한국 시간 기준 오늘보다 이전인지 확인합니다.
  * @param date 확인할 날짜
  * @returns 오늘보다 이전이면 true, 아니면 false
  */
 export const isBeforeKoreaToday = (date: Date): boolean => {
   const koreaToday = getKoreaToday();
-  return date < koreaToday;
+  const inputKorea = toKoreaDateTime(date);
+  return inputKorea < koreaToday;
 };
 
 /**
@@ -29,9 +46,8 @@ export const isBeforeKoreaToday = (date: Date): boolean => {
  */
 export const isKoreaToday = (date: Date): boolean => {
   const koreaToday = getKoreaToday();
-  const inputDate = new Date(date);
-  inputDate.setHours(0, 0, 0, 0);
-  return inputDate.getTime() === koreaToday.getTime();
+  const inputKorea = toKoreaMidnight(date);
+  return inputKorea.getTime() === koreaToday.getTime();
 };
 
 /**
@@ -41,9 +57,8 @@ export const isKoreaToday = (date: Date): boolean => {
  */
 export const isAfterKoreaToday = (date: Date): boolean => {
   const koreaToday = getKoreaToday();
-  const inputDate = new Date(date);
-  inputDate.setHours(0, 0, 0, 0);
-  return inputDate > koreaToday;
+  const inputKorea = toKoreaDateTime(date);
+  return inputKorea > koreaToday;
 };
 
 /**
@@ -53,9 +68,8 @@ export const isAfterKoreaToday = (date: Date): boolean => {
  */
 export const isValidFutureDate = (date: Date): boolean => {
   const koreaToday = getKoreaToday();
-  const inputDate = new Date(date);
-  inputDate.setHours(0, 0, 0, 0);
-  return inputDate > koreaToday;
+  const inputKorea = toKoreaDateTime(date);
+  return inputKorea > koreaToday;
 };
 
 /**
@@ -74,24 +88,23 @@ export const isValidMoveDate = (date: Date): boolean => {
  */
 export const validateMoveDate = (date: Date): { isValid: boolean; errorMessage?: string } => {
   const koreaToday = getKoreaToday();
-  const inputDate = new Date(date);
-  inputDate.setHours(0, 0, 0, 0);
+  const inputKorea = toKoreaDateTime(date);
 
-  if (isNaN(inputDate.getTime())) {
+  if (isNaN(inputKorea.getTime())) {
     return {
       isValid: false,
       errorMessage: "올바른 날짜 형식이 아닙니다. (YYYY-MM-DD 형식으로 입력해주세요)",
     };
   }
 
-  if (inputDate < koreaToday) {
+  if (inputKorea < koreaToday) {
     return {
       isValid: false,
       errorMessage: "이사일은 오늘 이후로 설정해주세요.",
     };
   }
 
-  if (inputDate.getTime() === koreaToday.getTime()) {
+  if (inputKorea.getTime() === koreaToday.getTime()) {
     return {
       isValid: false,
       errorMessage: "당일 이사는 불가능합니다. 내일 이후로 설정해주세요.",
@@ -112,9 +125,9 @@ export const formatDateOnly = (dateTime: Date | string | null | undefined): stri
   const date = new Date(dateTime);
   if (isNaN(date.getTime())) return null;
 
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 };

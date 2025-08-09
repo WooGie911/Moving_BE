@@ -1,47 +1,69 @@
 import { Request, Response } from "express";
-import EstimateRequestController from "./estimateRequest.controller";
-import EstimateRequestService from "../services/estimateRequest.service";
-import { convertRegionToKorean } from "../utils/addressUtils";
-import { isBeforeKoreaToday, formatDateForAPI } from "../utils/dateUtils";
 
-// Mock dependencies
-jest.mock("../utils/addressUtils");
-jest.mock("../utils/dateUtils");
+// Note: mocks will be defined dynamically in beforeEach using jest.doMock
 
-const mockConvertRegionToKorean = convertRegionToKorean as jest.MockedFunction<typeof convertRegionToKorean>;
-const mockIsBeforeKoreaToday = isBeforeKoreaToday as jest.MockedFunction<typeof isBeforeKoreaToday>;
-const mockFormatDateForAPI = formatDateForAPI as jest.MockedFunction<typeof formatDateForAPI>;
-
-// validateMoveDate 함수 모킹
-const { validateMoveDate } = require("../utils/dateUtils");
-const mockValidateMoveDate = validateMoveDate as jest.MockedFunction<typeof validateMoveDate>;
-
-// Mock EstimateRequestService
-jest.mock("../services/estimateRequest.service", () => {
-  const mockMethods = {
-    checkUserType: jest.fn(),
-    hasPendingRequest: jest.fn(),
-    createEstimateRequest: jest.fn(),
-    getActiveEstimateRequestByUserId: jest.fn(),
-    updateActiveEstimateRequest: jest.fn(),
-    cancelActiveEstimateRequest: jest.fn(),
-    hasEstimateFromMover: jest.fn(),
-    checkCustomerProfile: jest.fn(),
-    hasActiveRequestBeforeMoveDate: jest.fn(),
+const buildReqRes = (overrides: any = {}) => {
+  const req: any = {
+    user: { userId: "u1", userType: "CUSTOMER" },
+    body: {},
+    query: {},
+    url: "/api/estimate-requests",
+    method: "POST",
+    ...overrides,
   };
-  return jest.fn().mockImplementation(() => mockMethods);
-});
+  const res: any = {
+    status: jest.fn().mockReturnThis(),
+    json: jest.fn().mockReturnThis(),
+    send: jest.fn().mockReturnThis(),
+  };
+  return { req, res };
+};
 
-// Get reference to mocked service after mocking
-const mockEstimateRequestService = new (EstimateRequestService as any)();
+// removed empty describe block
+
+let mockEstimateRequestService: any;
 
 describe("EstimateRequest 유저 플로우 테스트", () => {
-  let controller: EstimateRequestController;
+  let controller: any;
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
 
   beforeEach(() => {
-    controller = new EstimateRequestController();
+    jest.resetModules();
+    jest.clearAllMocks();
+
+    // set up dynamic mocks
+    const serviceInstance = {
+      checkUserType: jest.fn(),
+      checkCustomerProfile: jest.fn(),
+      hasActiveRequestBeforeMoveDate: jest.fn(),
+      hasPendingRequest: jest.fn(),
+      hasEstimateFromMover: jest.fn(),
+      createEstimateRequest: jest.fn(),
+      getActiveEstimateRequestByUserId: jest.fn(),
+      updateActiveEstimateRequest: jest.fn(),
+      cancelActiveEstimateRequest: jest.fn(),
+    };
+    mockEstimateRequestService = serviceInstance;
+
+    jest.doMock("../services/estimateRequest.service", () => ({
+      __esModule: true,
+      default: jest.fn().mockImplementation(() => serviceInstance),
+    }));
+    jest.doMock("../utils/addressUtils", () => ({
+      __esModule: true,
+      convertRegionToKorean: jest.fn().mockReturnValue("서울특별시"),
+    }));
+    jest.doMock("../utils/dateUtils", () => ({
+      __esModule: true,
+      validateMoveDate: jest.fn().mockReturnValue({ isValid: true }),
+      formatDateForAPI: jest.fn().mockReturnValue("2024-12-25"),
+    }));
+
+    // import controller after mocking
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const Controller = require("./estimateRequest.controller").default;
+    controller = new Controller();
 
     mockResponse = {
       status: jest.fn().mockReturnThis(),
@@ -49,16 +71,8 @@ describe("EstimateRequest 유저 플로우 테스트", () => {
       send: jest.fn().mockReturnThis(),
     };
 
-    jest.clearAllMocks();
-
     // Mock console.error to prevent logs during testing
     jest.spyOn(console, "error").mockImplementation(() => {});
-
-    // Default mock implementations
-    mockConvertRegionToKorean.mockReturnValue("서울특별시");
-    mockIsBeforeKoreaToday.mockReturnValue(false);
-    mockFormatDateForAPI.mockReturnValue("2024-12-25");
-    mockValidateMoveDate.mockReturnValue({ isValid: true });
 
     // Default service mock implementations
     mockEstimateRequestService.checkCustomerProfile.mockResolvedValue(true);
@@ -159,7 +173,8 @@ describe("EstimateRequest 유저 플로우 테스트", () => {
 
     mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
     mockEstimateRequestService.hasPendingRequest.mockResolvedValue(false);
-    mockValidateMoveDate.mockReturnValue({
+    const { validateMoveDate } = require("../utils/dateUtils");
+    (validateMoveDate as jest.Mock).mockReturnValue({
       isValid: false,
       errorMessage: "이사일은 오늘 이후로 설정해주세요.",
     });
@@ -455,7 +470,8 @@ describe("EstimateRequest 유저 플로우 테스트", () => {
 
       mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
       mockEstimateRequestService.hasPendingRequest.mockResolvedValue(false);
-      mockValidateMoveDate.mockReturnValue({
+      const { validateMoveDate } = require("../utils/dateUtils");
+      (validateMoveDate as jest.Mock).mockReturnValue({
         isValid: false,
         errorMessage: "올바른 날짜 형식이 아닙니다. (YYYY-MM-DD 형식으로 입력해주세요)",
       });
