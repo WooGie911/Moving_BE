@@ -86,7 +86,7 @@ export const formatAddressForTranslation = (address: AddressFormatInput): string
 export const transformToScheduleResponse = (detail: TMoverScheduleWithDetails): TMoverScheduleResponse => {
   return {
     id: detail.estimateRequestId,
-    customerName: detail.customer.name,
+    customerName: detail.customer.name ?? "",
     movingType: moveTypeMapping[detail.moveType] || "small",
     status: statusMapping[detail.requestStatus as keyof StatusMapping] || "pending",
     fromAddress: formatAddressForTranslation(detail.fromAddress),
