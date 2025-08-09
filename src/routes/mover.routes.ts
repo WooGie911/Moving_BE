@@ -14,100 +14,95 @@ const moverRouter = Router();
  *       type: object
  *       properties:
  *         id:
- *           type: integer
- *           description: 기사님 프로필 ID
- *         userId:
- *           type: integer
- *           description: 사용자 ID
+ *           type: string
+ *           description: 기사님 사용자 ID
  *         nickname:
  *           type: string
  *           description: 닉네임
- *         profileImage:
+ *           nullable: true
+ *         name:
  *           type: string
- *           description: 프로필 이미지 URL
- *         experience:
+ *           description: 실명
+ *         career:
  *           type: integer
  *           description: 경력 (년)
- *         introduction:
+ *           minimum: 0
+ *         shortIntro:
  *           type: string
  *           description: 한줄 소개
- *         description:
+ *           nullable: true
+ *         detailIntro:
  *           type: string
- *           description: 상세 설명
- *         completedCount:
+ *           description: 상세 소개
+ *           nullable: true
+ *         workedCount:
  *           type: integer
  *           description: 완료된 이사 건수
- *         avgRating:
+ *           minimum: 0
+ *         averageRating:
  *           type: number
  *           description: 평균 평점
- *         reviewCount:
+ *           format: float
+ *           minimum: 0
+ *           maximum: 5
+ *         totalReviewCount:
  *           type: integer
- *           description: 리뷰 개수
+ *           description: 총 리뷰 개수
+ *           minimum: 0
+ *         serviceTypes:
+ *           type: array
+ *           description: 서비스 타입 배열
+ *           items:
+ *             type: string
+ *             enum: ["SMALL", "HOME", "OFFICE"]
  *         favoriteCount:
  *           type: integer
  *           description: 찜 개수
- *         lastActivityAt:
+ *           minimum: 0
+ *         moverImage:
  *           type: string
- *           description: 마지막 활동 시간
- *           format: date-time
- *         user:
- *           type: object
+ *           description: 기사님 프로필 이미지 URL
+ *           nullable: true
+ *         currentAreas:
+ *           type: array
+ *           description: 현재 서비스 가능 지역
+ *           items:
+ *             type: string
+ *         serviceAreas:
+ *           type: array
+ *           description: 서비스 지역 정보
+ *           items:
+ *             type: string
+ *         Favorite:
+ *           type: array
+ *           description: 찜 관계 데이터 (내부용)
+ *           items:
+ *             type: object
+ *
+ *     MoverDetailInfo:
+ *       allOf:
+ *         - $ref: '#/components/schemas/MoverInfo'
+ *         - type: object
  *           properties:
- *             id:
- *               type: integer
- *               description: 사용자 ID
- *             name:
- *               type: string
- *               description: 사용자 이름
- *             email:
- *               type: string
- *               description: 이메일
- *         serviceRegions:
- *           type: array
- *           items:
- *             type: object
- *             properties:
- *               id:
- *                 type: integer
- *                 description: 서비스 지역 ID
- *               profileId:
- *                 type: integer
- *                 description: 프로필 ID
- *               region:
- *                 type: string
- *                 description: 지역명
- *         serviceTypes:
- *           type: array
- *           items:
- *             type: object
- *             properties:
- *               id:
- *                 type: integer
- *                 description: 서비스 타입 ID
- *               profileId:
- *                 type: integer
- *                 description: 프로필 ID
- *               serviceId:
- *                 type: integer
- *                 description: 서비스 ID
- *               service:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: integer
- *                     description: 서비스 ID
- *                   name:
- *                     type: string
- *                     description: 서비스명
- *                   description:
- *                     type: string
- *                     description: 서비스 설명
- *                   isActive:
- *                     type: boolean
- *                     description: 활성화 여부
- *                   iconUrl:
- *                     type: string
- *                     description: 아이콘 URL
+ *             isFavorited:
+ *               type: boolean
+ *               description: 현재 사용자의 찜 여부 (로그인 시에만 제공)
+ *             activeEstimateRequest:
+ *               type: object
+ *               description: 활성 견적 요청 정보 (로그인 시에만 제공)
+ *               nullable: true
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   description: 견적 요청 ID
+ *                 status:
+ *                   type: string
+ *                   enum: ["PENDING", "APPROVED"]
+ *                   description: 견적 요청 상태
+ *                 moveDate:
+ *                   type: string
+ *                   format: date-time
+ *                   description: 이사 예정일
  *
  *     MoverListResponse:
  *       type: object
@@ -116,10 +111,20 @@ const moverRouter = Router();
  *           type: boolean
  *           description: 성공 여부
  *         data:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/MoverInfo'
- *           description: 기사님 목록
+ *           type: object
+ *           properties:
+ *             items:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/MoverInfo'
+ *               description: 기사님 목록
+ *             hasNext:
+ *               type: boolean
+ *               description: 다음 페이지 존재 여부
+ *             nextCursor:
+ *               type: string
+ *               description: 다음 페이지 커서
+ *               nullable: true
  *
  *     MoverErrorResponse:
  *       type: object
@@ -159,7 +164,9 @@ const moverRouter = Router();
  *         name: sort
  *         schema:
  *           type: string
- *         description: 정렬 기준
+ *           enum: ["rating", "career", "confirmed", "review"]
+ *           default: "review"
+ *         description: 정렬 기준 (rating: 평점순, career: 경력순, confirmed: 완료건수순, review: 리뷰순)
  *       - in: query
  *         name: cursor
  *         schema:
@@ -180,36 +187,23 @@ const moverRouter = Router();
  *             example:
  *               success: true
  *               data:
- *                 - id: 1
- *                   userId: 4
- *                   nickname: "믿을만한김기사"
- *                   profileImage: "https://s3.amazonaws.com/profiles/profile1.jpg"
- *                   experience: 5
- *                   introduction: "5년 경력의 꼼꼼한 이사 전문가입니다"
- *                   description: "안전하고 신속한 이사를 약속드립니다."
- *                   completedCount: 136
- *                   avgRating: 5.0
- *                   reviewCount: 128
- *                   favoriteCount: 45
- *                   lastActivityAt: "2025-07-10T00:33:16.456Z"
- *                   user:
- *                     id: 4
- *                     name: "김민수"
- *                     email: "mover1@example.com"
- *                   serviceRegions:
- *                     - id: 1
- *                       profileId: 1
- *                       region: "SEOUL"
- *                   serviceTypes:
- *                     - id: 1
- *                       profileId: 1
- *                       serviceId: 1
- *                       service:
- *                         id: 1
- *                         name: "소형이사"
- *                         description: "원룸, 투룸 등 소규모 이사"
- *                         isActive: true
- *                         iconUrl: "https://s3.amazonaws.com/moving-icons/small-moving.svg"
+ *                 items:
+ *                   - id: "user_123"
+ *                     nickname: "믿을만한김기사"
+ *                     name: "김***"
+ *                     career: 5
+ *                     shortIntro: "5년 경력의 꼼꼼한 이사 전문가입니다"
+ *                     detailIntro: "안전하고 신속한 이사를 약속드립니다. 고객 만족을 최우선으로 생각합니다."
+ *                     workedCount: 136
+ *                     averageRating: 4.8
+ *                     totalReviewCount: 128
+ *                     serviceTypes: ["SMALL", "HOME"]
+ *                     favoriteCount: 45
+ *                     moverImage: "https://s3.amazonaws.com/profiles/profile1.jpg"
+ *                     currentAreas: ["SEOUL", "GYEONGGI"]
+ *                     serviceAreas: ["SEOUL", "GYEONGGI"]
+ *                 hasNext: true
+ *                 nextCursor: "user_124"
  *       404:
  *         description: 데이터 없음
  *         content:
@@ -220,7 +214,11 @@ const moverRouter = Router();
  *               success: false
  *               message: "기사님을 찾을 수 없습니다"
  */
-moverRouter.get("/", defaultTranslationMiddleware, moverController.getMoverListController);
+moverRouter.get(
+  "/",
+  defaultTranslationMiddleware,
+  moverController.getMoverListController
+);
 
 /**
  * @swagger
@@ -245,136 +243,39 @@ moverRouter.get("/", defaultTranslationMiddleware, moverController.getMoverListC
  *                 data:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: integer
- *                         description: 기사님 ID
- *                       userId:
- *                         type: integer
- *                         description: 사용자 ID
- *                       nickname:
- *                         type: string
- *                         description: 닉네임
- *                       profileImage:
- *                         type: string
- *                         description: 프로필 이미지 URL
- *                       experience:
- *                         type: integer
- *                         description: 경력 연차
- *                       introduction:
- *                         type: string
- *                         description: 소개
- *                       description:
- *                         type: string
- *                         description: 상세 설명
- *                       completedCount:
- *                         type: integer
- *                         description: 완료된 이사 건수
- *                       avgRating:
- *                         type: number
- *                         description: 평균 평점
- *                       reviewCount:
- *                         type: integer
- *                         description: 리뷰 개수
- *                       favoriteCount:
- *                         type: integer
- *                         description: 찜 개수
- *                       lastActivityAt:
- *                         type: string
- *                         description: 마지막 활동 시간
- *                         format: date-time
- *                       user:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: integer
- *                             description: 사용자 ID
- *                           name:
- *                             type: string
- *                             description: 이름
- *                           email:
- *                             type: string
- *                             description: 이메일
- *                       serviceRegions:
- *                         type: array
- *                         items:
- *                           type: object
- *                           properties:
- *                             id:
- *                               type: integer
- *                               description: 서비스 지역 ID
- *                             profileId:
- *                               type: integer
- *                               description: 프로필 ID
- *                             region:
- *                               type: string
- *                               description: 지역
- *                       serviceTypes:
- *                         type: array
- *                         items:
- *                           type: object
- *                           properties:
- *                             id:
- *                               type: integer
- *                               description: 서비스 타입 ID
- *                             profileId:
- *                               type: integer
- *                               description: 프로필 ID
- *                             serviceId:
- *                               type: integer
- *                               description: 서비스 ID
- *                             service:
- *                               type: object
- *                               properties:
- *                                 id:
- *                                   type: integer
- *                                   description: 서비스 ID
- *                                 name:
- *                                   type: string
- *                                   description: 서비스명
- *                                 description:
- *                                   type: string
- *                                   description: 서비스 설명
- *                                 isActive:
- *                                   type: boolean
- *                                   description: 활성화 여부
- *                                 iconUrl:
- *                                   type: string
- *                                   description: 아이콘 URL
+ *                     $ref: '#/components/schemas/MoverInfo'
+ *                   description: 찜한 기사님 목록
  *             example:
  *               success: true
  *               data:
- *                 - id: 1
- *                   userId: 4
+ *                 - id: "user_123"
  *                   nickname: "믿을만한김기사"
- *                   profileImage: "https://s3.amazonaws.com/profiles/profile1.jpg"
- *                   experience: 5
- *                   introduction: "5년 경력의 꼼꼼한 이사 전문가입니다"
- *                   description: "안전하고 신속한 이사를 약속드립니다."
- *                   completedCount: 136
- *                   avgRating: 5.0
- *                   reviewCount: 128
+ *                   name: "김***"
+ *                   career: 5
+ *                   shortIntro: "5년 경력의 꼼꼼한 이사 전문가입니다"
+ *                   detailIntro: "안전하고 신속한 이사를 약속드립니다."
+ *                   workedCount: 136
+ *                   averageRating: 4.8
+ *                   totalReviewCount: 128
+ *                   serviceTypes: ["SMALL", "HOME"]
  *                   favoriteCount: 45
- *                   lastActivityAt: "2025-07-10T00:33:16.456Z"
- *                   user:
- *                     id: 4
- *                     name: "김민수"
- *                     email: "mover1@example.com"
- *                   serviceRegions:
- *                     - id: 1
- *                       profileId: 1
- *                       region: "SEOUL"
- *                   serviceTypes:
- *                     - id: 1
- *                       profileId: 1
- *                       serviceId: 1
- *                       service:
- *                         id: 1
- *                         name: "소형이사"
- *                         description: "원룸, 투룸 등 소규모 이사"
- *                         isActive: true
- *                         iconUrl: "https://s3.amazonaws.com/moving-icons/small-moving.svg"
+ *                   moverImage: "https://s3.amazonaws.com/profiles/profile1.jpg"
+ *                   currentAreas: ["SEOUL", "GYEONGGI"]
+ *                   serviceAreas: ["SEOUL", "GYEONGGI"]
+ *                 - id: "user_124"
+ *                   nickname: "전문박기사"
+ *                   name: "박***"
+ *                   career: 8
+ *                   shortIntro: "8년차 전문 이사업체 운영"
+ *                   detailIntro: "대형 이사부터 소형 이사까지 모든 것을 처리합니다."
+ *                   workedCount: 284
+ *                   averageRating: 4.9
+ *                   totalReviewCount: 203
+ *                   serviceTypes: ["HOME", "OFFICE"]
+ *                   favoriteCount: 78
+ *                   moverImage: "https://s3.amazonaws.com/profiles/profile2.jpg"
+ *                   currentAreas: ["BUSAN", "GYEONGNAM"]
+ *                   serviceAreas: ["BUSAN", "GYEONGNAM"]
  *       401:
  *         description: 인증 실패
  *         content:
@@ -412,7 +313,7 @@ moverRouter.get(
   "/favorite",
   verifyAccessToken,
   defaultTranslationMiddleware,
-  moverController.getFavoriteMoversController,
+  moverController.getFavoriteMoversController
 );
 
 /**
@@ -441,136 +342,29 @@ moverRouter.get(
  *                   type: boolean
  *                   description: 성공 여부
  *                 data:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: integer
- *                       description: 기사님 ID
- *                     userId:
- *                       type: integer
- *                       description: 사용자 ID
- *                     nickname:
- *                       type: string
- *                       description: 닉네임
- *                     profileImage:
- *                       type: string
- *                       description: 프로필 이미지 URL
- *                     experience:
- *                       type: integer
- *                       description: 경력 연차
- *                     introduction:
- *                       type: string
- *                       description: 소개
- *                     description:
- *                       type: string
- *                       description: 상세 설명
- *                     completedCount:
- *                       type: integer
- *                       description: 완료된 이사 건수
- *                     avgRating:
- *                       type: number
- *                       description: 평균 평점
- *                     reviewCount:
- *                       type: integer
- *                       description: 리뷰 개수
- *                     favoriteCount:
- *                       type: integer
- *                       description: 찜 개수
- *                     lastActivityAt:
- *                       type: string
- *                       description: 마지막 활동 시간
- *                       format: date-time
- *                     user:
- *                       type: object
- *                       properties:
- *                         id:
- *                           type: integer
- *                           description: 사용자 ID
- *                         name:
- *                           type: string
- *                           description: 이름
- *                         email:
- *                           type: string
- *                           description: 이메일
- *                     serviceRegions:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: integer
- *                             description: 서비스 지역 ID
- *                           profileId:
- *                             type: integer
- *                             description: 프로필 ID
- *                           region:
- *                             type: string
- *                             description: 지역
- *                     serviceTypes:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: integer
- *                             description: 서비스 타입 ID
- *                           profileId:
- *                             type: integer
- *                             description: 프로필 ID
- *                           serviceId:
- *                             type: integer
- *                             description: 서비스 ID
- *                           service:
- *                             type: object
- *                             properties:
- *                               id:
- *                                 type: integer
- *                                 description: 서비스 ID
- *                               name:
- *                                 type: string
- *                                 description: 서비스명
- *                               description:
- *                                 type: string
- *                                 description: 서비스 설명
- *                               isActive:
- *                                 type: boolean
- *                                 description: 활성화 여부
- *                               iconUrl:
- *                                 type: string
- *                                 description: 아이콘 URL
+ *                   $ref: '#/components/schemas/MoverDetailInfo'
  *             example:
  *               success: true
  *               data:
- *                 id: 1
- *                 userId: 4
+ *                 id: "user_123"
  *                 nickname: "믿을만한김기사"
- *                 profileImage: "https://s3.amazonaws.com/profiles/profile1.jpg"
- *                 experience: 5
- *                 introduction: "5년 경력의 꼼꼼한 이사 전문가입니다"
- *                 description: "안전하고 신속한 이사를 약속드립니다."
- *                 completedCount: 136
- *                 avgRating: 5.0
- *                 reviewCount: 128
+ *                 name: "김***"
+ *                 career: 5
+ *                 shortIntro: "5년 경력의 꼼꼼한 이사 전문가입니다"
+ *                 detailIntro: "안전하고 신속한 이사를 약속드립니다. 고객의 소중한 물건을 내 것처럼 소중히 다루겠습니다."
+ *                 workedCount: 136
+ *                 averageRating: 4.8
+ *                 totalReviewCount: 128
+ *                 serviceTypes: ["SMALL", "HOME"]
  *                 favoriteCount: 45
- *                 lastActivityAt: "2025-07-10T00:33:16.456Z"
- *                 user:
- *                   id: 4
- *                   name: "김민수"
- *                   email: "mover1@example.com"
- *                 serviceRegions:
- *                   - id: 1
- *                     profileId: 1
- *                     region: "SEOUL"
- *                 serviceTypes:
- *                   - id: 1
- *                     profileId: 1
- *                     serviceId: 1
- *                     service:
- *                       id: 1
- *                       name: "소형이사"
- *                       description: "원룸, 투룸 등 소규모 이사"
- *                       isActive: true
- *                       iconUrl: "https://s3.amazonaws.com/moving-icons/small-moving.svg"
+ *                 moverImage: "https://s3.amazonaws.com/profiles/profile1.jpg"
+ *                 currentAreas: ["SEOUL", "GYEONGGI"]
+ *                 serviceAreas: ["SEOUL", "GYEONGGI"]
+ *                 isFavorited: true
+ *                 activeEstimateRequest:
+ *                   id: 42
+ *                   status: "PENDING"
+ *                   moveDate: "2025-08-15T09:00:00.000Z"
  *       404:
  *         description: 데이터 없음
  *         content:
@@ -588,7 +382,12 @@ moverRouter.get(
  *               status: 404
  *               message: "기사님을 찾을 수 없습니다."
  */
-moverRouter.get("/:moverId", optionalAuth, defaultTranslationMiddleware, moverController.getMoverDetailController);
+moverRouter.get(
+  "/:moverId",
+  optionalAuth,
+  defaultTranslationMiddleware,
+  moverController.getMoverDetailController
+);
 
 /**
  * @swagger
@@ -827,7 +626,7 @@ moverRouter.post(
 moverRouter.get(
   "/:moverId/quote-request/check",
   verifyAccessToken,
-  moverController.getDesignatedQuoteRequestCheckController,
+  moverController.getDesignatedQuoteRequestCheckController
 );
 
 /**
@@ -884,7 +683,7 @@ moverRouter.get(
 moverRouter.get(
   "/active-estimate-request/check",
   verifyAccessToken,
-  moverController.checkActiveEstimateRequestController,
+  moverController.checkActiveEstimateRequestController
 );
 
 export default moverRouter;
