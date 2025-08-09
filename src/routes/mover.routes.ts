@@ -68,11 +68,7 @@ const moverRouter = Router();
  *           description: 현재 서비스 가능 지역
  *           items:
  *             type: string
- *         serviceAreas:
- *           type: array
- *           description: 서비스 지역 정보
- *           items:
- *             type: string
+
  *         Favorite:
  *           type: array
  *           description: 찜 관계 데이터 (내부용)
@@ -103,6 +99,17 @@ const moverRouter = Router();
  *                   type: string
  *                   format: date-time
  *                   description: 이사 예정일
+ *
+ *     FavoriteMoverInfo:
+ *       allOf:
+ *         - $ref: '#/components/schemas/MoverInfo'
+ *         - type: object
+ *           properties:
+ *             serviceAreas:
+ *               type: array
+ *               description: 서비스 지역 정보 (찜한 기사님에서만 제공)
+ *               items:
+ *                 type: string
  *
  *     MoverListResponse:
  *       type: object
@@ -243,7 +250,7 @@ moverRouter.get(
  *                 data:
  *                   type: array
  *                   items:
- *                     $ref: '#/components/schemas/MoverInfo'
+ *                     $ref: '#/components/schemas/FavoriteMoverInfo'
  *                   description: 찜한 기사님 목록
  *             example:
  *               success: true
@@ -359,7 +366,6 @@ moverRouter.get(
  *                 favoriteCount: 45
  *                 moverImage: "https://s3.amazonaws.com/profiles/profile1.jpg"
  *                 currentAreas: ["SEOUL", "GYEONGGI"]
- *                 serviceAreas: ["SEOUL", "GYEONGGI"]
  *                 isFavorited: true
  *                 activeEstimateRequest:
  *                   id: 42
