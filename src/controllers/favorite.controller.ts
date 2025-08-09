@@ -137,11 +137,22 @@ class FavoriteController {
   async getFavoriteMovers(req: IUserRequest, res: Response) {
     try {
       const customerId = req.user?.userId;
-      const limit = parseInt(req.query.limit as string) || 3; // 기본값을 3으로 변경
+      const limitRaw = req.query.limit as string | undefined;
+      let limit: number;
+      if (limitRaw === undefined) {
+        limit = 3; // 기본값
+      } else if (!/^-?\d+$/.test(limitRaw)) {
+        return res.status(400).json({
+          success: false,
+          message: "limit은 1-50 사이의 값이어야 합니다.",
+        });
+      } else {
+        limit = Number(limitRaw);
+      }
       const cursor = req.query.cursor as string;
 
       // 입력 검증
-      if (limit < 1 || limit > 50) {
+      if (!Number.isFinite(limit) || limit < 1 || limit > 50) {
         return res.status(400).json({
           success: false,
           message: "limit은 1-50 사이의 값이어야 합니다.",
@@ -157,11 +168,7 @@ class FavoriteController {
         });
       }
 
-      const result = await favoriteRepository.getFavoriteMovers(
-        customerId!,
-        limit,
-        cursor
-      );
+      const result = await favoriteRepository.getFavoriteMovers(customerId!, limit, cursor);
 
       return res.status(200).json({
         success: true,
@@ -214,10 +221,7 @@ class FavoriteController {
         });
       }
 
-      const status = await favoriteRepository.getFavoriteStatus(
-        customerId!,
-        moverId
-      );
+      const status = await favoriteRepository.getFavoriteStatus(customerId!, moverId);
 
       return res.status(200).json({
         success: true,
