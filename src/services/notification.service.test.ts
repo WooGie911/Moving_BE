@@ -39,10 +39,11 @@ describe("NotificationService", () => {
             actionId: "action-1",
             userId: "user-1",
             userType: "CUSTOMER" as UserType,
-            type: "ESTIMATE_REQUEST_ARRIVED" as NotificationType,
-            title: "새로운 견적 요청",
-            content: "테스트 알림 1",
-            path: null,
+            type: "ESTIMATE_STATUS_UPDATED" as NotificationType,
+            messageKo: "<span class=\"font-bold\">성민기사</span> 기사님의 견적이 <span class=\"text-primary-400 font-bold\">확정</span>되었어요.",
+            messageEn: "<span class=\"font-bold\">성민기사</span> mover's estimate has been <span class=\"text-primary-400 font-bold\">confirmed</span>.",
+            messageZh: "<span class=\"font-bold\">성민기사</span> 搬家师傅的估价已 <span class=\"text-primary-400 font-bold\">确定</span>。",
+            path: "/estimateRequest/pending/test-id",
             isRead: false,
             createdAt: new Date("2024-01-01T00:00:00Z"),
             updatedAt: new Date("2024-01-01T00:00:00Z"),
@@ -53,10 +54,11 @@ describe("NotificationService", () => {
             actionId: "action-2",
             userId: "user-1",
             userType: "CUSTOMER" as UserType,
-            type: "ESTIMATE_ARRIVED" as NotificationType,
-            title: "견적이 도착했습니다",
-            content: "테스트 알림 2",
-            path: null,
+            type: "WELCOME" as NotificationType,
+            messageKo: "<span class=\"font-bold\">회원가입</span>을 환영합니다!",
+            messageEn: "<span class=\"font-bold\">Registration</span> welcome!",
+            messageZh: "<span class=\"font-bold\">注册</span>欢迎！",
+            path: "/",
             isRead: true,
             createdAt: new Date("2024-01-02T00:00:00Z"),
             updatedAt: new Date("2024-01-02T00:00:00Z"),
@@ -76,7 +78,8 @@ describe("NotificationService", () => {
         "CUSTOMER" as UserType,
         "user-1",
         10,
-        0
+        0,
+        "ko" // 기본 언어
       );
 
       // Assertion
@@ -112,7 +115,7 @@ describe("NotificationService", () => {
 
       // Exercise & Assertion
       await expect(
-        notificationService.getNotifications("CUSTOMER" as UserType, "user-1", 10, 0)
+        notificationService.getNotifications("CUSTOMER" as UserType, "user-1", 10, 0, "ko")
       ).rejects.toThrow("레포지토리 에러");
       expect(mockRepository.getNotifications).toHaveBeenCalledWith(
         "CUSTOMER",
@@ -120,6 +123,94 @@ describe("NotificationService", () => {
         10,
         0
       );
+    });
+
+    it("언어별로 올바른 메시지를 선택한다", async () => {
+      // Setup
+      const mockNotifications = {
+        items: [
+          {
+            id: "notification-1",
+            actionId: "action-1",
+            userId: "user-1",
+            userType: "CUSTOMER" as UserType,
+            type: "ESTIMATE_STATUS_UPDATED" as NotificationType,
+            messageKo: "<span class=\"font-bold\">성민기사</span> 기사님의 견적이 <span class=\"text-primary-400 font-bold\">확정</span>되었어요.",
+            messageEn: "<span class=\"font-bold\">성민기사</span> mover's estimate has been <span class=\"text-primary-400 font-bold\">confirmed</span>.",
+            messageZh: "<span class=\"font-bold\">성민기사</span> 搬家师傅的估价已 <span class=\"text-primary-400 font-bold\">确定</span>。",
+            path: "/estimateRequest/pending/test-id",
+            isRead: false,
+            createdAt: new Date("2024-01-01T00:00:00Z"),
+            updatedAt: new Date("2024-01-01T00:00:00Z"),
+            deletedAt: null,
+          },
+        ],
+        total: 1,
+        limit: 10,
+        offset: 0,
+      };
+
+      mockRepository.getNotifications.mockResolvedValue(mockNotifications);
+      mockRepository.hasUnreadNotification.mockResolvedValue(false);
+
+      // Exercise - 영어 언어
+      const resultEn = await notificationService.getNotifications(
+        "CUSTOMER" as UserType,
+        "user-1",
+        10,
+        0,
+        "en"
+      );
+
+      // Assertion - 영어 메시지가 선택되었는지 확인
+      expect(resultEn.items[0].message).toBe("<span class=\"font-bold\">성민기사</span> mover's estimate has been <span class=\"text-primary-400 font-bold\">confirmed</span>.");
+      expect(resultEn.items[0].messageKo).toBeUndefined();
+      expect(resultEn.items[0].messageEn).toBeUndefined();
+      expect(resultEn.items[0].messageZh).toBeUndefined();
+    });
+
+    it("중국어 언어로 올바른 메시지를 선택한다", async () => {
+      // Setup
+      const mockNotifications = {
+        items: [
+          {
+            id: "notification-1",
+            actionId: "action-1",
+            userId: "user-1",
+            userType: "CUSTOMER" as UserType,
+            type: "ESTIMATE_STATUS_UPDATED" as NotificationType,
+            messageKo: "<span class=\"font-bold\">성민기사</span> 기사님의 견적이 <span class=\"text-primary-400 font-bold\">확정</span>되었어요.",
+            messageEn: "<span class=\"font-bold\">성민기사</span> mover's estimate has been <span class=\"text-primary-400 font-bold\">confirmed</span>.",
+            messageZh: "<span class=\"font-bold\">성민기사</span> 搬家师傅的估价已 <span class=\"text-primary-400 font-bold\">确定</span>。",
+            path: "/estimateRequest/pending/test-id",
+            isRead: false,
+            createdAt: new Date("2024-01-01T00:00:00Z"),
+            updatedAt: new Date("2024-01-01T00:00:00Z"),
+            deletedAt: null,
+          },
+        ],
+        total: 1,
+        limit: 10,
+        offset: 0,
+      };
+
+      mockRepository.getNotifications.mockResolvedValue(mockNotifications);
+      mockRepository.hasUnreadNotification.mockResolvedValue(false);
+
+      // Exercise - 중국어 언어
+      const resultZh = await notificationService.getNotifications(
+        "CUSTOMER" as UserType,
+        "user-1",
+        10,
+        0,
+        "zh"
+      );
+
+      // Assertion - 중국어 메시지가 선택되었는지 확인
+      expect(resultZh.items[0].message).toBe("<span class=\"font-bold\">성민기사</span> 搬家师傅的估价已 <span class=\"text-primary-400 font-bold\">确定</span>。");
+      expect(resultZh.items[0].messageKo).toBeUndefined();
+      expect(resultZh.items[0].messageEn).toBeUndefined();
+      expect(resultZh.items[0].messageZh).toBeUndefined();
     });
   });
 

@@ -38,8 +38,9 @@ export const notificationMiddleware: Prisma.Middleware = async (
               userType: receiver.userType,
               actionId: action.id,
               type: mapping.type,
-              title: message.title,
-              content: message.content,
+              messageKo: message.messageKo,
+              messageEn: message.messageEn,
+              messageZh: message.messageZh,
               path: message.path,
             },
           });
