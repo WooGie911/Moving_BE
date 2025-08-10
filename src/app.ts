@@ -13,7 +13,6 @@ import helmet from "helmet";
 import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware";
 import { setupManualSwagger } from "./utils/swagger-manual";
 import cookieParser from "cookie-parser";
-import { initializeScheduler } from "./utils/scheduler";
 
 // 라우터 import
 import authIndexRoutes from "./routes/authIndex.routes";
@@ -22,7 +21,6 @@ import businessRoutes from "./routes/index.routes";
 import passport from "./config/passport";
 
 const app = express();
-const PORT = process.env.PORT || 5050;
 
 // 보안 헤더 설정 (Helmet)
 app.use(
@@ -87,22 +85,5 @@ app.use(notFoundHandler);
 
 // 전역 에러 핸들링 (모든 에러를 통합 처리)
 app.use(errorHandler);
-
-// 스케줄러 초기화
-initializeScheduler();
-
-// 서버 시작
-const startServer = async () => {
-  try {
-    app.listen(PORT, () => {
-      console.log(`서버가 실행되었습니다. 포트번호 ${PORT} 에서 실행중입니다.`);
-    });
-  } catch (error) {
-    console.error("서버 시작 실패:", error);
-    process.exit(1);
-  }
-};
-
-startServer();
 
 export default app;

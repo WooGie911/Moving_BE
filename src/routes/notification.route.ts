@@ -140,7 +140,7 @@ const notificationRouter = Router();
  *         schema:
  *           type: string
  *           enum: [ko, en, zh]
- *         description: 언어 선택 (기본값: ko)
+ *         description: "언어 선택 (기본값: ko)"
  *     responses:
  *       200:
  *         description: 알림 목록 조회 성공
@@ -180,11 +180,7 @@ const notificationRouter = Router();
  *                 offset: 0
  *                 hasUnread: true
  */
-notificationRouter.get(
-  "/",
-  verifyAccessToken,
-  notificationController.getNotifications
-);
+notificationRouter.get("/", verifyAccessToken, notificationController.getNotifications);
 
 /**
  * @swagger
@@ -216,11 +212,7 @@ notificationRouter.get(
  *                 id: "clx..."
  *                 isRead: true
  */
-notificationRouter.patch(
-  "/:notificationId/read",
-  verifyAccessToken,
-  notificationController.readNotification
-);
+notificationRouter.patch("/:notificationId/read", verifyAccessToken, notificationController.readNotification);
 
 /**
  * @swagger
@@ -244,10 +236,6 @@ notificationRouter.patch(
  *               data:
  *                 count: 7
  */
-notificationRouter.patch(
-  "/read-all",
-  verifyAccessToken,
-  notificationController.readAllNotifications
-);
+notificationRouter.patch("/read-all", verifyAccessToken, notificationController.readAllNotifications);
 
 export default notificationRouter;
