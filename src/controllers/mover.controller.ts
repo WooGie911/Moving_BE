@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import moverService from "../services/mover.service";
 import * as Sentry from "@sentry/node";
+import { invalidateCacheByPattern } from "../middlewares/cacheMiddleware";
 
 const ALLOWED_SORT = ["rating", "career", "confirmed", "review"];
 
@@ -44,6 +45,7 @@ export const getMoverListController = async (
     };
     const { items, nextCursor, hasNext } =
       await moverService.fetchMoverList(filter);
+
     res.json({
       success: true,
       message: "기사님 목록을 성공적으로 조회했습니다.",
@@ -196,6 +198,18 @@ export const postDesignatedQuoteRequestController = async (
         data: null,
       });
     }
+
+    // 캐시 무효화: 기사님 관련 캐시들
+    if (request.moverId) {
+      // 기사님 상세 정보 캐시 무효화
+      const moverDetailPattern = `cache:GET:/movers/${request.moverId}:*`;
+      void invalidateCacheByPattern(moverDetailPattern);
+
+      // 기사님 목록 캐시 무효화 (견적 요청 상태 변경)
+      const moverListPattern = `cache:GET:/movers:*`;
+      void invalidateCacheByPattern(moverListPattern);
+    }
+
     res.json({
       success: true,
       message: "지정 견적 요청이 성공적으로 생성되었습니다.",
@@ -256,8 +270,6 @@ export const getDesignatedQuoteRequestCheckController = async (
         hasRequested: hasRequested,
         status: request?.status || null,
         requestId: request?.id || null,
-        message: request?.message || null,
-        expiresAt: request?.expiresAt || null,
       },
     });
   } catch (err) {

@@ -3,6 +3,7 @@ import * as moverController from "../controllers/mover.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 import { optionalAuth } from "../middlewares/optionalAuth";
 import { defaultTranslationMiddleware } from "../middlewares/translationMiddleware";
+import { cache } from "../middlewares/cacheMiddleware";
 
 const moverRouter = Router();
 
@@ -222,6 +223,7 @@ const moverRouter = Router();
  */
 moverRouter.get(
   "/",
+  cache({ ttlSeconds: 30, varyByAuth: false }), // 공개 데이터이므로 사용자별 캐시 분리 불필요
   defaultTranslationMiddleware,
   moverController.getMoverListController
 );
@@ -318,6 +320,7 @@ moverRouter.get(
 moverRouter.get(
   "/favorite",
   verifyAccessToken,
+  cache({ ttlSeconds: 3, varyByAuth: true }), // 사용자별 캐시 분리 (개인 데이터)
   defaultTranslationMiddleware,
   moverController.getFavoriteMoversController
 );
@@ -390,6 +393,7 @@ moverRouter.get(
 moverRouter.get(
   "/:moverId",
   optionalAuth,
+  cache({ ttlSeconds: 60, varyByAuth: true }), // 사용자별 캐시 분리 (로그인 여부에 따라 다른 응답)
   defaultTranslationMiddleware,
   moverController.getMoverDetailController
 );
