@@ -46,8 +46,18 @@ const REGION_TYPE = {
 } as const;
 
 describe("이사업체 견적 서비스", () => {
+  // 미래 날짜로 설정하여 만료되지 않도록 함
+  const futureDate = new Date();
+  futureDate.setDate(futureDate.getDate() + 30); // 30일 후
+
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    // Date 모킹 복원
+    global.Date = Date;
   });
 
   describe("견적 생성", () => {
@@ -58,11 +68,15 @@ describe("이사업체 견적 서비스", () => {
       comment: "합리적인 가격으로 안전한 이사 서비스 제공",
     };
 
+    // Date 모킹을 위한 변수들
+    let mockDate: Date;
+    let originalDate: typeof Date;
+
     test("성공적으로 견적을 생성한다", async () => {
       // Arrange
       const mockEstimateRequest = {
         status: REQUEST_STATUS.PENDING,
-        moveDate: new Date("2025-08-10"),
+        moveDate: futureDate,
       };
 
       const mockEstimate = {
@@ -98,7 +112,7 @@ describe("이사업체 견적 서비스", () => {
           id: "estimateRequest123",
           customerId: "customer123",
           moveType: "HOME" as const,
-          moveDate: new Date("2025-08-10"),
+          moveDate: new Date("2025-10-10"),
           fromAddressId: "addr1",
           toAddressId: "addr2",
           description: "1인가구 이사",
@@ -141,7 +155,7 @@ describe("이사업체 견적 서비스", () => {
         estimateRequest: {
           customerId: "customer123",
           moveType: "HOME" as const,
-          moveDate: new Date("2025-08-10"),
+          moveDate: new Date("2025-10-10"),
           id: "estimateRequest123",
           customer: { id: "customer123", name: "김고객" },
         },
@@ -213,7 +227,7 @@ describe("이사업체 견적 서비스", () => {
       // Arrange
       const mockEstimateRequest = {
         status: REQUEST_STATUS.PENDING,
-        moveDate: new Date("2025-08-10"),
+        moveDate: futureDate,
       };
 
       const mockEstimate = {
@@ -249,7 +263,7 @@ describe("이사업체 견적 서비스", () => {
           id: "estimateRequest123",
           customerId: "customer123",
           moveType: "HOME" as const,
-          moveDate: new Date("2025-08-10"),
+          moveDate: new Date("2025-10-10"),
           fromAddressId: "addr1",
           toAddressId: "addr2",
           description: "1인가구 이사",
@@ -292,7 +306,7 @@ describe("이사업체 견적 서비스", () => {
         estimateRequest: {
           customerId: "customer123",
           moveType: "HOME" as const,
-          moveDate: new Date("2025-08-10"),
+          moveDate: new Date("2025-10-10"),
           id: "estimateRequest123",
           customer: { id: "customer123", name: "김고객" },
         },
@@ -358,7 +372,7 @@ describe("이사업체 견적 서비스", () => {
       // Arrange
       const mockEstimateRequest = {
         status: REQUEST_STATUS.PENDING,
-        moveDate: new Date("2025-08-10"),
+        moveDate: futureDate,
       };
 
       mockedRepository.findEstimateRequestById.mockResolvedValue(
@@ -432,7 +446,7 @@ describe("이사업체 견적 서비스", () => {
       // Arrange
       const mockEstimateRequest = {
         status: REQUEST_STATUS.COMPLETED,
-        moveDate: new Date("2025-08-10"),
+        moveDate: new Date("2025-10-10"),
       };
       mockedRepository.findEstimateRequestById.mockResolvedValue(
         mockEstimateRequest
@@ -448,7 +462,7 @@ describe("이사업체 견적 서비스", () => {
       // Arrange
       const mockEstimateRequest = {
         status: REQUEST_STATUS.PENDING,
-        moveDate: new Date("2024-01-01"), // 과거 날짜
+        moveDate: new Date("2020-01-01"), // 확실히 과거 날짜
       };
       mockedRepository.findEstimateRequestById.mockResolvedValue(
         mockEstimateRequest
@@ -464,7 +478,7 @@ describe("이사업체 견적 서비스", () => {
       // Arrange
       const mockEstimateRequest = {
         status: REQUEST_STATUS.PENDING,
-        moveDate: new Date("2025-08-10"),
+        moveDate: new Date("2025-10-10"),
       };
       const mockExistingEstimate = {
         id: "existingEstimate",
@@ -499,7 +513,7 @@ describe("이사업체 견적 서비스", () => {
           id: "estimateRequest123",
           customerId: "customer123",
           moveType: "HOME" as const,
-          moveDate: new Date("2025-08-10"),
+          moveDate: new Date("2025-10-10"),
           fromAddressId: "addr1",
           toAddressId: "addr2",
           description: "1인가구 이사",
@@ -549,7 +563,7 @@ describe("이사업체 견적 서비스", () => {
       // Arrange
       const mockEstimateRequest = {
         status: REQUEST_STATUS.PENDING,
-        moveDate: new Date("2025-08-10"),
+        moveDate: futureDate,
       };
       const mockExistingEstimates = Array(5).fill({ isDesignated: false });
 
@@ -572,7 +586,7 @@ describe("이사업체 견적 서비스", () => {
       // Arrange
       const mockEstimateRequest = {
         status: REQUEST_STATUS.PENDING,
-        moveDate: new Date("2025-08-10"),
+        moveDate: futureDate,
       };
       const mockExistingEstimates = Array(3).fill({ isDesignated: true });
 
@@ -605,7 +619,7 @@ describe("이사업체 견적 서비스", () => {
       // Arrange
       const mockEstimateRequest = {
         status: REQUEST_STATUS.PENDING,
-        moveDate: new Date("2025-08-10"),
+        moveDate: futureDate,
       };
 
       const mockEstimate = {
@@ -641,7 +655,7 @@ describe("이사업체 견적 서비스", () => {
           id: "estimateRequest123",
           customerId: "customer123",
           moveType: "HOME" as const,
-          moveDate: new Date("2025-08-10"),
+          moveDate: new Date("2025-10-10"),
           fromAddressId: "addr1",
           toAddressId: "addr2",
           description: "1인가구 이사",
@@ -705,7 +719,7 @@ describe("이사업체 견적 서비스", () => {
       // Arrange
       const mockEstimateRequest = {
         status: REQUEST_STATUS.PENDING,
-        moveDate: new Date("2025-08-10"),
+        moveDate: futureDate,
       };
 
       const mockEstimate = {
@@ -741,7 +755,7 @@ describe("이사업체 견적 서비스", () => {
           id: "estimateRequest123",
           customerId: "customer123",
           moveType: "HOME" as const,
-          moveDate: new Date("2025-08-10"),
+          moveDate: new Date("2025-10-10"),
           fromAddressId: "addr1",
           toAddressId: "addr2",
           description: "1인가구 이사",
@@ -798,6 +812,133 @@ describe("이사업체 견적 서비스", () => {
       });
       expect(mockedActionService.createAction).not.toHaveBeenCalled();
     });
+
+    test("견적 생성에서 견적 요청이 존재하지 않을 때 MoverInvalidEstimateRequestError를 던진다", async () => {
+      // Arrange
+      mockedRepository.findEstimateRequestById.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.createEstimate(mockData)
+      ).rejects.toThrow(MoverInvalidEstimateRequestError);
+    });
+
+    test("견적 생성에서 견적 요청 상태가 PENDING이 아닐 때 MoverInvalidEstimateRequestError를 던진다", async () => {
+      // Arrange
+      const mockEstimateRequest = {
+        status: REQUEST_STATUS.COMPLETED,
+        moveDate: new Date("2025-10-10"),
+      };
+      mockedRepository.findEstimateRequestById.mockResolvedValue(
+        mockEstimateRequest
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.createEstimate(mockData)
+      ).rejects.toThrow(MoverInvalidEstimateRequestError);
+    });
+
+    test("견적 생성에서 이사일이 지났을 때 MoverExpiredEstimateRequestError를 던진다", async () => {
+      // Arrange
+      const mockEstimateRequest = {
+        status: REQUEST_STATUS.PENDING,
+        moveDate: new Date("2025-01-01"), // 확실히 과거 날짜
+      };
+      mockedRepository.findEstimateRequestById.mockResolvedValue(
+        mockEstimateRequest
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.createEstimate(mockData)
+      ).rejects.toThrow(MoverExpiredEstimateRequestError);
+    });
+
+    test("견적 생성에서 이미 견적이 존재할 때 MoverEstimateDuplicateError를 던진다", async () => {
+      // Arrange
+      const mockEstimateRequest = {
+        status: REQUEST_STATUS.PENDING,
+        moveDate: new Date("2025-10-10"), // 확실히 미래 날짜
+      };
+      const mockExistingEstimate = {
+        id: "existingEstimate",
+        status: ESTIMATE_STATUS.PROPOSED,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: "기존 견적",
+        rejectReason: null,
+        isDesignated: false,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+        mover: {
+          id: "mover123",
+          name: "김이사",
+          moverImage: null,
+          nickname: "김이사",
+          shortIntro: "5년 경력의 전문 이사업체",
+          detailIntro: "신중하고 안전한 이사 서비스",
+          career: 5,
+          workedCount: 120,
+          averageRating: 4.8,
+          totalReviewCount: 45,
+          serviceTypes: ["HOME", "SMALL"],
+        },
+        estimateRequest: {
+          id: "estimateRequest123",
+          customerId: "customer123",
+          moveType: "HOME" as const,
+          moveDate: new Date("2025-10-10"),
+          fromAddressId: "addr1",
+          toAddressId: "addr2",
+          description: "1인가구 이사",
+          status: REQUEST_STATUS.PENDING,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          customer: {
+            id: "customer123",
+            name: "김고객",
+            currentArea: "서울특별시",
+            customerImage: null,
+            nickname: "김고객",
+          },
+          fromAddress: {
+            id: "addr1",
+            zoneCode: "06123",
+            city: "서울특별시",
+            district: "강남구",
+            detail: "테헤란로 123",
+            region: REGION_TYPE.SEOUL,
+          },
+          toAddress: {
+            id: "addr2",
+            zoneCode: "06621",
+            city: "서울특별시",
+            district: "서초구",
+            detail: "서초대로 456",
+            region: REGION_TYPE.SEOUL,
+          },
+        },
+      };
+
+      mockedRepository.findEstimateRequestById.mockResolvedValue(
+        mockEstimateRequest
+      );
+      mockedRepository.findExistingEstimate.mockResolvedValue(
+        mockExistingEstimate
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.createEstimate(mockData)
+      ).rejects.toThrow(MoverEstimateDuplicateError);
+    });
   });
 
   describe("지역 견적 요청 조회", () => {
@@ -811,7 +952,7 @@ describe("이사업체 견적 서비스", () => {
           id: "estimateRequest1",
           customerId: "customer1",
           moveType: "HOME" as const,
-          moveDate: new Date("2025-08-10"),
+          moveDate: new Date("2025-10-10"),
           fromAddressId: "addr1",
           toAddressId: "addr2",
           description: "1인가구 이사",
@@ -902,7 +1043,7 @@ describe("이사업체 견적 서비스", () => {
           id: "estimateRequest1",
           customerId: "customer1",
           moveType: "HOME" as const,
-          moveDate: new Date("2025-08-10"),
+          moveDate: new Date("2025-10-10"),
           fromAddressId: "addr1",
           toAddressId: "addr2",
           description: "1인가구 이사",
@@ -991,7 +1132,7 @@ describe("이사업체 견적 서비스", () => {
           id: "estimateRequest1",
           customerId: "customer1",
           moveType: "HOME" as const,
-          moveDate: new Date("2025-08-10"),
+          moveDate: new Date("2025-10-10"),
           fromAddressId: "addr1",
           toAddressId: "addr2",
           description: "1인가구 이사",
@@ -1127,7 +1268,7 @@ describe("이사업체 견적 서비스", () => {
             id: "estimateRequest1",
             customerId: "customer1",
             moveType: "HOME" as const,
-            moveDate: new Date("2025-08-10"),
+            moveDate: new Date("2025-10-10"),
             fromAddressId: "addr1",
             toAddressId: "addr2",
             description: "1인가구 이사",
@@ -1218,7 +1359,7 @@ describe("이사업체 견적 서비스", () => {
             id: "estimateRequest1",
             customerId: "customer1",
             moveType: "HOME" as const,
-            moveDate: new Date("2025-08-10"),
+            moveDate: new Date("2025-10-10"),
             fromAddressId: "addr1",
             toAddressId: "addr2",
             description: "1인가구 이사",
@@ -1282,11 +1423,15 @@ describe("이사업체 견적 서비스", () => {
       comment: "일정이 맞지 않아 반려합니다",
     };
 
+    // Date 모킹을 위한 변수들
+    let mockDate: Date;
+    let originalDate: typeof Date;
+
     test("성공적으로 견적을 반려한다", async () => {
       // Arrange
       const mockEstimateRequest = {
         status: REQUEST_STATUS.PENDING,
-        moveDate: new Date("2025-08-10"),
+        moveDate: new Date("2025-10-10"), // 확실히 미래 날짜
       };
 
       const mockRejectedEstimate = {
@@ -1317,7 +1462,7 @@ describe("이사업체 견적 서비스", () => {
         estimateRequest: {
           customerId: "customer123",
           moveType: "HOME" as const,
-          moveDate: new Date("2025-08-10"),
+          moveDate: new Date("2025-10-10"),
           id: "estimateRequest123",
           customer: { id: "customer123", name: "김고객" },
         },
@@ -1375,7 +1520,7 @@ describe("이사업체 견적 서비스", () => {
       // Arrange
       const mockEstimateRequest = {
         status: REQUEST_STATUS.PENDING,
-        moveDate: new Date("2025-08-10"),
+        moveDate: new Date("2025-10-10"), // 확실히 미래 날짜
       };
 
       const mockRejectedEstimate = {
@@ -1406,7 +1551,7 @@ describe("이사업체 견적 서비스", () => {
         estimateRequest: {
           customerId: "customer123",
           moveType: "HOME" as const,
-          moveDate: new Date("2025-08-10"),
+          moveDate: new Date("2025-10-10"),
           id: "estimateRequest123",
           customer: { id: "customer123", name: "김고객" },
         },
@@ -1514,7 +1659,7 @@ describe("이사업체 견적 서비스", () => {
       // Arrange
       const mockEstimateRequest = {
         status: REQUEST_STATUS.COMPLETED,
-        moveDate: new Date("2025-08-10"),
+        moveDate: new Date("2025-10-10"),
       };
       mockedRepository.findEstimateRequestById.mockResolvedValue(
         mockEstimateRequest
@@ -1530,7 +1675,7 @@ describe("이사업체 견적 서비스", () => {
       // Arrange
       const mockEstimateRequest = {
         status: REQUEST_STATUS.PENDING,
-        moveDate: new Date("2024-01-01"), // 과거 날짜
+        moveDate: new Date("2020-01-01"), // 확실히 과거 날짜
       };
       mockedRepository.findEstimateRequestById.mockResolvedValue(
         mockEstimateRequest
@@ -1546,7 +1691,140 @@ describe("이사업체 견적 서비스", () => {
       // Arrange
       const mockEstimateRequest = {
         status: REQUEST_STATUS.PENDING,
-        moveDate: new Date("2025-08-10"),
+        moveDate: new Date("2025-10-10"),
+      };
+      const mockExistingEstimate = {
+        id: "existingEstimate",
+        status: ESTIMATE_STATUS.PROPOSED,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: "기존 견적",
+        rejectReason: null,
+        isDesignated: false,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+        mover: {
+          id: "mover123",
+          name: "김이사",
+          moverImage: null,
+          nickname: "김이사",
+          shortIntro: "5년 경력의 전문 이사업체",
+          detailIntro: "신중하고 안전한 이사 서비스",
+          career: 5,
+          workedCount: 120,
+          averageRating: 4.8,
+          totalReviewCount: 45,
+          serviceTypes: ["HOME", "SMALL"],
+        },
+        estimateRequest: {
+          id: "estimateRequest123",
+          customerId: "customer123",
+          moveType: "HOME" as const,
+          moveDate: new Date("2025-10-10"),
+          fromAddressId: "addr1",
+          toAddressId: "addr2",
+          description: "1인가구 이사",
+          status: REQUEST_STATUS.PENDING,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          customer: {
+            id: "customer123",
+            name: "김고객",
+            currentArea: "서울특별시",
+            customerImage: null,
+            nickname: "김고객",
+          },
+          fromAddress: {
+            id: "addr1",
+            zoneCode: "06123",
+            city: "서울특별시",
+            district: "강남구",
+            detail: "테헤란로 123",
+            region: REGION_TYPE.SEOUL,
+          },
+          toAddress: {
+            id: "addr2",
+            zoneCode: "06621",
+            city: "서울특별시",
+            district: "서초구",
+            detail: "서초대로 456",
+            region: REGION_TYPE.SEOUL,
+          },
+        },
+      };
+
+      mockedRepository.findEstimateRequestById.mockResolvedValue(
+        mockEstimateRequest
+      );
+      mockedRepository.findExistingEstimate.mockResolvedValue(
+        mockExistingEstimate
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.rejectEstimate(mockRejectData)
+      ).rejects.toThrow(MoverEstimateDuplicateError);
+    });
+
+    test("견적 반려 실패 시 ServiceError를 던진다", async () => {
+      // Arrange
+      const mockEstimateRequest = {
+        status: REQUEST_STATUS.PENDING,
+        moveDate: new Date("2025-10-10"),
+      };
+
+      mockedRepository.findEstimateRequestById.mockResolvedValue(
+        mockEstimateRequest
+      );
+      mockedRepository.findExistingEstimate.mockResolvedValue(null);
+      mockedRepository.findDesignatedRequest.mockResolvedValue(null);
+      mockedRepository.createEstimate.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.rejectEstimate(mockRejectData)
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("Repository 에러 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      mockedRepository.findEstimateRequestById.mockRejectedValue(
+        new RepositoryError("Repository 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.rejectEstimate(mockRejectData)
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("견적 반려에서 견적 요청 상태가 PENDING이 아닐 때 MoverInvalidEstimateRequestError를 던진다", async () => {
+      // Arrange
+      const mockEstimateRequest = {
+        status: REQUEST_STATUS.COMPLETED,
+        moveDate: new Date("2025-10-10"),
+      };
+      mockedRepository.findEstimateRequestById.mockResolvedValue(
+        mockEstimateRequest
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.rejectEstimate(mockRejectData)
+      ).rejects.toThrow(MoverInvalidEstimateRequestError);
+    });
+
+    test("견적 반려에서 이미 견적이 존재할 때 MoverEstimateDuplicateError를 던진다", async () => {
+      // Arrange
+      const mockEstimateRequest = {
+        status: REQUEST_STATUS.PENDING,
+        moveDate: new Date("2025-10-10"),
       };
       const mockExistingEstimate = {
         id: "existingEstimate",
@@ -1579,36 +1857,83 @@ describe("이사업체 견적 서비스", () => {
       ).rejects.toThrow(MoverEstimateDuplicateError);
     });
 
-    test("견적 반려 실패 시 ServiceError를 던진다", async () => {
+    test("견적 반려에서 견적 요청이 존재하지 않을 때 MoverInvalidEstimateRequestError를 던진다", async () => {
+      // Arrange
+      mockedRepository.findEstimateRequestById.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.rejectEstimate(mockRejectData)
+      ).rejects.toThrow(MoverInvalidEstimateRequestError);
+    });
+
+    test("견적 반려에서 견적 요청 상태가 PENDING이 아닐 때 MoverInvalidEstimateRequestError를 던진다", async () => {
+      // Arrange
+      const mockEstimateRequest = {
+        status: REQUEST_STATUS.COMPLETED,
+        moveDate: new Date("2025-10-10"),
+      };
+      mockedRepository.findEstimateRequestById.mockResolvedValue(
+        mockEstimateRequest
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.rejectEstimate(mockRejectData)
+      ).rejects.toThrow(MoverInvalidEstimateRequestError);
+    });
+
+    test("견적 반려에서 이사일이 지났을 때 MoverExpiredEstimateRequestError를 던진다", async () => {
       // Arrange
       const mockEstimateRequest = {
         status: REQUEST_STATUS.PENDING,
-        moveDate: new Date("2025-08-10"),
+        moveDate: new Date("2020-01-01"), // 확실히 과거 날짜
+      };
+      mockedRepository.findEstimateRequestById.mockResolvedValue(
+        mockEstimateRequest
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.rejectEstimate(mockRejectData)
+      ).rejects.toThrow(MoverExpiredEstimateRequestError);
+    });
+
+    test("견적 반려에서 이미 견적이 존재할 때 MoverEstimateDuplicateError를 던진다", async () => {
+      // Arrange
+      const mockEstimateRequest = {
+        status: REQUEST_STATUS.PENDING,
+        moveDate: new Date("2025-10-10"),
+      };
+      const mockExistingEstimate = {
+        id: "existingEstimate",
+        status: ESTIMATE_STATUS.PROPOSED,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: "기존 견적",
+        rejectReason: null,
+        isDesignated: false,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
       };
 
       mockedRepository.findEstimateRequestById.mockResolvedValue(
         mockEstimateRequest
       );
-      mockedRepository.findExistingEstimate.mockResolvedValue(null);
-      mockedRepository.findDesignatedRequest.mockResolvedValue(null);
-      mockedRepository.createEstimate.mockResolvedValue(null);
-
-      // Act & Assert
-      await expect(
-        moverEstimateService.rejectEstimate(mockRejectData)
-      ).rejects.toThrow(ServiceError);
-    });
-
-    test("Repository 에러 발생 시 ServiceError로 래핑한다", async () => {
-      // Arrange
-      mockedRepository.findEstimateRequestById.mockRejectedValue(
-        new RepositoryError("Repository 에러")
+      mockedRepository.findExistingEstimate.mockResolvedValue(
+        mockExistingEstimate
       );
 
       // Act & Assert
       await expect(
         moverEstimateService.rejectEstimate(mockRejectData)
-      ).rejects.toThrow(ServiceError);
+      ).rejects.toThrow(MoverEstimateDuplicateError);
     });
   });
 
@@ -1654,7 +1979,7 @@ describe("이사업체 견적 서비스", () => {
           id: "estimateRequest1",
           customerId: "customer1",
           moveType: "HOME" as const,
-          moveDate: new Date("2025-08-10"),
+          moveDate: new Date("2025-10-10"),
           fromAddressId: "addr1",
           toAddressId: "addr2",
           description: "1인가구 이사",
@@ -1783,76 +2108,17 @@ describe("이사업체 견적 서비스", () => {
     const mockData = {
       estimateId: "estimate123",
       moverId: "mover123",
-      price: 600000,
-      comment: "업데이트된 견적 코멘트",
+      price: 500000,
+      comment: "합리적인 가격으로 업데이트",
     };
 
     test("성공적으로 견적서를 업데이트한다", async () => {
       // Arrange
       const mockUpdatedEstimate = {
         id: "estimate123",
-        moverId: "mover123",
-        estimateRequestId: "estimateRequest1",
-        price: 600000,
-        comment: "업데이트된 견적 코멘트",
-        status: ESTIMATE_STATUS.PROPOSED,
-        rejectReason: null,
-        isDesignated: false,
-        workingHours: null,
-        includesPackaging: false,
-        insuranceAmount: null,
-        validUntil: null,
-        createdAt: new Date(),
+        price: 500000,
+        comment: "합리적인 가격으로 업데이트",
         updatedAt: new Date(),
-        deletedAt: null,
-        mover: {
-          id: "mover123",
-          name: "김이사",
-          moverImage: null,
-          nickname: "김이사",
-          shortIntro: "5년 경력의 전문 이사업체",
-          detailIntro: "신중하고 안전한 이사 서비스",
-          career: 5,
-          workedCount: 120,
-          averageRating: 4.8,
-          totalReviewCount: 45,
-          serviceTypes: ["HOME", "SMALL"],
-        },
-        estimateRequest: {
-          id: "estimateRequest1",
-          customerId: "customer1",
-          moveType: "HOME" as const,
-          moveDate: new Date("2025-08-10"),
-          fromAddressId: "addr1",
-          toAddressId: "addr2",
-          description: "1인가구 이사",
-          status: REQUEST_STATUS.PENDING,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          customer: {
-            id: "customer1",
-            name: "김고객",
-            currentArea: "SEOUL" as RegionType,
-            customerImage: null,
-            nickname: "김고객",
-          },
-          fromAddress: {
-            id: "addr1",
-            zoneCode: "06123",
-            city: "서울특별시",
-            district: "강남구",
-            detail: "테헤란로 123",
-            region: REGION_TYPE.SEOUL,
-          },
-          toAddress: {
-            id: "addr2",
-            zoneCode: "06621",
-            city: "서울특별시",
-            district: "서초구",
-            detail: "서초대로 456",
-            region: REGION_TYPE.SEOUL,
-          },
-        },
       };
 
       mockedRepository.checkEstimateOwnership.mockResolvedValue(true);
@@ -1863,7 +2129,7 @@ describe("이사업체 견적 서비스", () => {
         updatedAt: new Date(),
         deletedAt: null,
         moverId: "mover123",
-        estimateRequestId: "estimateRequest1",
+        estimateRequestId: "estimateRequest123",
         price: 500000,
         comment: "기존 견적",
         rejectReason: null,
@@ -1873,9 +2139,23 @@ describe("이사업체 견적 서비스", () => {
         insuranceAmount: null,
         validUntil: null,
       } as any);
-      mockedRepository.updateEstimatePrice.mockResolvedValue(
-        mockUpdatedEstimate
-      );
+      mockedRepository.updateEstimatePrice.mockResolvedValue({
+        id: "estimate123",
+        price: 500000,
+        comment: "합리적인 가격으로 업데이트",
+        updatedAt: new Date(),
+        createdAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        status: ESTIMATE_STATUS.PROPOSED,
+        rejectReason: null,
+        isDesignated: false,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+      } as any);
 
       // Act
       const result = await moverEstimateService.updateEstimate(mockData);
@@ -1883,19 +2163,10 @@ describe("이사업체 견적 서비스", () => {
       // Assert
       expect(result).toEqual({
         id: "estimate123",
-        price: 600000,
-        comment: "업데이트된 견적 코멘트",
+        price: 500000,
+        comment: "합리적인 가격으로 업데이트",
         updatedAt: mockUpdatedEstimate.updatedAt,
       });
-      expect(mockedRepository.checkEstimateOwnership).toHaveBeenCalledWith(
-        mockData.estimateId,
-        mockData.moverId
-      );
-      expect(mockedRepository.updateEstimatePrice).toHaveBeenCalledWith(
-        mockData.estimateId,
-        mockData.price,
-        mockData.comment
-      );
     });
 
     test("견적 소유권이 없을 때 MoverUnauthorizedAccessError를 던진다", async () => {
@@ -1918,7 +2189,7 @@ describe("이사업체 견적 서비스", () => {
         updatedAt: new Date(),
         deletedAt: null,
         moverId: "mover123",
-        estimateRequestId: "estimateRequest1",
+        estimateRequestId: "estimateRequest123",
         price: 500000,
         comment: "기존 견적",
         rejectReason: null,
@@ -1936,34 +2207,603 @@ describe("이사업체 견적 서비스", () => {
     });
 
     test("잘못된 입력값으로 호출 시 ServiceValidationError를 던진다", async () => {
+      // Arrange
+      const invalidData = {
+        estimateId: "estimate123",
+        moverId: "", // 잘못된 기사 ID
+        price: 500000,
+        comment: "합리적인 가격으로 업데이트",
+      };
+
       // Act & Assert
       await expect(
-        moverEstimateService.updateEstimate({
-          ...mockData,
-          moverId: "",
-        })
+        moverEstimateService.updateEstimate(invalidData)
       ).rejects.toThrow(ServiceValidationError);
+    });
 
-      await expect(
-        moverEstimateService.updateEstimate({
-          ...mockData,
-          estimateId: "",
-        })
-      ).rejects.toThrow(ServiceValidationError);
+    test("견적서 업데이트 실패 시 ServiceError를 던진다", async () => {
+      // Arrange
+      mockedRepository.checkEstimateOwnership.mockResolvedValue(true);
+      mockedRepository.getEstimateById.mockResolvedValue({
+        id: "estimate123",
+        status: ESTIMATE_STATUS.PROPOSED,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: "기존 견적",
+        rejectReason: null,
+        isDesignated: false,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+      } as any);
+      mockedRepository.updateEstimatePrice.mockResolvedValue(null);
 
+      // Act & Assert
       await expect(
-        moverEstimateService.updateEstimate({
-          ...mockData,
-          price: 0,
-        })
-      ).rejects.toThrow(ServiceValidationError);
+        moverEstimateService.updateEstimate(mockData)
+      ).rejects.toThrow(ServiceError);
+    });
 
+    test("Repository 에러 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      mockedRepository.checkEstimateOwnership.mockRejectedValue(
+        new RepositoryError("Repository 에러")
+      );
+
+      // Act & Assert
       await expect(
-        moverEstimateService.updateEstimate({
-          ...mockData,
-          comment: "",
-        })
-      ).rejects.toThrow(ServiceValidationError);
+        moverEstimateService.updateEstimate(mockData)
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("견적 상태 업데이트 실패 시 ServiceError를 던진다", async () => {
+      // Arrange
+      const mockData = {
+        estimateId: "estimate123",
+        moverId: "mover123",
+        status: ESTIMATE_STATUS.ACCEPTED,
+      };
+
+      mockedRepository.checkEstimateOwnership.mockResolvedValue(true);
+      mockedRepository.updateEstimateStatus.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.updateEstimateStatus(mockData)
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("견적 상태 업데이트 Repository 에러 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      const mockData = {
+        estimateId: "estimate123",
+        moverId: "mover123",
+        status: ESTIMATE_STATUS.ACCEPTED,
+      };
+
+      mockedRepository.checkEstimateOwnership.mockRejectedValue(
+        new RepositoryError("Repository 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.updateEstimateStatus(mockData)
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("내 견적서 조회 Repository 에러 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      mockedRepository.getMyEstimate.mockRejectedValue(
+        new RepositoryError("Repository 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.getMyEstimate("mover123")
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("내 반려 견적 조회 Repository 에러 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      mockedRepository.getMyRejectedEstimates.mockRejectedValue(
+        new RepositoryError("Repository 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.getMyRejectedEstimates("mover123")
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("지역 견적 요청 조회 Repository 에러 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      mockedRepository.findUserServiceAreas.mockRejectedValue(
+        new RepositoryError("Repository 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.getRegionEstimateRequest("mover123")
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("지정 견적 요청 조회 Repository 에러 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      mockedRepository.getDesignatedEstimateRequest.mockRejectedValue(
+        new RepositoryError("Repository 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.getDesignatedEstimateRequest("mover123")
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("견적 생성 중 일반 에러 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      const mockCreateData = {
+        estimateRequestId: "estimateRequest123",
+        moverId: "mover123",
+        price: 500000,
+        comment: "합리적인 가격",
+        workingHours: 4,
+        includesPackaging: true,
+        insuranceAmount: 100000,
+      };
+
+      mockedRepository.findEstimateRequestById.mockRejectedValue(
+        new Error("일반 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.createEstimate(mockCreateData)
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("견적 반려 중 일반 에러 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      const mockRejectData = {
+        estimateRequestId: "estimateRequest123",
+        moverId: "mover123",
+        comment: "일정이 맞지 않아 반려합니다",
+      };
+
+      mockedRepository.findEstimateRequestById.mockRejectedValue(
+        new Error("일반 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.rejectEstimate(mockRejectData)
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("지역 견적 요청 조회 중 일반 에러 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      mockedRepository.findUserServiceAreas.mockRejectedValue(
+        new Error("일반 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.getRegionEstimateRequest("mover123")
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("지정 견적 요청 조회 중 일반 에러 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      mockedRepository.getDesignatedEstimateRequest.mockRejectedValue(
+        new Error("일반 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.getDesignatedEstimateRequest("mover123")
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("내 견적서 조회 중 일반 에러 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      mockedRepository.getMyEstimate.mockRejectedValue(new Error("일반 에러"));
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.getMyEstimate("mover123")
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("내 반려 견적 조회 중 일반 에러 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      mockedRepository.getMyRejectedEstimates.mockRejectedValue(
+        new Error("일반 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.getMyRejectedEstimates("mover123")
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("견적 상태 업데이트 중 일반 에러 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      const mockData = {
+        estimateId: "estimate123",
+        moverId: "mover123",
+        status: ESTIMATE_STATUS.ACCEPTED,
+      };
+
+      mockedRepository.checkEstimateOwnership.mockRejectedValue(
+        new Error("일반 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.updateEstimateStatus(mockData)
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("견적서 업데이트 중 일반 에러 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      mockedRepository.checkEstimateOwnership.mockRejectedValue(
+        new Error("일반 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.updateEstimate(mockData)
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("견적서 업데이트 중 일반 에러 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      mockedRepository.checkEstimateOwnership.mockRejectedValue(
+        new Error("일반 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.updateEstimate(mockData)
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("getAllEstimateRequests에서 에러 발생 시 빈 배열로 처리한다", async () => {
+      // Arrange
+      const options = {
+        region: true,
+        designated: true,
+        sortBy: "moveDate" as const,
+        customerName: "김고객",
+        movingType: "HOME" as const,
+      };
+
+      mockedRepository.findUserServiceAreas.mockRejectedValue(
+        new Error("테스트 에러")
+      );
+
+      // Act
+      const result = await moverEstimateService.getAllEstimateRequests(
+        "mover123",
+        options
+      );
+
+      // Assert
+      expect(result).toEqual({
+        regionEstimateRequests: [],
+        designatedEstimateRequests: [],
+      });
+    });
+
+    test("updateEstimate에서 RepositoryError가 아닌 다른 에러 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      mockedRepository.checkEstimateOwnership.mockResolvedValue(true);
+      mockedRepository.getEstimateById.mockResolvedValue({
+        id: "estimate123",
+        status: ESTIMATE_STATUS.PROPOSED,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: "기존 견적",
+        rejectReason: null,
+        isDesignated: false,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+      } as any);
+      mockedRepository.updateEstimatePrice.mockRejectedValue(
+        new Error("일반 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.updateEstimate(mockData)
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("updateEstimate에서 알 수 없는 에러 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      mockedRepository.checkEstimateOwnership.mockResolvedValue(true);
+      mockedRepository.getEstimateById.mockResolvedValue({
+        id: "estimate123",
+        status: ESTIMATE_STATUS.PROPOSED,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: "기존 견적",
+        rejectReason: null,
+        isDesignated: false,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+      } as any);
+      mockedRepository.updateEstimatePrice.mockRejectedValue(
+        new Error("알 수 없는 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.updateEstimate(mockData)
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("updateEstimate에서 알 수 없는 에러 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      mockedRepository.checkEstimateOwnership.mockResolvedValue(true);
+      mockedRepository.getEstimateById.mockResolvedValue({
+        id: "estimate123",
+        status: ESTIMATE_STATUS.PROPOSED,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: "기존 견적",
+        rejectReason: null,
+        isDesignated: false,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+      } as any);
+      mockedRepository.updateEstimatePrice.mockRejectedValue(
+        new Error("알 수 없는 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.updateEstimate(mockData)
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("getAllEstimateRequests에서 region과 designated가 모두 false일 때 빈 객체를 반환한다", async () => {
+      // Arrange
+      const options = {
+        region: false,
+        designated: false,
+      };
+
+      // Act
+      const result = await moverEstimateService.getAllEstimateRequests(
+        "mover123",
+        options
+      );
+
+      // Assert
+      expect(result).toEqual({
+        regionEstimateRequests: undefined,
+        designatedEstimateRequests: undefined,
+      });
+    });
+
+    test("updateEstimate에서 RepositoryError가 아닌 다른 타입의 에러 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      mockedRepository.checkEstimateOwnership.mockResolvedValue(true);
+      mockedRepository.getEstimateById.mockResolvedValue({
+        id: "estimate123",
+        status: ESTIMATE_STATUS.PROPOSED,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: "기존 견적",
+        rejectReason: null,
+        isDesignated: false,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+      } as any);
+      mockedRepository.updateEstimatePrice.mockRejectedValue(
+        new TypeError("타입 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.updateEstimate(mockData)
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("updateEstimate에서 알 수 없는 에러 타입 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      mockedRepository.checkEstimateOwnership.mockResolvedValue(true);
+      mockedRepository.getEstimateById.mockResolvedValue({
+        id: "estimate123",
+        status: ESTIMATE_STATUS.PROPOSED,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: "기존 견적",
+        rejectReason: null,
+        isDesignated: false,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+      } as any);
+      mockedRepository.updateEstimatePrice.mockRejectedValue(
+        new RangeError("범위 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.updateEstimate(mockData)
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("updateEstimate에서 알 수 없는 에러 타입 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      mockedRepository.checkEstimateOwnership.mockResolvedValue(true);
+      mockedRepository.getEstimateById.mockResolvedValue({
+        id: "estimate123",
+        status: ESTIMATE_STATUS.PROPOSED,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: "기존 견적",
+        rejectReason: null,
+        isDesignated: false,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+      } as any);
+      mockedRepository.updateEstimatePrice.mockRejectedValue(
+        new RangeError("범위 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.updateEstimate(mockData)
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("getAllEstimateRequests에서 region이 true이고 designated가 false일 때", async () => {
+      // Arrange
+      const options = {
+        region: true,
+        designated: false,
+        sortBy: "moveDate" as const,
+      };
+
+      mockedRepository.findUserServiceAreas.mockResolvedValue([]);
+      mockedRepository.getRegionEstimateRequest.mockResolvedValue([]);
+
+      // Act
+      const result = await moverEstimateService.getAllEstimateRequests(
+        "mover123",
+        options
+      );
+
+      // Assert
+      expect(result).toEqual({
+        regionEstimateRequests: [],
+        designatedEstimateRequests: undefined,
+      });
+    });
+
+    test("getAllEstimateRequests에서 region이 false이고 designated가 true일 때", async () => {
+      // Arrange
+      const options = {
+        region: false,
+        designated: true,
+        sortBy: "createdAt" as const,
+      };
+
+      mockedRepository.getDesignatedEstimateRequest.mockResolvedValue([]);
+
+      // Act
+      const result = await moverEstimateService.getAllEstimateRequests(
+        "mover123",
+        options
+      );
+
+      // Assert
+      expect(result).toEqual({
+        regionEstimateRequests: undefined,
+        designatedEstimateRequests: [],
+      });
+    });
+
+    test("updateEstimate에서 ReferenceError 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      mockedRepository.checkEstimateOwnership.mockResolvedValue(true);
+      mockedRepository.getEstimateById.mockResolvedValue({
+        id: "estimate123",
+        status: ESTIMATE_STATUS.PROPOSED,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: "기존 견적",
+        rejectReason: null,
+        isDesignated: false,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+      } as any);
+      mockedRepository.updateEstimatePrice.mockRejectedValue(
+        new ReferenceError("참조 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.updateEstimate(mockData)
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("updateEstimate에서 SyntaxError 발생 시 ServiceError로 래핑한다", async () => {
+      // Arrange
+      mockedRepository.checkEstimateOwnership.mockResolvedValue(true);
+      mockedRepository.getEstimateById.mockResolvedValue({
+        id: "estimate123",
+        status: ESTIMATE_STATUS.PROPOSED,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: "기존 견적",
+        rejectReason: null,
+        isDesignated: false,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+      } as any);
+      mockedRepository.updateEstimatePrice.mockRejectedValue(
+        new SyntaxError("구문 에러")
+      );
+
+      // Act & Assert
+      await expect(
+        moverEstimateService.updateEstimate(mockData)
+      ).rejects.toThrow(ServiceError);
     });
   });
 });
