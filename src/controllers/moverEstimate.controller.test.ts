@@ -15,6 +15,11 @@ import {
   TCreateEstimateResponse,
   TRejectEstimateResponse,
 } from "../types/moverEstimate";
+import {
+  ServiceValidationError,
+  MoverEstimateDuplicateError,
+  ServiceError,
+} from "../types/errors.types";
 
 // Service 모킹
 jest.mock("../services/moverEstimate.service");
@@ -179,13 +184,215 @@ describe("이사업체 견적 컨트롤러", () => {
       });
     });
 
+    it("견적 요청 ID가 없을 때 ControllerValidationError를 던진다", async () => {
+      // Arrange
+      mockRequest.body = {
+        price: 500000,
+        comment: "합리적인 가격으로 안전한 이사 서비스 제공",
+      };
+
+      // Act
+      await moverEstimateController.createEstimate(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message:
+          "[Controller 오류] 요청 검증 실패: 유효하지 않은 견적 요청 ID입니다",
+        code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
+      });
+    });
+
+    it("가격이 0 이하일 때 ControllerValidationError를 던진다", async () => {
+      // Arrange
+      mockRequest.body = {
+        estimateRequestId: "estimateRequest123",
+        price: 0,
+        comment: "합리적인 가격으로 안전한 이사 서비스 제공",
+      };
+
+      // Act
+      await moverEstimateController.createEstimate(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "[Controller 오류] 요청 검증 실패: 유효하지 않은 가격입니다",
+        code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
+      });
+    });
+
+    it("견적 코멘트가 없을 때 ControllerValidationError를 던진다", async () => {
+      // Arrange
+      mockRequest.body = {
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: "",
+      };
+
+      // Act
+      await moverEstimateController.createEstimate(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "[Controller 오류] 요청 검증 실패: 견적 코멘트를 입력해주세요",
+        code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
+      });
+    });
+
+    it("견적 코멘트가 1000자를 초과할 때 ControllerValidationError를 던진다", async () => {
+      // Arrange
+      const longComment = "a".repeat(1001);
+      mockRequest.body = {
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: longComment,
+      };
+
+      // Act
+      await moverEstimateController.createEstimate(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message:
+          "[Controller 오류] 요청 검증 실패: 견적 코멘트는 1000자 이내로 입력해주세요",
+        code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
+      });
+    });
+
+    it("ServiceValidationError 발생 시 적절한 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.body = {
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: "합리적인 가격으로 안전한 이사 서비스 제공",
+      };
+      const error = new ServiceValidationError("서비스 검증 오류");
+      mockedService.createEstimate.mockRejectedValue(error);
+
+      // Act
+      await moverEstimateController.createEstimate(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "[Service 오류] 비즈니스 검증 실패: 서비스 검증 오류",
+        code: ErrorCode.SERVICE_VALIDATION_ERROR,
+      });
+    });
+
+    it("MoverEstimateDuplicateError 발생 시 적절한 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.body = {
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: "합리적인 가격으로 안전한 이사 서비스 제공",
+      };
+      const error = new MoverEstimateDuplicateError();
+      mockedService.createEstimate.mockRejectedValue(error);
+
+      // Act
+      await moverEstimateController.createEstimate(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: error.message,
+        code: error.code,
+      });
+    });
+
+    it("NotFoundError 발생 시 적절한 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.body = {
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: "합리적인 가격으로 안전한 이사 서비스 제공",
+      };
+      const error = new NotFoundError("견적 요청을 찾을 수 없습니다");
+      mockedService.createEstimate.mockRejectedValue(error);
+
+      // Act
+      await moverEstimateController.createEstimate(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "견적 요청을 찾을 수 없습니다",
+        code: ErrorCode.REPOSITORY_DATA_NOT_FOUND,
+      });
+    });
+
+    it("ServiceError 발생 시 적절한 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.body = {
+        estimateRequestId: "estimateRequest123",
+        price: 500000,
+        comment: "합리적인 가격으로 안전한 이사 서비스 제공",
+      };
+      const error = new ServiceError("서비스 오류");
+      mockedService.createEstimate.mockRejectedValue(error);
+
+      // Act
+      await moverEstimateController.createEstimate(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "[Service 오류] 서비스 오류",
+        code: ErrorCode.SERVICE_BUSINESS_LOGIC_ERROR,
+      });
+    });
+
     it("서비스 에러 시 next(error)를 호출한다", async () => {
       // Arrange
       mockRequest.body = {
         estimateRequestId: "estimateRequest123",
         price: 500000,
         comment: "합리적인 가격으로 안전한 이사 서비스 제공",
-      } as TCreateEstimateRequest;
+      };
       const error = new Error("Service error");
       mockedService.createEstimate.mockRejectedValue(error);
 
@@ -239,6 +446,61 @@ describe("이사업체 견적 컨트롤러", () => {
         success: true,
         message: "견적 반려 성공",
         data: mockData,
+      });
+    });
+
+    it("사용자 정보가 없을 때 401 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.user = undefined;
+      mockRequest.body = {
+        estimateRequestId: "estimateRequest123",
+        comment: "일정이 맞지 않아 반려합니다",
+      };
+
+      // Act
+      await moverEstimateController.rejectEstimate(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "유효하지 않은 사용자 정보입니다.",
+        code: ErrorCode.CONTROLLER_AUTH_ERROR,
+      });
+    });
+
+    it("무버가 아닌 사용자가 요청할 때 403 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.user = {
+        userId: "customer123",
+        name: "김고객",
+        userType: "CUSTOMER",
+        hasProfile: true,
+        iat: 1234567890,
+        exp: 1234567890,
+      } as any;
+      mockRequest.body = {
+        estimateRequestId: "estimateRequest123",
+        comment: "일정이 맞지 않아 반려합니다",
+      };
+
+      // Act
+      await moverEstimateController.rejectEstimate(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "현재 유저타입이 기사가 아닙니다.",
+        code: ErrorCode.MOVER_UNAUTHORIZED_ACCESS,
       });
     });
 
@@ -308,6 +570,106 @@ describe("이사업체 견적 컨트롤러", () => {
         success: false,
         message: "반려 사유는 500자 이내로 입력해주세요.",
         code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
+      });
+    });
+
+    it("이미 견적을 작성한 경우 400 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.body = {
+        estimateRequestId: "estimateRequest123",
+        comment: "일정이 맞지 않아 반려합니다",
+      };
+      const error = new Error("이미 견적을 작성했습니다.");
+      mockedService.rejectEstimate.mockRejectedValue(error);
+
+      // Act
+      await moverEstimateController.rejectEstimate(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "이미 견적을 작성했습니다.",
+        code: ErrorCode.SERVICE_BUSINESS_LOGIC_ERROR,
+      });
+    });
+
+    it("견적 요청을 찾을 수 없는 경우 400 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.body = {
+        estimateRequestId: "estimateRequest123",
+        comment: "일정이 맞지 않아 반려합니다",
+      };
+      const error = new Error("견적 요청을 찾을 수 없습니다.");
+      mockedService.rejectEstimate.mockRejectedValue(error);
+
+      // Act
+      await moverEstimateController.rejectEstimate(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "견적 요청을 찾을 수 없습니다.",
+        code: ErrorCode.SERVICE_BUSINESS_LOGIC_ERROR,
+      });
+    });
+
+    it("활성 상태가 아닌 견적 요청인 경우 400 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.body = {
+        estimateRequestId: "estimateRequest123",
+        comment: "일정이 맞지 않아 반려합니다",
+      };
+      const error = new Error("활성 상태가 아닌 견적 요청입니다.");
+      mockedService.rejectEstimate.mockRejectedValue(error);
+
+      // Act
+      await moverEstimateController.rejectEstimate(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "활성 상태가 아닌 견적 요청입니다.",
+        code: ErrorCode.SERVICE_BUSINESS_LOGIC_ERROR,
+      });
+    });
+
+    it("이사일이 지난 견적 요청인 경우 400 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.body = {
+        estimateRequestId: "estimateRequest123",
+        comment: "일정이 맞지 않아 반려합니다",
+      };
+      const error = new Error("이사일이 지난 견적 요청입니다.");
+      mockedService.rejectEstimate.mockRejectedValue(error);
+
+      // Act
+      await moverEstimateController.rejectEstimate(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "이사일이 지난 견적 요청입니다.",
+        code: ErrorCode.SERVICE_BUSINESS_LOGIC_ERROR,
       });
     });
 
@@ -401,6 +763,53 @@ describe("이사업체 견적 컨트롤러", () => {
         success: true,
         message: "서비스 가능 지역 견적 조회 성공",
         data: mockData,
+      });
+    });
+
+    it("사용자 정보가 없을 때 401 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.user = undefined;
+
+      // Act
+      await moverEstimateController.getRegionEstimateRequest(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "유효하지 않은 사용자 정보입니다.",
+        code: ErrorCode.CONTROLLER_AUTH_ERROR,
+      });
+    });
+
+    it("무버가 아닌 사용자가 요청할 때 403 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.user = {
+        userId: "customer123",
+        name: "김고객",
+        userType: "CUSTOMER",
+        hasProfile: true,
+        iat: 1234567890,
+        exp: 1234567890,
+      } as any;
+
+      // Act
+      await moverEstimateController.getRegionEstimateRequest(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "현재 유저타입이 기사가 아닙니다.",
+        code: ErrorCode.MOVER_UNAUTHORIZED_ACCESS,
       });
     });
 
@@ -542,6 +951,97 @@ describe("이사업체 견적 컨트롤러", () => {
       });
     });
 
+    it("사용자 정보가 없을 때 401 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.user = undefined;
+
+      // Act
+      await moverEstimateController.getDesignatedEstimateRequest(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "유효하지 않은 사용자 정보입니다.",
+        code: ErrorCode.CONTROLLER_AUTH_ERROR,
+      });
+    });
+
+    it("무버가 아닌 사용자가 요청할 때 403 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.user = {
+        userId: "customer123",
+        name: "김고객",
+        userType: "CUSTOMER",
+        hasProfile: true,
+        iat: 1234567890,
+        exp: 1234567890,
+      } as any;
+
+      // Act
+      await moverEstimateController.getDesignatedEstimateRequest(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "현재 유저타입이 기사가 아닙니다.",
+        code: ErrorCode.MOVER_UNAUTHORIZED_ACCESS,
+      });
+    });
+
+    it("잘못된 정렬 옵션일 때 400 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.query = {
+        sortBy: "invalidSort" as any,
+      };
+
+      // Act
+      await moverEstimateController.getDesignatedEstimateRequest(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "유효하지 않은 정렬 옵션입니다.",
+        code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
+      });
+    });
+
+    it("잘못된 이사 타입일 때 400 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.query = {
+        movingType: "INVALID_TYPE" as any,
+      };
+
+      // Act
+      await moverEstimateController.getDesignatedEstimateRequest(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "유효하지 않은 이사 타입입니다.",
+        code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
+      });
+    });
+
     it("지정 견적 요청 조회 중 에러가 발생할 때 next(error)를 호출한다", async () => {
       // Arrange
       mockRequest.query = {
@@ -645,6 +1145,53 @@ describe("이사업체 견적 컨트롤러", () => {
       });
     });
 
+    it("사용자 정보가 없을 때 401 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.user = undefined;
+
+      // Act
+      await moverEstimateController.getAllEstimateRequests(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "유효하지 않은 사용자 정보입니다.",
+        code: ErrorCode.CONTROLLER_AUTH_ERROR,
+      });
+    });
+
+    it("무버가 아닌 사용자가 요청할 때 403 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.user = {
+        userId: "customer123",
+        name: "김고객",
+        userType: "CUSTOMER",
+        hasProfile: true,
+        iat: 1234567890,
+        exp: 1234567890,
+      } as any;
+
+      // Act
+      await moverEstimateController.getAllEstimateRequests(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "현재 유저타입이 기사가 아닙니다.",
+        code: ErrorCode.MOVER_UNAUTHORIZED_ACCESS,
+      });
+    });
+
     it("region과 designated가 모두 false일 때 빈 결과를 반환한다", async () => {
       // Arrange
       mockRequest.query = {
@@ -665,6 +1212,34 @@ describe("이사업체 견적 컨트롤러", () => {
         success: true,
         message: "조회 결과 없음",
         data: { regionEstimateRequests: [], designatedEstimateRequests: [] },
+      });
+    });
+
+    it("NotFoundError 발생 시 적절한 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.query = {
+        region: "true",
+        designated: "false",
+        sortBy: "createdAt",
+        customerName: "김고객",
+        movingType: "HOME",
+      };
+      const error = new NotFoundError("견적 요청을 찾을 수 없습니다");
+      mockedService.getAllEstimateRequests.mockRejectedValue(error);
+
+      // Act
+      await moverEstimateController.getAllEstimateRequests(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "견적 요청을 찾을 수 없습니다",
+        code: ErrorCode.REPOSITORY_DATA_NOT_FOUND,
       });
     });
 
@@ -782,6 +1357,53 @@ describe("이사업체 견적 컨트롤러", () => {
       });
     });
 
+    it("사용자 정보가 없을 때 401 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.user = undefined;
+
+      // Act
+      await moverEstimateController.getMyEstimate(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "유효하지 않은 사용자 정보입니다.",
+        code: ErrorCode.CONTROLLER_AUTH_ERROR,
+      });
+    });
+
+    it("무버가 아닌 사용자가 요청할 때 403 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.user = {
+        userId: "customer123",
+        name: "김고객",
+        userType: "CUSTOMER",
+        hasProfile: true,
+        iat: 1234567890,
+        exp: 1234567890,
+      } as any;
+
+      // Act
+      await moverEstimateController.getMyEstimate(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "현재 유저타입이 기사가 아닙니다.",
+        code: ErrorCode.MOVER_UNAUTHORIZED_ACCESS,
+      });
+    });
+
     it("내 견적서 조회 중 에러가 발생할 때 next(error)를 호출한다", async () => {
       // Arrange
       const error = new Error("Service error");
@@ -888,6 +1510,53 @@ describe("이사업체 견적 컨트롤러", () => {
         success: true,
         message: "내가 반려한 견적 조회 성공",
         data: mockData,
+      });
+    });
+
+    it("사용자 정보가 없을 때 401 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.user = undefined;
+
+      // Act
+      await moverEstimateController.getMyRejectedEstimates(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "유효하지 않은 사용자 정보입니다.",
+        code: ErrorCode.CONTROLLER_AUTH_ERROR,
+      });
+    });
+
+    it("무버가 아닌 사용자가 요청할 때 403 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.user = {
+        userId: "customer123",
+        name: "김고객",
+        userType: "CUSTOMER",
+        hasProfile: true,
+        iat: 1234567890,
+        exp: 1234567890,
+      } as any;
+
+      // Act
+      await moverEstimateController.getMyRejectedEstimates(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "현재 유저타입이 기사가 아닙니다.",
+        code: ErrorCode.MOVER_UNAUTHORIZED_ACCESS,
       });
     });
 
@@ -1407,7 +2076,13 @@ describe("이사업체 견적 컨트롤러", () => {
       );
 
       // Assert
-      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message:
+          "[Controller 오류] 요청 검증 실패: 유효하지 않은 견적 요청 ID입니다",
+        code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
+      });
     });
   });
 
@@ -1433,6 +2108,119 @@ describe("이사업체 견적 컨트롤러", () => {
         message: "유효하지 않은 견적 요청 ID입니다.",
         code: ErrorCode.CONTROLLER_VALIDATION_ERROR,
       });
+    });
+  });
+
+  describe("getRegionEstimateRequest 에러 처리", () => {
+    it("서비스 에러 시 next(error)를 호출한다", async () => {
+      // Arrange
+      const error = new Error("Service error");
+      mockedService.getRegionEstimateRequest.mockRejectedValue(error);
+
+      // Act
+      await moverEstimateController.getRegionEstimateRequest(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockNext).toHaveBeenCalledWith(error);
+    });
+  });
+
+  describe("getDesignatedEstimateRequest 에러 처리", () => {
+    it("서비스 에러 시 next(error)를 호출한다", async () => {
+      // Arrange
+      const error = new Error("Service error");
+      mockedService.getDesignatedEstimateRequest.mockRejectedValue(error);
+
+      // Act
+      await moverEstimateController.getDesignatedEstimateRequest(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockNext).toHaveBeenCalledWith(error);
+    });
+  });
+
+  describe("getAllEstimateRequests 에러 처리", () => {
+    it("NotFoundError 발생 시 404 응답을 반환한다", async () => {
+      // Arrange
+      mockRequest.query = { region: "true", designated: "false" };
+      const notFoundError = new NotFoundError("견적 요청을 찾을 수 없습니다");
+      mockedService.getAllEstimateRequests.mockRejectedValue(notFoundError);
+
+      // Act
+      await moverEstimateController.getAllEstimateRequests(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "견적 요청을 찾을 수 없습니다",
+        code: ErrorCode.REPOSITORY_DATA_NOT_FOUND,
+      });
+    });
+
+    it("기타 에러 시 next(error)를 호출한다", async () => {
+      // Arrange
+      mockRequest.query = { region: "true", designated: "false" };
+      const error = new Error("Service error");
+      mockedService.getAllEstimateRequests.mockRejectedValue(error);
+
+      // Act
+      await moverEstimateController.getAllEstimateRequests(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockNext).toHaveBeenCalledWith(error);
+    });
+  });
+
+  describe("getMyEstimate 에러 처리", () => {
+    it("서비스 에러 시 next(error)를 호출한다", async () => {
+      // Arrange
+      const error = new Error("Service error");
+      mockedService.getMyEstimate.mockRejectedValue(error);
+
+      // Act
+      await moverEstimateController.getMyEstimate(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockNext).toHaveBeenCalledWith(error);
+    });
+  });
+
+  describe("getMyRejectedEstimates 에러 처리", () => {
+    it("서비스 에러 시 next(error)를 호출한다", async () => {
+      // Arrange
+      const error = new Error("Service error");
+      mockedService.getMyRejectedEstimates.mockRejectedValue(error);
+
+      // Act
+      await moverEstimateController.getMyRejectedEstimates(
+        mockRequest,
+        mockResponse,
+        mockNext
+      );
+
+      // Assert
+      expect(mockNext).toHaveBeenCalledWith(error);
     });
   });
 });
