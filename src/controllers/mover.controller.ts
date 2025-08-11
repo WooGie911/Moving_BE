@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import moverService from "../services/mover.service";
+import * as Sentry from "@sentry/node";
 
 const ALLOWED_SORT = ["rating", "career", "confirmed", "review"];
 
@@ -25,6 +26,14 @@ export const getMoverListController = async (
       if (!isNaN(parsed)) takeNum = parsed;
     }
 
+    Sentry.setContext("MoverListQuery", {
+      region,
+      serviceTypeId,
+      search,
+      sort,
+      take: takeNum,
+    });
+
     const filter = {
       region,
       serviceType: serviceTypeId,
@@ -45,6 +54,17 @@ export const getMoverListController = async (
       },
     });
   } catch (err) {
+    Sentry.captureException(err, {
+      extra: {
+        userId: req.user?.userId,
+        operation: "fetchMoverList",
+        query: req.query,
+      },
+      tags: {
+        controller: "mover",
+        action: "getMoverList",
+      },
+    });
     next(err);
   }
 };
@@ -59,6 +79,11 @@ export const getFavoriteMoversController = async (
 ) => {
   try {
     const { userId } = req.user as { userId: string | number };
+
+    Sentry.setContext("FavoriteMoversQuery", {
+      userId: String(userId),
+    });
+
     const favoriteMovers = await moverService.fetchFavoriteMovers(
       String(userId)
     );
@@ -68,6 +93,16 @@ export const getFavoriteMoversController = async (
       data: favoriteMovers,
     });
   } catch (err) {
+    Sentry.captureException(err, {
+      extra: {
+        userId: req.user?.userId,
+        operation: "fetchFavoriteMovers",
+      },
+      tags: {
+        controller: "mover",
+        action: "getFavoriteMovers",
+      },
+    });
     next(err);
   }
 };
@@ -89,6 +124,11 @@ export const getMoverDetailController = async (
         .status(400)
         .json({ success: false, message: "id가 필요합니다.", data: null });
 
+    Sentry.setContext("MoverDetailQuery", {
+      moverId: id,
+      userId: userId || "anonymous",
+    });
+
     const mover = await moverService.fetchMoverDetail(id, userId);
     if (!mover)
       return res
@@ -97,6 +137,17 @@ export const getMoverDetailController = async (
 
     res.json({ success: true, message: "기사님 상세 조회 성공", data: mover });
   } catch (err) {
+    Sentry.captureException(err, {
+      extra: {
+        userId: req.user?.userId,
+        moverId: req.params.moverId,
+        operation: "fetchMoverDetail",
+      },
+      tags: {
+        controller: "mover",
+        action: "getMoverDetail",
+      },
+    });
     next(err);
   }
 };

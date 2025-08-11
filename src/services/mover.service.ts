@@ -13,145 +13,208 @@ import {
 import actionService from "./action.service";
 import { ActionType } from "@prisma/client";
 import estimateRequestRepository from "../repositories/estimateRequest.repository";
+import * as Sentry from "@sentry/node";
 
 /**
  * 기사님 리스트 조회
  */
 export const fetchMoverList = async (filter: MoverListFilter) => {
-  const result = await getMoverList(filter);
+  try {
+    Sentry.setContext("MoverListService", {
+      filter: JSON.stringify(filter),
+    });
 
-  const transformedItems = result.items.map((mover) => ({
-    id: mover.id,
-    userId: 0,
-    nickname: mover.nickname || "",
-    profileImage: mover.moverImage || null,
-    experience: mover.career || 0,
-    introduction: mover.shortIntro || "",
-    description: mover.detailIntro || "",
-    completedCount: mover.workedCount || 0,
-    averageRating: mover.averageRating || 0,
-    totalReviewCount: mover.totalReviewCount || 0,
-    favoriteCount: (mover.Favorite || []).filter(
-      (fav) => fav.deletedAt === null
-    ).length,
-    lastActivityAt: null,
-    user: {
-      id: 0,
-      name: mover.name,
-      email: "",
-    },
-    serviceRegions: ((mover as any).currentAreas || []).map((region: any) => ({
-      region: region,
-      district: null,
-    })),
-    serviceTypes: (mover.serviceTypes || []).map((serviceType) => ({
-      service: {
-        name:
-          serviceType === "SMALL"
-            ? "소형이사"
-            : serviceType === "HOME"
-              ? "가정이사"
-              : serviceType === "OFFICE"
-                ? "사무실이사"
-                : "기타",
+    const result = await getMoverList(filter);
+
+    const transformedItems = result.items.map((mover) => ({
+      id: mover.id,
+      userId: 0,
+      nickname: mover.nickname || "",
+      profileImage: mover.moverImage || null,
+      experience: mover.career || 0,
+      introduction: mover.shortIntro || "",
+      description: mover.detailIntro || "",
+      completedCount: mover.workedCount || 0,
+      averageRating: mover.averageRating || 0,
+      totalReviewCount: mover.totalReviewCount || 0,
+      favoriteCount: (mover.Favorite || []).filter(
+        (fav) => fav.deletedAt === null
+      ).length,
+      lastActivityAt: null,
+      user: {
+        id: 0,
+        name: mover.name,
+        email: "",
       },
-    })),
-  }));
+      serviceRegions: ((mover as any).currentAreas || []).map(
+        (region: any) => ({
+          region: region,
+          district: null,
+        })
+      ),
+      serviceTypes: (mover.serviceTypes || []).map((serviceType) => ({
+        service: {
+          name:
+            serviceType === "SMALL"
+              ? "소형이사"
+              : serviceType === "HOME"
+                ? "가정이사"
+                : serviceType === "OFFICE"
+                  ? "사무실이사"
+                  : "기타",
+        },
+      })),
+    }));
 
-  return {
-    items: transformedItems,
-    nextCursor: result.nextCursor,
-    hasNext: result.hasNext,
-  };
+    return {
+      items: transformedItems,
+      nextCursor: result.nextCursor,
+      hasNext: result.hasNext,
+    };
+  } catch (error) {
+    Sentry.captureException(error, {
+      extra: {
+        operation: "fetchMoverList",
+        filter: JSON.stringify(filter),
+      },
+      tags: {
+        service: "mover",
+        action: "fetchMoverList",
+      },
+    });
+    throw error;
+  }
 };
 
 /**
  * 찜한 기사님 리스트 조회
  */
 export const fetchFavoriteMovers = async (customerId: string) => {
-  const movers = await getFavoriteMovers(customerId);
-  return (movers || []).map((mover) => ({
-    id: mover.id,
-    userId: 0,
-    nickname: mover.nickname || "",
-    profileImage: mover.moverImage || null,
-    experience: mover.career || 0,
-    introduction: mover.shortIntro || "",
-    description: mover.detailIntro || "",
-    completedCount: mover.workedCount || 0,
-    averageRating: mover.averageRating || 0,
-    totalReviewCount: mover.totalReviewCount || 0,
-    favoriteCount: mover.favoriteCount || 0,
-    lastActivityAt: null,
-    user: {
-      id: 0,
-      name: mover.name,
-      email: "",
-    },
-    serviceRegions: ((mover as any).currentAreas || []).map((region: any) => ({
-      region: region,
-      district: null,
-    })),
-    serviceTypes: (mover.serviceTypes || []).map((serviceType) => ({
-      service: {
-        name:
-          serviceType === "SMALL"
-            ? "소형이사"
-            : serviceType === "HOME"
-              ? "가정이사"
-              : serviceType === "OFFICE"
-                ? "사무실이사"
-                : "기타",
+  try {
+    Sentry.setContext("FavoriteMoversService", {
+      customerId,
+    });
+
+    const movers = await getFavoriteMovers(customerId);
+    return (movers || []).map((mover) => ({
+      id: mover.id,
+      userId: 0,
+      nickname: mover.nickname || "",
+      profileImage: mover.moverImage || null,
+      experience: mover.career || 0,
+      introduction: mover.shortIntro || "",
+      description: mover.detailIntro || "",
+      completedCount: mover.workedCount || 0,
+      averageRating: mover.averageRating || 0,
+      totalReviewCount: mover.totalReviewCount || 0,
+      favoriteCount: mover.favoriteCount || 0,
+      lastActivityAt: null,
+      user: {
+        id: 0,
+        name: mover.name,
+        email: "",
       },
-    })),
-  }));
+      serviceRegions: ((mover as any).currentAreas || []).map(
+        (region: any) => ({
+          region: region,
+          district: null,
+        })
+      ),
+      serviceTypes: (mover.serviceTypes || []).map((serviceType) => ({
+        service: {
+          name:
+            serviceType === "SMALL"
+              ? "소형이사"
+              : serviceType === "HOME"
+                ? "가정이사"
+                : serviceType === "OFFICE"
+                  ? "사무실이사"
+                  : "기타",
+        },
+      })),
+    }));
+  } catch (error) {
+    Sentry.captureException(error, {
+      extra: {
+        operation: "fetchFavoriteMovers",
+        customerId,
+      },
+      tags: {
+        service: "mover",
+        action: "fetchFavoriteMovers",
+      },
+    });
+    throw error;
+  }
 };
 
 /**
  * 기사님 상세 조회
  */
 export const fetchMoverDetail = async (id: string, userId?: string) => {
-  const mover = await getMoverDetail(id, userId);
+  try {
+    Sentry.setContext("MoverDetailService", {
+      moverId: id,
+      userId: userId || "anonymous",
+    });
 
-  if (!mover) return null;
+    const mover = await getMoverDetail(id, userId);
 
-  return {
-    id: mover.id,
-    userId: 0,
-    nickname: mover.nickname || "",
-    profileImage: mover.moverImage || null,
-    experience: mover.career || 0,
-    introduction: mover.shortIntro || "",
-    description: mover.detailIntro || "",
-    completedCount: mover.workedCount || 0,
-    averageRating: mover.averageRating || 0,
-    totalReviewCount: mover.totalReviewCount || 0,
-    favoriteCount: mover.favoriteCount || 0,
-    isFavorited: mover.isFavorited || false,
-    lastActivityAt: null,
-    user: {
-      id: 0,
-      name: mover.name,
-      email: "",
-    },
-    serviceRegions: ((mover as any).currentAreas || []).map((region: any) => ({
-      region: region,
-      district: null,
-    })),
-    serviceTypes: (mover.serviceTypes || []).map((serviceType) => ({
-      service: {
-        name:
-          serviceType === "SMALL"
-            ? "소형이사"
-            : serviceType === "HOME"
-              ? "가정이사"
-              : serviceType === "OFFICE"
-                ? "사무실이사"
-                : "기타",
+    if (!mover) return null;
+
+    return {
+      id: mover.id,
+      userId: 0,
+      nickname: mover.nickname || "",
+      profileImage: mover.moverImage || null,
+      experience: mover.career || 0,
+      introduction: mover.shortIntro || "",
+      description: mover.detailIntro || "",
+      completedCount: mover.workedCount || 0,
+      averageRating: mover.averageRating || 0,
+      totalReviewCount: mover.totalReviewCount || 0,
+      favoriteCount: mover.favoriteCount || 0,
+      isFavorited: mover.isFavorited || false,
+      lastActivityAt: null,
+      user: {
+        id: 0,
+        name: mover.name,
+        email: "",
       },
-    })),
-    activeEstimateRequest: mover.activeEstimateRequest,
-  };
+      serviceRegions: ((mover as any).currentAreas || []).map(
+        (region: any) => ({
+          region: region,
+          district: null,
+        })
+      ),
+      serviceTypes: (mover.serviceTypes || []).map((serviceType) => ({
+        service: {
+          name:
+            serviceType === "SMALL"
+              ? "소형이사"
+              : serviceType === "HOME"
+                ? "가정이사"
+                : serviceType === "OFFICE"
+                  ? "사무실이사"
+                  : "기타",
+        },
+      })),
+      activeEstimateRequest: mover.activeEstimateRequest,
+    };
+  } catch (error) {
+    Sentry.captureException(error, {
+      extra: {
+        operation: "fetchMoverDetail",
+        moverId: id,
+        userId: userId || "anonymous",
+      },
+      tags: {
+        service: "mover",
+        action: "fetchMoverDetail",
+      },
+    });
+    throw error;
+  }
 };
 
 /**
