@@ -36,7 +36,7 @@ export const fetchMoverList = async (filter: MoverListFilter) => {
       name: mover.name,
       email: "",
     },
-    serviceRegions: mover.serviceAreas || [],
+    serviceRegions: mover.currentAreas || [],
     serviceTypes: (mover.serviceTypes || []).map((serviceType) => ({
       service: {
         name:
@@ -81,7 +81,7 @@ export const fetchFavoriteMovers = async (customerId: string) => {
       name: mover.name,
       email: "",
     },
-    serviceRegions: mover.serviceAreas || [],
+    serviceRegions: mover.currentAreas || [],
     serviceTypes: (mover.serviceTypes || []).map((serviceType) => ({
       service: {
         name:
@@ -124,7 +124,7 @@ export const fetchMoverDetail = async (id: string, userId?: string) => {
       name: mover.name,
       email: "",
     },
-    serviceRegions: mover.serviceAreas || [],
+    serviceRegions: mover.currentAreas || [],
     serviceTypes: (mover.serviceTypes || []).map((serviceType) => ({
       service: {
         name:

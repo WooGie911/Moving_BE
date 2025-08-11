@@ -44,8 +44,8 @@ export const getMoverList = async (filter: MoverListFilter) => {
       serviceTypes: { has: serviceTypeEnum },
     }),
     ...(region && {
-      serviceAreas: {
-        some: { region },
+      currentAreas: {
+        has: region,
       },
     }),
   };
@@ -64,20 +64,8 @@ export const getMoverList = async (filter: MoverListFilter) => {
     skip: cursor ? 1 : 0,
     ...(cursor && { cursor: { id: String(cursor) } }),
     take: take + 1,
-    select: {
-      id: true,
-      nickname: true,
-      name: true,
-      career: true,
-      shortIntro: true,
-      detailIntro: true,
-      workedCount: true,
-      averageRating: true,
-      totalReviewCount: true,
-      serviceAreas: true,
-      serviceTypes: true,
+    include: {
       Favorite: true,
-      moverImage: true,
     },
   });
 
@@ -88,20 +76,8 @@ export const getMoverList = async (filter: MoverListFilter) => {
   if (items.length === 0 && cursor) {
     const cursorRow = await prisma.user.findUnique({
       where: { id: String(cursor), deletedAt: null },
-      select: {
-        id: true,
-        nickname: true,
-        name: true,
-        career: true,
-        shortIntro: true,
-        detailIntro: true,
-        workedCount: true,
-        averageRating: true,
-        totalReviewCount: true,
-        serviceAreas: true,
-        serviceTypes: true,
+      include: {
         Favorite: true,
-        moverImage: true,
       },
     });
     if (cursorRow) {
@@ -119,19 +95,7 @@ export const getMoverList = async (filter: MoverListFilter) => {
 export const getMoverDetail = async (id: string, userId?: string) => {
   const mover = await prisma.user.findUnique({
     where: { id, deletedAt: null },
-    select: {
-      id: true,
-      nickname: true,
-      name: true,
-      career: true,
-      shortIntro: true,
-      detailIntro: true,
-      workedCount: true,
-      averageRating: true,
-      totalReviewCount: true,
-      serviceAreas: true,
-      serviceTypes: true,
-      moverImage: true,
+    include: {
       Favorite: true,
     },
   });
@@ -171,20 +135,8 @@ export const getFavoriteMovers = async (customerId: string) => {
     take: 3,
     include: {
       mover: {
-        select: {
-          id: true,
-          nickname: true,
-          name: true,
-          career: true,
-          shortIntro: true,
-          detailIntro: true,
-          workedCount: true,
-          averageRating: true,
-          totalReviewCount: true,
-          serviceAreas: true,
-          serviceTypes: true,
-          moverImage: true,
-          Favorite: true, // 찜받은 관계 (moverId로 연결)
+        include: {
+          Favorite: true,
         },
       },
     },
