@@ -10,7 +10,9 @@ export const verifyAccessToken = (
   const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
-    return res.status(401).json({ message: "로그인이 필요합니다." });
+    return res
+      .status(401)
+      .json({ message: "로그인이 필요합니다. 다시 로그인해 주세요." });
   }
 
   try {
@@ -27,21 +29,22 @@ export const verifyAccessToken = (
     next();
   } catch (err: unknown) {
     if (err instanceof jwt.TokenExpiredError) {
-      return res
-        .status(401)
-        .json({ success: false, message: "토큰 만료 시간이 지났습니다." });
+      return res.status(401).json({
+        success: false,
+        message: "로그인 세션이 만료되었습니다. 다시 로그인해 주세요.",
+      });
     }
 
     if (err instanceof jwt.JsonWebTokenError) {
       return res.status(401).json({
         success: false,
-        message: "Access token이 변조되었거나 잘못된 형식입니다.",
+        message: "유효하지 않은 로그인 정보입니다. 다시 로그인해 주세요.",
       });
     }
 
     return res.status(401).json({
       success: false,
-      message: "Access token이 유효하지 않습니다.",
+      message: "인증에 실패했습니다. 다시 로그인해 주세요.",
     });
   }
 };

@@ -1,4 +1,6 @@
 import authRepository from "../repositories/auth.repository";
+import actionService from "./action.service";
+import { ActionType } from "@prisma/client";
 import bcrypt from "bcrypt";
 import {
   generateAccessToken,
@@ -37,7 +39,15 @@ const signin = async (email: string, password: string, userType: TUserRole) => {
     if (!existingUser) {
       throw new AuthenticationError("존재하지 않는 유저입니다");
     }
-    // 2. 비밀번호 검증
+
+    // 2. 소셜 로그인 유저 확인
+    if (existingUser.provider !== "LOCAL") {
+      throw new AuthenticationError(
+        "소셜 로그인 유저입니다. 소셜로그인으로 로그인 해주세요"
+      );
+    }
+
+    // 3. 비밀번호 검증
     if (
       !existingUser.encryptedPassword ||
       !(await bcrypt.compare(password, existingUser.encryptedPassword))
@@ -46,7 +56,7 @@ const signin = async (email: string, password: string, userType: TUserRole) => {
     }
 
     let accessToken, refreshToken;
-    // 3. 유저 role에 따른 토큰 생성
+    // 4. 유저 role에 따른 토큰 생성
     if (userType === "CUSTOMER") {
       const { newAccessToken, newRefreshToken } = generateToken({
         id: String(existingUser.id),
@@ -205,11 +215,42 @@ const logout = async (userId: string) => {
     throw new NotFoundError("존재하지 않는 유저입니다");
   }
 
-  if (!user.refreshToken) {
-    throw new AuthenticationError("이미 로그아웃된 상태입니다");
+  await authRepository.updateUserToken(String(userId), null, user.userType);
+};
+
+// 역할 변경
+const switchRole = async (userId: string, userType: TUserRole) => {
+  const user = await authRepository.findUserById(String(userId));
+
+  if (!user) {
+    throw new NotFoundError("존재하지 않는 유저입니다");
   }
 
-  await authRepository.updateUserToken(String(userId), null, user.userType);
+  const { newAccessToken, newRefreshToken } = generateToken({
+    id: String(user.id),
+    name: user.name,
+    userType: userType,
+    hasProfile:
+      userType === "CUSTOMER"
+        ? user.isCustomer || false
+        : user.isMover || false,
+  });
+
+  if (!newAccessToken || !newRefreshToken) {
+    throw new ServerError("유저 변환중 오류가 발생했습니다");
+  }
+
+  await authRepository.updateUserToken(
+    String(user.id),
+    newRefreshToken,
+    user.userType
+  );
+
+  return {
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
+    provider: user.provider,
+  };
 };
 
 // JWT 슬라이딩 세션 토큰 갱신
@@ -224,7 +265,10 @@ const refresh = async (decoded: TDecodedToken) => {
     id: user.id,
     name: user.name,
     userType: decoded.userType,
-    hasProfile: user.isCustomer || false,
+    hasProfile:
+      decoded.userType === "CUSTOMER"
+        ? user.isCustomer || false
+        : user.isMover || false,
   });
 
   let refreshToken = undefined;
@@ -234,7 +278,10 @@ const refresh = async (decoded: TDecodedToken) => {
       id: user.id,
       name: user.name,
       userType: decoded.userType,
-      hasProfile: user.isCustomer || false,
+      hasProfile:
+        decoded.userType === "CUSTOMER"
+          ? user.isCustomer || false
+          : user.isMover || false,
     });
 
     await authRepository.updateUserToken(
@@ -245,7 +292,7 @@ const refresh = async (decoded: TDecodedToken) => {
   }
 
   // refreshToken은 optional
-  return { accessToken, refreshToken };
+  return { accessToken, refreshToken, provider: user.provider };
 };
 
 // 소셜 로그인
@@ -323,4 +370,11 @@ const oauthCrateOrUpdate = async (
   }
 };
 
-export default { signin, signup, logout, refresh, oauthCrateOrUpdate };
+export default {
+  signin,
+  signup,
+  logout,
+  switchRole,
+  refresh,
+  oauthCrateOrUpdate,
+};

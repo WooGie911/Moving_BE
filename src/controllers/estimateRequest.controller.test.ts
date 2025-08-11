@@ -1,41 +1,69 @@
 import { Request, Response } from "express";
-import EstimateRequestController from "./estimateRequest.controller";
-import EstimateRequestService from "../services/estimateRequest.service";
-import { convertRegionToKorean } from "../utils/addressUtils";
-import { isBeforeKoreaToday, formatDateForAPI } from "../utils/dateUtils";
 
-// Mock dependencies
-jest.mock("../utils/addressUtils");
-jest.mock("../utils/dateUtils");
+// Note: mocks will be defined dynamically in beforeEach using jest.doMock
 
-const mockConvertRegionToKorean = convertRegionToKorean as jest.MockedFunction<typeof convertRegionToKorean>;
-const mockIsBeforeKoreaToday = isBeforeKoreaToday as jest.MockedFunction<typeof isBeforeKoreaToday>;
-const mockFormatDateForAPI = formatDateForAPI as jest.MockedFunction<typeof formatDateForAPI>;
-
-// Mock EstimateRequestService
-jest.mock("../services/estimateRequest.service", () => {
-  const mockMethods = {
-    checkUserType: jest.fn(),
-    hasPendingRequest: jest.fn(),
-    createEstimateRequest: jest.fn(),
-    getActiveEstimateRequestByUserId: jest.fn(),
-    updateActiveEstimateRequest: jest.fn(),
-    cancelActiveEstimateRequest: jest.fn(),
-    hasEstimateFromMover: jest.fn(),
+const buildReqRes = (overrides: any = {}) => {
+  const req: any = {
+    user: { userId: "u1", userType: "CUSTOMER" },
+    body: {},
+    query: {},
+    url: "/api/estimate-requests",
+    method: "POST",
+    ...overrides,
   };
-  return jest.fn().mockImplementation(() => mockMethods);
-});
+  const res: any = {
+    status: jest.fn().mockReturnThis(),
+    json: jest.fn().mockReturnThis(),
+    send: jest.fn().mockReturnThis(),
+  };
+  return { req, res };
+};
 
-// Get reference to mocked service after mocking
-const mockEstimateRequestService = new (EstimateRequestService as any)();
+// removed empty describe block
+
+let mockEstimateRequestService: any;
 
 describe("EstimateRequest 유저 플로우 테스트", () => {
-  let controller: EstimateRequestController;
+  let controller: any;
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
 
   beforeEach(() => {
-    controller = new EstimateRequestController();
+    jest.resetModules();
+    jest.clearAllMocks();
+
+    // set up dynamic mocks
+    const serviceInstance = {
+      checkUserType: jest.fn(),
+      checkCustomerProfile: jest.fn(),
+      hasActiveRequestBeforeMoveDate: jest.fn(),
+      hasPendingRequest: jest.fn(),
+      hasEstimateFromMover: jest.fn(),
+      createEstimateRequest: jest.fn(),
+      getActiveEstimateRequestByUserId: jest.fn(),
+      updateActiveEstimateRequest: jest.fn(),
+      cancelActiveEstimateRequest: jest.fn(),
+    };
+    mockEstimateRequestService = serviceInstance;
+
+    jest.doMock("../services/estimateRequest.service", () => ({
+      __esModule: true,
+      default: jest.fn().mockImplementation(() => serviceInstance),
+    }));
+    jest.doMock("../utils/addressUtils", () => ({
+      __esModule: true,
+      convertRegionToKorean: jest.fn().mockReturnValue("서울특별시"),
+    }));
+    jest.doMock("../utils/dateUtils", () => ({
+      __esModule: true,
+      validateMoveDate: jest.fn().mockReturnValue({ isValid: true }),
+      formatDateForAPI: jest.fn().mockReturnValue("2024-12-25"),
+    }));
+
+    // import controller after mocking
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const Controller = require("./estimateRequest.controller").default;
+    controller = new Controller();
 
     mockResponse = {
       status: jest.fn().mockReturnThis(),
@@ -43,15 +71,12 @@ describe("EstimateRequest 유저 플로우 테스트", () => {
       send: jest.fn().mockReturnThis(),
     };
 
-    jest.clearAllMocks();
-
     // Mock console.error to prevent logs during testing
     jest.spyOn(console, "error").mockImplementation(() => {});
 
-    // Default mock implementations
-    mockConvertRegionToKorean.mockReturnValue("서울특별시");
-    mockIsBeforeKoreaToday.mockReturnValue(false);
-    mockFormatDateForAPI.mockReturnValue("2024-12-25");
+    // Default service mock implementations
+    mockEstimateRequestService.checkCustomerProfile.mockResolvedValue(true);
+    mockEstimateRequestService.hasActiveRequestBeforeMoveDate.mockResolvedValue(false);
   });
 
   afterEach(() => {
@@ -148,7 +173,11 @@ describe("EstimateRequest 유저 플로우 테스트", () => {
 
     mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
     mockEstimateRequestService.hasPendingRequest.mockResolvedValue(false);
-    mockIsBeforeKoreaToday.mockReturnValue(true); // 과거 날짜임을 표시
+    const { validateMoveDate } = require("../utils/dateUtils");
+    (validateMoveDate as jest.Mock).mockReturnValue({
+      isValid: false,
+      errorMessage: "이사일은 오늘 이후로 설정해주세요.",
+    });
 
     // Act
     await controller.createEstimateRequest(mockRequest as Request, mockResponse as Response);
@@ -363,6 +392,513 @@ describe("EstimateRequest 유저 플로우 테스트", () => {
     expect(mockResponse.json).toHaveBeenCalledWith({
       success: false,
       message: "기사님은 견적 요청을 생성할 수 없습니다. 일반 고객으로 로그인해주세요.",
+    });
+  });
+
+  // 추가 테스트 케이스들 - 커버리지 향상을 위해
+  describe("추가 테스트 케이스", () => {
+    it("인증되지 않은 사용자 요청 처리", async () => {
+      // Arrange - user가 없는 경우
+      mockRequest = {
+        body: {
+          movingType: "home",
+          movingDate: "2024-12-25",
+          departure: { roadAddress: "서울특별시 강남구", detailAddress: "123", zoneCode: "06123" },
+          arrival: { roadAddress: "서울특별시 서초구", detailAddress: "456", zoneCode: "06124" },
+        },
+      };
+
+      // Act
+      await controller.createEstimateRequest(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "인증이 필요합니다.",
+      });
+    });
+
+    it("빈 userId 처리", async () => {
+      // Arrange - 빈 userId
+      mockRequest = {
+        user: {
+          userId: "",
+          name: "고객",
+          userType: "CUSTOMER" as const,
+          hasProfile: true,
+          iat: 1640995200,
+          exp: 1641081600,
+        },
+        body: {
+          movingType: "home",
+          movingDate: "2024-12-25",
+          departure: { roadAddress: "서울특별시 강남구", detailAddress: "123", zoneCode: "06123" },
+          arrival: { roadAddress: "서울특별시 서초구", detailAddress: "456", zoneCode: "06124" },
+        },
+      };
+
+      // Act
+      await controller.createEstimateRequest(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "인증이 필요합니다.",
+      });
+    });
+
+    it("잘못된 날짜 형식 처리", async () => {
+      // Arrange - 잘못된 날짜 형식
+      mockRequest = {
+        user: {
+          userId: "customer-user-id",
+          name: "고객",
+          userType: "CUSTOMER" as const,
+          hasProfile: true,
+          iat: 1640995200,
+          exp: 1641081600,
+        },
+        body: {
+          movingType: "home",
+          movingDate: "invalid-date",
+          departure: { roadAddress: "서울특별시 강남구", detailAddress: "123", zoneCode: "06123" },
+          arrival: { roadAddress: "서울특별시 서초구", detailAddress: "456", zoneCode: "06124" },
+        },
+      };
+
+      mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
+      mockEstimateRequestService.hasPendingRequest.mockResolvedValue(false);
+      const { validateMoveDate } = require("../utils/dateUtils");
+      (validateMoveDate as jest.Mock).mockReturnValue({
+        isValid: false,
+        errorMessage: "올바른 날짜 형식이 아닙니다. (YYYY-MM-DD 형식으로 입력해주세요)",
+      });
+
+      // Act
+      await controller.createEstimateRequest(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "올바른 날짜 형식이 아닙니다. (YYYY-MM-DD 형식으로 입력해주세요)",
+      });
+    });
+
+    it("잘못된 이사 유형 처리", async () => {
+      // Arrange - 잘못된 이사 유형
+      mockRequest = {
+        user: {
+          userId: "customer-user-id",
+          name: "고객",
+          userType: "CUSTOMER" as const,
+          hasProfile: true,
+          iat: 1640995200,
+          exp: 1641081600,
+        },
+        body: {
+          movingType: "invalid-type",
+          movingDate: "2024-12-25",
+          departure: { roadAddress: "서울특별시 강남구", detailAddress: "123", zoneCode: "06123" },
+          arrival: { roadAddress: "서울특별시 서초구", detailAddress: "456", zoneCode: "06124" },
+        },
+      };
+
+      mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
+      mockEstimateRequestService.hasPendingRequest.mockResolvedValue(false);
+
+      // Act
+      await controller.createEstimateRequest(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "이사 종류는 small, home, office 중 하나여야 합니다.",
+      });
+    });
+
+    it("도착지 주소 누락 처리", async () => {
+      // Arrange - 도착지 주소 누락
+      mockRequest = {
+        user: {
+          userId: "customer-user-id",
+          name: "고객",
+          userType: "CUSTOMER" as const,
+          hasProfile: true,
+          iat: 1640995200,
+          exp: 1641081600,
+        },
+        body: {
+          movingType: "home",
+          movingDate: "2024-12-25",
+          departure: { roadAddress: "서울특별시 강남구", detailAddress: "123", zoneCode: "06123" },
+          arrival: { roadAddress: "", detailAddress: "456", zoneCode: "06124" }, // 빈 도착지 주소
+        },
+      };
+
+      mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
+      mockEstimateRequestService.hasPendingRequest.mockResolvedValue(false);
+
+      // Act
+      await controller.createEstimateRequest(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "도착지 주소는 필수입니다.",
+      });
+    });
+
+    it("이미 진행중인 견적 요청이 있는 경우", async () => {
+      // Arrange
+      mockRequest = {
+        user: {
+          userId: "customer-user-id",
+          name: "고객",
+          userType: "CUSTOMER" as const,
+          hasProfile: true,
+          iat: 1640995200,
+          exp: 1641081600,
+        },
+        body: {
+          movingType: "home",
+          movingDate: "2024-12-25",
+          departure: { roadAddress: "서울특별시 강남구", detailAddress: "123", zoneCode: "06123" },
+          arrival: { roadAddress: "서울특별시 서초구", detailAddress: "456", zoneCode: "06124" },
+        },
+      };
+
+      mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
+      mockEstimateRequestService.hasActiveRequestBeforeMoveDate.mockResolvedValue(true); // 이미 진행중인 요청
+
+      // Act
+      await controller.createEstimateRequest(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(409);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "이사일이 지나지 않은 견적 요청이 있습니다.",
+      });
+    });
+
+    it("성공적인 견적 요청 생성", async () => {
+      // Arrange
+      mockRequest = {
+        user: {
+          userId: "customer-user-id",
+          name: "고객",
+          userType: "CUSTOMER" as const,
+          hasProfile: true,
+          iat: 1640995200,
+          exp: 1641081600,
+        },
+        body: {
+          movingType: "home",
+          movingDate: "2024-12-25",
+          departure: { roadAddress: "서울특별시 강남구", detailAddress: "123", zoneCode: "06123" },
+          arrival: { roadAddress: "서울특별시 서초구", detailAddress: "456", zoneCode: "06124" },
+          description: "이사 요청",
+        },
+      };
+
+      const mockCreatedRequest = {
+        id: "request-id",
+        customerId: "customer-user-id",
+        moveType: "HOME",
+        moveDate: new Date("2024-12-25"),
+        status: "PENDING",
+        fromAddress: {
+          region: "SEOUL",
+          city: "강남구",
+          district: "테헤란로",
+          detail: "123",
+          zoneCode: "06123",
+        },
+        toAddress: {
+          region: "SEOUL",
+          city: "서초구",
+          district: "서초동",
+          detail: "456",
+          zoneCode: "06124",
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
+      mockEstimateRequestService.hasPendingRequest.mockResolvedValue(false);
+      mockEstimateRequestService.createEstimateRequest.mockResolvedValue(undefined);
+      mockEstimateRequestService.getActiveEstimateRequestByUserId.mockResolvedValue(mockCreatedRequest);
+
+      // Act
+      await controller.createEstimateRequest(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: true,
+        message: "견적 요청이 성공적으로 생성되었습니다.",
+        data: expect.any(Object),
+      });
+    });
+
+    it("활성 견적 요청이 없는 경우 조회", async () => {
+      // Arrange
+      mockRequest = {
+        user: {
+          userId: "customer-user-id",
+          name: "고객",
+          userType: "CUSTOMER" as const,
+          hasProfile: true,
+          iat: 1640995200,
+          exp: 1641081600,
+        },
+      };
+
+      mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
+      mockEstimateRequestService.getActiveEstimateRequestByUserId.mockResolvedValue(null);
+
+      // Act
+      await controller.getActiveEstimateRequest(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: true,
+        hasActive: false,
+        hasEstimate: false,
+      });
+    });
+
+    it("진행중인 요청이 없는 경우 수정 시도", async () => {
+      // Arrange
+      mockRequest = {
+        user: {
+          userId: "customer-user-id",
+          name: "고객",
+          userType: "CUSTOMER" as const,
+          hasProfile: true,
+          iat: 1640995200,
+          exp: 1641081600,
+        },
+        body: {
+          movingType: "office",
+          movingDate: "2024-12-26",
+        },
+      };
+
+      mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
+      mockEstimateRequestService.hasPendingRequest.mockResolvedValue(false);
+
+      // Act
+      await controller.updateActiveEstimateRequest(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(409);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "진행중(PENDING) 상태에서만 수정할 수 있습니다.",
+      });
+    });
+
+    it("활성 견적 요청이 없는 경우 수정 시도", async () => {
+      // Arrange
+      mockRequest = {
+        user: {
+          userId: "customer-user-id",
+          name: "고객",
+          userType: "CUSTOMER" as const,
+          hasProfile: true,
+          iat: 1640995200,
+          exp: 1641081600,
+        },
+        body: {
+          movingType: "office",
+          movingDate: "2024-12-26",
+        },
+      };
+
+      mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
+      mockEstimateRequestService.hasPendingRequest.mockResolvedValue(true);
+      mockEstimateRequestService.hasEstimateFromMover.mockResolvedValue(false);
+      mockEstimateRequestService.getActiveEstimateRequestByUserId.mockResolvedValue(null);
+
+      // Act
+      await controller.updateActiveEstimateRequest(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "활성 견적 요청이 없습니다.",
+      });
+    });
+
+    it("PENDING이 아닌 상태의 요청 수정 시도", async () => {
+      // Arrange
+      mockRequest = {
+        user: {
+          userId: "customer-user-id",
+          name: "고객",
+          userType: "CUSTOMER" as const,
+          hasProfile: true,
+          iat: 1640995200,
+          exp: 1641081600,
+        },
+        body: {
+          movingType: "office",
+          movingDate: "2024-12-26",
+        },
+      };
+
+      const mockActiveRequest = {
+        id: "request-id",
+        customerId: "customer-user-id",
+        status: "COMPLETED", // PENDING이 아닌 상태
+      };
+
+      mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
+      mockEstimateRequestService.hasPendingRequest.mockResolvedValue(true);
+      mockEstimateRequestService.hasEstimateFromMover.mockResolvedValue(false);
+      mockEstimateRequestService.getActiveEstimateRequestByUserId.mockResolvedValue(mockActiveRequest);
+
+      // Act
+      await controller.updateActiveEstimateRequest(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(409);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "진행중(PENDING) 상태에서만 수정할 수 있습니다.",
+      });
+    });
+
+    it("진행중인 요청이 없는 경우 취소 시도", async () => {
+      // Arrange
+      mockRequest = {
+        user: {
+          userId: "customer-user-id",
+          name: "고객",
+          userType: "CUSTOMER" as const,
+          hasProfile: true,
+          iat: 1640995200,
+          exp: 1641081600,
+        },
+      };
+
+      mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
+      mockEstimateRequestService.hasPendingRequest.mockResolvedValue(false);
+
+      // Act
+      await controller.cancelActiveEstimateRequest(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(409);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "진행중(PENDING) 상태에서만 취소할 수 있습니다.",
+      });
+    });
+
+    it("활성 견적 요청이 없는 경우 취소 시도", async () => {
+      // Arrange
+      mockRequest = {
+        user: {
+          userId: "customer-user-id",
+          name: "고객",
+          userType: "CUSTOMER" as const,
+          hasProfile: true,
+          iat: 1640995200,
+          exp: 1641081600,
+        },
+      };
+
+      mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
+      mockEstimateRequestService.hasPendingRequest.mockResolvedValue(true);
+      mockEstimateRequestService.hasEstimateFromMover.mockResolvedValue(false);
+      mockEstimateRequestService.getActiveEstimateRequestByUserId.mockResolvedValue(null);
+
+      // Act
+      await controller.cancelActiveEstimateRequest(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "활성 견적 요청이 없습니다.",
+      });
+    });
+
+    it("PENDING이 아닌 상태의 요청 취소 시도", async () => {
+      // Arrange
+      mockRequest = {
+        user: {
+          userId: "customer-user-id",
+          name: "고객",
+          userType: "CUSTOMER" as const,
+          hasProfile: true,
+          iat: 1640995200,
+          exp: 1641081600,
+        },
+      };
+
+      const mockActiveRequest = {
+        id: "request-id",
+        customerId: "customer-user-id",
+        status: "COMPLETED", // PENDING이 아닌 상태
+      };
+
+      mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
+      mockEstimateRequestService.hasPendingRequest.mockResolvedValue(true);
+      mockEstimateRequestService.hasEstimateFromMover.mockResolvedValue(false);
+      mockEstimateRequestService.getActiveEstimateRequestByUserId.mockResolvedValue(mockActiveRequest);
+
+      // Act
+      await controller.cancelActiveEstimateRequest(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(409);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "진행중(PENDING) 상태에서만 취소할 수 있습니다.",
+      });
+    });
+
+    it("서비스 에러 처리", async () => {
+      // Arrange
+      mockRequest = {
+        user: {
+          userId: "customer-user-id",
+          name: "고객",
+          userType: "CUSTOMER" as const,
+          hasProfile: true,
+          iat: 1640995200,
+          exp: 1641081600,
+        },
+        body: {
+          movingType: "home",
+          movingDate: "2024-12-25",
+          departure: { roadAddress: "서울특별시 강남구", detailAddress: "123", zoneCode: "06123" },
+          arrival: { roadAddress: "서울특별시 서초구", detailAddress: "456", zoneCode: "06124" },
+        },
+      };
+
+      mockEstimateRequestService.checkUserType.mockRejectedValue(new Error("서비스 에러"));
+
+      // Act
+      await controller.createEstimateRequest(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "서비스 에러",
+      });
     });
   });
 });

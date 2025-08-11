@@ -1,8 +1,40 @@
 import { Router } from "express";
 import moverEstimateController from "../controllers/moverEstimate.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
+import { createCustomTranslationMiddleware } from "../middlewares/translationMiddleware";
 
 const router = Router();
+
+// 기사님 견적 관련 번역 미들웨어 (특정 필드만 번역)
+const moverEstimateTranslationMiddleware = createCustomTranslationMiddleware([
+  "id",
+  "uuid",
+  "createdAt",
+  "updatedAt",
+  "email",
+  "phone",
+  "url",
+  "link",
+  "name",
+  "nickname",
+  "customerId",
+  "moveType",
+  "moveDate",
+  "status",
+  "isDesignated",
+  "price",
+  "moverId",
+  "estimateRequestId",
+  "averageRating",
+  "totalReviewCount",
+  "workedCount",
+  "career",
+  "totalFavoriteCount",
+  "isFavorite",
+  "isVeteran",
+  "userType",
+  "zoneCode",
+]);
 
 // 모든 라우트에 토큰 검증 미들웨어 적용
 router.use(verifyAccessToken);
@@ -158,7 +190,11 @@ router.use(verifyAccessToken);
  *               success: false
  *               message: "권한이 없습니다"
  */
-router.post("/create", moverEstimateController.createEstimate);
+router.post(
+  "/create",
+  moverEstimateTranslationMiddleware,
+  moverEstimateController.createEstimate
+);
 
 /**
  * @swagger
@@ -223,7 +259,11 @@ router.post("/create", moverEstimateController.createEstimate);
  *               success: false
  *               message: "권한이 없습니다"
  */
-router.post("/reject", moverEstimateController.rejectEstimate);
+router.post(
+  "/reject",
+  moverEstimateTranslationMiddleware,
+  moverEstimateController.rejectEstimate
+);
 
 /**
  * @swagger
@@ -337,7 +377,11 @@ router.post("/reject", moverEstimateController.rejectEstimate);
  *               success: false
  *               message: "권한이 없습니다"
  */
-router.get("/region", moverEstimateController.getRegionEstimateRequest);
+router.get(
+  "/region",
+  moverEstimateTranslationMiddleware,
+  moverEstimateController.getRegionEstimateRequest
+);
 
 /**
  * @swagger
@@ -402,7 +446,7 @@ router.get("/region", moverEstimateController.getRegionEstimateRequest);
  *                           id:
  *                             type: string
  *                             description: 주소 ID
- *                           postalCode:
+ *                           zoneCode:
  *                             type: string
  *                             description: 우편번호
  *                           city:
@@ -423,7 +467,7 @@ router.get("/region", moverEstimateController.getRegionEstimateRequest);
  *                           id:
  *                             type: string
  *                             description: 주소 ID
- *                           postalCode:
+ *                           zoneCode:
  *                             type: string
  *                             description: 우편번호
  *                           city:
@@ -469,14 +513,14 @@ router.get("/region", moverEstimateController.getRegionEstimateRequest);
  *                   moveDate: "2025-07-15T00:00:00.000Z"
  *                   fromAddress:
  *                     id: "clx1234567893"
- *                     postalCode: "06123"
+ *                     zoneCode: "06123"
  *                     city: "서울시"
  *                     district: "강남구"
  *                     detail: "강남역 1번 출구"
  *                     region: "SEOUL"
  *                   toAddress:
  *                     id: "clx1234567894"
- *                     postalCode: "06123"
+ *                     zoneCode: "06123"
  *                     city: "서울시"
  *                     district: "서초구"
  *                     detail: "서초역 2번 출구"
@@ -521,7 +565,11 @@ router.get("/region", moverEstimateController.getRegionEstimateRequest);
  *               success: false
  *               message: "권한이 없습니다."
  */
-router.get("/designated", moverEstimateController.getDesignatedEstimateRequest);
+router.get(
+  "/designated",
+  moverEstimateTranslationMiddleware,
+  moverEstimateController.getDesignatedEstimateRequest
+);
 
 /**
  * @swagger
@@ -644,125 +692,11 @@ router.get("/designated", moverEstimateController.getDesignatedEstimateRequest);
  *               success: false
  *               message: "권한이 없습니다."
  */
-router.get("/list", moverEstimateController.getAllEstimateRequests);
-
-/**
- * @swagger
- * /mover-estimates/request/{estimateRequestId}:
- *   get:
- *     summary: 견적 요청 상세 조회
- *     description: 특정 견적 요청의 상세 정보를 조회합니다.
- *     tags: [MoverEstimate]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: estimateRequestId
- *         schema:
- *           type: string
- *         required: true
- *         description: 견적 요청 ID
- *     responses:
- *       200:
- *         description: 견적 요청 상세 조회 성공
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   description: 성공 여부
- *                 message:
- *                   type: string
- *                   description: 응답 메시지
- *                 data:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                       description: 견적 요청 ID
- *                     moveType:
- *                       type: string
- *                       description: 이사 타입
- *                       enum: [SMALL, HOME, OFFICE]
- *                     moveDate:
- *                       type: string
- *                       description: 이사 날짜
- *                       format: date-time
- *             example:
- *               success: true
- *               message: "견적 요청 상세 조회 성공"
- *               data:
- *                 id: "clx1234567890"
- *                 moveType: "SMALL"
- *                 moveDate: "2025-07-15T00:00:00.000Z"
- *       400:
- *         description: 유효하지 않은 견적 요청 ID
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   description: 성공 여부
- *                 message:
- *                   type: string
- *                   description: 에러 메시지
- *             example:
- *               success: false
- *               message: "유효하지 않은 견적 요청 ID입니다."
- *       401:
- *         description: 인증 실패
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   description: 성공 여부
- *                 message:
- *                   type: string
- *                   description: 에러 메시지
- *             example:
- *               success: false
- *               message: "인증이 필요합니다."
- *       403:
- *         description: 권한 없음
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   description: 성공 여부
- *                 message:
- *                   type: string
- *                   description: 에러 메시지
- *             example:
- *               success: false
- *               message: "권한이 없습니다."
- *       404:
- *         description: 견적 요청 정보 없음
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   description: 성공 여부
- *                 message:
- *                   type: string
- *                   description: 에러 메시지
- *             example:
- *               success: false
- *               message: "견적 요청 정보가 없습니다."
- */
-router.get("/request/:estimateRequestId", moverEstimateController.getEstimateRequestById);
+router.get(
+  "/list",
+  moverEstimateTranslationMiddleware,
+  moverEstimateController.getAllEstimateRequests
+);
 
 /**
  * @swagger
@@ -829,7 +763,7 @@ router.get("/request/:estimateRequestId", moverEstimateController.getEstimateReq
  *                               id:
  *                                 type: string
  *                                 description: 주소 ID
- *                               postalCode:
+ *                               zoneCode:
  *                                 type: string
  *                                 description: 우편번호
  *                               city:
@@ -850,7 +784,7 @@ router.get("/request/:estimateRequestId", moverEstimateController.getEstimateReq
  *                               id:
  *                                 type: string
  *                                 description: 주소 ID
- *                               postalCode:
+ *                               zoneCode:
  *                                 type: string
  *                                 description: 우편번호
  *                               city:
@@ -880,14 +814,14 @@ router.get("/request/:estimateRequestId", moverEstimateController.getEstimateReq
  *                     moveDate: "2025-07-15T00:00:00.000Z"
  *                     fromAddress:
  *                       id: "clx1234567893"
- *                       postalCode: "06123"
+ *                       zoneCode: "06123"
  *                       city: "서울시"
  *                       district: "강남구"
  *                       detail: "강남역 1번 출구"
  *                       region: "SEOUL"
  *                     toAddress:
  *                       id: "clx1234567894"
- *                       postalCode: "06123"
+ *                       zoneCode: "06123"
  *                       city: "서울시"
  *                       district: "서초구"
  *                       detail: "서초역 2번 출구"
@@ -925,7 +859,11 @@ router.get("/request/:estimateRequestId", moverEstimateController.getEstimateReq
  *               success: false
  *               message: "권한이 없습니다."
  */
-router.get("/my-estimates", moverEstimateController.getMyEstimate);
+router.get(
+  "/my-estimates",
+  moverEstimateTranslationMiddleware,
+  moverEstimateController.getMyEstimate
+);
 
 /**
  * @swagger
@@ -989,7 +927,7 @@ router.get("/my-estimates", moverEstimateController.getMyEstimate);
  *                               id:
  *                                 type: string
  *                                 description: 주소 ID
- *                               postalCode:
+ *                               zoneCode:
  *                                 type: string
  *                                 description: 우편번호
  *                               city:
@@ -1010,7 +948,7 @@ router.get("/my-estimates", moverEstimateController.getMyEstimate);
  *                               id:
  *                                 type: string
  *                                 description: 주소 ID
- *                               postalCode:
+ *                               zoneCode:
  *                                 type: string
  *                                 description: 우편번호
  *                               city:
@@ -1039,14 +977,14 @@ router.get("/my-estimates", moverEstimateController.getMyEstimate);
  *                     moveDate: "2025-07-15T00:00:00.000Z"
  *                     fromAddress:
  *                       id: "clx1234567893"
- *                       postalCode: "06123"
+ *                       zoneCode: "06123"
  *                       city: "서울시"
  *                       district: "강남구"
  *                       detail: "강남역 1번 출구"
  *                       region: "SEOUL"
  *                     toAddress:
  *                       id: "clx1234567894"
- *                       postalCode: "06123"
+ *                       zoneCode: "06123"
  *                       city: "서울시"
  *                       district: "서초구"
  *                       detail: "서초역 2번 출구"
@@ -1084,7 +1022,11 @@ router.get("/my-estimates", moverEstimateController.getMyEstimate);
  *               success: false
  *               message: "권한이 없습니다."
  */
-router.get("/my-rejected", moverEstimateController.getMyRejectedEstimates);
+router.get(
+  "/my-rejected",
+  moverEstimateTranslationMiddleware,
+  moverEstimateController.getMyRejectedEstimates
+);
 
 /**
  * @swagger
@@ -1202,7 +1144,11 @@ router.get("/my-rejected", moverEstimateController.getMyRejectedEstimates);
  *               success: false
  *               message: "권한이 없습니다."
  */
-router.patch("/status", moverEstimateController.updateEstimateStatus);
+router.patch(
+  "/status",
+  moverEstimateTranslationMiddleware,
+  moverEstimateController.updateEstimateStatus
+);
 
 /**
  * @swagger
@@ -1328,6 +1274,10 @@ router.patch("/status", moverEstimateController.updateEstimateStatus);
  *               success: false
  *               message: "권한이 없습니다."
  */
-router.patch("/estimate", moverEstimateController.updateEstimate);
+router.patch(
+  "/estimate",
+  moverEstimateTranslationMiddleware,
+  moverEstimateController.updateEstimate
+);
 
 export default router;

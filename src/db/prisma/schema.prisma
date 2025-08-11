@@ -82,8 +82,10 @@ enum NotificationType {
   ESTIMATE_REQUEST_ARRIVED // 견적 요청 도착  
   ESTIMATE_ARRIVED // 견적 도착
   ESTIMATE_STATUS_UPDATED // 견적 수락/거절
-  DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED // 지정 견적 요청 관련 상태 변경
-  DESIGNATED_ESTIMATE_STATUS_UPDATED // 지정 견적 관련 상태 변경
+  DESIGNATED_ESTIMATE_REQUEST_ARRIVED // 지정 견적 요청 도착
+  DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED // 지정 견적 요청 관련 상태 변경 - 거절만.
+  DESIGNATED_ESTIMATE_ARRIVED // 지정 견적 도착
+  DESIGNATED_ESTIMATE_STATUS_UPDATED // 지정 견적 수락/거절
   REVIEW_EVENT // 리뷰 관련
   FAVORITE_EVENT // 찜 관련
   MOVE_DAY_REMINDER // 이사 리마인더
@@ -92,7 +94,7 @@ enum NotificationType {
 // 사용자 활동 타입
 enum ActionType {
   WELCOME // 회원가입 환영
-  ESTIMATE_REQUEST_CREATE // 견적 요청 생성 
+  ESTIMATE_REQUEST_CREATE // 견적 요청 생성  
   ESTIMATE_SUBMITTED // 견적 제출
   ESTIMATE_ACCEPTED // 견적 수락
   ESTIMATE_REJECTED // 견적 거절
@@ -124,7 +126,7 @@ model User {
   encryptedPassword    String? // 암호화된 비밀번호 (소셜 로그인은 null)
   refreshToken         String? // 리프레시 토큰 (JWT, 암호화 저장 권장)
   encryptedPhoneNumber String? // 암호화된 전화번호
-  name                 String // 실명
+  name                 String? // 실명
   userType             UserType[] // 유저 타입 배열 (CUSTOMER, MOVER 둘 다 가능)
   provider             AuthProvider @default(LOCAL) // 로그인 제공자
   providerId           String? // 소셜 로그인 ID
@@ -154,19 +156,19 @@ model User {
   serviceTypes     MoveType[] // 제공 가능한 서비스 타입들
 
   // 관계
-  addresses          UserAddress[] // 등록한 주소들
+  addresses          UserAddress[] // 등록한 주소들 (역방향 관계 - 코드에서 직접 사용하지 않음)
   serviceAreas       MoverServiceArea[] // 기사님 활동 가능 지역
-  requests           EstimateRequest[] // 고객이 생성한 견적 요청들
-  estimates          Estimate[] // 기사님이 작성한 견적들
-  reviewsWritten     Review[]           @relation("ReviewWriter") // 작성한 리뷰들
-  reviewsReceived    Review[]           @relation("ReviewReceiver") // 받은 리뷰들
-  favorites          Favorite[]         @relation("UserFavorites") // 찜한 기사님들
-  designatedRequests DesignatedMover[] // 지정 요청받은 견적들
-  actions            Action[] // 사용자 활동들
-  notifications      Notification[] // 받은 알림들
-  Favorite           Favorite[]
+  requests           EstimateRequest[] // 고객이 생성한 견적 요청들 (역방향 관계)
+  estimates          Estimate[] // 기사님이 작성한 견적들 (역방향 관계)
+  reviewsWritten     Review[]           @relation("ReviewWriter") // 작성한 리뷰들 (역방향 관계)
+  reviewsReceived    Review[]           @relation("ReviewReceiver") // 받은 리뷰들 (역방향 관계)
+  favorites          Favorite[]         @relation("UserFavorites") // 내가 찜한 기사님들 (역방향 관계)
+  designatedRequests DesignatedMover[] // 지정 요청받은 견적들 (역방향 관계)
+  actions            Action[] // 사용자 활동들 (역방향 관계)
+  notifications      Notification[] // 받은 알림들 (역방향 관계)
+  Favorite           Favorite[] // 내가 찜받은 관계 (mover 쪽)
 
-  @@index([email])
+  // 최적화된 인덱스: email은 unique이므로 별도 인덱스 불필요
   @@index([deletedAt])
   @@map("users")
 }
@@ -184,36 +186,34 @@ model Address {
   deletedAt DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
 
   // 관계
-  requestsFrom  EstimateRequest[] @relation("RequestFrom") // 출발지로 사용된 견적 요청들
-  requestsTo    EstimateRequest[] @relation("RequestTo") // 도착지로 사용된 견적 요청들
-  userAddresses UserAddress[] // 사용자별 주소 연결
+  requestsFrom  EstimateRequest[] @relation("RequestFrom") // 출발지로 사용된 견적 요청들 (역방향 관계)
+  requestsTo    EstimateRequest[] @relation("RequestTo") // 도착지로 사용된 견적 요청들 (역방향 관계)
+  userAddresses UserAddress[] // 사용자별 주소 연결 (역방향 관계)
 
-  @@index([region])
-  @@index([city])
-  @@index([district])
+  // 복합 인덱스로 최적화: 지역별 검색이 가장 빈번
+  @@index([region, city, district])
   @@index([deletedAt])
   @@map("addresses")
 }
 
 // 사용자별 주소 연결 테이블
 model UserAddress {
-  id          String      @id @default(cuid())
-  userId      String // 사용자 ID
-  addressId   String // 주소 ID
-  role        AddressRole // 주소 역할 (FROM, TO, EXTRA)
-  customLabel String? // 사용자 정의 라벨 (예: "회사", "창고")
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  deletedAt   DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
+  id        String      @id @default(cuid())
+  userId    String // 사용자 ID
+  addressId String // 주소 ID
+  role      AddressRole // 주소 역할 (FROM, TO, EXTRA)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  deletedAt DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
 
   // 관계
   user    User    @relation(fields: [userId], references: [id])
   address Address @relation(fields: [addressId], references: [id])
 
   @@unique([userId, addressId, role]) // 같은 사용자가 동일 주소를 같은 역할로 중복 등록 불가
+  // 복합 인덱스로 최적화: 사용자별 주소 조회가 가장 빈번
+  @@index([userId, role])
   @@index([deletedAt])
-  @@index([userId])
-  @@index([addressId])
   @@map("user_addresses")
 }
 
@@ -231,8 +231,8 @@ model MoverServiceArea {
   user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, region, district]) // 같은 기사님이 동일 지역 중복 등록 불가
-  @@index([region])
-  @@index([district])
+  // 복합 인덱스로 최적화: 지역별 기사님 검색이 가장 빈번
+  @@index([region, district])
   @@index([deletedAt])
   @@map("mover_service_areas")
 }
@@ -259,10 +259,10 @@ model EstimateRequest {
   review           Review? // 작성된 리뷰 (1개만)
   designatedMovers DesignatedMover[] // 지정 요청한 기사님들
 
-  @@index([customerId])
-  @@index([status])
-  @@index([moveDate])
-  @@index([moveType])
+  // 복합 인덱스로 최적화: 고객별 상태 조회가 가장 빈번
+  @@index([customerId, status])
+  // 복합 인덱스로 최적화: 날짜별 이사 유형 조회가 빈번
+  @@index([moveDate, moveType])
   @@index([deletedAt])
   @@map("estimate_requests")
 }
@@ -272,9 +272,7 @@ model DesignatedMover {
   id                String        @id @default(cuid())
   estimateRequestId String // 견적 요청 ID
   moverId           String // 기사님 ID
-  message           String? // 요청 메시지
   status            RequestStatus @default(PENDING) // 요청 상태
-  expiresAt         DateTime // 만료일
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   deletedAt         DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
@@ -284,9 +282,10 @@ model DesignatedMover {
   mover           User            @relation(fields: [moverId], references: [id])
 
   @@unique([estimateRequestId, moverId]) // 한 요청에 동일 기사님 중복 지정 불가
-  @@index([estimateRequestId])
-  @@index([moverId])
-  @@index([status])
+  // 복합 인덱스로 최적화: 기사님별 상태 조회가 가장 빈번
+  @@index([moverId, status])
+  // 복합 인덱스로 최적화: 요청별 상태 조회가 빈번
+  @@index([estimateRequestId, status])
   @@index([deletedAt])
   @@map("designated_movers")
 }
@@ -314,10 +313,14 @@ model Estimate {
   estimateRequest EstimateRequest @relation(fields: [estimateRequestId], references: [id])
 
   @@unique([estimateRequestId, moverId]) // 한 요청에 동일 기사님 중복 견적 불가
-  @@index([moverId])
-  @@index([status])
-  @@index([price])
-  @@index([isDesignated])
+  // 복합 인덱스로 최적화: 기사님별 상태 조회가 가장 빈번
+  @@index([moverId, status])
+  // 복합 인덱스로 최적화: 요청별 상태 조회가 빈번
+  @@index([estimateRequestId, status])
+  // 복합 인덱스로 최적화: 가격 범위 검색이 빈번
+  @@index([status, price])
+  // 복합 인덱스로 최적화: 지정 기사 여부와 상태 조회
+  @@index([isDesignated, status])
   @@index([deletedAt])
   @@map("estimates")
 }
@@ -341,8 +344,8 @@ model Review {
   request EstimateRequest @relation(fields: [estimateRequestId], references: [id])
 
   @@unique([estimateRequestId]) // 한 견적 요청당 리뷰 1개만
-  @@index([moverId])
-  @@index([rating])
+  // 복합 인덱스로 최적화: 기사님별 평점 조회가 가장 빈번
+  @@index([moverId, rating])
   @@index([deletedAt])
   @@map("reviews")
 }
@@ -361,8 +364,10 @@ model Favorite {
   mover    User @relation(fields: [moverId], references: [id])
 
   @@unique([customerId, moverId]) // 중복 찜 방지
-  @@index([customerId])
-  @@index([moverId])
+  // 복합 인덱스로 최적화: 고객별 찜 목록 조회가 가장 빈번
+  @@index([customerId, createdAt])
+  // 복합 인덱스로 최적화: 기사님별 찜 받은 수 조회가 빈번
+  @@index([moverId, createdAt])
   @@index([deletedAt])
   @@map("favorites")
 }
@@ -383,10 +388,12 @@ model Action {
   user          User           @relation(fields: [userId], references: [id])
   notifications Notification[] // 이 활동으로 생성된 알림들
 
-  @@index([userId])
-  @@index([type])
+  // 복합 인덱스로 최적화: 사용자별 활동 타입 조회가 가장 빈번
+  @@index([userId, type])
+  // 복합 인덱스로 최적화: 엔티티별 활동 조회가 빈번
   @@index([entityId, entityType])
-  @@index([createdAt])
+  // 복합 인덱스로 최적화: 시간순 활동 조회가 빈번
+  @@index([createdAt, type])
   @@index([deletedAt])
   @@map("actions")
 }
@@ -396,9 +403,11 @@ model Notification {
   id        String           @id @default(cuid())
   actionId  String // 연결된 Action ID
   userId    String // 수신자 ID
+  userType  UserType // 수신자 타입
   type      NotificationType // 알림 종류
-  title     String // 알림 제목
-  content   String // 알림 내용
+  messageKo String // 한국어 알림 메시지
+  messageEn String // 영어 알림 메시지
+  messageZh String // 중국어 알림 메시지
   path      String? // 클릭 시 이동 경로
   isRead    Boolean          @default(false) // 읽음 여부
   createdAt DateTime         @default(now())
@@ -409,10 +418,10 @@ model Notification {
   action Action @relation(fields: [actionId], references: [id])
   user   User   @relation(fields: [userId], references: [id])
 
-  @@index([userId, isRead])
-  @@index([actionId])
-  @@index([type])
-  @@index([createdAt])
+  // 복합 인덱스로 최적화: 사용자별 읽음 상태 조회가 가장 빈번
+  @@index([userId, isRead, createdAt])
+  // 복합 인덱스로 최적화: 알림 타입별 조회가 빈번
+  @@index([type, createdAt])
   @@index([deletedAt])
   @@map("notifications")
 }

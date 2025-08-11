@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from "../db/prisma/prisma";
 import {
   TCreateMoverProfile,
   TCreateCustomerProfile,
@@ -9,8 +9,6 @@ import {
   TCustomerProfileUpdate,
   TMoverProfileUpdateInput,
 } from "../types/user.types";
-
-const prisma = new PrismaClient();
 
 // 사용자 정보 조회
 const getUserById = async (userId: string) => {
@@ -28,6 +26,9 @@ const getUserById = async (userId: string) => {
       moverImage: true,
       userType: true,
       refreshToken: true,
+      provider: true,
+      isCustomer: true,
+      isMover: true,
     },
   });
   return user;
@@ -284,15 +285,39 @@ const updateUserProfile = async (
   });
 };
 
-export {
+// 사용자 이름 조회 (액션 메타데이터용)
+const getUserNameById = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true },
+  });
+  return user?.name || "";
+};
+
+// 무버 정보 조회 (액션 메타데이터용)
+const getMoverInfoById = async (moverId: string) => {
+  const mover = await prisma.user.findUnique({
+    where: { id: moverId },
+    select: {
+      id: true,
+      name: true,
+      nickname: true,
+    },
+  });
+  return mover;
+};
+
+export default {
   getUserById,
   getUserWithPassword,
   getCustomerProfile,
   getMoverProfile,
   createCustomerProfile,
-  createMoverProfile as createMoverProfileRepository,
-  updateUserProfile,
   updateCustomerProfile,
+  createMoverProfile,
   updateMoverProfile,
   checkNicknameExists,
+  updateUserProfile,
+  getUserNameById,
+  getMoverInfoById,
 };

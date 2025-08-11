@@ -5,6 +5,7 @@ import reviewRouter from "./review.route";
 import customerEstimateRequestRouter from "./customerEstimateRequest.route";
 import estimateRequestRouter from "./estimateRequest.routes";
 import moverEstimateRouter from "./moverEstimate.routes";
+import moverScheduleRouter from "./moverSchedule.routes";
 import favoriteRouter from "./favorite.routes";
 import expirationRouter from "./expiration.routes";
 
@@ -67,6 +68,7 @@ businessRoutes.use("/reviews", reviewRouter);
 businessRoutes.use("/estimateRequests", estimateRequestRouter);
 businessRoutes.use("/customer-quotes", customerEstimateRequestRouter);
 businessRoutes.use("/mover-estimates", moverEstimateRouter);
+businessRoutes.use("/mover-schedules", moverScheduleRouter);
 businessRoutes.use("/favorites", favoriteRouter);
 businessRoutes.use("/expiration", expirationRouter);
 

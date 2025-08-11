@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import EstimateRequestService from "../services/estimateRequest.service";
 import { convertRegionToKorean } from "../utils/addressUtils";
-import { isBeforeKoreaToday, formatDateForAPI } from "../utils/dateUtils";
+import { validateMoveDate, formatDateForAPI } from "../utils/dateUtils";
+import * as Sentry from "@sentry/node";
 import {
   TCreateEstimateRequest,
   TUpdateEstimateRequest,
@@ -37,21 +38,19 @@ class EstimateRequestController {
     }
   }
 
-  private validateMoveDate(movingDate: string): void {
-    try {
-      const moveDate = new Date(movingDate);
-      if (isNaN(moveDate.getTime())) {
-        throw new Error("올바른 날짜 형식이 아닙니다. (YYYY-MM-DD 형식으로 입력해주세요)");
-      }
+  private async validateCustomerProfile(userId: string): Promise<void> {
+    const hasProfile = await estimateRequestService.checkCustomerProfile(userId);
+    if (!hasProfile) {
+      throw new Error("고객 프로필을 먼저 등록해주세요.");
+    }
+  }
 
-      if (isBeforeKoreaToday(moveDate)) {
-        throw new Error("이사일은 오늘 이후로 설정해주세요.");
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("날짜 검증 중 오류가 발생했습니다.");
+  private validateMoveDate(movingDate: string): void {
+    const moveDate = new Date(movingDate);
+    const validation = validateMoveDate(moveDate);
+
+    if (!validation.isValid) {
+      throw new Error(validation.errorMessage);
     }
   }
 
@@ -155,10 +154,11 @@ class EstimateRequestController {
       const userId = this.getUserId(req);
       this.validateUser(userId);
       await this.validateCustomerAccess(userId);
+      await this.validateCustomerProfile(userId);
 
-      const hasPending = await estimateRequestService.hasPendingRequest(userId);
-      if (hasPending) {
-        return res.status(409).json({ success: false, message: "이미 진행중인 견적 요청이 있습니다." });
+      const hasActiveRequest = await estimateRequestService.hasActiveRequestBeforeMoveDate(userId);
+      if (hasActiveRequest) {
+        return res.status(409).json({ success: false, message: "이사일이 지나지 않은 견적 요청이 있습니다." });
       }
 
       const { movingType, movingDate, departure, arrival, description } = req.body;
@@ -197,7 +197,20 @@ class EstimateRequestController {
         data: createdRequest ? this.formatEstimateRequestResponse(createdRequest) : null,
       });
     } catch (error) {
-      console.error("견적 요청 생성 에러:", error);
+      // 센트리로 에러 전송
+      Sentry.captureException(error, {
+        extra: {
+          userId: req.user?.userId,
+          body: req.body,
+          url: req.url,
+          method: req.method,
+        },
+        tags: {
+          error_type: "estimate_request_creation",
+          user_type: req.user?.userType || "type_unknown",
+        },
+      });
+
       const message = error instanceof Error ? error.message : "서버 내부 오류가 발생했습니다.";
       const status = error instanceof Error && error.message.includes("인증") ? 401 : 500;
       return res.status(status).json({ success: false, message });
@@ -212,15 +225,28 @@ class EstimateRequestController {
 
       const active = await estimateRequestService.getActiveEstimateRequestByUserId(userId);
       const hasActive = !!active;
+      const hasEstimate = hasActive ? await estimateRequestService.hasEstimateFromMover(userId) : false;
 
       if (hasActive && active) {
         const responseData = this.formatEstimateRequestResponse(active);
-        return res.status(200).json({ success: true, hasActive, data: responseData });
+        return res.status(200).json({ success: true, hasActive, hasEstimate, data: responseData });
       } else {
-        return res.status(200).json({ success: true, hasActive });
+        return res.status(200).json({ success: true, hasActive, hasEstimate });
       }
     } catch (error) {
-      console.error("활성 견적 요청 조회 에러:", error);
+      // 센트리로 에러 전송
+      Sentry.captureException(error, {
+        extra: {
+          userId: req.user?.userId,
+          url: req.url,
+          method: req.method,
+        },
+        tags: {
+          error_type: "estimate_request_get_active",
+          user_type: req.user?.userType || "unknown",
+        },
+      });
+
       const message = error instanceof Error ? error.message : "서버 내부 오류가 발생했습니다.";
       const status = error instanceof Error && error.message.includes("인증") ? 401 : 500;
       return res.status(status).json({ success: false, message });
@@ -232,6 +258,7 @@ class EstimateRequestController {
       const userId = this.getUserId(req);
       this.validateUser(userId);
       await this.validateCustomerAccess(userId);
+      await this.validateCustomerProfile(userId);
 
       const isPending = await estimateRequestService.hasPendingRequest(userId);
       if (!isPending) {
@@ -296,7 +323,20 @@ class EstimateRequestController {
         data: updatedRequest ? this.formatEstimateRequestResponse(updatedRequest) : null,
       });
     } catch (error) {
-      console.error("견적 요청 수정 에러:", error);
+      // 센트리로 에러 전송
+      Sentry.captureException(error, {
+        extra: {
+          userId: req.user?.userId,
+          body: req.body,
+          url: req.url,
+          method: req.method,
+        },
+        tags: {
+          error_type: "estimate_request_update",
+          user_type: req.user?.userType || "unknown",
+        },
+      });
+
       const message = error instanceof Error ? error.message : "서버 내부 오류가 발생했습니다.";
       const status = error instanceof Error && error.message.includes("인증") ? 401 : 500;
       return res.status(status).json({ success: false, message });
@@ -308,6 +348,7 @@ class EstimateRequestController {
       const userId = this.getUserId(req);
       this.validateUser(userId);
       await this.validateCustomerAccess(userId);
+      await this.validateCustomerProfile(userId);
 
       const isPending = await estimateRequestService.hasPendingRequest(userId);
       if (!isPending) {
@@ -340,7 +381,19 @@ class EstimateRequestController {
       await estimateRequestService.cancelActiveEstimateRequest(active.id);
       return res.status(204).send();
     } catch (error) {
-      console.error("견적 요청 취소 에러:", error);
+      // 센트리로 에러 전송
+      Sentry.captureException(error, {
+        extra: {
+          userId: req.user?.userId,
+          url: req.url,
+          method: req.method,
+        },
+        tags: {
+          error_type: "estimate_request_cancel",
+          user_type: req.user?.userType || "unknown",
+        },
+      });
+
       const message = error instanceof Error ? error.message : "서버 내부 오류가 발생했습니다.";
       const status = error instanceof Error && error.message.includes("인증") ? 401 : 500;
       return res.status(status).json({ success: false, message });

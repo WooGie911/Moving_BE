@@ -13,6 +13,11 @@ const mockPrisma = {
     create: jest.fn(),
     findFirst: jest.fn(),
   },
+  estimateRequest: {
+    findUnique: jest.fn(),
+    findMany: jest.fn(),
+    findFirst: jest.fn(),
+  },
 };
 
 jest.mock("@prisma/client", () => ({
@@ -38,17 +43,17 @@ describe("MoverRepository - 유닛 테스트", () => {
 
       const mockMovers = [
         {
-          id: "mover-1",
+          id: "user_123",
           nickname: "김기사",
-          name: "김기사",
+          name: "김***",
           career: 5,
           shortIntro: "안녕하세요",
           detailIntro: "상세 소개입니다",
           workedCount: 100,
           averageRating: 4.5,
           totalReviewCount: 10,
-          serviceAreas: [],
           serviceTypes: ["SMALL"],
+          currentAreas: ["SEOUL"],
           Favorite: [
             { id: "favorite-1", deletedAt: null },
             { id: "favorite-2", deletedAt: null },
@@ -70,12 +75,10 @@ describe("MoverRepository - 유닛 테스트", () => {
             { nickname: { contains: "김기사" } },
             { name: { contains: "김기사" } },
           ],
-          serviceAreas: {
-            some: { region: "서울" },
-          },
+          currentAreas: { has: "서울" },
           serviceTypes: { has: "SMALL" },
         },
-        orderBy: { totalReviewCount: "desc" },
+        orderBy: [{ totalReviewCount: "desc" }, { id: "asc" }],
         skip: 0,
         take: 11,
         select: {
@@ -88,10 +91,10 @@ describe("MoverRepository - 유닛 테스트", () => {
           workedCount: true,
           averageRating: true,
           totalReviewCount: true,
-          serviceAreas: true,
           serviceTypes: true,
           Favorite: true,
           moverImage: true,
+          currentAreas: true,
         },
       });
       expect(result).toEqual({
@@ -121,7 +124,8 @@ describe("MoverRepository - 유닛 테스트", () => {
           workedCount: 100,
           averageRating: 4.5,
           totalReviewCount: 10,
-          serviceAreas: [],
+          serviceAreas: ["SEOUL"],
+          currentAreas: ["SEOUL"],
           serviceTypes: ["SMALL"],
           Favorite: [
             { id: "favorite-1", deletedAt: null },
@@ -141,7 +145,7 @@ describe("MoverRepository - 유닛 테스트", () => {
           deletedAt: null,
           userType: { has: "MOVER" },
         },
-        orderBy: { totalReviewCount: "desc" },
+        orderBy: [{ totalReviewCount: "desc" }, { id: "asc" }],
         skip: 0,
         take: 11,
         select: {
@@ -154,10 +158,10 @@ describe("MoverRepository - 유닛 테스트", () => {
           workedCount: true,
           averageRating: true,
           totalReviewCount: true,
-          serviceAreas: true,
           serviceTypes: true,
           Favorite: true,
           moverImage: true,
+          currentAreas: true,
         },
       });
       expect(result).toEqual({
@@ -184,7 +188,7 @@ describe("MoverRepository - 유닛 테스트", () => {
           deletedAt: null,
           userType: { has: "MOVER" },
         },
-        orderBy: { career: "desc" },
+        orderBy: [{ career: "desc" }, { id: "asc" }],
         skip: 0,
         take: 11,
         select: {
@@ -197,10 +201,10 @@ describe("MoverRepository - 유닛 테스트", () => {
           workedCount: true,
           averageRating: true,
           totalReviewCount: true,
-          serviceAreas: true,
           serviceTypes: true,
           Favorite: true,
           moverImage: true,
+          currentAreas: true,
         },
       });
     });
@@ -225,7 +229,8 @@ describe("MoverRepository - 유닛 테스트", () => {
           workedCount: 100,
           averageRating: 4.5,
           totalReviewCount: 10,
-          serviceAreas: [],
+          serviceAreas: ["SEOUL"],
+          currentAreas: ["SEOUL"],
           serviceTypes: ["SMALL"],
           Favorite: [
             { id: "favorite-1", deletedAt: null },
@@ -245,7 +250,7 @@ describe("MoverRepository - 유닛 테스트", () => {
           deletedAt: null,
           userType: { has: "MOVER" },
         },
-        orderBy: { workedCount: "desc" },
+        orderBy: [{ workedCount: "desc" }, { id: "asc" }],
         skip: 0,
         take: 11,
         select: {
@@ -258,7 +263,7 @@ describe("MoverRepository - 유닛 테스트", () => {
           workedCount: true,
           averageRating: true,
           totalReviewCount: true,
-          serviceAreas: true,
+          currentAreas: true,
           serviceTypes: true,
           Favorite: true,
           moverImage: true,
@@ -287,7 +292,7 @@ describe("MoverRepository - 유닛 테스트", () => {
             { name: { contains: "이사" } },
           ],
         },
-        orderBy: { totalReviewCount: "desc" },
+        orderBy: [{ totalReviewCount: "desc" }, { id: "asc" }],
         skip: 0,
         take: 11,
         select: {
@@ -300,7 +305,7 @@ describe("MoverRepository - 유닛 테스트", () => {
           workedCount: true,
           averageRating: true,
           totalReviewCount: true,
-          serviceAreas: true,
+          currentAreas: true,
           serviceTypes: true,
           Favorite: true,
           moverImage: true,
@@ -329,13 +334,14 @@ describe("MoverRepository - 유닛 테스트", () => {
             workedCount: 100,
             averageRating: 4.5,
             totalReviewCount: 10,
-            serviceAreas: [],
+            serviceAreas: ["SEOUL"],
+            currentAreas: ["SEOUL"],
             serviceTypes: ["SMALL"],
             moverImage: "image1.jpg",
             Favorite: [
               { id: "favorite-1", deletedAt: null },
               { id: "favorite-2", deletedAt: null },
-              { id: "favorite-3", deletedAt: new Date() }, 
+              { id: "favorite-3", deletedAt: new Date() },
             ],
           },
         },
@@ -363,6 +369,7 @@ describe("MoverRepository - 유닛 테스트", () => {
               averageRating: true,
               totalReviewCount: true,
               serviceAreas: true,
+              currentAreas: true,
               serviceTypes: true,
               moverImage: true,
               Favorite: true,
@@ -377,7 +384,7 @@ describe("MoverRepository - 유닛 테스트", () => {
       expect(result).toEqual([
         {
           ...mockFavorites[0].mover,
-          favoriteCount: 2, 
+          favoriteCount: 2,
         },
       ]);
     });
@@ -407,7 +414,8 @@ describe("MoverRepository - 유닛 테스트", () => {
         workedCount: 100,
         averageRating: 4.5,
         totalReviewCount: 10,
-        serviceAreas: [],
+        serviceAreas: ["SEOUL"],
+        currentAreas: ["SEOUL"],
         serviceTypes: ["SMALL"],
         moverImage: "image1.jpg",
         Favorite: [
@@ -440,7 +448,7 @@ describe("MoverRepository - 유닛 테스트", () => {
           workedCount: true,
           averageRating: true,
           totalReviewCount: true,
-          serviceAreas: true,
+          currentAreas: true,
           serviceTypes: true,
           moverImage: true,
           Favorite: true,
@@ -455,7 +463,7 @@ describe("MoverRepository - 유닛 테스트", () => {
       });
       expect(result).toEqual({
         ...mockMover,
-        favoriteCount: 2, 
+        favoriteCount: 2,
         isFavorited: true,
       });
     });
@@ -473,13 +481,14 @@ describe("MoverRepository - 유닛 테스트", () => {
         workedCount: 100,
         averageRating: 4.5,
         totalReviewCount: 10,
-        serviceAreas: [],
+        serviceAreas: ["SEOUL"],
+        currentAreas: ["SEOUL"],
         serviceTypes: ["SMALL"],
         moverImage: "image1.jpg",
         Favorite: [
           { id: "favorite-1", deletedAt: null },
           { id: "favorite-2", deletedAt: null },
-          { id: "favorite-3", deletedAt: new Date() }, 
+          { id: "favorite-3", deletedAt: new Date() },
         ],
       };
 
@@ -490,7 +499,7 @@ describe("MoverRepository - 유닛 테스트", () => {
 
       expect(result).toEqual({
         ...mockMover,
-        favoriteCount: 2, 
+        favoriteCount: 2,
         isFavorited: false,
       });
     });
@@ -519,13 +528,14 @@ describe("MoverRepository - 유닛 테스트", () => {
         workedCount: 100,
         averageRating: 4.5,
         totalReviewCount: 10,
-        serviceAreas: [],
+        serviceAreas: ["SEOUL"],
+        currentAreas: ["SEOUL"],
         serviceTypes: ["SMALL"],
         moverImage: "image1.jpg",
         Favorite: [
           { id: "favorite-1", deletedAt: null },
           { id: "favorite-2", deletedAt: null },
-          { id: "favorite-3", deletedAt: new Date() }, 
+          { id: "favorite-3", deletedAt: new Date() },
         ],
       };
 
@@ -545,7 +555,7 @@ describe("MoverRepository - 유닛 테스트", () => {
           workedCount: true,
           averageRating: true,
           totalReviewCount: true,
-          serviceAreas: true,
+          currentAreas: true,
           serviceTypes: true,
           moverImage: true,
           Favorite: true,
@@ -554,8 +564,9 @@ describe("MoverRepository - 유닛 테스트", () => {
       expect(mockPrisma.favorite.findUnique).not.toHaveBeenCalled();
       expect(result).toEqual({
         ...mockMover,
-        favoriteCount: 2, 
+        favoriteCount: 2,
         isFavorited: false,
+        activeEstimateRequest: null,
       });
     });
   });
@@ -622,6 +633,7 @@ describe("MoverRepository - 유닛 테스트", () => {
           message: true,
           expiresAt: true,
           createdAt: true,
+          status: true,
         },
       });
       expect(result).toEqual(mockRequest);
@@ -639,6 +651,86 @@ describe("MoverRepository - 유닛 테스트", () => {
         await moverRepository.checkDesignatedEstimateRequest(params);
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe("checkEstimateRequestStatus", () => {
+    it("유효한 견적 요청 상태를 성공적으로 확인한다", async () => {
+      const quoteId = "quote-1";
+      const mockEstimateRequest = {
+        id: quoteId,
+        status: "PENDING",
+        moveDate: new Date("2025-12-31"),
+      };
+
+      mockPrisma.estimateRequest.findUnique.mockResolvedValue(
+        mockEstimateRequest
+      );
+
+      const result = await moverRepository.checkEstimateRequestStatus(quoteId);
+
+      expect(mockPrisma.estimateRequest.findUnique).toHaveBeenCalledWith({
+        where: { id: quoteId },
+        select: {
+          id: true,
+          status: true,
+          moveDate: true,
+        },
+      });
+      expect(result).toEqual({ isValid: true });
+    });
+
+    it("확정된 견적 요청에 대해 유효하지 않음을 반환한다", async () => {
+      const quoteId = "quote-1";
+      const mockEstimateRequest = {
+        id: quoteId,
+        status: "APPROVED",
+        moveDate: new Date("2025-12-31"),
+      };
+
+      mockPrisma.estimateRequest.findUnique.mockResolvedValue(
+        mockEstimateRequest
+      );
+
+      const result = await moverRepository.checkEstimateRequestStatus(quoteId);
+
+      expect(result).toEqual({
+        isValid: false,
+        reason: "확정되거나 완료된 견적에는 지정 견적을 요청할 수 없습니다.",
+      });
+    });
+
+    it("완료된 견적 요청에 대해 유효하지 않음을 반환한다", async () => {
+      const quoteId = "quote-1";
+      const mockEstimateRequest = {
+        id: quoteId,
+        status: "COMPLETED",
+        moveDate: new Date("2025-12-31"),
+      };
+
+      mockPrisma.estimateRequest.findUnique.mockResolvedValue(
+        mockEstimateRequest
+      );
+
+      const result = await moverRepository.checkEstimateRequestStatus(quoteId);
+
+      expect(result).toEqual({
+        isValid: false,
+        reason: "확정되거나 완료된 견적에는 지정 견적을 요청할 수 없습니다.",
+      });
+    });
+
+    it("존재하지 않는 견적 요청을 확인한다", async () => {
+      const quoteId = "invalid-quote";
+
+      mockPrisma.estimateRequest.findUnique.mockResolvedValue(null);
+
+      const result = await moverRepository.checkEstimateRequestStatus(quoteId);
+
+      expect(result).toEqual({
+        isValid: false,
+        reason: "견적을 찾을 수 없습니다.",
+      });
     });
   });
 });

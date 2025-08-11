@@ -1,11 +1,10 @@
-import { AuthProvider, PrismaClient } from "@prisma/client";
+import { AuthProvider } from "@prisma/client";
+import prisma from "../db/prisma/prisma";
 import {
   TSocialSignupInput,
   TUserRole,
   TUserSignup,
 } from "../types/user.types";
-
-const prisma = new PrismaClient();
 
 // 유저 생성
 const createUser = async (user: TUserSignup) => {
@@ -60,6 +59,7 @@ const findUserByEmailAndPassword = async (email: string) => {
       moverImage: true,
       isCustomer: true,
       isMover: true,
+      provider: true,
     },
   });
 };

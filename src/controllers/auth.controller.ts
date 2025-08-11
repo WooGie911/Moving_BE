@@ -11,8 +11,11 @@ const FRONTEND_URL =
     ? process.env.FRONTEND_URL
     : "http://localhost:3000";
 
-export const authCookieOptions = (maxAgeSeconds: number): TCookieOptions => ({
-  httpOnly: true,
+export const authCookieOptions = (
+  maxAgeSeconds: number,
+  httpOnly: boolean = true
+): TCookieOptions => ({
+  httpOnly: httpOnly,
   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 개발환경에서는 lax 사용
   secure: process.env.NODE_ENV === "production", // 개발환경에서는 false
   path: "/",
@@ -34,6 +37,12 @@ const postSignin = async (req: Request, res: Response) => {
     } = await authService.signin(email, password, userType);
 
     res.cookie(
+      "accessToken",
+      accessToken,
+      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+    );
+
+    res.cookie(
       "refreshToken",
       refreshToken,
       authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
@@ -47,7 +56,6 @@ const postSignin = async (req: Request, res: Response) => {
         userName,
         userType: userTypeResponse,
       },
-      accessToken,
     });
   } catch (error: any) {
     console.error("로그인 에러:", error);
@@ -80,6 +88,12 @@ const postSignup = async (req: Request, res: Response) => {
     });
 
     res.cookie(
+      "accessToken",
+      accessToken,
+      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+    );
+
+    res.cookie(
       "refreshToken",
       refreshToken,
       authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
@@ -93,7 +107,6 @@ const postSignup = async (req: Request, res: Response) => {
         name: userName,
         userType: userTypeResponse,
       },
-      accessToken,
     });
   } catch (error: any) {
     handleError(res, error);
@@ -107,11 +120,48 @@ const postLogout = async (req: Request, res: Response) => {
   try {
     await authService.logout(userId);
 
+    res.clearCookie("accessToken", authCookieOptions(0));
     res.clearCookie("refreshToken", authCookieOptions(0));
 
     res.status(200).json({
       success: true,
       message: "로그아웃 성공",
+    });
+  } catch (error: any) {
+    handleError(res, error);
+  }
+};
+
+// 역할 변경
+const postSwitchRole = async (req: Request, res: Response) => {
+  const { userId, userType: oldUserType } = req.user as {
+    userId: string;
+    userType: TUserRole;
+  };
+
+  const { userType } = req.body;
+
+  try {
+    const { accessToken, refreshToken, provider } =
+      await authService.switchRole(userId, userType);
+
+    res.cookie(
+      "accessToken",
+      accessToken,
+      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+    );
+
+    res.cookie(
+      "refreshToken",
+      refreshToken,
+      authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "역할 변경 성공",
+      oldUserType,
+      newUserType: userType,
     });
   } catch (error: any) {
     handleError(res, error);
@@ -133,7 +183,12 @@ const postRefresh = async (req: Request, res: Response) => {
       userId,
     });
 
-    // 리프레쉬 쿠키까지 재발급 된다면 저장
+    res.cookie(
+      "accessToken",
+      accessToken,
+      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+    );
+
     if (refreshToken) {
       res.cookie(
         "refreshToken",
@@ -145,7 +200,6 @@ const postRefresh = async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       message: "토큰 갱신 성공",
-      accessToken,
     });
   } catch (error: any) {
     handleError(res, error);
@@ -158,15 +212,18 @@ const getGoogleCallback = async (req: Request, res: Response) => {
 
   try {
     res.cookie(
+      "accessToken",
+      accessToken,
+      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+    );
+
+    res.cookie(
       "refreshToken",
       refreshToken,
       authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
     );
 
-    // 보호되지 않는 콜백 페이지로 리디렉션
-    res.redirect(
-      `${FRONTEND_URL}/callback?success=true&accessToken=${accessToken}&userType=${userType}`
-    );
+    res.redirect(`${FRONTEND_URL}/`);
   } catch (error: any) {
     const params = new URLSearchParams({
       success: "false",
@@ -187,15 +244,18 @@ const getKakaoCallback = async (req: Request, res: Response) => {
 
   try {
     res.cookie(
+      "accessToken",
+      accessToken,
+      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+    );
+
+    res.cookie(
       "refreshToken",
       refreshToken,
       authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
     );
 
-    // 보호되지 않는 콜백 페이지로 리디렉션
-    res.redirect(
-      `${FRONTEND_URL}/callback?success=true&accessToken=${accessToken}&userType=${userType}`
-    );
+    res.redirect(`${FRONTEND_URL}/`);
   } catch (error: any) {
     const params = new URLSearchParams({
       success: "false",
@@ -216,15 +276,18 @@ const getNaverCallback = async (req: Request, res: Response) => {
 
   try {
     res.cookie(
+      "accessToken",
+      accessToken,
+      authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+    );
+
+    res.cookie(
       "refreshToken",
       refreshToken,
       authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
     );
 
-    // 보호되지 않는 콜백 페이지로 리디렉션
-    res.redirect(
-      `${FRONTEND_URL}/callback?success=true&accessToken=${accessToken}&userType=${userType}`
-    );
+    res.redirect(`${FRONTEND_URL}/`);
   } catch (error: any) {
     const params = new URLSearchParams({
       success: "false",
@@ -243,6 +306,7 @@ export {
   postSignin,
   postSignup,
   postLogout,
+  postSwitchRole,
   postRefresh,
   getGoogleCallback,
   getKakaoCallback,

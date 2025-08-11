@@ -1,17 +1,16 @@
-import { VALID_REGIONS } from "../../constants/regions.constants";
 import {
   PROFILE_ERROR_MESSAGES,
   VALIDATION_CONFIG,
 } from "../../constants/profile.constants";
-import { ValidationError, ForbiddenError } from "../../types/commonError.types";
+import { ValidationError } from "../../types/commonError.types";
 import {
   TCustomerProfileInput,
   TMoverProfileInput,
-  TUserProfileUpdateInput,
   MoveType,
   RegionType,
+  TCustomerProfileUpdateInput,
 } from "../../types/user.types";
-import { checkNicknameExists } from "../../repositories/user.repository";
+import userRepository from "../../repositories/user.repository";
 
 // MoveType 유효성 검사
 export const validateMoveTypes = (moveTypes: MoveType[]): boolean => {
@@ -46,19 +45,36 @@ export const validateRegion = (regions: RegionType[]): boolean => {
   return regions.every((region) => validRegions.includes(region));
 };
 
-// 닉네임 중복 확인 및 에러 처리
+// 닉네임 유효성 정규식 (한글, 영어, 중국어, 숫자만 허용) 15자 이하
+const NICKNAME_REGEX =
+  /^[\p{Script=Hangul}\p{Script=Han}\p{Script=Latin}0-9]{1,15}$/u;
+
+// 닉네임 중복 확인 및 유효성 검사
 export const ensureNicknameUnique = async (
   nickname: string,
   excludeUserId?: string
 ): Promise<void> => {
-  if (
-    !nickname ||
-    nickname.trim().length < VALIDATION_CONFIG.MIN_NICKNAME_LENGTH
-  ) {
+  const trimmed = nickname?.trim();
+
+  // 닉네임 최소 길이 검사
+  if (!trimmed || trimmed.length < VALIDATION_CONFIG.MIN_NICKNAME_LENGTH) {
     throw new ValidationError(PROFILE_ERROR_MESSAGES.NICKNAME_REQUIRED);
   }
 
-  const nicknameExists = await checkNicknameExists(nickname, excludeUserId);
+  // 닉네임 최대 길이 검사
+  if (trimmed.length > VALIDATION_CONFIG.MAX_NICKNAME_LENGTH) {
+    throw new ValidationError(PROFILE_ERROR_MESSAGES.NICKNAME_TOO_LONG);
+  }
+
+  if (!NICKNAME_REGEX.test(trimmed)) {
+    throw new ValidationError(PROFILE_ERROR_MESSAGES.NICKNAME_INVALID_FORMAT);
+  }
+
+  const nicknameExists = await userRepository.checkNicknameExists(
+    trimmed,
+    excludeUserId
+  );
+
   if (nicknameExists) {
     throw new ValidationError(PROFILE_ERROR_MESSAGES.NICKNAME_ALREADY_EXISTS);
   }
@@ -66,7 +82,7 @@ export const ensureNicknameUnique = async (
 
 // Customer 프로필 데이터 유효성 검사
 export const validateCustomerProfileData = async (
-  profileData: TCustomerProfileInput,
+  profileData: TCustomerProfileUpdateInput,
   userId?: string
 ): Promise<void> => {
   // 닉네임 유효성 검사 (선택사항)
@@ -138,44 +154,35 @@ export const validateMoverProfileData = async (
     throw new ValidationError(PROFILE_ERROR_MESSAGES.EXPERIENCE_REQUIRED);
   }
 
-  // 5. 한줄 소개 유효성 검사 (선택사항, 있으면 최소 길이 체크)
+  // 5. 한줄 소개 유효성 검사 (선택사항, 있으면 최소/최대 길이 체크)
   if (profileData.shortIntro !== undefined) {
+    const trimmedIntro = profileData.shortIntro.trim();
     if (
-      profileData.shortIntro.trim().length > 0 &&
-      profileData.shortIntro.trim().length <
-        VALIDATION_CONFIG.MIN_INTRODUCTION_LENGTH
+      trimmedIntro.length > 0 &&
+      trimmedIntro.length < VALIDATION_CONFIG.MIN_INTRODUCTION_LENGTH
     ) {
       throw new ValidationError(PROFILE_ERROR_MESSAGES.INTRODUCTION_REQUIRED);
+    }
+    if (trimmedIntro.length > VALIDATION_CONFIG.MAX_INTRODUCTION_LENGTH) {
+      throw new ValidationError(PROFILE_ERROR_MESSAGES.INTRODUCTION_TOO_LONG);
     }
   } else if (!profileData.shortIntro) {
     throw new ValidationError(PROFILE_ERROR_MESSAGES.INTRODUCTION_REQUIRED);
   }
 
-  // 6. 상세 소개 유효성 검사 (선택사항, 있으면 최소 길이 체크)
+  // 6. 상세 소개 유효성 검사 (선택사항, 있으면 최소/최대 길이 체크)
   if (profileData.detailIntro !== undefined) {
+    const trimmedDetail = profileData.detailIntro.trim();
     if (
-      profileData.detailIntro.trim().length > 0 &&
-      profileData.detailIntro.trim().length <
-        VALIDATION_CONFIG.MIN_DESCRIPTION_LENGTH
+      trimmedDetail.length > 0 &&
+      trimmedDetail.length < VALIDATION_CONFIG.MIN_DESCRIPTION_LENGTH
     ) {
       throw new ValidationError(PROFILE_ERROR_MESSAGES.DESCRIPTION_REQUIRED);
     }
+    if (trimmedDetail.length > VALIDATION_CONFIG.MAX_DESCRIPTION_LENGTH) {
+      throw new ValidationError(PROFILE_ERROR_MESSAGES.DESCRIPTION_TOO_LONG);
+    }
   } else if (!profileData.detailIntro) {
     throw new ValidationError(PROFILE_ERROR_MESSAGES.DESCRIPTION_REQUIRED);
-  }
-
-  // 7. 프로필 이미지 유효성 검사 (선택사항, URL 형식 체크)
-  if (profileData.moverImage !== undefined && profileData.moverImage !== null) {
-    if (profileData.moverImage.trim().length === 0) {
-      throw new ValidationError("프로필 이미지 URL이 유효하지 않습니다");
-    }
-    // URL 형식 간단 검증
-    try {
-      new URL(profileData.moverImage);
-    } catch {
-      throw new ValidationError(
-        "프로필 이미지는 유효한 URL 형식이어야 합니다 "
-      );
-    }
   }
 };

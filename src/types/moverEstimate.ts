@@ -56,7 +56,7 @@ export type TAddress = {
 // 고객 타입 정의
 export type TCustomer = {
   id: string;
-  name: string;
+  name: string | null;
   currentArea: string | null;
   customerImage: string | null;
   nickname: string | null;
@@ -65,7 +65,7 @@ export type TCustomer = {
 // 기사님 타입 정의
 export type TMover = {
   id: string;
-  name: string;
+  name: string | null;
   moverImage: string | null;
   nickname: string | null;
   shortIntro: string | null;
@@ -89,6 +89,7 @@ export type TEstimateRequestResponse = {
   status: string;
   createdAt: Date;
   updatedAt: Date;
+  isDesignated?: boolean; // 지정견적 여부 (선택적 필드)
   customer: TCustomer;
   fromAddress: TAddress;
   toAddress: TAddress;
@@ -191,7 +192,7 @@ export type EstimateWithRelations = {
   deletedAt: Date | null;
   mover: {
     id: string;
-    name: string;
+    name: string | null;
     moverImage: string | null;
     nickname: string | null;
     shortIntro: string | null;
@@ -215,7 +216,7 @@ export type EstimateWithRelations = {
     updatedAt: Date;
     customer: {
       id: string;
-      name: string;
+      name: string | null;
       currentArea: string | null;
       customerImage: string | null;
       nickname: string | null;
@@ -237,4 +238,41 @@ export type EstimateWithRelations = {
       region: string;
     };
   };
+};
+
+// 견적 생성 응답 타입
+export type TCreateEstimateResponse = {
+  id: string;
+  estimateRequestId: string;
+  moverId: string;
+  price: number;
+  comment: string;
+  status: "PROPOSED";
+  createdAt: Date;
+};
+
+// 견적 반려 응답 타입
+export type TRejectEstimateResponse = {
+  id: string;
+  estimateRequestId: string;
+  moverId: string;
+  price: number | null;
+  comment: string;
+  status: "REJECTED";
+  createdAt: Date;
+};
+
+// 견적 상태 업데이트 응답 타입
+export type TUpdateEstimateStatusResponse = {
+  id: string;
+  status: "PROPOSED" | "ACCEPTED" | "REJECTED" | "AUTO_REJECTED";
+  updatedAt: Date;
+};
+
+// 견적서 업데이트 응답 타입
+export type TUpdateEstimateResponse = {
+  id: string;
+  price: number;
+  comment: string;
+  updatedAt: Date;
 };

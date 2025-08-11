@@ -1,25 +1,24 @@
 module.exports = {
-    preset: 'ts-jest',
-    testEnvironment: 'node',
-    testMatch: ['**/*.test.ts'],
-    collectCoverage: false,
-    coverageDirectory: 'coverage',
-    coverageReporters: ['text', 'lcov', 'html'],
-    collectCoverageFrom: [
-        'src/**/*.ts',
-        '!src/**/*.d.ts',
-        '!src/**/*.test.ts',
-        '!src/app.ts',
-        '!src/db/**',
-        '!src/config/**',
-        '!src/types/**',
-        '!src/utils/**',
-        '!src/constants/**',
-        '!src/middlewares/**',
-        '!src/routes/**'
-    ],
-    testPathIgnorePatterns: [
-        '/node_modules/',
-        '/dist/'
-    ]
-}; 
+  preset: "ts-jest",
+  testEnvironment: "node",
+  testMatch: ["**/*.test.ts"],
+  setupFiles: ["dotenv/config"], // .env(.test) 자동 로딩
+  collectCoverage: false,
+  coverageDirectory: "coverage",
+  coverageReporters: ["text", "lcov", "html"],
+  collectCoverageFrom: [
+    "src/**/*.ts",
+    "!src/**/*.d.ts",
+    "!src/**/*.test.ts",
+    "!src/app.ts",
+    "!src/db/**",
+    "!src/config/**",
+    "!src/types/**",
+    "!src/utils/**",
+    "!src/constants/**",
+    "!src/middlewares/**",
+    "!src/routes/**",
+  ],
+  testPathIgnorePatterns: ["/node_modules/", "/dist/"],
+  globalTeardown: "<rootDir>/tests/global-teardown.ts",
+};

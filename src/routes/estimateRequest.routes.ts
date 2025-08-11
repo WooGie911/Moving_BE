@@ -1,6 +1,8 @@
 import { Router } from "express";
 import EstimateRequestController from "../controllers/estimateRequest.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
+import { defaultTranslationMiddleware } from "../middlewares/translationMiddleware";
+import { estimateRequestLimiter } from "../middlewares/rateLimiter";
 
 const router = Router();
 const estimateRequestController = new EstimateRequestController();
@@ -182,7 +184,7 @@ const estimateRequestController = new EstimateRequestController();
  * /estimateRequests/create:
  *   post:
  *     summary: 견적 요청 생성
- *     description: 고객이 이사 견적을 요청합니다. 한 사용자는 PENDING 상태의 견적 요청이 1개만 존재할 수 있습니다. 기사님은 견적 요청을 생성할 수 없습니다. 주소는 자동으로 파싱되어 데이터베이스에 저장되며, zonecode 필드는 postalCode로 자동 변환됩니다.
+ *     description: 고객이 이사 견적을 요청합니다. 한 사용자는 PENDING 상태의 견적 요청이 1개만 존재할 수 있습니다. 기사님은 견적 요청을 생성할 수 없습니다. 주소는 자동으로 파싱되어 데이터베이스에 저장되며, zonecode 필드는 zoneCode로 자동 변환됩니다. 생성 후 즉시 최신 활성 견적 요청을 반환합니다.
  *     tags: [EstimateRequest]
  *     security:
  *       - BearerAuth: []
@@ -300,7 +302,9 @@ const estimateRequestController = new EstimateRequestController();
  *               success: false
  *               message: "서버 내부 오류가 발생했습니다."
  */
-router.post("/create", verifyAccessToken, (req, res) => estimateRequestController.createEstimateRequest(req, res));
+router.post("/create", verifyAccessToken, estimateRequestLimiter, (req, res) =>
+  estimateRequestController.createEstimateRequest(req, res),
+);
 
 // 활성 견적 요청 조회
 /**
@@ -308,7 +312,7 @@ router.post("/create", verifyAccessToken, (req, res) => estimateRequestControlle
  * /estimateRequests/active:
  *   get:
  *     summary: 활성 견적 요청 조회
- *     description: 현재 사용자의 활성 상태(PENDING) 견적 요청을 조회합니다. 기사님은 견적 요청을 조회할 수 없습니다. 지역명은 한글로 표시되며, 주소가 soft delete된 경우 undefined로 처리됩니다.
+ *     description: 현재 사용자의 활성 상태(PENDING) 견적 요청을 조회합니다. 기사님은 견적 요청을 조회할 수 없습니다. 지역명은 한글로 표시되며, 주소가 soft delete된 경우 undefined로 처리됩니다. 추가로 `hasEstimate` 플래그를 반환합니다.
  *     tags: [EstimateRequest]
  *     security:
  *       - BearerAuth: []
@@ -372,7 +376,9 @@ router.post("/create", verifyAccessToken, (req, res) => estimateRequestControlle
  *               success: false
  *               message: "서버 내부 오류가 발생했습니다."
  */
-router.get("/active", verifyAccessToken, (req, res) => estimateRequestController.getActiveEstimateRequest(req, res));
+router.get("/active", verifyAccessToken, defaultTranslationMiddleware, (req, res) =>
+  estimateRequestController.getActiveEstimateRequest(req, res),
+);
 
 // 견적 요청 수정
 /**
@@ -515,7 +521,7 @@ router.get("/active", verifyAccessToken, (req, res) => estimateRequestController
  *               success: false
  *               message: "서버 내부 오류가 발생했습니다."
  */
-router.patch("/active", verifyAccessToken, (req, res) =>
+router.patch("/active", verifyAccessToken, estimateRequestLimiter, (req, res) =>
   estimateRequestController.updateActiveEstimateRequest(req, res),
 );
 

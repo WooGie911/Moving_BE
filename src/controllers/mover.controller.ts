@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import moverService from "../services/mover.service";
+import * as Sentry from "@sentry/node";
 
 const ALLOWED_SORT = ["rating", "career", "confirmed", "review"];
 
@@ -25,6 +26,14 @@ export const getMoverListController = async (
       if (!isNaN(parsed)) takeNum = parsed;
     }
 
+    Sentry.setContext("MoverListQuery", {
+      region,
+      serviceTypeId,
+      search,
+      sort,
+      take: takeNum,
+    });
+
     const filter = {
       region,
       serviceType: serviceTypeId,
@@ -45,6 +54,17 @@ export const getMoverListController = async (
       },
     });
   } catch (err) {
+    Sentry.captureException(err, {
+      extra: {
+        userId: req.user?.userId,
+        operation: "fetchMoverList",
+        query: req.query,
+      },
+      tags: {
+        controller: "mover",
+        action: "getMoverList",
+      },
+    });
     next(err);
   }
 };
@@ -59,6 +79,11 @@ export const getFavoriteMoversController = async (
 ) => {
   try {
     const { userId } = req.user as { userId: string | number };
+
+    Sentry.setContext("FavoriteMoversQuery", {
+      userId: String(userId),
+    });
+
     const favoriteMovers = await moverService.fetchFavoriteMovers(
       String(userId)
     );
@@ -68,6 +93,16 @@ export const getFavoriteMoversController = async (
       data: favoriteMovers,
     });
   } catch (err) {
+    Sentry.captureException(err, {
+      extra: {
+        userId: req.user?.userId,
+        operation: "fetchFavoriteMovers",
+      },
+      tags: {
+        controller: "mover",
+        action: "getFavoriteMovers",
+      },
+    });
     next(err);
   }
 };
@@ -89,6 +124,11 @@ export const getMoverDetailController = async (
         .status(400)
         .json({ success: false, message: "id가 필요합니다.", data: null });
 
+    Sentry.setContext("MoverDetailQuery", {
+      moverId: id,
+      userId: userId || "anonymous",
+    });
+
     const mover = await moverService.fetchMoverDetail(id, userId);
     if (!mover)
       return res
@@ -97,6 +137,17 @@ export const getMoverDetailController = async (
 
     res.json({ success: true, message: "기사님 상세 조회 성공", data: mover });
   } catch (err) {
+    Sentry.captureException(err, {
+      extra: {
+        userId: req.user?.userId,
+        moverId: req.params.moverId,
+        operation: "fetchMoverDetail",
+      },
+      tags: {
+        controller: "mover",
+        action: "getMoverDetail",
+      },
+    });
     next(err);
   }
 };
@@ -195,14 +246,63 @@ export const getDesignatedQuoteRequestCheckController = async (
       moverId: String(moverId),
     });
 
+    // 반려된 경우도 요청한 것으로 간주
+    const hasRequested = !!request;
+
     res.json({
       success: true,
       message: "지정 견적 요청 여부 조회 성공",
       data: {
-        hasRequested: !!request,
+        hasRequested: hasRequested,
+        status: request?.status || null,
         requestId: request?.id || null,
         message: request?.message || null,
         expiresAt: request?.expiresAt || null,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * 이사일이 지나지 않은 견적 확인
+ */
+export const checkActiveEstimateRequestController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const user = req.user as {
+      userId: string;
+      name: string;
+      userType: string | string[];
+    };
+
+    // userType이 문자열이거나 배열일 수 있으므로 둘 다 처리
+    const userTypes = Array.isArray(user.userType)
+      ? user.userType
+      : [user.userType];
+
+    if (!user || !userTypes.includes("CUSTOMER")) {
+      return res.status(401).json({
+        success: false,
+        message: "회원만 확인이 가능합니다.",
+      });
+    }
+
+    const estimateRequestService = new (
+      await import("../services/estimateRequest.service")
+    ).default();
+    const hasActiveRequest =
+      await estimateRequestService.hasActiveRequestBeforeMoveDate(user.userId);
+
+    res.json({
+      success: true,
+      message: "이사일이 지나지 않은 견적 확인 성공",
+      data: {
+        hasActiveRequest,
       },
     });
   } catch (err) {
@@ -216,4 +316,5 @@ export default {
   getMoverDetailController,
   postDesignatedQuoteRequestController,
   getDesignatedQuoteRequestCheckController,
+  checkActiveEstimateRequestController,
 };

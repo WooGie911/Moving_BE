@@ -18,22 +18,22 @@ export class AppError extends Error {
 // 자주 사용하는 에러들을 위한 편의 클래스들
 
 /**
- * 유효성 검사 실패 시 사용 (HTTP 422)
- */
-export class ValidationError extends AppError {
-  constructor(message: string, data?: any) {
-    super(message, 422, data); // 422는 기본값
-    this.name = "ValidationError";
-  }
-}
-
-/**
  * 인증 실패(로그인 필요) 시 사용 (HTTP 401)
  */
 export class AuthenticationError extends AppError {
   constructor(message: string, data?: any) {
     super(message, 401, data); // 401은 기본값
     this.name = "AuthenticationError";
+  }
+}
+
+/**
+ * 권한이 없을 때 사용 (HTTP 403)
+ */
+export class ForbiddenError extends AppError {
+  constructor(message: string, data?: any) {
+    super(message, 403, data); // 403은 기본값
+    this.name = "ForbiddenError";
   }
 }
 
@@ -48,12 +48,25 @@ export class NotFoundError extends AppError {
 }
 
 /**
- * 권한이 없을 때 사용 (HTTP 403)
+ * 유효성 검사 실패 시 사용 (HTTP 422)
  */
-export class ForbiddenError extends AppError {
+export class ValidationError extends AppError {
   constructor(message: string, data?: any) {
-    super(message, 403, data); // 403은 기본값
-    this.name = "ForbiddenError";
+    super(message, 422, data); // 422는 기본값
+    this.name = "ValidationError";
+  }
+}
+
+/**
+ * 요청 제한 초과 시 사용 (HTTP 429)
+ */
+export class TooManyRequestsError extends AppError {
+  constructor(
+    message = "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.",
+    data?: any
+  ) {
+    super(message, 429, data);
+    this.name = "TooManyRequestsError";
   }
 }
 

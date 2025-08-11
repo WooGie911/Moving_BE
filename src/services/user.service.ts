@@ -1,15 +1,5 @@
 import bcrypt from "bcrypt";
-import {
-  getUserById,
-  getUserWithPassword,
-  createCustomerProfile as createCustomerProfileRepository,
-  createMoverProfileRepository,
-  updateUserProfile,
-  updateCustomerProfile,
-  updateMoverProfile,
-  getCustomerProfile,
-  getMoverProfile,
-} from "../repositories/user.repository";
+import userRepository from "../repositories/user.repository";
 import {
   encryptPhoneNumber,
   decryptPhoneNumber,
@@ -33,10 +23,12 @@ import {
 } from "../utils/validators/profileValidator";
 import { generateToken } from "../utils/generateToken";
 import { validateMoverProfileUpdate } from "../utils/validators/userValidator";
+import actionService from "./action.service";
+import { ActionType } from "@prisma/client";
 
 // 유저 정보 조회
 const userInfo = async (userId: string, userType: TUserRole) => {
-  const user = await getUserById(userId);
+  const user = await userRepository.getUserById(userId);
 
   if (!user) {
     throw new NotFoundError(PROFILE_ERROR_MESSAGES.USER_NOT_FOUND);
@@ -53,6 +45,8 @@ const userInfo = async (userId: string, userType: TUserRole) => {
       nickname: user.nickname,
       customerImage: user.customerImage || "",
       userType,
+      provider: user.provider,
+      hasBothProfiles: !!user.isCustomer && !!user.isMover,
     };
   } else if (userType === "MOVER") {
     return {
@@ -65,6 +59,8 @@ const userInfo = async (userId: string, userType: TUserRole) => {
       nickname: user.nickname,
       moverImage: user.moverImage || "",
       userType,
+      provider: user.provider,
+      hasBothProfiles: !!user.isCustomer && !!user.isMover,
     };
   }
 };
@@ -72,7 +68,7 @@ const userInfo = async (userId: string, userType: TUserRole) => {
 // 프로필 정보 조회
 const getProfileData = async (userId: string, userType: TUserRole) => {
   if (userType === "CUSTOMER") {
-    const profile = await getCustomerProfile(userId);
+    const profile = await userRepository.getCustomerProfile(userId);
 
     if (!profile) {
       throw new NotFoundError(PROFILE_ERROR_MESSAGES.PROFILE_NOT_FOUND);
@@ -85,7 +81,7 @@ const getProfileData = async (userId: string, userType: TUserRole) => {
 
     return { ...rest, phoneNumber };
   } else if (userType === "MOVER") {
-    const profile = await getMoverProfile(userId);
+    const profile = await userRepository.getMoverProfile(userId);
 
     if (!profile) {
       throw new NotFoundError(PROFILE_ERROR_MESSAGES.PROFILE_NOT_FOUND);
@@ -101,7 +97,7 @@ const createCustomerProfile = async (
   profileData: TCustomerProfileInput
 ): Promise<any> => {
   // 사용자 존재 확인
-  const user = await getUserById(userId);
+  const user = await userRepository.getUserById(userId);
   if (!user) {
     throw new NotFoundError(PROFILE_ERROR_MESSAGES.USER_NOT_FOUND);
   }
@@ -125,11 +121,22 @@ const createCustomerProfile = async (
     hasProfile: true,
   });
 
-  const result = await createCustomerProfileRepository(createProfileData);
+  const result = await userRepository.createCustomerProfile(createProfileData);
+
+  // WELCOME 액션 생성 (프로필 등록 시점)
+  await actionService.createAction(
+    userId,
+    ActionType.WELCOME,
+    userId,
+    "WELCOME",
+    { userType: "CUSTOMER" }
+  );
+
   return {
     result,
     accessToken: newAccessToken,
     refreshToken: newRefreshToken,
+    provider: user.provider,
   };
 };
 
@@ -138,7 +145,7 @@ const updateCustomerProfileCheck = async (
   userId: string,
   updateData: TCustomerProfileUpdateInput
 ) => {
-  const user = await getUserWithPassword(userId);
+  const user = await userRepository.getUserWithPassword(userId);
   if (!user) {
     throw new NotFoundError(PROFILE_ERROR_MESSAGES.USER_NOT_FOUND);
   }
@@ -154,10 +161,13 @@ const updateCustomerProfileCheck = async (
     }
   }
 
+  // 유효성 검사
+  await validateCustomerProfileData(updateData, userId);
+
   // 업데이트 데이터 준비
   const encryptedPhoneNumber = encryptPhoneNumber(updateData.phoneNumber!);
 
-  // 비밀 번호 변경 요청 시 새로운 비밀 번호 암호화 및 업데이트
+  // 비밀 번호 변경 요청 시 새로운 비밀번호 암호화 및 업데이트
   let newEncryptedPassword: string | undefined;
   if (updateData.newPassword) {
     newEncryptedPassword = await bcrypt.hash(updateData.newPassword, 10);
@@ -177,7 +187,7 @@ const updateCustomerProfileCheck = async (
     preferredServices: updateData.preferredServices,
   };
 
-  await updateCustomerProfile(userId, newUpdateData);
+  await userRepository.updateCustomerProfile(userId, newUpdateData);
 };
 
 // 기사님(MOVER) 프로필 등록
@@ -186,7 +196,7 @@ const createMoverProfile = async (
   profileData: TMoverProfileInput
 ): Promise<any> => {
   // 사용자 존재 확인
-  const user = await getUserById(userId);
+  const user = await userRepository.getUserById(userId);
   if (!user) {
     throw new NotFoundError(PROFILE_ERROR_MESSAGES.USER_NOT_FOUND);
   }
@@ -213,7 +223,17 @@ const createMoverProfile = async (
     hasProfile: true,
   });
 
-  const result = await createMoverProfileRepository(createProfileData);
+  const result = await userRepository.createMoverProfile(createProfileData);
+
+  // WELCOME 액션 생성 (프로필 등록 시점)
+  await actionService.createAction(
+    userId,
+    ActionType.WELCOME,
+    userId,
+    "WELCOME",
+    { userType: "MOVER" }
+  );
+
   return {
     result,
     accessToken: newAccessToken,
@@ -232,14 +252,14 @@ const updateMoverBasicInfo = async (
   }
 ): Promise<void> => {
   // 1. 사용자 존재 확인
-  const user = await getUserById(userId);
+  const user = await userRepository.getUserById(userId);
   if (!user) {
     throw new NotFoundError(PROFILE_ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
   // 2. 비밀번호 변경 요청 시 현재 비밀번호 검증
   if (updateData.currentPassword && updateData.newPassword) {
-    const userWithPassword = await getUserWithPassword(userId);
+    const userWithPassword = await userRepository.getUserWithPassword(userId);
     if (!userWithPassword || !userWithPassword.encryptedPassword) {
       throw new ValidationError("현재 비밀번호를 확인할 수 없습니다");
     }
@@ -271,7 +291,7 @@ const updateMoverBasicInfo = async (
   }
 
   // 4. 업데이트 실행 (User 테이블만)
-  await updateUserProfile(userId, dbUpdateData);
+  await userRepository.updateUserProfile(userId, dbUpdateData);
 };
 
 // 기사님 프로필 수정
@@ -280,7 +300,7 @@ const updateMoverProfileCheck = async (
   updateData: TMoverProfileUpdateInput
 ): Promise<any> => {
   // 1. 사용자 존재 확인
-  const user = await getUserById(userId);
+  const user = await userRepository.getUserById(userId);
   if (!user) {
     throw new NotFoundError(PROFILE_ERROR_MESSAGES.USER_NOT_FOUND);
   }
@@ -289,7 +309,7 @@ const updateMoverProfileCheck = async (
   await validateMoverProfileUpdate(updateData, userId);
 
   // 3. 프로필 업데이트 실행
-  const result = await updateMoverProfile(userId, updateData);
+  const result = await userRepository.updateMoverProfile(userId, updateData);
   return result;
 };
 

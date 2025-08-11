@@ -24,12 +24,9 @@ const notificationRouter = Router();
  *           type: string
  *           description: 알림 타입
  *           enum: [ESTIMATE_ARRIVED, ESTIMATE_ACCEPTED, ESTIMATE_REJECTED, MOVE_COMPLETED]
- *         title:
+ *         message:
  *           type: string
- *           description: 알림 제목
- *         content:
- *           type: string
- *           description: 알림 내용
+ *           description: 알림 메시지 (언어별로 선택됨)
  *         path:
  *           type: string
  *           description: 관련 페이지 경로
@@ -122,6 +119,13 @@ const notificationRouter = Router();
  *       - BearerAuth: []
  *     parameters:
  *       - in: query
+ *         name: userType
+ *         schema:
+ *           type: string
+ *           enum: [CUSTOMER, MOVER]
+ *         required: true
+ *         description: 사용자 타입
+ *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
@@ -131,6 +135,12 @@ const notificationRouter = Router();
  *         schema:
  *           type: integer
  *         description: 페이지네이션 오프셋, 기본값 0
+ *       - in: query
+ *         name: lang
+ *         schema:
+ *           type: string
+ *           enum: [ko, en, zh]
+ *         description: "언어 선택 (기본값: ko)"
  *     responses:
  *       200:
  *         description: 알림 목록 조회 성공
@@ -146,15 +156,27 @@ const notificationRouter = Router();
  *                   - id: "clx..."
  *                     actionId: "clx..."
  *                     userId: "clx..."
- *                     type: "ESTIMATE_ARRIVED"
- *                     title: "새 견적 요청이 등록되었습니다."
- *                     content: "새로운 견적 요청이 등록되었습니다."
- *                     path: "/estimateRequests/clx..."
+ *                     userType: "CUSTOMER"
+ *                     type: "ESTIMATE_STATUS_UPDATED"
+ *                     message: "<span class=\"font-bold\">성민기사</span> 기사님의 견적이 <span class=\"text-primary-400 font-bold\">확정</span>되었어요."
+ *                     path: "/estimateRequest/pending/clx..."
  *                     isRead: false
- *                     createdAt: "2025-07-10T00:33:16.456Z"
- *                     updatedAt: "2025-07-10T00:33:16.456Z"
+ *                     createdAt: "2025-08-09"
+ *                     updatedAt: "2025-08-09"
+ *                     deletedAt: null
+ *                   - id: "clx..."
+ *                     actionId: "clx..."
+ *                     userId: "clx..."
+ *                     userType: "CUSTOMER"
+ *                     type: "WELCOME"
+ *                     message: "<span class=\"font-bold\">회원가입</span>을 환영합니다!"
+ *                     path: "/"
+ *                     isRead: true
+ *                     createdAt: "2025-08-09"
+ *                     updatedAt: "2025-08-09"
+ *                     deletedAt: null
  *                 total: 10
- *                 limit: 5
+ *                 limit: 4
  *                 offset: 0
  *                 hasUnread: true
  */

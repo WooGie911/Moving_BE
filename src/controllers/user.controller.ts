@@ -44,9 +44,13 @@ const getProfile = async (req: Request, res: Response) => {
     userType: TUserRole;
   };
 
-  const profile = await getProfileData(userId, userType);
+  try {
+    const profile = await getProfileData(userId, userType);
 
-  res.json({ success: true, data: profile });
+    res.json({ success: true, data: profile });
+  } catch (error) {
+    handleError(res, error);
+  }
 };
 
 // 프로필 등록
@@ -66,9 +70,13 @@ const postProfile = async (req: Request, res: Response) => {
         preferredServices: req.body.preferredServices,
       };
 
-      const { result, accessToken, refreshToken } = await createCustomerProfile(
-        userId,
-        profileData
+      const { result, accessToken, refreshToken, provider } =
+        await createCustomerProfile(userId, profileData);
+
+      res.cookie(
+        "accessToken",
+        accessToken,
+        authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
       );
 
       res.cookie(
@@ -81,7 +89,6 @@ const postProfile = async (req: Request, res: Response) => {
         success: true,
         message: PROFILE_SUCCESS_MESSAGES.CUSTOMER_PROFILE_CREATED,
         data: result,
-        accessToken,
       });
     } else if (userType === "MOVER") {
       // 기사님 프로필 등록
@@ -101,6 +108,12 @@ const postProfile = async (req: Request, res: Response) => {
       );
 
       res.cookie(
+        "accessToken",
+        accessToken,
+        authCookieOptions(TOKEN_EXPIRES.ACCESS_TOKEN_COOKIE, false)
+      );
+
+      res.cookie(
         "refreshToken",
         refreshToken,
         authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
@@ -110,7 +123,6 @@ const postProfile = async (req: Request, res: Response) => {
         success: true,
         message: PROFILE_SUCCESS_MESSAGES.MOVER_PROFILE_CREATED,
         data: result,
-        accessToken,
       });
     } else {
       res.status(400).json({

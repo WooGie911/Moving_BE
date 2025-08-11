@@ -1,0 +1,442 @@
+[
+  {
+    "id": "est_req_001",
+    "customerId": "customer_001",
+    "movingType": "home",
+    "movingDate": "2025-08-15",
+    "departure": {
+      "roadAddress": "서울 강남구 테헤란로 123",
+      "detailAddress": "456호",
+      "zonecode": "06123",
+      "jibunAddress": "서울 강남구 역삼동 123-45",
+      "extraAddress": "역삼동"
+    },
+    "arrival": {
+      "roadAddress": "경기 성남시 분당구 판교로 456",
+      "detailAddress": "789호",
+      "zonecode": "13561",
+      "jibunAddress": "경기 성남시 분당구 정자동 456-78",
+      "extraAddress": "정자동"
+    },
+    "description": "가정 이사입니다. 신중하게 견적 부탁드립니다.",
+    "status": "PENDING"
+  },
+  {
+    "id": "est_req_002",
+    "customerId": "customer_002",
+    "movingType": "small",
+    "movingDate": "2025-08-20",
+    "departure": {
+      "roadAddress": "부산 연제구 월드컵대로91번가길 15",
+      "detailAddress": "501호",
+      "zonecode": "47597",
+      "jibunAddress": "부산 연제구 연산동 715-1",
+      "extraAddress": "연산동"
+    },
+    "arrival": {
+      "roadAddress": "경남 고성군 고성읍 송학로 206",
+      "detailAddress": "402호",
+      "zonecode": "52940",
+      "jibunAddress": "경남 고성군 고성읍 송학리 235-2",
+      "extraAddress": "송학리"
+    },
+    "description": "소형 이사입니다. 가전제품과 책상, 의자만 있습니다.",
+    "status": "PENDING"
+  },
+  {
+    "id": "est_req_003",
+    "customerId": "customer_003",
+    "movingType": "office",
+    "movingDate": "2025-08-25",
+    "departure": {
+      "roadAddress": "서울 마포구 양화로 654",
+      "detailAddress": "3층",
+      "zonecode": "04021",
+      "jibunAddress": "서울 마포구 합정동 654-32",
+      "extraAddress": "합정동"
+    },
+    "arrival": {
+      "roadAddress": "서울 영등포구 여의대로 357",
+      "detailAddress": "15층",
+      "zonecode": "07345",
+      "jibunAddress": "서울 영등포구 여의도동 357-89",
+      "extraAddress": "여의도동"
+    },
+    "description": "사무실 이사입니다. 서류철과 책장, 책상들이 많습니다.",
+    "status": "PENDING"
+  },
+  {
+    "id": "est_req_004",
+    "customerId": "customer_004",
+    "movingType": "home",
+    "movingDate": "2025-09-01",
+    "departure": {
+      "roadAddress": "경기 수원시 정자로 123",
+      "detailAddress": "101호",
+      "zonecode": "16489",
+      "jibunAddress": "경기 수원시 정자동 123-45",
+      "extraAddress": "정자동"
+    },
+    "arrival": {
+      "roadAddress": "경기 안산시 단원로 654",
+      "detailAddress": "202호",
+      "zonecode": "15323",
+      "jibunAddress": "경기 안산시 단원동 654-78",
+      "extraAddress": "단원동"
+    },
+    "description": "가정 이사입니다. 아이들 장난감과 옷이 많아서 포장 서비스도 필요합니다.",
+    "status": "PENDING"
+  },
+  {
+    "id": "est_req_005",
+    "customerId": "customer_005",
+    "movingType": "small",
+    "movingDate": "2025-09-05",
+    "departure": {
+      "roadAddress": "대구 수성구 동대구로 456",
+      "detailAddress": "301호",
+      "zonecode": "41931",
+      "jibunAddress": "대구 수성구 동대구동 456-12",
+      "extraAddress": "동대구동"
+    },
+    "arrival": {
+      "roadAddress": "대구 중구 중앙대로 789",
+      "detailAddress": "501호",
+      "zonecode": "41911",
+      "jibunAddress": "대구 중구 중앙동 789-34",
+      "extraAddress": "중앙동"
+    },
+    "description": "원룸 이사입니다. 가전제품과 간단한 가구만 있습니다.",
+    "status": "PENDING"
+  },
+  {
+    "id": "est_req_006",
+    "customerId": "customer_006",
+    "movingType": "office",
+    "movingDate": "2025-09-10",
+    "departure": {
+      "roadAddress": "인천 연수구 송도대로 321",
+      "detailAddress": "8층",
+      "zonecode": "21984",
+      "jibunAddress": "인천 연수구 송도동 321-56",
+      "extraAddress": "송도동"
+    },
+    "arrival": {
+      "roadAddress": "인천 미추홀구 미추홀대로 654",
+      "detailAddress": "12층",
+      "zonecode": "22012",
+      "jibunAddress": "인천 미추홀구 주안동 654-78",
+      "extraAddress": "주안동"
+    },
+    "description": "스타트업 사무실 이사입니다. 서버장비와 책상, 의자들이 많습니다.",
+    "status": "PENDING"
+  },
+  {
+    "id": "est_req_007",
+    "customerId": "customer_007",
+    "movingType": "home",
+    "movingDate": "2025-09-15",
+    "departure": {
+      "roadAddress": "광주 서구 상무대로 987",
+      "detailAddress": "401호",
+      "zonecode": "61965",
+      "jibunAddress": "광주 서구 상무동 987-12",
+      "extraAddress": "상무동"
+    },
+    "arrival": {
+      "roadAddress": "광주 동구 동명로 135",
+      "detailAddress": "601호",
+      "zonecode": "61452",
+      "jibunAddress": "광주 동구 동명동 135-34",
+      "extraAddress": "동명동"
+    },
+    "description": "가정 이사입니다. 피아노가 있어서 특별히 조심스럽게 다뤄주셔야 합니다.",
+    "status": "PENDING"
+  },
+  {
+    "id": "est_req_008",
+    "customerId": "customer_008",
+    "movingType": "small",
+    "movingDate": "2025-09-20",
+    "departure": {
+      "roadAddress": "대전 유성구 대학로 246",
+      "detailAddress": "201호",
+      "zonecode": "34134",
+      "jibunAddress": "대전 유성구 대학동 246-56",
+      "extraAddress": "대학동"
+    },
+    "arrival": {
+      "roadAddress": "대전 중구 중앙로 357",
+      "detailAddress": "301호",
+      "zonecode": "34942",
+      "jibunAddress": "대전 중구 중앙동 357-78",
+      "extraAddress": "중앙동"
+    },
+    "description": "원룸 이사입니다. 책상과 의자, 작은 가전제품들만 있습니다.",
+    "status": "PENDING"
+  },
+  {
+    "id": "est_req_009",
+    "customerId": "customer_009",
+    "movingType": "office",
+    "movingDate": "2025-09-25",
+    "departure": {
+      "roadAddress": "울산 남구 삼산로 468",
+      "detailAddress": "5층",
+      "zonecode": "44715",
+      "jibunAddress": "울산 남구 삼산동 468-90",
+      "extraAddress": "삼산동"
+    },
+    "arrival": {
+      "roadAddress": "울산 동구 동해안로 579",
+      "detailAddress": "10층",
+      "zonecode": "44708",
+      "jibunAddress": "울산 동구 동해안동 579-12",
+      "extraAddress": "동해안동"
+    },
+    "description": "회사 사무실 이사입니다. 서류철과 책장, 책상들이 많고 보안서류도 있습니다.",
+    "status": "PENDING"
+  },
+  {
+    "id": "est_req_010",
+    "customerId": "customer_010",
+    "movingType": "home",
+    "movingDate": "2025-10-01",
+    "departure": {
+      "roadAddress": "세종특별자치시 한누리대로 680",
+      "detailAddress": "301호",
+      "zonecode": "30123",
+      "jibunAddress": "세종특별자치시 한누리동 680-34",
+      "extraAddress": "한누리동"
+    },
+    "arrival": {
+      "roadAddress": "세종특별자치시 도움3로 791",
+      "detailAddress": "501호",
+      "zonecode": "30124",
+      "jibunAddress": "세종특별자치시 도움동 791-56",
+      "extraAddress": "도움동"
+    },
+    "description": "가정 이사입니다. 아이들 장난감과 옷이 많고, 반려동물도 있어서 조심스럽게 다뤄주셔야 합니다.",
+    "status": "PENDING"
+  },
+  {
+    "id": "est_req_011",
+    "customerId": "customer_011",
+    "movingType": "small",
+    "movingDate": "2025-10-05",
+    "departure": {
+      "roadAddress": "강원특별자치도 춘천시 춘천로 802",
+      "detailAddress": "101호",
+      "zonecode": "24256",
+      "jibunAddress": "강원특별자치도 춘천시 춘천동 802-78",
+      "extraAddress": "춘천동"
+    },
+    "arrival": {
+      "roadAddress": "강원특별자치도 원주시 원주로 913",
+      "detailAddress": "201호",
+      "zonecode": "26464",
+      "jibunAddress": "강원특별자치도 원주시 원주동 913-90",
+      "extraAddress": "원주동"
+    },
+    "description": "원룸 이사입니다. 간단한 가전제품과 책상, 의자만 있습니다.",
+    "status": "PENDING"
+  },
+  {
+    "id": "est_req_012",
+    "customerId": "customer_012",
+    "movingType": "office",
+    "movingDate": "2025-10-10",
+    "departure": {
+      "roadAddress": "충청북도 청주시 청주로 024",
+      "detailAddress": "7층",
+      "zonecode": "28569",
+      "jibunAddress": "충청북도 청주시 청주동 024-12",
+      "extraAddress": "청주동"
+    },
+    "arrival": {
+      "roadAddress": "충청북도 충주시 충주로 135",
+      "detailAddress": "12층",
+      "zonecode": "27407",
+      "jibunAddress": "충청북도 충주시 충주동 135-34",
+      "extraAddress": "충주동"
+    },
+    "description": "회사 사무실 이사입니다. 서버장비와 책상, 의자들이 많고 보안서류도 있습니다.",
+    "status": "PENDING"
+  },
+  {
+    "id": "est_req_013",
+    "customerId": "customer_013",
+    "movingType": "home",
+    "movingDate": "2025-10-15",
+    "departure": {
+      "roadAddress": "충청남도 천안시 천안로 246",
+      "detailAddress": "401호",
+      "zonecode": "31156",
+      "jibunAddress": "충청남도 천안시 천안동 246-56",
+      "extraAddress": "천안동"
+    },
+    "arrival": {
+      "roadAddress": "충청남도 아산시 아산로 357",
+      "detailAddress": "601호",
+      "zonecode": "31423",
+      "jibunAddress": "충청남도 아산시 아산동 357-78",
+      "extraAddress": "아산동"
+    },
+    "description": "가정 이사입니다. 아이들 장난감과 옷이 많고, 반려동물도 있어서 조심스럽게 다뤄주셔야 합니다.",
+    "status": "PENDING"
+  },
+  {
+    "id": "est_req_014",
+    "customerId": "customer_014",
+    "movingType": "small",
+    "movingDate": "2025-10-20",
+    "departure": {
+      "roadAddress": "전북특별자치도 전주시 전주로 468",
+      "detailAddress": "201호",
+      "zonecode": "54823",
+      "jibunAddress": "전북특별자치도 전주시 전주동 468-90",
+      "extraAddress": "전주동"
+    },
+    "arrival": {
+      "roadAddress": "전북특별자치도 군산시 군산로 579",
+      "detailAddress": "301호",
+      "zonecode": "54023",
+      "jibunAddress": "전북특별자치도 군산시 군산동 579-12",
+      "extraAddress": "군산동"
+    },
+    "description": "원룸 이사입니다. 간단한 가전제품과 책상, 의자만 있습니다.",
+    "status": "PENDING"
+  },
+  {
+    "id": "est_req_015",
+    "customerId": "customer_015",
+    "movingType": "office",
+    "movingDate": "2025-10-25",
+    "departure": {
+      "roadAddress": "전라남도 광주시 광주로 680",
+      "detailAddress": "8층",
+      "zonecode": "61452",
+      "jibunAddress": "전라남도 광주시 광주동 680-34",
+      "extraAddress": "광주동"
+    },
+    "arrival": {
+      "roadAddress": "전라남도 목포시 목포로 791",
+      "detailAddress": "15층",
+      "zonecode": "58623",
+      "jibunAddress": "전라남도 목포시 목포동 791-56",
+      "extraAddress": "목포동"
+    },
+    "description": "회사 사무실 이사입니다. 서버장비와 책상, 의자들이 많고 보안서류도 있습니다.",
+    "status": "PENDING"
+  },
+  {
+    "id": "est_req_016",
+    "customerId": "customer_016",
+    "movingType": "home",
+    "movingDate": "2025-11-01",
+    "departure": {
+      "roadAddress": "경상북도 포항시 포항로 802",
+      "detailAddress": "501호",
+      "zonecode": "37554",
+      "jibunAddress": "경상북도 포항시 포항동 802-78",
+      "extraAddress": "포항동"
+    },
+    "arrival": {
+      "roadAddress": "경상북도 구미시 구미로 913",
+      "detailAddress": "701호",
+      "zonecode": "39123",
+      "jibunAddress": "경상북도 구미시 구미동 913-90",
+      "extraAddress": "구미동"
+    },
+    "description": "가정 이사입니다. 아이들 장난감과 옷이 많고, 반려동물도 있어서 조심스럽게 다뤄주셔야 합니다.",
+    "status": "PENDING"
+  },
+  {
+    "id": "est_req_017",
+    "customerId": "customer_017",
+    "movingType": "small",
+    "movingDate": "2025-11-05",
+    "departure": {
+      "roadAddress": "경상남도 창원시 창원로 024",
+      "detailAddress": "301호",
+      "zonecode": "51523",
+      "jibunAddress": "경상남도 창원시 창원동 024-12",
+      "extraAddress": "창원동"
+    },
+    "arrival": {
+      "roadAddress": "경상남도 진주시 진주로 135",
+      "detailAddress": "401호",
+      "zonecode": "52645",
+      "jibunAddress": "경상남도 진주시 진주동 135-34",
+      "extraAddress": "진주동"
+    },
+    "description": "원룸 이사입니다. 간단한 가전제품과 책상, 의자만 있습니다.",
+    "status": "PENDING"
+  },
+  {
+    "id": "est_req_018",
+    "customerId": "customer_018",
+    "movingType": "office",
+    "movingDate": "2025-11-10",
+    "departure": {
+      "roadAddress": "제주특별자치도 제주시 제주로 246",
+      "detailAddress": "6층",
+      "zonecode": "63108",
+      "jibunAddress": "제주특별자치도 제주시 제주동 246-56",
+      "extraAddress": "제주동"
+    },
+    "arrival": {
+      "roadAddress": "제주특별자치도 서귀포시 서귀포로 357",
+      "detailAddress": "11층",
+      "zonecode": "63589",
+      "jibunAddress": "제주특별자치도 서귀포시 서귀포동 357-78",
+      "extraAddress": "서귀포동"
+    },
+    "description": "회사 사무실 이사입니다. 서버장비와 책상, 의자들이 많고 보안서류도 있습니다.",
+    "status": "PENDING"
+  },
+  {
+    "id": "est_req_019",
+    "customerId": "customer_019",
+    "movingType": "home",
+    "movingDate": "2025-11-15",
+    "departure": {
+      "roadAddress": "서울 송파구 송파대로 468",
+      "detailAddress": "601호",
+      "zonecode": "05823",
+      "jibunAddress": "서울 송파구 문정동 468-90",
+      "extraAddress": "문정동"
+    },
+    "arrival": {
+      "roadAddress": "경기 고양시 덕양로 579",
+      "detailAddress": "801호",
+      "zonecode": "10423",
+      "jibunAddress": "경기 고양시 덕양동 579-12",
+      "extraAddress": "덕양동"
+    },
+    "description": "가정 이사입니다. 아이들 장난감과 옷이 많고, 반려동물도 있어서 조심스럽게 다뤄주셔야 합니다.",
+    "status": "PENDING"
+  },
+  {
+    "id": "est_req_020",
+    "customerId": "customer_020",
+    "movingType": "small",
+    "movingDate": "2025-11-20",
+    "departure": {
+      "roadAddress": "부산 해운대구 해운대로 680",
+      "detailAddress": "401호",
+      "zonecode": "48001",
+      "jibunAddress": "부산 해운대구 해운대동 680-34",
+      "extraAddress": "해운대동"
+    },
+    "arrival": {
+      "roadAddress": "부산 동래구 동래로 791",
+      "detailAddress": "501호",
+      "zonecode": "47512",
+      "jibunAddress": "부산 동래구 동래동 791-56",
+      "extraAddress": "동래동"
+    },
+    "description": "원룸 이사입니다. 간단한 가전제품과 책상, 의자만 있습니다.",
+    "status": "PENDING"
+  }
+]

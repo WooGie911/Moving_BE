@@ -1,18 +1,18 @@
 // @ts-nocheck
 
 import favoriteService from "./favorite.service";
-
-jest.mock("../repositories/favorite.repository", () => ({
-  getFavoriteStatus: jest.fn(),
-  addFavorite: jest.fn(),
-  removeFavorite: jest.fn(),
-}));
-
 import favoriteRepository from "../repositories/favorite.repository";
+import actionService from "./action.service";
 
+// Repository 모킹
+jest.mock("../repositories/favorite.repository");
 const mockFavoriteRepository = favoriteRepository as jest.Mocked<
   typeof favoriteRepository
 >;
+
+// Action Service 모킹
+jest.mock("./action.service");
+const mockActionService = actionService as jest.Mocked<typeof actionService>;
 
 describe("FavoriteService - 유닛 테스트", () => {
   beforeEach(() => {
@@ -34,7 +34,30 @@ describe("FavoriteService - 유닛 테스트", () => {
           favoriteCount: 5,
         });
 
-      mockFavoriteRepository.addFavorite.mockResolvedValue(undefined);
+      mockFavoriteRepository.addFavorite.mockResolvedValue({
+        id: "favorite-1",
+        customerId: "customer-1",
+        moverId: "mover-1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      mockFavoriteRepository.getFavoriteDetailForAction.mockResolvedValue({
+        id: "favorite-1",
+        customerId: "customer-1",
+        moverId: "mover-1",
+        customer: { id: "customer-1", name: "고객" },
+        mover: { id: "mover-1", name: "기사" },
+      });
+
+      mockActionService.createAction.mockResolvedValue({
+        id: "action-1",
+        userId: "customer-1",
+        type: "FAVORITE_ADDED",
+        entityId: "favorite-1",
+        entityType: "FAVORITE",
+        createdAt: new Date(),
+      });
 
       const result = await favoriteService.addFavorite(customerId, moverId);
 
@@ -111,7 +134,30 @@ describe("FavoriteService - 유닛 테스트", () => {
           favoriteCount: 4,
         });
 
-      mockFavoriteRepository.removeFavorite.mockResolvedValue(undefined);
+      mockFavoriteRepository.removeFavorite.mockResolvedValue({
+        id: "favorite-1",
+        customerId: "customer-1",
+        moverId: "mover-1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      mockFavoriteRepository.getFavoriteDetailForAction.mockResolvedValue({
+        id: "favorite-1",
+        customerId: "customer-1",
+        moverId: "mover-1",
+        customer: { id: "customer-1", name: "고객" },
+        mover: { id: "mover-1", name: "기사" },
+      });
+
+      mockActionService.createAction.mockResolvedValue({
+        id: "action-1",
+        userId: "customer-1",
+        type: "FAVORITE_REMOVED",
+        entityId: "favorite-1",
+        entityType: "FAVORITE",
+        createdAt: new Date(),
+      });
 
       const result = await favoriteService.removeFavorite(customerId, moverId);
 

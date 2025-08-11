@@ -13,13 +13,105 @@ const getKoreaToday = (): Date => {
 };
 
 /**
+ * 입력 날짜를 한국 시간 기준 자정으로 변환합니다.
+ */
+const toKoreaMidnight = (date: Date): Date => {
+  const koreaTime = new Date(new Date(date).toLocaleString("en-US", { timeZone: KOREA_TIMEZONE }));
+  koreaTime.setHours(0, 0, 0, 0);
+  return koreaTime;
+};
+
+/**
+ * 입력 날짜를 한국 시간 기준 시각으로 변환합니다 (자정으로 내리지 않음).
+ */
+const toKoreaDateTime = (date: Date): Date => {
+  return new Date(new Date(date).toLocaleString("en-US", { timeZone: KOREA_TIMEZONE }));
+};
+
+/**
  * 주어진 날짜가 한국 시간 기준 오늘보다 이전인지 확인합니다.
  * @param date 확인할 날짜
  * @returns 오늘보다 이전이면 true, 아니면 false
  */
 export const isBeforeKoreaToday = (date: Date): boolean => {
   const koreaToday = getKoreaToday();
-  return date < koreaToday;
+  const inputKorea = toKoreaDateTime(date);
+  return inputKorea < koreaToday;
+};
+
+/**
+ * 주어진 날짜가 한국 시간 기준 오늘과 같은지 확인합니다.
+ * @param date 확인할 날짜
+ * @returns 오늘과 같으면 true, 아니면 false
+ */
+export const isKoreaToday = (date: Date): boolean => {
+  const koreaToday = getKoreaToday();
+  const inputKorea = toKoreaMidnight(date);
+  return inputKorea.getTime() === koreaToday.getTime();
+};
+
+/**
+ * 주어진 날짜가 한국 시간 기준 오늘 이후인지 확인합니다.
+ * @param date 확인할 날짜
+ * @returns 오늘 이후이면 true, 아니면 false
+ */
+export const isAfterKoreaToday = (date: Date): boolean => {
+  const koreaToday = getKoreaToday();
+  const inputKorea = toKoreaDateTime(date);
+  return inputKorea > koreaToday;
+};
+
+/**
+ * 주어진 날짜가 한국 시간 기준 오늘 이후인지 확인합니다 (과거 및 당일 제외).
+ * @param date 확인할 날짜
+ * @returns 오늘 이후이면 true, 과거 또는 당일이면 false
+ */
+export const isValidFutureDate = (date: Date): boolean => {
+  const koreaToday = getKoreaToday();
+  const inputKorea = toKoreaDateTime(date);
+  return inputKorea > koreaToday;
+};
+
+/**
+ * 주어진 날짜가 유효한 이사일인지 확인합니다 (과거 및 당일 제외).
+ * @param date 확인할 날짜
+ * @returns 유효한 미래 날짜이면 true, 아니면 false
+ */
+export const isValidMoveDate = (date: Date): boolean => {
+  return isValidFutureDate(date);
+};
+
+/**
+ * 주어진 날짜에 대한 이사일 유효성 검사 결과를 반환합니다.
+ * @param date 확인할 날짜
+ * @returns { isValid: boolean, errorMessage?: string }
+ */
+export const validateMoveDate = (date: Date): { isValid: boolean; errorMessage?: string } => {
+  const koreaToday = getKoreaToday();
+  const inputKorea = toKoreaDateTime(date);
+
+  if (isNaN(inputKorea.getTime())) {
+    return {
+      isValid: false,
+      errorMessage: "올바른 날짜 형식이 아닙니다. (YYYY-MM-DD 형식으로 입력해주세요)",
+    };
+  }
+
+  if (inputKorea < koreaToday) {
+    return {
+      isValid: false,
+      errorMessage: "이사일은 오늘 이후로 설정해주세요.",
+    };
+  }
+
+  if (inputKorea.getTime() === koreaToday.getTime()) {
+    return {
+      isValid: false,
+      errorMessage: "당일 이사는 불가능합니다. 내일 이후로 설정해주세요.",
+    };
+  }
+
+  return { isValid: true };
 };
 
 /**
@@ -33,9 +125,9 @@ export const formatDateOnly = (dateTime: Date | string | null | undefined): stri
   const date = new Date(dateTime);
   if (isNaN(date.getTime())) return null;
 
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 };

@@ -33,6 +33,9 @@ export type EstimateRequestWithRelations = Prisma.EstimateRequestGetPayload<{
         price: {
           not: null;
         };
+        status: {
+          in: ["PROPOSED", "ACCEPTED", "AUTO_REJECTED"];
+        };
       };
       select: {
         id: true;
@@ -40,7 +43,7 @@ export type EstimateRequestWithRelations = Prisma.EstimateRequestGetPayload<{
         comment: true;
         status: true;
         isDesignated: true;
-        createdAt: true; // ✅ 이제 포함됨
+        createdAt: true;
         mover: {
           select: {
             id: true;
@@ -59,6 +62,9 @@ export type EstimateRequestWithRelations = Prisma.EstimateRequestGetPayload<{
             serviceAreas: true;
             totalFavoriteCount: true;
             Favorite: {
+              where: {
+                deletedAt: null;
+              };
               select: {
                 id: true;
               };
@@ -107,6 +113,9 @@ export type MultipleEstimateRequestWithRelations =
           price: {
             not: null;
           };
+          status: {
+            in: ["PROPOSED", "ACCEPTED", "AUTO_REJECTED"];
+          };
         };
         select: {
           id: true;
@@ -133,6 +142,9 @@ export type MultipleEstimateRequestWithRelations =
               serviceAreas: true;
               totalFavoriteCount: true;
               Favorite: {
+                where: {
+                  deletedAt: null;
+                };
                 select: {
                   id: true;
                 };

@@ -1,4 +1,6 @@
 import moverEstimateRepository from "../repositories/moverEstimate.repository";
+import actionService from "./action.service";
+import { ActionType } from "@prisma/client";
 import { NotFoundError } from "../types/commonError.types";
 import {
   MoverEstimateDuplicateError,
@@ -22,13 +24,17 @@ import {
   TEstimateResponse,
   TMyEstimateResponse,
   TMyRejectedEstimateResponse,
+  TCreateEstimateResponse,
+  TRejectEstimateResponse,
+  TUpdateEstimateStatusResponse,
+  TUpdateEstimateResponse,
 } from "../types/moverEstimate";
 
 const moverEstimateService = {
   // 견적 생성
   createEstimate: async (
     data: TCreateEstimateRequest
-  ): Promise<TEstimateResponse | null> => {
+  ): Promise<TCreateEstimateResponse | null> => {
     try {
       // 입력 검증
       if (!data.moverId || typeof data.moverId !== "string") {
@@ -122,7 +128,35 @@ const moverEstimateService = {
         throw new ServiceError("견적 생성에 실패했습니다");
       }
 
-      return estimate;
+      // 견적 제출 액션 생성
+      const estimateDetail =
+        await moverEstimateRepository.getEstimateDetailForAction(estimate.id);
+      if (estimateDetail) {
+        const actionType = isDesignated
+          ? ActionType.DESIGNATED_ESTIMATE_SUBMITTED
+          : ActionType.ESTIMATE_SUBMITTED;
+        await actionService.createAction(
+          estimateDetail.estimateRequest.customerId,
+          actionType,
+          estimate.id,
+          isDesignated ? "DESIGNATED_ESTIMATE" : "ESTIMATE",
+          {
+            moverName: estimateDetail.mover?.nickname || "",
+            moveType: estimateDetail.estimateRequest?.moveType || "",
+          }
+        );
+      }
+
+      // 응답 타입에 맞게 변환
+      return {
+        id: estimate.id,
+        estimateRequestId: estimate.estimateRequestId,
+        moverId: estimate.moverId,
+        price: estimate.price || 0,
+        comment: estimate.comment || "",
+        status: "PROPOSED",
+        createdAt: estimate.createdAt,
+      };
     } catch (error) {
       if (error instanceof RepositoryError) {
         throw new ServiceError(
@@ -154,7 +188,7 @@ const moverEstimateService = {
   // 견적 반려
   rejectEstimate: async (
     data: TRejectEstimateRequest
-  ): Promise<TEstimateResponse | null> => {
+  ): Promise<TRejectEstimateResponse | null> => {
     try {
       // 입력 검증
       if (!data.moverId || typeof data.moverId !== "string") {
@@ -225,7 +259,32 @@ const moverEstimateService = {
         throw new ServiceError("견적 반려에 실패했습니다");
       }
 
-      return estimate;
+      // 지정 견적 요청 거절 액션 생성
+      const estimateDetail =
+        await moverEstimateRepository.getEstimateDetailForAction(estimate.id);
+      if (estimateDetail && isDesignated) {
+        await actionService.createAction(
+          data.moverId,
+          ActionType.DESIGNATED_ESTIMATE_REQUEST_REJECTED,
+          estimate.id,
+          "DESIGNATED_ESTIMATE",
+          {
+            moveType: estimateDetail.estimateRequest?.moveType || "",
+            estimateRequestId: data.estimateRequestId,
+          }
+        );
+      }
+
+      // 응답 타입에 맞게 변환
+      return {
+        id: estimate.id,
+        estimateRequestId: estimate.estimateRequestId,
+        moverId: estimate.moverId,
+        price: estimate.price,
+        comment: estimate.comment || "",
+        status: "REJECTED",
+        createdAt: estimate.createdAt,
+      };
     } catch (error) {
       if (error instanceof RepositoryError) {
         throw new ServiceError(
@@ -418,48 +477,6 @@ const moverEstimateService = {
     }
   },
 
-  // 견적 요청 상세 조회
-  getEstimateRequestById: async (
-    estimateRequestId: string
-  ): Promise<TEstimateRequestResponse | null> => {
-    try {
-      // 입력 검증
-      if (!estimateRequestId || typeof estimateRequestId !== "string") {
-        throw new ServiceValidationError("잘못된 견적 요청 ID입니다");
-      }
-
-      const estimateRequest =
-        await moverEstimateRepository.getEstimateRequestById(estimateRequestId);
-
-      if (!estimateRequest) {
-        throw new NotFoundError("견적 요청을 찾을 수 없습니다.");
-      }
-
-      return estimateRequest;
-    } catch (error) {
-      if (error instanceof RepositoryError) {
-        throw new ServiceError(
-          `견적 요청 상세 조회 실패: ${error.message}`,
-          undefined,
-          error
-        );
-      }
-
-      if (
-        error instanceof ServiceValidationError ||
-        error instanceof NotFoundError
-      ) {
-        throw error;
-      }
-
-      throw new ServiceError(
-        "견적 요청 상세 조회 중 오류가 발생했습니다",
-        undefined,
-        error
-      );
-    }
-  },
-
   // 내가 보낸 견적서 조회
   getMyEstimate: async (moverId: string): Promise<TMyEstimateResponse[]> => {
     try {
@@ -528,7 +545,7 @@ const moverEstimateService = {
   // 견적 상태 업데이트
   updateEstimateStatus: async (
     data: TUpdateEstimateStatusRequest
-  ): Promise<TEstimateResponse | null> => {
+  ): Promise<TUpdateEstimateStatusResponse | null> => {
     try {
       // 입력 검증
       if (!data.moverId || typeof data.moverId !== "string") {
@@ -567,7 +584,12 @@ const moverEstimateService = {
         throw new ServiceError("견적 상태 업데이트에 실패했습니다");
       }
 
-      return estimate;
+      // 응답 타입에 맞게 변환
+      return {
+        id: estimate.id,
+        status: estimate.status,
+        updatedAt: estimate.updatedAt,
+      };
     } catch (error) {
       if (error instanceof RepositoryError) {
         throw new ServiceError(
@@ -596,7 +618,7 @@ const moverEstimateService = {
   // 견적서 업데이트
   updateEstimate: async (
     data: TUpdateEstimateRequest
-  ): Promise<TEstimateResponse | null> => {
+  ): Promise<TUpdateEstimateResponse | null> => {
     try {
       // 입력 검증
       if (!data.moverId || typeof data.moverId !== "string") {
@@ -626,11 +648,9 @@ const moverEstimateService = {
       }
 
       // 비즈니스 로직: 견적 상태 확인 (PROPOSED 상태만 수정 가능)
-      const existingEstimate =
-        await moverEstimateRepository.findExistingEstimate(
-          data.estimateId,
-          data.moverId
-        );
+      const existingEstimate = await moverEstimateRepository.getEstimateById(
+        data.estimateId
+      );
 
       if (existingEstimate && existingEstimate.status !== "PROPOSED") {
         throw new MoverInvalidEstimateStatusError();
@@ -646,7 +666,13 @@ const moverEstimateService = {
         throw new ServiceError("견적서 업데이트에 실패했습니다");
       }
 
-      return estimate;
+      // 응답 타입에 맞게 변환
+      return {
+        id: estimate.id,
+        price: estimate.price || 0,
+        comment: estimate.comment || "",
+        updatedAt: estimate.updatedAt,
+      };
     } catch (error) {
       if (error instanceof RepositoryError) {
         throw new ServiceError(

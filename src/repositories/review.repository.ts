@@ -1,13 +1,12 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../db/prisma/prisma";
+import { ReviewStatus } from "@prisma/client";
 
 const reviewRepository = {
   // 1. 리뷰 작성 (PATCH)
   postReview: async (reviewId: string, rating: number, content: string) => {
     return prisma.review.update({
       where: { id: reviewId },
-      data: { rating, content, status: "COMPLETED" },
+      data: { rating, content, status: ReviewStatus.COMPLETED },
     });
   },
 
@@ -43,7 +42,7 @@ const reviewRepository = {
         where: {
           customerId,
           status: "COMPLETED",
-          review: { is: { status: "PENDING" } },
+          review: { is: { status: ReviewStatus.PENDING } },
         },
       }),
     ]);
@@ -59,7 +58,10 @@ const reviewRepository = {
     const skip = (page - 1) * pageSize;
     const [items, total] = await Promise.all([
       prisma.review.findMany({
-        where: { customerId },
+        where: {
+          customerId,
+          status: "COMPLETED",
+        },
         include: {
           request: {
             include: {
@@ -73,7 +75,12 @@ const reviewRepository = {
         skip,
         take: pageSize,
       }),
-      prisma.review.count({ where: { customerId } }),
+      prisma.review.count({
+        where: {
+          customerId,
+          status: "COMPLETED",
+        },
+      }),
     ]);
     return { items, total, page, pageSize };
   },
@@ -81,17 +88,24 @@ const reviewRepository = {
   // 4. 내가 받은 리뷰 목록 조회
   getReceivedReviews: async (
     moverId: string,
-    pageQuery: { page: number; pageSize: number }
+    pageQuery: { page: number; pageSize: number; status?: string }
   ) => {
-    const { page, pageSize } = pageQuery;
+    const { page, pageSize, status } = pageQuery;
     const skip = (page - 1) * pageSize;
+
+    const whereCondition: any = {
+      moverId,
+      deletedAt: null,
+    };
+
+    // status가 제공된 경우 조건 추가
+    if (status) {
+      whereCondition.status = status;
+    }
 
     const [items, total] = await Promise.all([
       prisma.review.findMany({
-        where: {
-          moverId,
-          deletedAt: null,
-        },
+        where: whereCondition,
         select: {
           id: true,
           customerId: true,
@@ -125,18 +139,54 @@ const reviewRepository = {
             },
           },
         },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         skip,
         take: pageSize,
       }),
       prisma.review.count({
-        where: {
-          moverId,
-          deletedAt: null,
-        },
+        where: whereCondition,
       }),
     ]);
 
     return { items, total, page, pageSize };
+  },
+
+  // 리뷰 상세 정보 조회 (액션 메타데이터용)
+  getReviewDetailForAction: async (reviewId: string) => {
+    const review = await prisma.review.findUnique({
+      where: { id: reviewId },
+      select: {
+        id: true,
+        customerId: true,
+        moverId: true,
+        estimateRequestId: true,
+        status: true,
+        mover: {
+          select: {
+            id: true,
+            nickname: true,
+          },
+        },
+      },
+    });
+    return review;
+  },
+
+  // 리뷰 조회 (스케줄러용)
+  getReview: async (estimateRequestId: string) => {
+    return prisma.review.findFirst({
+      where: {
+        estimateRequestId,
+      },
+      include: {
+        mover: {
+          select: {
+            id: true,
+            nickname: true,
+          },
+        },
+      },
+    });
   },
 };
 

@@ -1,9 +1,8 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from "../db/prisma/prisma";
 import type {
   MoverListFilter,
   DesignatedQuoteRequestDto,
 } from "../types/mover.types";
-const prisma = new PrismaClient();
 
 /**
  * 기사님 리스트 조회
@@ -15,7 +14,7 @@ export const getMoverList = async (filter: MoverListFilter) => {
     search,
     sort = "review",
     cursor,
-    take = 2,
+    take = 4,
   } = filter;
 
   const getServiceTypeEnum = (serviceTypeId: string | number) => {
@@ -60,7 +59,10 @@ export const getMoverList = async (filter: MoverListFilter) => {
 
   const movers = await prisma.user.findMany({
     where,
-    orderBy: { [orderByField]: "desc" },
+    orderBy: [
+      { [orderByField]: "desc" },
+      { id: "asc" }, // 동일한 값일 때 ID로 정렬하여 일관성 보장
+    ],
     skip: cursor ? 1 : 0,
     ...(cursor && { cursor: { id: String(cursor) } }),
     take: take + 1,
@@ -69,8 +71,17 @@ export const getMoverList = async (filter: MoverListFilter) => {
     },
   });
 
-  const hasNext = movers.length > take;
-  const items = hasNext ? movers.slice(0, take) : movers;
+  // NULL 값 처리만 하고 정렬은 Prisma에서 처리된 결과 사용
+  const processedMovers = movers.map((mover) => ({
+    ...mover,
+    career: mover.career || 0,
+    workedCount: mover.workedCount || 0,
+    averageRating: mover.averageRating || 0,
+    totalReviewCount: mover.totalReviewCount || 0,
+  }));
+
+  const hasNext = processedMovers.length > take;
+  const items = hasNext ? processedMovers.slice(0, take) : processedMovers;
   const nextCursor = hasNext ? items[items.length - 1]?.id : null;
 
   if (items.length === 0 && cursor) {
@@ -107,6 +118,8 @@ export const getMoverDetail = async (id: string, userId?: string) => {
   ).length;
 
   let isFavorited = false;
+  let activeEstimateRequest = null;
+
   if (userId) {
     const favorite = await prisma.favorite.findFirst({
       where: {
@@ -116,12 +129,28 @@ export const getMoverDetail = async (id: string, userId?: string) => {
       },
     });
     isFavorited = !!favorite;
+
+    // 활성 견적 요청 조회
+    activeEstimateRequest = await prisma.estimateRequest.findFirst({
+      where: {
+        customerId: userId,
+        status: { in: ["PENDING", "APPROVED"] },
+        moveDate: { gte: new Date() },
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        status: true,
+        moveDate: true,
+      },
+    });
   }
 
   return {
     ...mover,
     favoriteCount,
     isFavorited,
+    activeEstimateRequest,
   };
 };
 
@@ -163,10 +192,17 @@ export const createDesignatedEstimateRequest = async (
   dto: DesignatedQuoteRequestDto
 ) => {
   const { quoteId, moverId, message, expiresAt } = dto;
-  const exists = await prisma.designatedMover.findFirst({
+
+  // 기존 요청 확인
+  const existingRequest = await prisma.designatedMover.findFirst({
     where: { estimateRequestId: quoteId, moverId },
   });
-  if (exists) return null;
+
+  if (existingRequest) {
+    // 모든 상태(PENDING, APPROVED, REJECTED 등)에서 생성 불가
+    return null;
+  }
+
   return await prisma.designatedMover.create({
     data: {
       estimateRequestId: quoteId,
@@ -185,7 +221,7 @@ export const checkDesignatedEstimateRequest = async (params: {
   moverId: string;
 }) => {
   const { quoteId, moverId } = params;
-  return await prisma.designatedMover.findFirst({
+  const designatedRequest = await prisma.designatedMover.findFirst({
     where: {
       estimateRequestId: quoteId,
       moverId,
@@ -196,8 +232,53 @@ export const checkDesignatedEstimateRequest = async (params: {
       message: true,
       expiresAt: true,
       createdAt: true,
+      status: true,
     },
   });
+
+  // 지정견적요청이 있고, 상태가 COMPLETED가 아니면 요청한 것으로 간주
+  // REJECTED(반려)된 경우는 다시 요청 가능하도록 null 반환
+  if (designatedRequest && designatedRequest.status === "COMPLETED") {
+    return null;
+  }
+
+  // REJECTED(반려)된 경우도 다시 요청 불가
+  if (designatedRequest && designatedRequest.status === "REJECTED") {
+    return designatedRequest;
+  }
+
+  return designatedRequest;
+};
+
+/**
+ * 견적 상태 확인 (확정/완료된 견적은 지정 견적 요청 불가)
+ */
+export const checkEstimateRequestStatus = async (quoteId: string) => {
+  const estimateRequest = await prisma.estimateRequest.findUnique({
+    where: { id: quoteId },
+    select: {
+      id: true,
+      status: true,
+      moveDate: true,
+    },
+  });
+
+  if (!estimateRequest) {
+    return { isValid: false, reason: "견적을 찾을 수 없습니다." };
+  }
+
+  // 견적이 확정(APPROVED) 또는 완료(COMPLETED)된 경우만 제한
+  if (
+    estimateRequest.status === "APPROVED" ||
+    estimateRequest.status === "COMPLETED"
+  ) {
+    return {
+      isValid: false,
+      reason: "확정되거나 완료된 견적에는 지정 견적을 요청할 수 없습니다.",
+    };
+  }
+
+  return { isValid: true };
 };
 
 const moverRepository = {
@@ -206,6 +287,7 @@ const moverRepository = {
   getMoverDetail,
   createDesignatedEstimateRequest,
   checkDesignatedEstimateRequest,
+  checkEstimateRequestStatus,
 };
 
 export default moverRepository;

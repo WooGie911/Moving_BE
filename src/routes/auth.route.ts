@@ -7,10 +7,15 @@ import {
   getGoogleCallback,
   getKakaoCallback,
   getNaverCallback,
+  postSwitchRole,
 } from "../controllers/auth.controller";
-import { verifyAccessToken, verifyRefreshToken } from "../middlewares/verifyToken";
+import {
+  verifyAccessToken,
+  verifyRefreshToken,
+} from "../middlewares/verifyToken";
 import passport from "passport";
 import { TUserRole } from "../types/user.types";
+import { loginLimiter, signupLimiter } from "../middlewares/rateLimiter";
 
 const authRouter = Router();
 
@@ -122,7 +127,7 @@ const authRouter = Router();
  * /auth/sign-in:
  *   post:
  *     summary: 사용자 로그인
- *     description: 이메일과 비밀번호를 통해 사용자 로그인을 진행합니다. 성공 시 HTTP-only 쿠키에 액세스 토큰과 리프레시 토큰을 설정합니다.
+ *     description: 이메일과 비밀번호를 통해 사용자 로그인을 진행합니다. 성공 시 쿠키에 액세스 토큰과 리프레시 토큰을 설정합니다.
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -186,6 +191,17 @@ const authRouter = Router();
  *               success: false
  *               message: "이메일 형식이 올바르지 않습니다"
  *               error: "ValidationError"
+ *       429:
+ *         description: 요청 제한 초과
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthErrorResponse'
+ *             example:
+ *               status: 429
+ *               success: false
+ *               message: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."
+ *               error: "TooManyRequestsError"
  *       500:
  *         description: 서버 내부 오류 (데이터베이스 오류, 비밀번호 검증 오류, 토큰 생성 오류)
  *         content:
@@ -198,7 +214,7 @@ const authRouter = Router();
  *               message: "서버 내부 오류가 발생했습니다"
  *               error: "InternalServerError"
  */
-authRouter.post("/sign-in", postSignin);
+authRouter.post("/sign-in", loginLimiter, postSignin);
 
 // 회원가입 엔드포인트
 /**
@@ -206,7 +222,7 @@ authRouter.post("/sign-in", postSignin);
  * /auth/sign-up:
  *   post:
  *     summary: 사용자 회원가입
- *     description: 새로운 사용자를 등록합니다. 이메일 중복 확인 후 계정을 생성하고, HTTP-only 쿠키에 토큰을 설정합니다.
+ *     description: 새로운 사용자를 등록합니다. 이메일 중복 확인 후 계정을 생성하고, 쿠키에 액세스 토큰과 리프레시 토큰을 설정합니다.
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -273,6 +289,17 @@ authRouter.post("/sign-in", postSignin);
  *                   success: false
  *                   message: "회원가입 정보가 올바르지 않습니다"
  *                   error: "ValidationError"
+ *       429:
+ *         description: 요청 제한 초과
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthErrorResponse'
+ *             example:
+ *               status: 429
+ *               success: false
+ *               message: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."
+ *               error: "TooManyRequestsError"
  *       500:
  *         description: 서버 내부 오류 (데이터베이스 오류, 암호화 오류, 토큰 생성 오류)
  *         content:
@@ -292,7 +319,7 @@ authRouter.post("/sign-in", postSignin);
  *   "error": "ServerError"
  * }
  */
-authRouter.post("/sign-up", postSignup);
+authRouter.post("/sign-up", signupLimiter, postSignup);
 
 // 로그아웃 엔드포인트
 /**
@@ -343,13 +370,29 @@ authRouter.post("/sign-up", postSignup);
  */
 authRouter.post("/logout", verifyAccessToken, postLogout);
 
+// role 변경 엔드포인트
+/**
+ * @swagger
+ * /auth/switch-role:
+ *   post:
+ *     summary: 간단 로그인 역할 변경
+ *     description: 간단 로그인 역할을 변경합니다. 새로운 토큰은 쿠키에 저장됩니다.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ */
+
+authRouter.post("/switch-role", verifyAccessToken, postSwitchRole);
+
 // refresh token 갱신 엔드포인트
 /**
  * @swagger
  * /auth/refresh-token:
  *   post:
  *     summary: 액세스 토큰 갱신
- *     description: 리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급합니다 (리프레쉬 토큰의 유효기간이 발급 만료 시간에 해당할 경우 리프레시 토큰도 갱신).
+ *     description: 리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급합니다. 토큰은 쿠키에 저장됩니다 (리프레쉬 토큰의 유효기간이 발급 만료 시간에 해당할 경우 리프레시 토큰도 갱신).
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -416,7 +459,7 @@ authRouter.post("/refresh-token", verifyRefreshToken, postRefresh);
  * /auth/google/callback:
  *   get:
  *     summary: 구글 로그인 콜백
- *     description: 구글 로그인을 처리합니다. 구글 로그인 후 토큰을 발급합니다.
+ *     description: 구글 로그인을 처리합니다. 구글 로그인 후 토큰을 쿠키에 저장합니다.
  *     tags: [Auth]
  *     responses:
  *       200:
@@ -439,7 +482,11 @@ authRouter.post("/refresh-token", verifyRefreshToken, postRefresh);
  *               message: "구글 로그인에 실패했습니다"
  *               error: "AuthenticationError"
  */
-authRouter.get("/google/callback", passport.authenticate("google", { session: false }), getGoogleCallback);
+authRouter.get(
+  "/google/callback",
+  passport.authenticate("google", { session: false }),
+  getGoogleCallback
+);
 
 // 구글 로그인 엔드포인트
 /**
@@ -495,7 +542,7 @@ authRouter.get("/google", (req, res, next) => {
  * /auth/kakao/callback:
  *   get:
  *     summary: 카카오 로그인 콜백
- *     description: 카카오 로그인을 처리합니다. 카카오 로그인 후 토큰을 발급합니다.
+ *     description: 카카오 로그인을 처리합니다. 카카오 로그인 후 토큰을 쿠키에 저장합니다.
  *     tags: [Auth]
  *     responses:
  *       200:
@@ -518,7 +565,11 @@ authRouter.get("/google", (req, res, next) => {
  *               message: "카카오 로그인에 실패했습니다"
  *               error: "AuthenticationError"
  */
-authRouter.get("/kakao/callback", passport.authenticate("kakao", { session: false }), getKakaoCallback);
+authRouter.get(
+  "/kakao/callback",
+  passport.authenticate("kakao", { session: false }),
+  getKakaoCallback
+);
 
 //카카오 로그인 엔드 포인트
 /**
@@ -623,7 +674,7 @@ authRouter.get("/naver", (req, res, next) => {
  * /auth/naver/callback:
  *   get:
  *     summary: 네이버 로그인 콜백
- *     description: 네이버 로그인 완료 후 콜백을 처리합니다. 토큰을 발급합니다.
+ *     description: 네이버 로그인 완료 후 콜백을 처리합니다. 토큰을 쿠키에 저장합니다.
  *     tags: [Auth]
  *     responses:
  *       200:
@@ -631,21 +682,10 @@ authRouter.get("/naver", (req, res, next) => {
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   description: 성공 여부
- *                 accessToken:
- *                   type: string
- *                   description: 액세스 토큰
- *                 refreshToken:
- *                   type: string
- *                   description: 리프레시 토큰
+ *               $ref: '#/components/schemas/AuthSuccessResponse'
  *             example:
  *               success: true
- *               accessToken: "eyJhbGci..."
- *               refreshToken: "eyJhbGci..."
+ *               message: "네이버 로그인 성공"
  *       400:
  *         description: 잘못된 요청
  *         content:
@@ -668,7 +708,7 @@ authRouter.get("/naver", (req, res, next) => {
 authRouter.get(
   "/naver/callback",
   passport.authenticate("naver", { session: false }), // ✅ JWT 기반이므로 session: false
-  getNaverCallback, // 👈 이 핸들러 안에서 JWT 발급 처리
+  getNaverCallback // 👈 이 핸들러 안에서 JWT 발급 처리
 );
 
 export default authRouter;
