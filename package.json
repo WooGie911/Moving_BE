@@ -17,6 +17,8 @@
     "format": "prettier --write \"src/**/*.{ts,js,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
     "test": "jest",
+    "test:unit": "jest --testPathIgnorePatterns=tests/integration",
+    "test:integration": "jest tests/integration",
     "test:coverage": "jest --collectCoverage"
   },
   "keywords": [
