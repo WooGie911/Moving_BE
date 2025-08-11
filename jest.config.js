@@ -2,6 +2,7 @@ module.exports = {
   preset: "ts-jest",
   testEnvironment: "node",
   testMatch: ["**/*.test.ts"],
+  setupFiles: ["dotenv/config"], // .env(.test) 자동 로딩
   collectCoverage: false,
   coverageDirectory: "coverage",
   coverageReporters: ["text", "lcov", "html"],
@@ -19,4 +20,5 @@ module.exports = {
     "!src/routes/**",
   ],
   testPathIgnorePatterns: ["/node_modules/", "/dist/"],
+  globalTeardown: "<rootDir>/tests/global-teardown.ts",
 };

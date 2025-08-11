@@ -5,7 +5,7 @@ import { notificationMiddleware } from "../../middlewares/notificationMiddleware
 // Singleton 패턴으로 Prisma 클라이언트 인스턴스를 관리하여 연결 풀 최적화
 let prisma: PrismaClient;
 
-if (process.env.NODE_ENV === "production") {
+if (process.env.NODE_ENV === "production" || process.env.NODE_ENV === "test") {
   prisma = new PrismaClient({
     datasources: {
       db: {
@@ -25,10 +25,13 @@ if (process.env.NODE_ENV === "production") {
   prisma = (global as any).prisma;
 }
 
-// 리뷰생성 Prisma 미들웨어 등록
-prisma.$use(reviewPrismaMiddleware);
+// 테스트 환경에서는 Prisma 미들웨어를 비활성화하여 부작용/노이즈를 방지
+if (process.env.NODE_ENV !== "test") {
+  // 리뷰생성 Prisma 미들웨어 등록
+  prisma.$use(reviewPrismaMiddleware);
 
-// 알림생성 Prisma 미들웨어 등록
-prisma.$use(notificationMiddleware);
+  // 알림생성 Prisma 미들웨어 등록
+  prisma.$use(notificationMiddleware);
+}
 
 export default prisma;

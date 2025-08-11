@@ -23,7 +23,8 @@ const removeFavorite = async (customerId: string, moverId: string) => {
   });
 
   if (!favorite) {
-    throw new Error("찜하기 정보를 찾을 수 없습니다.");
+    // 존재하지 않아도 removeFavorite 호출자는 일관 응답을 줄 수 있도록 null 반환
+    return null as unknown as { id: string; customerId: string; moverId: string };
   }
 
   // 삭제 실행
@@ -65,11 +66,7 @@ const getFavoriteStatus = async (customerId: string, moverId: string) => {
 };
 
 // 찜한 기사님 목록 조회 (페이지네이션)
-const getFavoriteMovers = async (
-  customerId: string,
-  limit: number = 3,
-  cursor?: string
-) => {
+const getFavoriteMovers = async (customerId: string, limit: number = 3, cursor?: string) => {
   const where = {
     customerId,
     deletedAt: null,
@@ -142,22 +139,15 @@ const getFavoriteMovers = async (
       serviceTypes: favorite.mover.serviceTypes.map((type) => ({
         service: {
           name:
-            type === "SMALL"
-              ? "소형이사"
-              : type === "HOME"
-                ? "가정이사"
-                : type === "OFFICE"
-                  ? "사무실이사"
-                  : "기타",
+            type === "SMALL" ? "소형이사" : type === "HOME" ? "가정이사" : type === "OFFICE" ? "사무실이사" : "기타",
         },
       })),
       // 추가 속성들
       description: favorite.mover.detailIntro,
       introduction: favorite.mover.shortIntro,
       completedCount: favorite.mover.workedCount,
-      favoriteCount: (favorite.mover.Favorite || []).filter(
-        (fav: { deletedAt: Date | null }) => fav.deletedAt === null
-      ).length,
+      favoriteCount: (favorite.mover.Favorite || []).filter((fav: { deletedAt: Date | null }) => fav.deletedAt === null)
+        .length,
       experience: favorite.mover.career,
       reviewCount: favorite.mover.totalReviewCount,
       avgRating: favorite.mover.averageRating,

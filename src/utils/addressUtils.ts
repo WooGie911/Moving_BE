@@ -107,15 +107,22 @@ export const parseAddress = (addressObj: {
   if (isMetropolitan) {
     // 특별시/광역시: 구가 city, 동이 district
     // 예: "서울 강남구 역삼동 테헤란로 123"
+    city = roadAddressParts[1];
     if (roadAddressParts.length >= 4) {
-      city = roadAddressParts[1]; // 강남구
-      district = roadAddressParts[2]; // 역삼동
-      detail = roadAddressParts.slice(3).join(" "); // 테헤란로 123
+      const thirdToken = roadAddressParts[2];
+      // "역삼동" 같은 동 토큰 여부 판단. 동이 아니면 동 정보가 없는 것으로 간주
+      const looksLikeDong = /동$/.test(thirdToken) || /가$/.test(thirdToken);
+      if (looksLikeDong) {
+        district = thirdToken;
+        detail = roadAddressParts.slice(3).join(" ");
+      } else {
+        district = "";
+        detail = roadAddressParts.slice(2).join(" ");
+      }
     } else {
-      // 동 정보가 없는 경우: "서울 강남구 테헤란로 123"
-      city = roadAddressParts[1]; // 강남구
-      district = ""; // 빈 문자열
-      detail = roadAddressParts.slice(2).join(" "); // 테헤란로 123
+      // 동 정보가 없는 형태
+      district = "";
+      detail = roadAddressParts.slice(2).join(" ");
     }
   } else if (isSpecialSelfGoverning) {
     // 특별자치도: 시/군이 city, 구/동이 district

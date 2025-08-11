@@ -6,14 +6,6 @@ import * as Sentry from "@sentry/node";
  * 전역 에러 핸들링 미들웨어
  */
 export const errorHandler = (err: CustomError, req: Request, res: Response, next: NextFunction): void => {
-  console.error("Error:", {
-    message: err.message,
-    stack: err.stack,
-    url: req.url,
-    method: req.method,
-    timestamp: new Date().toISOString(),
-  });
-
   // 센트리로 에러 전송
   Sentry.captureException(err, {
     extra: {
