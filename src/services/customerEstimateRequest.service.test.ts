@@ -1251,6 +1251,118 @@ describe("고객 견적 요청 서비스", () => {
       expect(prisma.$transaction).toHaveBeenCalled();
       expect(mockActionService.createAction).toHaveBeenCalledTimes(3);
     });
+
+    test("견적 확정 트랜잭션에서 result가 null일 때 NotFoundError를 던진다", async () => {
+      // Arrange - 라인 282 커버리지 개선
+      const userId = "user123";
+      const estimateId = "estimate123";
+      const activeEstimateRequestId = "estimateRequest123";
+      const mockEstimate: TestEstimate = {
+        id: "estimate123",
+        status: "PROPOSED" as EstimateStatus,
+        price: 500000,
+        comment: "합리적인 가격",
+        isDesignated: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        rejectReason: null,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+      };
+      const mockEstimateRequest: TestEstimateRequest = {
+        id: "estimateRequest123",
+        status: "PENDING" as RequestStatus,
+        customerId: "user123",
+        moveType: "HOME" as MoveType,
+        moveDate: new Date("2025-08-10"),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        description: "이사 견적 요청",
+        fromAddressId: "addr1",
+        toAddressId: "addr2",
+      };
+
+      mockCustomerEstimateRequestRepository.getActiveEstimateRequest.mockResolvedValue(
+        activeEstimateRequestId
+      );
+      mockCustomerEstimateRequestRepository.getEstimateByIdAndRequestId.mockResolvedValue(
+        mockEstimate
+      );
+      mockCustomerEstimateRequestRepository.getEstimateRequestById.mockResolvedValue(
+        mockEstimateRequest
+      );
+      mockCustomerEstimateRequestRepository.getEstimateDetailForAction.mockResolvedValue(
+        {
+          id: "estimate123",
+          status: "PROPOSED" as EstimateStatus,
+          moverId: "mover123",
+          estimateRequestId: "estimateRequest123",
+          isDesignated: false,
+          mover: { id: "mover123", name: "이사업체A", nickname: null },
+          estimateRequest: {
+            id: "estimateRequest123",
+            customerId: "customer123",
+            moveType: "HOME" as MoveType,
+            moveDate: new Date("2025-08-10"),
+            customer: { id: "customer123", nickname: "고객A" },
+          },
+        }
+      );
+      mockCustomerEstimateRequestRepository.getAutoRejectedEstimates.mockResolvedValue(
+        []
+      );
+
+      // Prisma 트랜잭션 모킹 - null 반환
+      const prisma = require("../db/prisma/prisma").default;
+      prisma.$transaction.mockImplementation(async (callback: any) => {
+        const mockTx = {
+          estimateRequest: {
+            update: jest.fn().mockResolvedValue({
+              id: "estimateRequest123",
+              customerId: "user123",
+              moveType: "HOME" as MoveType,
+              moveDate: new Date("2025-08-10"),
+              createdAt: new Date(),
+              description: "이사 견적 요청",
+              status: "APPROVED" as RequestStatus,
+              fromAddress: {
+                zoneCode: "12345",
+                city: "서울시",
+                district: "강남구",
+                detail: "123-456",
+                region: "SEOUL" as RegionType,
+              },
+              toAddress: {
+                zoneCode: "12346",
+                city: "경기도",
+                district: "성남시",
+                detail: "789-012",
+                region: "GYEONGGI" as RegionType,
+              },
+            }),
+          },
+          estimate: {
+            update: jest.fn().mockResolvedValue({
+              id: "estimate123",
+              status: "ACCEPTED" as EstimateStatus,
+            }),
+            updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+          },
+        };
+        return null; // 트랜잭션 결과를 null로 반환하여 라인 282 커버
+      });
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestService.confirmEstimate(userId, estimateId)
+      ).rejects.toThrow(NotFoundError);
+    });
   });
 
   describe("견적 취소", () => {
@@ -2272,6 +2384,1029 @@ describe("고객 견적 요청 서비스", () => {
         {
           moverName: "이사업체A",
           moveType: "HOME",
+        }
+      );
+    });
+
+    test("이사 완료 트랜잭션에서 updatedEstimateRequest가 null일 때 NotFoundError를 던진다", async () => {
+      // Arrange - 라인 556 커버리지 개선
+      const userId = "user123";
+      const estimateId = "estimate123";
+      const mockEstimate: TestEstimate = {
+        id: "estimate123",
+        status: "ACCEPTED" as EstimateStatus,
+        price: 500000,
+        comment: "합리적인 가격",
+        isDesignated: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        rejectReason: null,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+      };
+      const mockEstimateRequest: TestEstimateRequest = {
+        id: "estimateRequest123",
+        status: "APPROVED" as RequestStatus,
+        customerId: "user123",
+        moveType: "HOME" as MoveType,
+        moveDate: new Date("2025-08-10"),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        description: "이사 견적 요청",
+        fromAddressId: "addr1",
+        toAddressId: "addr2",
+      };
+
+      mockCustomerEstimateRequestRepository.getEstimateById.mockResolvedValue(
+        mockEstimate
+      );
+      mockCustomerEstimateRequestRepository.getEstimateRequestById.mockResolvedValue(
+        mockEstimateRequest
+      );
+      mockCustomerEstimateRequestRepository.getEstimateByIdAndRequestId.mockResolvedValue(
+        mockEstimate
+      );
+      mockCustomerEstimateRequestRepository.getEstimateDetailForAction.mockResolvedValue(
+        {
+          id: "estimate123",
+          status: "ACCEPTED" as EstimateStatus,
+          moverId: "mover123",
+          estimateRequestId: "estimateRequest123",
+          isDesignated: false,
+          mover: { id: "mover123", name: "이사업체A", nickname: null },
+          estimateRequest: {
+            id: "estimateRequest123",
+            customerId: "customer123",
+            moveType: "HOME" as MoveType,
+            moveDate: new Date("2025-08-10"),
+            customer: { id: "customer123", nickname: "고객A" },
+          },
+        }
+      );
+
+      // Prisma 트랜잭션 모킹 - updatedEstimateRequest가 null 반환
+      const prisma = require("../db/prisma/prisma").default;
+      prisma.$transaction.mockImplementation(async (callback: any) => {
+        const mockTx = {
+          estimateRequest: {
+            update: jest.fn().mockResolvedValue(null), // null 반환으로 라인 556 커버
+          },
+          user: {
+            update: jest.fn().mockResolvedValue({
+              id: "mover123",
+              workedCount: 5,
+            }),
+          },
+        };
+        return await callback(mockTx);
+      });
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestService.completeEstimate(userId, estimateId)
+      ).rejects.toThrow(NotFoundError);
+    });
+
+    test("확정된 견적의 기사를 찾을 수 없을 때 NotFoundError를 던진다", async () => {
+      // Arrange - 라인 566 커버리지 개선
+      const userId = "user123";
+      const estimateId = "estimate123";
+      const mockEstimate: TestEstimate = {
+        id: "estimate123",
+        status: "ACCEPTED" as EstimateStatus,
+        price: 500000,
+        comment: "합리적인 가격",
+        isDesignated: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        rejectReason: null,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+      };
+      const mockEstimateRequest: TestEstimateRequest = {
+        id: "estimateRequest123",
+        status: "APPROVED" as RequestStatus,
+        customerId: "user123",
+        moveType: "HOME" as MoveType,
+        moveDate: new Date("2025-08-10"),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        description: "이사 견적 요청",
+        fromAddressId: "addr1",
+        toAddressId: "addr2",
+      };
+
+      mockCustomerEstimateRequestRepository.getEstimateById.mockResolvedValue(
+        mockEstimate
+      );
+      mockCustomerEstimateRequestRepository.getEstimateRequestById.mockResolvedValue(
+        mockEstimateRequest
+      );
+      mockCustomerEstimateRequestRepository.getEstimateByIdAndRequestId.mockResolvedValue(
+        mockEstimate
+      );
+      mockCustomerEstimateRequestRepository.getEstimateDetailForAction.mockResolvedValue(
+        {
+          id: "estimate123",
+          status: "ACCEPTED" as EstimateStatus,
+          moverId: "mover123",
+          estimateRequestId: "estimateRequest123",
+          isDesignated: false,
+          mover: { id: "mover123", name: "이사업체A", nickname: null },
+          estimateRequest: {
+            id: "estimateRequest123",
+            customerId: "customer123",
+            moveType: "HOME" as MoveType,
+            moveDate: new Date("2025-08-10"),
+            customer: { id: "customer123", nickname: "고객A" },
+          },
+        }
+      );
+      mockCustomerEstimateRequestRepository.getMoverByEstimateId.mockResolvedValue(
+        null // null 반환으로 라인 566 커버
+      );
+
+      // Prisma 트랜잭션 모킹
+      const prisma = require("../db/prisma/prisma").default;
+      prisma.$transaction.mockImplementation(async (callback: any) => {
+        const mockTx = {
+          estimateRequest: {
+            update: jest.fn().mockResolvedValue({
+              id: "estimateRequest123",
+              customerId: "user123",
+              moveType: "HOME" as MoveType,
+              moveDate: new Date("2025-08-10"),
+              createdAt: new Date(),
+              description: "이사 견적 요청",
+              status: "COMPLETED" as RequestStatus,
+            }),
+          },
+          user: {
+            update: jest.fn().mockResolvedValue({
+              id: "mover123",
+              workedCount: 5,
+            }),
+          },
+        };
+        return await callback(mockTx);
+      });
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestService.completeEstimate(userId, estimateId)
+      ).rejects.toThrow(NotFoundError);
+    });
+
+    test("이사 완료에서 getEstimateByIdAndRequestId가 null을 반환할 때 NotFoundError를 던진다", async () => {
+      // Arrange - 라인 536 커버리지 개선
+      const userId = "user123";
+      const estimateId = "estimate123";
+      const mockEstimate: TestEstimate = {
+        id: "estimate123",
+        status: "ACCEPTED" as EstimateStatus,
+        price: 500000,
+        comment: "합리적인 가격",
+        isDesignated: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        rejectReason: null,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+      };
+      const mockEstimateRequest: TestEstimateRequest = {
+        id: "estimateRequest123",
+        status: "APPROVED" as RequestStatus,
+        customerId: "user123",
+        moveType: "HOME" as MoveType,
+        moveDate: new Date("2025-08-10"),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        description: "이사 견적 요청",
+        fromAddressId: "addr1",
+        toAddressId: "addr2",
+      };
+
+      mockCustomerEstimateRequestRepository.getEstimateById.mockResolvedValue(
+        mockEstimate
+      );
+      mockCustomerEstimateRequestRepository.getEstimateRequestById.mockResolvedValue(
+        mockEstimateRequest
+      );
+      mockCustomerEstimateRequestRepository.getEstimateByIdAndRequestId.mockResolvedValue(
+        null // null 반환으로 라인 536 커버
+      );
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestService.completeEstimate(userId, estimateId)
+      ).rejects.toThrow(NotFoundError);
+    });
+
+    test("견적 확정 트랜잭션에서 Error가 아닌 예외가 발생할 때 ServiceError를 던진다", async () => {
+      // Arrange - 라인 409-412 커버리지 개선 (error instanceof Error 분기)
+      const userId = "user123";
+      const estimateId = "estimate123";
+      const activeEstimateRequestId = "estimateRequest123";
+      const mockEstimate: TestEstimate = {
+        id: "estimate123",
+        status: "PROPOSED" as EstimateStatus,
+        price: 500000,
+        comment: "합리적인 가격",
+        isDesignated: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        rejectReason: null,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+      };
+      const mockEstimateRequest: TestEstimateRequest = {
+        id: "estimateRequest123",
+        status: "PENDING" as RequestStatus,
+        customerId: "user123",
+        moveType: "HOME" as MoveType,
+        moveDate: new Date("2025-08-10"),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        description: "이사 견적 요청",
+        fromAddressId: "addr1",
+        toAddressId: "addr2",
+      };
+
+      mockCustomerEstimateRequestRepository.getActiveEstimateRequest.mockResolvedValue(
+        activeEstimateRequestId
+      );
+      mockCustomerEstimateRequestRepository.getEstimateByIdAndRequestId.mockResolvedValue(
+        mockEstimate
+      );
+      mockCustomerEstimateRequestRepository.getEstimateRequestById.mockResolvedValue(
+        mockEstimateRequest
+      );
+      mockCustomerEstimateRequestRepository.getEstimateDetailForAction.mockResolvedValue(
+        {
+          id: "estimate123",
+          status: "PROPOSED" as EstimateStatus,
+          moverId: "mover123",
+          estimateRequestId: "estimateRequest123",
+          isDesignated: false,
+          mover: { id: "mover123", name: "이사업체A", nickname: null },
+          estimateRequest: {
+            id: "estimateRequest123",
+            customerId: "customer123",
+            moveType: "HOME" as MoveType,
+            moveDate: new Date("2025-08-10"),
+            customer: { id: "customer123", nickname: "고객A" },
+          },
+        }
+      );
+      mockCustomerEstimateRequestRepository.getAutoRejectedEstimates.mockResolvedValue(
+        []
+      );
+
+      // Prisma 트랜잭션 모킹 - Error가 아닌 예외 발생
+      const prisma = require("../db/prisma/prisma").default;
+      prisma.$transaction.mockImplementation(async (callback: any) => {
+        throw "String error"; // Error가 아닌 문자열 예외로 라인 409-412 커버
+      });
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestService.confirmEstimate(userId, estimateId)
+      ).rejects.toThrow(ServiceError);
+    });
+
+    test("견적 취소에서 estimateDetail의 customer nickname이 null일 때 빈 문자열을 사용한다", async () => {
+      // Arrange - 라인 482-486 커버리지 개선 (estimateDetail.estimateRequest?.customer?.nickname || "")
+      const userId = "user123";
+      const estimateId = "estimate123";
+      const activeEstimateRequestId = "estimateRequest123";
+      const mockEstimate: TestEstimate = {
+        id: "estimate123",
+        status: "PROPOSED" as EstimateStatus,
+        price: 500000,
+        comment: "합리적인 가격",
+        isDesignated: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        rejectReason: null,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+      };
+      const mockEstimateRequest: TestEstimateRequest = {
+        id: "estimateRequest123",
+        status: "PENDING" as RequestStatus,
+        customerId: "user123",
+        moveType: "HOME" as MoveType,
+        moveDate: new Date("2025-08-10"),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        description: "이사 견적 요청",
+        fromAddressId: "addr1",
+        toAddressId: "addr2",
+      };
+      const mockCancelledEstimate: TestEstimate = {
+        id: "estimate123",
+        status: "REJECTED" as EstimateStatus,
+        price: 500000,
+        comment: "합리적인 가격",
+        isDesignated: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        rejectReason: null,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+      };
+
+      mockCustomerEstimateRequestRepository.getActiveEstimateRequest.mockResolvedValue(
+        activeEstimateRequestId
+      );
+      mockCustomerEstimateRequestRepository.getEstimateByIdAndRequestId.mockResolvedValue(
+        mockEstimate
+      );
+      mockCustomerEstimateRequestRepository.getEstimateRequestById.mockResolvedValue(
+        mockEstimateRequest
+      );
+      mockCustomerEstimateRequestRepository.getEstimateDetailForAction.mockResolvedValue(
+        {
+          id: "estimate123",
+          status: "PROPOSED" as EstimateStatus,
+          moverId: "mover123",
+          estimateRequestId: "estimateRequest123",
+          isDesignated: false,
+          mover: { id: "mover123", name: "이사업체A", nickname: null },
+          estimateRequest: {
+            id: "estimateRequest123",
+            customerId: "customer123",
+            moveType: "HOME" as MoveType,
+            moveDate: new Date("2025-08-10"),
+            customer: { id: "customer123", nickname: null }, // nickname이 null
+          },
+        }
+      );
+      mockCustomerEstimateRequestRepository.updateEstimateStatus.mockResolvedValue(
+        mockCancelledEstimate
+      );
+      mockActionService.createAction.mockResolvedValue({
+        id: "action123",
+        createdAt: new Date(),
+        deletedAt: null,
+        description: null,
+        userId: "mover123",
+        type: ActionType.ESTIMATE_REJECTED,
+        entityId: "estimate123",
+        entityType: "ESTIMATE",
+        metadata: {},
+      });
+
+      // Act
+      const result = await customerEstimateRequestService.cancelEstimate(
+        userId,
+        estimateId
+      );
+
+      // Assert
+      expect(result).toEqual(mockCancelledEstimate);
+      expect(mockActionService.createAction).toHaveBeenCalledWith(
+        "mover123",
+        ActionType.ESTIMATE_REJECTED,
+        "estimate123",
+        "ESTIMATE",
+        {
+          customerName: "", // 빈 문자열이 사용됨
+          moveType: "HOME",
+        }
+      );
+    });
+
+    test("이사 완료에서 estimateDetail의 mover nickname이 null일 때 빈 문자열을 사용한다", async () => {
+      // Arrange - 라인 597-600 커버리지 개선 (estimateDetail.mover?.nickname || "")
+      const userId = "user123";
+      const estimateId = "estimate123";
+      const mockEstimate: TestEstimate = {
+        id: "estimate123",
+        status: "ACCEPTED" as EstimateStatus,
+        price: 500000,
+        comment: "합리적인 가격",
+        isDesignated: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        moverId: "mover123",
+        estimateRequestId: "estimateRequest123",
+        rejectReason: null,
+        workingHours: null,
+        includesPackaging: false,
+        insuranceAmount: null,
+        validUntil: null,
+      };
+      const mockEstimateRequest: TestEstimateRequest = {
+        id: "estimateRequest123",
+        status: "APPROVED" as RequestStatus,
+        customerId: "user123",
+        moveType: "HOME" as MoveType,
+        moveDate: new Date("2025-08-10"),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        description: "이사 견적 요청",
+        fromAddressId: "addr1",
+        toAddressId: "addr2",
+      };
+
+      mockCustomerEstimateRequestRepository.getEstimateById.mockResolvedValue(
+        mockEstimate
+      );
+      mockCustomerEstimateRequestRepository.getEstimateRequestById.mockResolvedValue(
+        mockEstimateRequest
+      );
+      mockCustomerEstimateRequestRepository.getEstimateByIdAndRequestId.mockResolvedValue(
+        mockEstimate
+      );
+      mockCustomerEstimateRequestRepository.getEstimateDetailForAction.mockResolvedValue(
+        {
+          id: "estimate123",
+          status: "ACCEPTED" as EstimateStatus,
+          moverId: "mover123",
+          estimateRequestId: "estimateRequest123",
+          isDesignated: false,
+          mover: { id: "mover123", name: "이사업체A", nickname: null }, // nickname이 null
+          estimateRequest: {
+            id: "estimateRequest123",
+            customerId: "customer123",
+            moveType: "HOME" as MoveType,
+            moveDate: new Date("2025-08-10"),
+            customer: { id: "customer123", nickname: "고객A" },
+          },
+        }
+      );
+      mockCustomerEstimateRequestRepository.getMoverByEstimateId.mockResolvedValue(
+        {
+          moverId: "mover123",
+        }
+      );
+
+      // Prisma 트랜잭션 모킹
+      const prisma = require("../db/prisma/prisma").default;
+      prisma.$transaction.mockImplementation(async (callback: any) => {
+        const mockTx = {
+          estimateRequest: {
+            update: jest.fn().mockResolvedValue({
+              id: "estimateRequest123",
+              customerId: "user123",
+              moveType: "HOME" as MoveType,
+              moveDate: new Date("2025-08-10"),
+              createdAt: new Date(),
+              description: "이사 견적 요청",
+              status: "COMPLETED" as RequestStatus,
+            }),
+          },
+          user: {
+            update: jest.fn().mockResolvedValue({
+              id: "mover123",
+              workedCount: 5,
+            }),
+          },
+        };
+        return await callback(mockTx);
+      });
+
+      // Prisma findUnique 모킹
+      prisma.estimateRequest.findUnique.mockResolvedValue({
+        id: "estimateRequest123",
+        customerId: "user123",
+        moveType: "SMALL",
+        moveDate: new Date("2025-07-10T00:33:16.456Z"),
+        createdAt: new Date("2025-07-10T00:33:16.456Z"),
+        description: "이사 요청 설명",
+        status: "COMPLETED",
+        fromAddress: {
+          zoneCode: "12345",
+          city: "서울시",
+          district: "강남구",
+          detail: "123-456",
+          region: "SEOUL",
+        },
+        toAddress: {
+          zoneCode: "12346",
+          city: "경기도",
+          district: "성남시",
+          detail: "789-012",
+          region: "GYEONGGI",
+        },
+      });
+
+      mockActionService.createAction.mockResolvedValue({
+        id: "action123",
+        createdAt: new Date(),
+        deletedAt: null,
+        description: null,
+        userId: "mover123",
+        type: ActionType.MOVE_DAY_REVIEW_REQUEST,
+        entityId: "estimate123",
+        entityType: "ESTIMATE",
+        metadata: {},
+      });
+
+      // Act
+      const result = await customerEstimateRequestService.completeEstimate(
+        userId,
+        estimateId
+      );
+
+      // Assert
+      expect(result).toEqual({
+        estimateRequest: {
+          id: "estimateRequest123",
+          customerId: "user123",
+          moveType: "SMALL",
+          moveDate: new Date("2025-07-10T00:33:16.456Z"),
+          createdAt: new Date("2025-07-10T00:33:16.456Z"),
+          description: "이사 요청 설명",
+          status: "COMPLETED",
+          fromAddress: {
+            zoneCode: "12345",
+            city: "서울시",
+            district: "강남구",
+            detail: "123-456",
+            region: "SEOUL",
+          },
+          toAddress: {
+            zoneCode: "12346",
+            city: "경기도",
+            district: "성남시",
+            detail: "789-012",
+            region: "GYEONGGI",
+          },
+        },
+      });
+      expect(mockActionService.createAction).toHaveBeenCalledWith(
+        "mover123",
+        ActionType.MOVE_DAY_REVIEW_REQUEST,
+        "estimate123",
+        "ESTIMATE",
+        {
+          moverName: "", // 빈 문자열이 사용됨
+          moveType: "HOME",
+        }
+      );
+    });
+
+    test("견적 확정 트랜잭션에서 estimateDetail의 mover nickname이 null일 때 빈 문자열을 사용한다", async () => {
+      // Arrange - 라인 395-402 커버리지 개선 (estimateDetail.mover?.nickname || "")
+      const estimateRequestId = "estimateRequest123";
+      const estimateId = "estimate123";
+      const mockTransactionResult = {
+        estimateRequest: {
+          id: "estimateRequest123",
+          customerId: "user123",
+          moveType: "HOME" as MoveType,
+          moveDate: new Date("2025-08-10"),
+          createdAt: new Date(),
+          description: "이사 견적 요청",
+          status: "APPROVED" as RequestStatus,
+          fromAddress: {
+            zoneCode: "12345",
+            city: "서울시",
+            district: "강남구",
+            detail: "123-456",
+            region: "SEOUL" as RegionType,
+          },
+          toAddress: {
+            zoneCode: "12346",
+            city: "경기도",
+            district: "성남시",
+            detail: "789-012",
+            region: "GYEONGGI" as RegionType,
+          },
+        },
+        estimate: {
+          id: "estimate123",
+          status: "ACCEPTED" as EstimateStatus,
+        },
+      };
+
+      mockCustomerEstimateRequestRepository.getEstimateDetailForAction.mockResolvedValue(
+        {
+          id: "estimate123",
+          status: "PROPOSED" as EstimateStatus,
+          moverId: "mover123",
+          estimateRequestId: "estimateRequest123",
+          isDesignated: false,
+          mover: { id: "mover123", name: "이사업체A", nickname: null }, // nickname이 null
+          estimateRequest: {
+            id: "estimateRequest123",
+            customerId: "customer123",
+            moveType: "HOME" as MoveType,
+            moveDate: new Date("2025-08-10"),
+            customer: { id: "customer123", nickname: "고객A" },
+          },
+        }
+      );
+      mockCustomerEstimateRequestRepository.getAutoRejectedEstimates.mockResolvedValue(
+        []
+      );
+
+      // Prisma 트랜잭션 모킹
+      const prisma = require("../db/prisma/prisma").default;
+      prisma.$transaction.mockImplementation(async (callback: any) => {
+        const mockTx = {
+          estimateRequest: {
+            update: jest
+              .fn()
+              .mockResolvedValue(mockTransactionResult.estimateRequest),
+          },
+          estimate: {
+            update: jest.fn().mockResolvedValue(mockTransactionResult.estimate),
+            updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+          },
+        };
+        return await callback(mockTx);
+      });
+
+      mockActionService.createAction.mockResolvedValue({
+        id: "action123",
+        createdAt: new Date(),
+        deletedAt: null,
+        description: null,
+        userId: "mover123",
+        type: ActionType.ESTIMATE_ACCEPTED,
+        entityId: "estimate123",
+        entityType: "ESTIMATE",
+        metadata: {},
+      });
+
+      // Act
+      const result =
+        await customerEstimateRequestService.executeConfirmEstimateTransaction(
+          estimateRequestId,
+          estimateId
+        );
+
+      // Assert
+      expect(result).toEqual(mockTransactionResult);
+      expect(mockActionService.createAction).toHaveBeenCalledWith(
+        "mover123",
+        ActionType.ESTIMATE_ACCEPTED,
+        "estimate123",
+        "ESTIMATE",
+        {
+          moverName: "", // 빈 문자열이 사용됨
+          customerName: "고객A",
+          moveType: "HOME",
+          estimateRequestId: "estimateRequest123",
+          estimateId: "estimate123",
+        }
+      );
+    });
+
+    test("견적 확정 트랜잭션에서 estimateDetail의 customer nickname이 null일 때 빈 문자열을 사용한다", async () => {
+      // Arrange - 라인 395-402 커버리지 개선 (estimateDetail.estimateRequest?.customer?.nickname || "")
+      const estimateRequestId = "estimateRequest123";
+      const estimateId = "estimate123";
+      const mockTransactionResult = {
+        estimateRequest: {
+          id: "estimateRequest123",
+          customerId: "user123",
+          moveType: "HOME" as MoveType,
+          moveDate: new Date("2025-08-10"),
+          createdAt: new Date(),
+          description: "이사 견적 요청",
+          status: "APPROVED" as RequestStatus,
+          fromAddress: {
+            zoneCode: "12345",
+            city: "서울시",
+            district: "강남구",
+            detail: "123-456",
+            region: "SEOUL" as RegionType,
+          },
+          toAddress: {
+            zoneCode: "12346",
+            city: "경기도",
+            district: "성남시",
+            detail: "789-012",
+            region: "GYEONGGI" as RegionType,
+          },
+        },
+        estimate: {
+          id: "estimate123",
+          status: "ACCEPTED" as EstimateStatus,
+        },
+      };
+
+      mockCustomerEstimateRequestRepository.getEstimateDetailForAction.mockResolvedValue(
+        {
+          id: "estimate123",
+          status: "PROPOSED" as EstimateStatus,
+          moverId: "mover123",
+          estimateRequestId: "estimateRequest123",
+          isDesignated: false,
+          mover: { id: "mover123", name: "이사업체A", nickname: "기사A" },
+          estimateRequest: {
+            id: "estimateRequest123",
+            customerId: "customer123",
+            moveType: "HOME" as MoveType,
+            moveDate: new Date("2025-08-10"),
+            customer: { id: "customer123", nickname: null }, // nickname이 null
+          },
+        }
+      );
+      mockCustomerEstimateRequestRepository.getAutoRejectedEstimates.mockResolvedValue(
+        []
+      );
+
+      // Prisma 트랜잭션 모킹
+      const prisma = require("../db/prisma/prisma").default;
+      prisma.$transaction.mockImplementation(async (callback: any) => {
+        const mockTx = {
+          estimateRequest: {
+            update: jest
+              .fn()
+              .mockResolvedValue(mockTransactionResult.estimateRequest),
+          },
+          estimate: {
+            update: jest.fn().mockResolvedValue(mockTransactionResult.estimate),
+            updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+          },
+        };
+        return await callback(mockTx);
+      });
+
+      mockActionService.createAction.mockResolvedValue({
+        id: "action123",
+        createdAt: new Date(),
+        deletedAt: null,
+        description: null,
+        userId: "mover123",
+        type: ActionType.ESTIMATE_ACCEPTED,
+        entityId: "estimate123",
+        entityType: "ESTIMATE",
+        metadata: {},
+      });
+
+      // Act
+      const result =
+        await customerEstimateRequestService.executeConfirmEstimateTransaction(
+          estimateRequestId,
+          estimateId
+        );
+
+      // Assert
+      expect(result).toEqual(mockTransactionResult);
+      expect(mockActionService.createAction).toHaveBeenCalledWith(
+        "mover123",
+        ActionType.ESTIMATE_ACCEPTED,
+        "estimate123",
+        "ESTIMATE",
+        {
+          moverName: "기사A",
+          customerName: "", // 빈 문자열이 사용됨
+          moveType: "HOME",
+          estimateRequestId: "estimateRequest123",
+          estimateId: "estimate123",
+        }
+      );
+    });
+
+    test("견적 확정 트랜잭션에서 estimateDetail의 estimateRequest가 null일 때 빈 문자열을 사용한다", async () => {
+      // Arrange - 라인 395-402 커버리지 개선 (estimateDetail.estimateRequest?.customer?.nickname || "")
+      const estimateRequestId = "estimateRequest123";
+      const estimateId = "estimate123";
+      const mockTransactionResult = {
+        estimateRequest: {
+          id: "estimateRequest123",
+          customerId: "user123",
+          moveType: "HOME" as MoveType,
+          moveDate: new Date("2025-08-10"),
+          createdAt: new Date(),
+          description: "이사 견적 요청",
+          status: "APPROVED" as RequestStatus,
+          fromAddress: {
+            zoneCode: "12345",
+            city: "서울시",
+            district: "강남구",
+            detail: "123-456",
+            region: "SEOUL" as RegionType,
+          },
+          toAddress: {
+            zoneCode: "12346",
+            city: "경기도",
+            district: "성남시",
+            detail: "789-012",
+            region: "GYEONGGI" as RegionType,
+          },
+        },
+        estimate: {
+          id: "estimate123",
+          status: "ACCEPTED" as EstimateStatus,
+        },
+      };
+
+      mockCustomerEstimateRequestRepository.getEstimateDetailForAction.mockResolvedValue(
+        {
+          id: "estimate123",
+          status: "PROPOSED" as EstimateStatus,
+          moverId: "mover123",
+          estimateRequestId: "estimateRequest123",
+          isDesignated: false,
+          mover: { id: "mover123", name: "이사업체A", nickname: "기사A" },
+          estimateRequest: null as any, // estimateRequest가 null
+        }
+      );
+      mockCustomerEstimateRequestRepository.getAutoRejectedEstimates.mockResolvedValue(
+        []
+      );
+
+      // Prisma 트랜잭션 모킹
+      const prisma = require("../db/prisma/prisma").default;
+      prisma.$transaction.mockImplementation(async (callback: any) => {
+        const mockTx = {
+          estimateRequest: {
+            update: jest
+              .fn()
+              .mockResolvedValue(mockTransactionResult.estimateRequest),
+          },
+          estimate: {
+            update: jest.fn().mockResolvedValue(mockTransactionResult.estimate),
+            updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+          },
+        };
+        return await callback(mockTx);
+      });
+
+      mockActionService.createAction.mockResolvedValue({
+        id: "action123",
+        createdAt: new Date(),
+        deletedAt: null,
+        description: null,
+        userId: "mover123",
+        type: ActionType.ESTIMATE_ACCEPTED,
+        entityId: "estimate123",
+        entityType: "ESTIMATE",
+        metadata: {},
+      });
+
+      // Act
+      const result =
+        await customerEstimateRequestService.executeConfirmEstimateTransaction(
+          estimateRequestId,
+          estimateId
+        );
+
+      // Assert
+      expect(result).toEqual(mockTransactionResult);
+      expect(mockActionService.createAction).toHaveBeenCalledWith(
+        "mover123",
+        ActionType.ESTIMATE_ACCEPTED,
+        "estimate123",
+        "ESTIMATE",
+        {
+          moverName: "기사A",
+          customerName: "", // 빈 문자열이 사용됨
+          moveType: "", // 빈 문자열이 사용됨
+          estimateRequestId: "estimateRequest123",
+          estimateId: "estimate123",
+        }
+      );
+    });
+
+    test("견적 확정 트랜잭션에서 estimateDetail의 mover가 null일 때 빈 문자열을 사용한다", async () => {
+      // Arrange - 라인 395-402 커버리지 개선 (estimateDetail.mover?.nickname || "")
+      const estimateRequestId = "estimateRequest123";
+      const estimateId = "estimate123";
+      const mockTransactionResult = {
+        estimateRequest: {
+          id: "estimateRequest123",
+          customerId: "user123",
+          moveType: "HOME" as MoveType,
+          moveDate: new Date("2025-08-10"),
+          createdAt: new Date(),
+          description: "이사 견적 요청",
+          status: "APPROVED" as RequestStatus,
+          fromAddress: {
+            zoneCode: "12345",
+            city: "서울시",
+            district: "강남구",
+            detail: "123-456",
+            region: "SEOUL" as RegionType,
+          },
+          toAddress: {
+            zoneCode: "12346",
+            city: "경기도",
+            district: "성남시",
+            detail: "789-012",
+            region: "GYEONGGI" as RegionType,
+          },
+        },
+        estimate: {
+          id: "estimate123",
+          status: "ACCEPTED" as EstimateStatus,
+        },
+      };
+
+      mockCustomerEstimateRequestRepository.getEstimateDetailForAction.mockResolvedValue(
+        {
+          id: "estimate123",
+          status: "PROPOSED" as EstimateStatus,
+          moverId: "mover123",
+          estimateRequestId: "estimateRequest123",
+          isDesignated: false,
+          mover: null as any, // mover가 null
+          estimateRequest: {
+            id: "estimateRequest123",
+            customerId: "customer123",
+            moveType: "HOME" as MoveType,
+            moveDate: new Date("2025-08-10"),
+            customer: { id: "customer123", nickname: "고객A" },
+          },
+        }
+      );
+      mockCustomerEstimateRequestRepository.getAutoRejectedEstimates.mockResolvedValue(
+        []
+      );
+
+      // Prisma 트랜잭션 모킹
+      const prisma = require("../db/prisma/prisma").default;
+      prisma.$transaction.mockImplementation(async (callback: any) => {
+        const mockTx = {
+          estimateRequest: {
+            update: jest
+              .fn()
+              .mockResolvedValue(mockTransactionResult.estimateRequest),
+          },
+          estimate: {
+            update: jest.fn().mockResolvedValue(mockTransactionResult.estimate),
+            updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+          },
+        };
+        return await callback(mockTx);
+      });
+
+      mockActionService.createAction.mockResolvedValue({
+        id: "action123",
+        createdAt: new Date(),
+        deletedAt: null,
+        description: null,
+        userId: "mover123",
+        type: ActionType.ESTIMATE_ACCEPTED,
+        entityId: "estimate123",
+        entityType: "ESTIMATE",
+        metadata: {},
+      });
+
+      // Act
+      const result =
+        await customerEstimateRequestService.executeConfirmEstimateTransaction(
+          estimateRequestId,
+          estimateId
+        );
+
+      // Assert
+      expect(result).toEqual(mockTransactionResult);
+      expect(mockActionService.createAction).toHaveBeenCalledWith(
+        "mover123",
+        ActionType.ESTIMATE_ACCEPTED,
+        "estimate123",
+        "ESTIMATE",
+        {
+          moverName: "", // 빈 문자열이 사용됨
+          customerName: "고객A",
+          moveType: "HOME",
+          estimateRequestId: "estimateRequest123",
+          estimateId: "estimate123",
         }
       );
     });

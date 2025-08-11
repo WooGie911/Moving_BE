@@ -81,6 +81,7 @@ const moverEstimateController = {
       // 구조화된 에러 처리
       if (
         error instanceof ControllerAuthError ||
+        error instanceof ControllerValidationError ||
         error instanceof MoverUnauthorizedAccessError
       ) {
         res.status(error.statusCode).json({

@@ -143,6 +143,24 @@ describe("고객 견적 요청 컨트롤러", () => {
         layer: "CONTROLLER",
       });
     });
+
+    it("Service에서 에러가 발생했을 때 next()를 호출한다", async () => {
+      // Arrange
+      const mockError = new Error("Service error");
+      mockCustomerEstimateRequestService.getPendingEstimateRequest.mockRejectedValue(
+        mockError
+      );
+
+      // Act
+      await customerEstimateRequestController.getPendingEstimateRequest(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
+
+      // Assert
+      expect(mockNext).toHaveBeenCalledWith(mockError);
+    });
   });
 
   describe("완료된 견적 요청 목록 조회", () => {
@@ -200,6 +218,57 @@ describe("고객 견적 요청 컨트롤러", () => {
       });
     });
 
+    it("사용자 정보가 없을 때 401 에러를 반환한다", async () => {
+      // Arrange
+      mockRequest.user = undefined;
+
+      // Act
+      await customerEstimateRequestController.getReceivedEstimateRequests(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message:
+          "[Controller 오류] 인증 실패: 유효하지 않은 사용자 정보입니다.",
+        code: "CTRL_3003",
+        layer: "CONTROLLER",
+      });
+    });
+
+    it("userId가 문자열이 아닐 때 401 에러를 반환한다", async () => {
+      // Arrange
+      mockRequest.user = {
+        userId: 123 as unknown as string,
+        name: "테스트유저",
+        userType: "CUSTOMER" as const,
+        hasProfile: true,
+        iat: 1234567890,
+        exp: 1234567890,
+      };
+
+      // Act
+      await customerEstimateRequestController.getReceivedEstimateRequests(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message:
+          "[Controller 오류] 인증 실패: 유효하지 않은 사용자 정보입니다.",
+        code: "CTRL_3003",
+        layer: "CONTROLLER",
+      });
+    });
+
     it("NotFoundError가 발생했을 때 404 에러를 반환한다", async () => {
       // Arrange
       mockCustomerEstimateRequestService.getReceivedEstimateRequests.mockRejectedValue(
@@ -221,6 +290,49 @@ describe("고객 견적 요청 컨트롤러", () => {
         code: 404,
         layer: "SERVICE",
       });
+    });
+
+    it("code가 없는 NotFoundError가 발생했을 때 기본 코드를 사용한다", async () => {
+      // Arrange
+      const notFoundError = new NotFoundError("완료된 견적요청이 없습니다.");
+      notFoundError.code = undefined; // code를 undefined로 설정
+      mockCustomerEstimateRequestService.getReceivedEstimateRequests.mockRejectedValue(
+        notFoundError
+      );
+
+      // Act
+      await customerEstimateRequestController.getReceivedEstimateRequests(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "완료된 견적요청이 없습니다.",
+        code: "NOT_FOUND",
+        layer: "SERVICE",
+      });
+    });
+
+    it("Service에서 에러가 발생했을 때 next()를 호출한다", async () => {
+      // Arrange
+      const mockError = new Error("Service error");
+      mockCustomerEstimateRequestService.getReceivedEstimateRequests.mockRejectedValue(
+        mockError
+      );
+
+      // Act
+      await customerEstimateRequestController.getReceivedEstimateRequests(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
+
+      // Assert
+      expect(mockNext).toHaveBeenCalledWith(mockError);
     });
   });
 
@@ -405,6 +517,86 @@ describe("고객 견적 요청 컨트롤러", () => {
         data: mockData,
       });
     });
+
+    it("사용자 정보가 없을 때 401 에러를 반환한다", async () => {
+      // Arrange
+      mockRequest.user = undefined;
+      mockRequest.query = { estimateId: "estimate123" };
+
+      // Act
+      await customerEstimateRequestController.cancelEstimate(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message:
+          "[Controller 오류] 인증 실패: 유효하지 않은 사용자 정보입니다.",
+        code: "CTRL_3003",
+        layer: "CONTROLLER",
+      });
+    });
+
+    it("estimateId가 없을 때 400 에러를 반환한다", async () => {
+      // Arrange
+      mockRequest.query = {};
+
+      // Act
+      await customerEstimateRequestController.cancelEstimate(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "유효하지 않은 견적 ID입니다.",
+      });
+    });
+
+    it("estimateId가 문자열이 아닐 때 400 에러를 반환한다", async () => {
+      // Arrange
+      mockRequest.query = { estimateId: 123 as unknown as string };
+
+      // Act
+      await customerEstimateRequestController.cancelEstimate(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "유효하지 않은 견적 ID입니다.",
+      });
+    });
+
+    it("Service에서 에러가 발생했을 때 next()를 호출한다", async () => {
+      // Arrange
+      mockRequest.query = { estimateId: "estimate123" };
+      const mockError = new Error("Service error");
+      mockCustomerEstimateRequestService.cancelEstimate.mockRejectedValue(
+        mockError
+      );
+
+      // Act
+      await customerEstimateRequestController.cancelEstimate(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
+
+      // Assert
+      expect(mockNext).toHaveBeenCalledWith(mockError);
+    });
   });
 
   describe("이사 완료", () => {
@@ -458,6 +650,86 @@ describe("고객 견적 요청 컨트롤러", () => {
         message: "이사완료 성공",
         data: mockData,
       });
+    });
+
+    it("사용자 정보가 없을 때 401 에러를 반환한다", async () => {
+      // Arrange
+      mockRequest.user = undefined;
+      mockRequest.query = { estimateId: "estimate123" };
+
+      // Act
+      await customerEstimateRequestController.completeEstimate(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message:
+          "[Controller 오류] 인증 실패: 유효하지 않은 사용자 정보입니다.",
+        code: "CTRL_3003",
+        layer: "CONTROLLER",
+      });
+    });
+
+    it("estimateId가 없을 때 400 에러를 반환한다", async () => {
+      // Arrange
+      mockRequest.query = {};
+
+      // Act
+      await customerEstimateRequestController.completeEstimate(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "유효하지 않은 견적 ID입니다.",
+      });
+    });
+
+    it("estimateId가 문자열이 아닐 때 400 에러를 반환한다", async () => {
+      // Arrange
+      mockRequest.query = { estimateId: 123 as unknown as string };
+
+      // Act
+      await customerEstimateRequestController.completeEstimate(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        message: "유효하지 않은 견적 ID입니다.",
+      });
+    });
+
+    it("Service에서 에러가 발생했을 때 next()를 호출한다", async () => {
+      // Arrange
+      mockRequest.query = { estimateId: "estimate123" };
+      const mockError = new Error("Service error");
+      mockCustomerEstimateRequestService.completeEstimate.mockRejectedValue(
+        mockError
+      );
+
+      // Act
+      await customerEstimateRequestController.completeEstimate(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
+
+      // Assert
+      expect(mockNext).toHaveBeenCalledWith(mockError);
     });
   });
 });
