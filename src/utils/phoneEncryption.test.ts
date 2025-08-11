@@ -37,3 +37,4 @@ describe("phoneEncryption", () => {
     expect(h1).toMatch(/^[0-9a-f]{64}$/);
   });
 });
+
