@@ -132,7 +132,7 @@ const router = Router();
  *           schema:
  *             $ref: '#/components/schemas/FavoriteRequest'
  *           example:
- *             moverId: 1
+ *             moverId: "clx123..."
  *     responses:
  *       201:
  *         description: 찜하기 성공

@@ -46,7 +46,7 @@ const moverScheduleRouter = Router();
  *     tags:
  *       - MoverSchedule
  *     security:
- *       - bearerAuth: []
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: year
