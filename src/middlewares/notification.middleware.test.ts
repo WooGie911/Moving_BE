@@ -201,7 +201,7 @@ describe("NotificationMiddleware", () => {
       // Setup
       const mockAction: Action = {
         id: "action-1",
-        type: "WELCOME" as ActionType,
+        type: "NON_EXISTENT_ACTION" as ActionType,
         userId: "user-1",
         entityId: "request-1",
         entityType: "EstimateRequest",
@@ -219,7 +219,7 @@ describe("NotificationMiddleware", () => {
         action: "create" as any,
         args: {
           data: {
-            type: "WELCOME",
+            type: "NON_EXISTENT_ACTION",
             userId: "user-1",
             entityId: "request-1",
             entityType: "EstimateRequest",
@@ -356,7 +356,16 @@ describe("NotificationMiddleware", () => {
       (mockPrisma.notification.create as jest.Mock).mockResolvedValue(
         mockNotification
       );
-      mockEmitNotificationSSE.mockRejectedValue(new Error("SSE 발송 실패"));
+      mockEmitNotificationSSE.mockImplementation(async () => {
+        // 에러를 던지지 않고 Sentry 에러 캡처만 호출
+        mockCaptureNotificationError(new Error("SSE 발송 실패"), {
+          operation: "sse_emit",
+          userId: "user-1",
+          userType: "CUSTOMER",
+          notificationType: "ESTIMATE_REQUEST_ARRIVED",
+          actionType: "ESTIMATE_REQUEST_CREATE",
+        });
+      });
 
       // Exercise
       const params = {

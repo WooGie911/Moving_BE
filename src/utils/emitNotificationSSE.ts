@@ -11,7 +11,7 @@ export type NotificationEvent = {
 };
 
 // 유저별 SSE 연결 저장소
-const sseClients = new Map<string, Response>();
+export const sseClients = new Map<string, Response>();
 
 /**
  * SSE 연결을 등록합니다.
