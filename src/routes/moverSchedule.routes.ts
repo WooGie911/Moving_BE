@@ -2,6 +2,7 @@ import { Router } from "express";
 import moverScheduleController from "../controllers/moverSchedule.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 import { translationMiddleware } from "../middlewares/translationMiddleware";
+import { cache } from "../middlewares/cacheMiddleware";
 
 const moverScheduleRouter = Router();
 
@@ -46,7 +47,7 @@ const moverScheduleRouter = Router();
  *     tags:
  *       - MoverSchedule
  *     security:
- *       - BearerAuth: []
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: year
@@ -93,21 +94,9 @@ const moverScheduleRouter = Router();
 moverScheduleRouter.get(
   "/monthly/:year/:month",
   verifyAccessToken,
+  cache({ ttlSeconds: 60, varyByAuth: true }),
   translationMiddleware({
-    excludeKeys: [
-      "id",
-      "uuid",
-      "createdAt",
-      "updatedAt",
-      "email",
-      "phone",
-      "url",
-      "link",
-      "customerName",
-      "moveDate",
-      "movingType",
-      "status",
-    ],
+    excludeKeys: ["id", "uuid", "createdAt", "updatedAt", "email", "phone", "url", "link", "customerName", "moveDate"],
   }),
   moverScheduleController.getMonthlySchedules,
 );

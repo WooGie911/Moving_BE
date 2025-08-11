@@ -13,6 +13,7 @@ import helmet from "helmet";
 import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware";
 import { setupManualSwagger } from "./utils/swagger-manual";
 import cookieParser from "cookie-parser";
+import { cache } from "./middlewares/cacheMiddleware";
 
 // 라우터 import
 import authIndexRoutes from "./routes/authIndex.routes";
