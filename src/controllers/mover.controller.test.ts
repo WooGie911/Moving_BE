@@ -6,6 +6,7 @@ import {
   getMoverDetailController,
   postDesignatedQuoteRequestController,
   getDesignatedQuoteRequestCheckController,
+  checkActiveEstimateRequestController,
 } from "./mover.controller";
 
 jest.mock("../services/mover.service", () => ({
@@ -15,6 +16,13 @@ jest.mock("../services/mover.service", () => ({
   requestDesignatedQuote: jest.fn(),
   checkDesignatedQuoteRequest: jest.fn(),
 }));
+
+jest.mock("../services/estimateRequest.service", () => {
+  const mockEstimateRequestService = {
+    hasActiveRequestBeforeMoveDate: jest.fn(),
+  };
+  return jest.fn().mockImplementation(() => mockEstimateRequestService);
+});
 
 import * as moverService from "../services/mover.service";
 
@@ -39,11 +47,20 @@ const createMockResponse = () => ({
 });
 
 const createMockMover = (overrides = {}) => ({
-  id: "mover-1",
+  id: "user_123",
   nickname: "김기사",
-  experience: 10,
-  avgRating: 4.5,
-  completedCount: 150,
+  name: "김***",
+  career: 10,
+  shortIntro: "10년 경력의 믿을만한 기사입니다",
+  detailIntro: "안전하고 신속한 이사를 약속드립니다",
+  workedCount: 150,
+  averageRating: 4.5,
+  totalReviewCount: 89,
+  serviceTypes: ["HOME", "OFFICE"],
+  favoriteCount: 23,
+  moverImage: "https://example.com/profile.jpg",
+  currentAreas: ["SEOUL", "GYEONGGI"],
+  serviceAreas: ["SEOUL", "GYEONGGI"],
   ...overrides,
 });
 
@@ -64,11 +81,17 @@ describe("MoverController - 유닛 테스트", () => {
       const mockMovers = [
         createMockMover(),
         createMockMover({
-          id: "mover-2",
+          id: "user_124",
           nickname: "이기사",
-          experience: 8,
-          avgRating: 4.8,
-          completedCount: 120,
+          name: "이***",
+          career: 8,
+          shortIntro: "8년차 전문 이사업체 운영",
+          detailIntro: "대형 이사부터 소형 이사까지 모든 것을 처리합니다",
+          workedCount: 120,
+          averageRating: 4.8,
+          totalReviewCount: 65,
+          serviceTypes: ["SMALL", "HOME"],
+          favoriteCount: 15,
         }),
       ];
 
@@ -80,7 +103,7 @@ describe("MoverController - 유닛 테스트", () => {
 
       mockReq.query = {
         region: "서울특별시",
-        serviceTypeId: "HOME",
+        serviceTypeId: "2",
         search: "김기사",
         sort: "rating",
         take: "10",
@@ -92,7 +115,7 @@ describe("MoverController - 유닛 테스트", () => {
 
       expect(mockMoverService.fetchMoverList).toHaveBeenCalledWith({
         region: "서울특별시",
-        serviceType: "HOME",
+        serviceType: "2",
         search: "김기사",
         sort: "rating",
         cursor: undefined,
@@ -211,15 +234,22 @@ describe("MoverController - 유닛 테스트", () => {
 
   describe("getMoverDetailController", () => {
     it("기사님 상세 정보를 성공적으로 조회한다", async () => {
-      const mockMover = createMockMover({ isFavorited: true });
+      const mockMover = createMockMover({
+        isFavorited: true,
+        activeEstimateRequest: {
+          id: 42,
+          status: "PENDING",
+          moveDate: "2025-08-15T09:00:00.000Z",
+        },
+      });
 
-      mockReq.params = { moverId: "mover-1" };
+      mockReq.params = { moverId: "user_123" };
       mockMoverService.fetchMoverDetail.mockResolvedValue(mockMover);
 
       await getMoverDetailController(mockReq, mockRes, mockNext);
 
       expect(mockMoverService.fetchMoverDetail).toHaveBeenCalledWith(
-        "mover-1",
+        "user_123",
         "test-user-id"
       );
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -258,7 +288,7 @@ describe("MoverController - 유닛 테스트", () => {
 
     it("서비스 에러를 next로 전달한다", async () => {
       const error = new Error("서비스 에러");
-      mockReq.params = { moverId: "mover-1" };
+      mockReq.params = { moverId: "user_123" };
       mockMoverService.fetchMoverDetail.mockRejectedValue(error);
 
       await getMoverDetailController(mockReq, mockRes, mockNext);
@@ -369,6 +399,7 @@ describe("MoverController - 유닛 테스트", () => {
         message: "지정 견적 요청 여부 조회 성공",
         data: {
           hasRequested: true,
+          status: null,
           requestId: "request-1",
           message: "테스트 메시지",
           expiresAt: mockRequest.expiresAt,
@@ -393,6 +424,7 @@ describe("MoverController - 유닛 테스트", () => {
         message: "지정 견적 요청 여부 조회 성공",
         data: {
           hasRequested: false,
+          status: null,
           requestId: null,
           message: null,
           expiresAt: null,
@@ -412,6 +444,139 @@ describe("MoverController - 유닛 테스트", () => {
         mockRes,
         mockNext
       );
+
+      expect(mockNext).toHaveBeenCalledWith(error);
+    });
+  });
+
+  describe("checkActiveEstimateRequestController", () => {
+    let mockEstimateRequestService: any;
+
+    beforeEach(() => {
+      // 동적 import된 서비스 모킹
+      jest.doMock("../services/estimateRequest.service", () => {
+        mockEstimateRequestService = {
+          hasActiveRequestBeforeMoveDate: jest.fn(),
+        };
+        return jest.fn().mockImplementation(() => mockEstimateRequestService);
+      });
+    });
+
+    it("활성 견적 요청이 있을 때 성공적으로 조회한다", async () => {
+      mockReq.user = {
+        userId: "customer-1",
+        name: "고객1",
+        userType: "CUSTOMER",
+      };
+
+      mockEstimateRequestService = {
+        hasActiveRequestBeforeMoveDate: jest.fn().mockResolvedValue(true),
+      };
+
+      // 동적 import 모킹
+      jest.doMock("../services/estimateRequest.service", () => {
+        return jest.fn().mockImplementation(() => mockEstimateRequestService);
+      });
+
+      await checkActiveEstimateRequestController(mockReq, mockRes, mockNext);
+
+      expect(mockRes.json).toHaveBeenCalledWith({
+        success: true,
+        message: "이사일이 지나지 않은 견적 확인 성공",
+        data: {
+          hasActiveRequest: true,
+        },
+      });
+    });
+
+    it("활성 견적 요청이 없을 때 성공적으로 조회한다", async () => {
+      mockReq.user = {
+        userId: "customer-1",
+        name: "고객1",
+        userType: "CUSTOMER",
+      };
+
+      mockEstimateRequestService = {
+        hasActiveRequestBeforeMoveDate: jest.fn().mockResolvedValue(false),
+      };
+
+      // 동적 import 모킹
+      jest.doMock("../services/estimateRequest.service", () => {
+        return jest.fn().mockImplementation(() => mockEstimateRequestService);
+      });
+
+      await checkActiveEstimateRequestController(mockReq, mockRes, mockNext);
+
+      expect(mockRes.json).toHaveBeenCalledWith({
+        success: true,
+        message: "이사일이 지나지 않은 견적 확인 성공",
+        data: {
+          hasActiveRequest: false,
+        },
+      });
+    });
+
+    it("고객이 아닌 사용자가 요청할 때 401 에러를 반환한다", async () => {
+      mockReq.user = {
+        userId: "mover-1",
+        name: "기사1",
+        userType: "MOVER",
+      };
+
+      await checkActiveEstimateRequestController(mockReq, mockRes, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        success: false,
+        message: "회원만 확인이 가능합니다.",
+      });
+    });
+
+    it("userType이 배열일 때 CUSTOMER 포함 여부를 확인한다", async () => {
+      mockReq.user = {
+        userId: "user-1",
+        name: "사용자1",
+        userType: ["CUSTOMER", "MOVER"],
+      };
+
+      mockEstimateRequestService = {
+        hasActiveRequestBeforeMoveDate: jest.fn().mockResolvedValue(true),
+      };
+
+      // 동적 import 모킹
+      jest.doMock("../services/estimateRequest.service", () => {
+        return jest.fn().mockImplementation(() => mockEstimateRequestService);
+      });
+
+      await checkActiveEstimateRequestController(mockReq, mockRes, mockNext);
+
+      expect(mockRes.json).toHaveBeenCalledWith({
+        success: true,
+        message: "이사일이 지나지 않은 견적 확인 성공",
+        data: {
+          hasActiveRequest: true,
+        },
+      });
+    });
+
+    it("서비스 에러를 next로 전달한다", async () => {
+      const error = new Error("서비스 에러");
+      mockReq.user = {
+        userId: "customer-1",
+        name: "고객1",
+        userType: "CUSTOMER",
+      };
+
+      mockEstimateRequestService = {
+        hasActiveRequestBeforeMoveDate: jest.fn().mockRejectedValue(error),
+      };
+
+      // 동적 import 모킹
+      jest.doMock("../services/estimateRequest.service", () => {
+        return jest.fn().mockImplementation(() => mockEstimateRequestService);
+      });
+
+      await checkActiveEstimateRequestController(mockReq, mockRes, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(error);
     });

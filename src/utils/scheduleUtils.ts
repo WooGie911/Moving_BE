@@ -10,6 +10,7 @@ import {
   ErrorHandlingInput,
 } from "../types/moverSchedule";
 import { convertRegionToKorean } from "./addressUtils";
+import { ServiceValidationError } from "../types/errors.types";
 
 // 상수 정의
 export const moveTypeMapping: MoveTypeMapping = {
@@ -35,11 +36,11 @@ export const validation = {
  */
 export const validateScheduleInput = (moverId: string, year: number, month: number): void => {
   if (!moverId || typeof moverId !== "string") {
-    throw new Error("잘못된 기사 ID입니다");
+    throw new ServiceValidationError("잘못된 기사 ID입니다");
   }
 
   if (!year || !month || year < validation.minYear || month < validation.minMonth || month > validation.maxMonth) {
-    throw new Error("잘못된 년도 또는 월입니다");
+    throw new ServiceValidationError("잘못된 년도 또는 월입니다");
   }
 };
 
@@ -86,7 +87,7 @@ export const formatAddressForTranslation = (address: AddressFormatInput): string
 export const transformToScheduleResponse = (detail: TMoverScheduleWithDetails): TMoverScheduleResponse => {
   return {
     id: detail.estimateRequestId,
-    customerName: detail.customer.name,
+    customerName: detail.customer.name ?? "",
     movingType: moveTypeMapping[detail.moveType] || "small",
     status: statusMapping[detail.requestStatus as keyof StatusMapping] || "pending",
     fromAddress: formatAddressForTranslation(detail.fromAddress),
@@ -116,7 +117,5 @@ export const handleScheduleError = (error: unknown, defaultMessage: string): nev
   if (error instanceof Error) {
     throw error;
   }
-
-  console.error("스케줄 서비스 에러:", error);
   throw new Error(defaultMessage);
 };

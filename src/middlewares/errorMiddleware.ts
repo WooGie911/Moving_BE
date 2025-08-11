@@ -6,14 +6,6 @@ import * as Sentry from "@sentry/node";
  * 전역 에러 핸들링 미들웨어
  */
 export const errorHandler = (err: CustomError, req: Request, res: Response, next: NextFunction): void => {
-  console.error("Error:", {
-    message: err.message,
-    stack: err.stack,
-    url: req.url,
-    method: req.method,
-    timestamp: new Date().toISOString(),
-  });
-
   // 센트리로 에러 전송
   Sentry.captureException(err, {
     extra: {
@@ -52,12 +44,10 @@ export const errorHandler = (err: CustomError, req: Request, res: Response, next
  * 404 에러 핸들링 미들웨어
  */
 export const notFoundHandler = (req: Request, res: Response, next: NextFunction): void => {
-  res.status(404).json({
-    success: false,
-    error: {
-      message: `페이지를 찾을 수 없습니다.: ${req.method} ${req.originalUrl}`,
-      status: 404,
-    },
-    timestamp: new Date().toISOString(),
-  });
+  // 404 에러를 CustomError로 변환하여 전역 에러 핸들러로 전달
+  const notFoundError = new Error(`페이지를 찾을 수 없습니다.: ${req.method} ${req.originalUrl}`) as CustomError;
+  notFoundError.status = 404;
+  notFoundError.statusCode = 404;
+
+  next(notFoundError);
 };

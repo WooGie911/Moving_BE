@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { translationService } from "../services/translation.service";
+import * as Sentry from "@sentry/node";
 
 /**
  * 번역 미들웨어 옵션
@@ -80,8 +81,13 @@ export function translationMiddleware(options: TranslationOptions = {}) {
             originalJson(translatedData);
           })
           .catch((error) => {
+            Sentry.captureException(error as Error, {
+              extra: { path: req.path, lang: targetLang },
+              tags: { error_type: "translation_error", operation: "translate_response" },
+            });
             if (enableLogging) {
-              console.error("[Translation Error]", error);
+              // keep minimal console if needed, but error itself goes to Sentry
+              // console.log("[Translation Error] captured to Sentry");
             }
 
             // 번역 실패 시 원본 데이터로 응답
@@ -93,9 +99,10 @@ export function translationMiddleware(options: TranslationOptions = {}) {
 
       next();
     } catch (error) {
-      if (enableLogging) {
-        console.error("[Translation Middleware Error]", error);
-      }
+      Sentry.captureException(error as Error, {
+        extra: { path: req.path, query: req.query },
+        tags: { error_type: "translation_middleware_error", operation: "middleware_wrapper" },
+      });
 
       // 미들웨어 오류 시에도 정상적으로 진행
       next();

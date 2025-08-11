@@ -21,7 +21,8 @@ const getKoreaToday = (): Date => {
  */
 export const isBeforeKoreaToday = (date: Date): boolean => {
   const koreaToday = getKoreaToday();
-  return date < koreaToday;
+  const inputKorea = toKoreaDateTime(date);
+  return inputKorea < koreaToday;
 };
 
 /**
@@ -31,9 +32,8 @@ export const isBeforeKoreaToday = (date: Date): boolean => {
  */
 export const isKoreaToday = (date: Date): boolean => {
   const koreaToday = getKoreaToday();
-  const inputDate = new Date(date);
-  inputDate.setHours(0, 0, 0, 0);
-  return inputDate.getTime() === koreaToday.getTime();
+  const inputKorea = toKoreaMidnight(date);
+  return inputKorea.getTime() === koreaToday.getTime();
 };
 
 /**
@@ -43,9 +43,8 @@ export const isKoreaToday = (date: Date): boolean => {
  */
 export const isAfterKoreaToday = (date: Date): boolean => {
   const koreaToday = getKoreaToday();
-  const inputDate = new Date(date);
-  inputDate.setHours(0, 0, 0, 0);
-  return inputDate > koreaToday;
+  const inputKorea = toKoreaDateTime(date);
+  return inputKorea > koreaToday;
 };
 
 /**
@@ -55,9 +54,8 @@ export const isAfterKoreaToday = (date: Date): boolean => {
  */
 export const isValidFutureDate = (date: Date): boolean => {
   const koreaToday = getKoreaToday();
-  const inputDate = new Date(date);
-  inputDate.setHours(0, 0, 0, 0);
-  return inputDate > koreaToday;
+  const inputKorea = toKoreaDateTime(date);
+  return inputKorea > koreaToday;
 };
 
 /**
@@ -78,10 +76,9 @@ export const validateMoveDate = (
   date: Date
 ): { isValid: boolean; errorMessage?: string } => {
   const koreaToday = getKoreaToday();
-  const inputDate = new Date(date);
-  inputDate.setHours(0, 0, 0, 0);
+  const inputKorea = toKoreaDateTime(date);
 
-  if (isNaN(inputDate.getTime())) {
+  if (isNaN(inputKorea.getTime())) {
     return {
       isValid: false,
       errorMessage:
@@ -89,14 +86,14 @@ export const validateMoveDate = (
     };
   }
 
-  if (inputDate < koreaToday) {
+  if (inputKorea < koreaToday) {
     return {
       isValid: false,
       errorMessage: "이사일은 오늘 이후로 설정해주세요.",
     };
   }
 
-  if (inputDate.getTime() === koreaToday.getTime()) {
+  if (inputKorea.getTime() === koreaToday.getTime()) {
     return {
       isValid: false,
       errorMessage: "당일 이사는 불가능합니다. 내일 이후로 설정해주세요.",
@@ -119,7 +116,6 @@ export const formatDateOnly = (
   const date = new Date(dateTime);
   if (isNaN(date.getTime())) return null;
 
-  // UTC 기준으로 날짜를 가져와서 시간대 변환 문제를 방지
   const year = date.getUTCFullYear();
   const month = String(date.getUTCMonth() + 1).padStart(2, "0");
   const day = String(date.getUTCDate()).padStart(2, "0");
