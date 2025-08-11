@@ -156,17 +156,17 @@ model User {
   serviceTypes     MoveType[] // 제공 가능한 서비스 타입들
 
   // 관계
-  addresses          UserAddress[] // 등록한 주소들
+  addresses          UserAddress[] // 등록한 주소들 (역방향 관계 - 코드에서 직접 사용하지 않음)
   serviceAreas       MoverServiceArea[] // 기사님 활동 가능 지역
-  requests           EstimateRequest[] // 고객이 생성한 견적 요청들
-  estimates          Estimate[] // 기사님이 작성한 견적들
-  reviewsWritten     Review[]           @relation("ReviewWriter") // 작성한 리뷰들
-  reviewsReceived    Review[]           @relation("ReviewReceiver") // 받은 리뷰들
-  favorites          Favorite[]         @relation("UserFavorites") // 찜한 기사님들
-  designatedRequests DesignatedMover[] // 지정 요청받은 견적들
-  actions            Action[] // 사용자 활동들
-  notifications      Notification[] // 받은 알림들
-  Favorite           Favorite[]
+  requests           EstimateRequest[] // 고객이 생성한 견적 요청들 (역방향 관계)
+  estimates          Estimate[] // 기사님이 작성한 견적들 (역방향 관계)
+  reviewsWritten     Review[]           @relation("ReviewWriter") // 작성한 리뷰들 (역방향 관계)
+  reviewsReceived    Review[]           @relation("ReviewReceiver") // 받은 리뷰들 (역방향 관계)
+  favorites          Favorite[]         @relation("UserFavorites") // 내가 찜한 기사님들 (역방향 관계)
+  designatedRequests DesignatedMover[] // 지정 요청받은 견적들 (역방향 관계)
+  actions            Action[] // 사용자 활동들 (역방향 관계)
+  notifications      Notification[] // 받은 알림들 (역방향 관계)
+  Favorite           Favorite[] // 내가 찜받은 관계 (mover 쪽)
 
   // 최적화된 인덱스: email은 unique이므로 별도 인덱스 불필요
   @@index([deletedAt])
@@ -186,9 +186,9 @@ model Address {
   deletedAt DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
 
   // 관계
-  requestsFrom  EstimateRequest[] @relation("RequestFrom") // 출발지로 사용된 견적 요청들
-  requestsTo    EstimateRequest[] @relation("RequestTo") // 도착지로 사용된 견적 요청들
-  userAddresses UserAddress[] // 사용자별 주소 연결
+  requestsFrom  EstimateRequest[] @relation("RequestFrom") // 출발지로 사용된 견적 요청들 (역방향 관계)
+  requestsTo    EstimateRequest[] @relation("RequestTo") // 도착지로 사용된 견적 요청들 (역방향 관계)
+  userAddresses UserAddress[] // 사용자별 주소 연결 (역방향 관계)
 
   // 복합 인덱스로 최적화: 지역별 검색이 가장 빈번
   @@index([region, city, district])
@@ -198,14 +198,13 @@ model Address {
 
 // 사용자별 주소 연결 테이블
 model UserAddress {
-  id          String      @id @default(cuid())
-  userId      String // 사용자 ID
-  addressId   String // 주소 ID
-  role        AddressRole // 주소 역할 (FROM, TO, EXTRA)
-  customLabel String? // 사용자 정의 라벨 (예: "회사", "창고")
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  deletedAt   DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
+  id        String      @id @default(cuid())
+  userId    String // 사용자 ID
+  addressId String // 주소 ID
+  role      AddressRole // 주소 역할 (FROM, TO, EXTRA)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  deletedAt DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
 
   // 관계
   user    User    @relation(fields: [userId], references: [id])
@@ -273,9 +272,7 @@ model DesignatedMover {
   id                String        @id @default(cuid())
   estimateRequestId String // 견적 요청 ID
   moverId           String // 기사님 ID
-  message           String? // 요청 메시지
   status            RequestStatus @default(PENDING) // 요청 상태
-  expiresAt         DateTime // 만료일
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   deletedAt         DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
