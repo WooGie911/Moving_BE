@@ -35,8 +35,8 @@ export const fetchMoverList = async (filter: MoverListFilter) => {
       introduction: mover.shortIntro || "",
       description: mover.detailIntro || "",
       completedCount: mover.workedCount || 0,
-      averageRating: mover.averageRating || 0,
-      totalReviewCount: mover.totalReviewCount || 0,
+      avgRating: mover.averageRating || 0,
+      reviewCount: mover.totalReviewCount || 0,
       favoriteCount: (mover.Favorite || []).filter(
         (fav) => fav.deletedAt === null
       ).length,
@@ -46,12 +46,7 @@ export const fetchMoverList = async (filter: MoverListFilter) => {
         name: mover.name,
         email: "",
       },
-      serviceRegions: ((mover as any).currentAreas || []).map(
-        (region: any) => ({
-          region: region,
-          district: null,
-        })
-      ),
+      serviceRegions: mover.currentAreas || [],
       serviceTypes: (mover.serviceTypes || []).map((serviceType) => ({
         service: {
           name:
@@ -90,62 +85,39 @@ export const fetchMoverList = async (filter: MoverListFilter) => {
  * 찜한 기사님 리스트 조회
  */
 export const fetchFavoriteMovers = async (customerId: string) => {
-  try {
-    Sentry.setContext("FavoriteMoversService", {
-      customerId,
-    });
-
-    const movers = await getFavoriteMovers(customerId);
-    return (movers || []).map((mover) => ({
-      id: mover.id,
-      userId: 0,
-      nickname: mover.nickname || "",
-      profileImage: mover.moverImage || null,
-      experience: mover.career || 0,
-      introduction: mover.shortIntro || "",
-      description: mover.detailIntro || "",
-      completedCount: mover.workedCount || 0,
-      averageRating: mover.averageRating || 0,
-      totalReviewCount: mover.totalReviewCount || 0,
-      favoriteCount: mover.favoriteCount || 0,
-      lastActivityAt: null,
-      user: {
-        id: 0,
-        name: mover.name,
-        email: "",
+  const movers = await getFavoriteMovers(customerId);
+  return (movers || []).map((mover) => ({
+    id: mover.id,
+    userId: 0,
+    nickname: mover.nickname || "",
+    profileImage: mover.moverImage || null,
+    experience: mover.career || 0,
+    introduction: mover.shortIntro || "",
+    description: mover.detailIntro || "",
+    completedCount: mover.workedCount || 0,
+    avgRating: mover.averageRating || 0,
+    reviewCount: mover.totalReviewCount || 0,
+    favoriteCount: mover.favoriteCount || 0,
+    lastActivityAt: null,
+    user: {
+      id: 0,
+      name: mover.name,
+      email: "",
+    },
+    serviceRegions: mover.currentAreas || [],
+    serviceTypes: (mover.serviceTypes || []).map((serviceType) => ({
+      service: {
+        name:
+          serviceType === "SMALL"
+            ? "소형이사"
+            : serviceType === "HOME"
+              ? "가정이사"
+              : serviceType === "OFFICE"
+                ? "사무실이사"
+                : "기타",
       },
-      serviceRegions: ((mover as any).currentAreas || []).map(
-        (region: any) => ({
-          region: region,
-          district: null,
-        })
-      ),
-      serviceTypes: (mover.serviceTypes || []).map((serviceType) => ({
-        service: {
-          name:
-            serviceType === "SMALL"
-              ? "소형이사"
-              : serviceType === "HOME"
-                ? "가정이사"
-                : serviceType === "OFFICE"
-                  ? "사무실이사"
-                  : "기타",
-        },
-      })),
-    }));
-  } catch (error) {
-    Sentry.captureException(error, {
-      extra: {
-        operation: "fetchFavoriteMovers",
-        customerId,
-      },
-      tags: {
-        service: "mover",
-        action: "fetchFavoriteMovers",
-      },
-    });
-    throw error;
-  }
+    })),
+  }));
 };
 
 /**
@@ -171,8 +143,8 @@ export const fetchMoverDetail = async (id: string, userId?: string) => {
       introduction: mover.shortIntro || "",
       description: mover.detailIntro || "",
       completedCount: mover.workedCount || 0,
-      averageRating: mover.averageRating || 0,
-      totalReviewCount: mover.totalReviewCount || 0,
+      avgRating: mover.averageRating || 0,
+      reviewCount: mover.totalReviewCount || 0,
       favoriteCount: mover.favoriteCount || 0,
       isFavorited: mover.isFavorited || false,
       lastActivityAt: null,
@@ -181,12 +153,7 @@ export const fetchMoverDetail = async (id: string, userId?: string) => {
         name: mover.name,
         email: "",
       },
-      serviceRegions: ((mover as any).currentAreas || []).map(
-        (region: any) => ({
-          region: region,
-          district: null,
-        })
-      ),
+      serviceRegions: mover.currentAreas || [],
       serviceTypes: (mover.serviceTypes || []).map((serviceType) => ({
         service: {
           name:
@@ -199,7 +166,6 @@ export const fetchMoverDetail = async (id: string, userId?: string) => {
                   : "기타",
         },
       })),
-      activeEstimateRequest: mover.activeEstimateRequest,
     };
   } catch (error) {
     Sentry.captureException(error, {
