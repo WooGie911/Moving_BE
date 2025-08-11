@@ -46,12 +46,6 @@ export const getMoverListController = async (
     const { items, nextCursor, hasNext } =
       await moverService.fetchMoverList(filter);
 
-    // 디버깅: 캐시 키 로깅 (나중에 제거 가능)
-    const queryString = new URLSearchParams(req.query as any).toString();
-    console.log(
-      `[Cache Debug] Mover List Cache Key: cache:GET:/movers:anon:${queryString ? `?${queryString}` : ""}`
-    );
-
     res.json({
       success: true,
       message: "기사님 목록을 성공적으로 조회했습니다.",
@@ -142,11 +136,6 @@ export const getMoverDetailController = async (
       return res
         .status(404)
         .json({ success: false, message: "존재하지 않는 기사님", data: null });
-
-    // 디버깅: 캐시 키 로깅 (나중에 제거 가능)
-    console.log(
-      `[Cache Debug] Mover Detail Cache Key: cache:GET:/movers/${id}:${userId ? `u:${userId}` : "anon"}:`
-    );
 
     res.json({ success: true, message: "기사님 상세 조회 성공", data: mover });
   } catch (err) {
