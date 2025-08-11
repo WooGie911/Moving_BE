@@ -320,7 +320,7 @@ moverRouter.get(
 moverRouter.get(
   "/favorite",
   verifyAccessToken,
-  cache({ ttlSeconds: 30, varyByAuth: true }), // 사용자별 캐시 분리 (개인 데이터)
+  cache({ ttlSeconds: 3, varyByAuth: true }), // 사용자별 캐시 분리 (개인 데이터)
   defaultTranslationMiddleware,
   moverController.getFavoriteMoversController
 );
