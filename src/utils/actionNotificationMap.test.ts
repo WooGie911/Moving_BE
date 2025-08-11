@@ -53,8 +53,9 @@ describe("ActionNotificationMap", () => {
       // Assertion
       expect(receivers).toEqual([{ id: "user-1", userType: "CUSTOMER" }]);
       expect(message).toEqual({
-        title: '<span class="font-bold">회원가입</span>을 환영합니다!',
-        content: "서비스 이용을 시작해보세요.",
+        messageKo: '<span class="font-bold">회원가입</span>을 환영합니다!',
+        messageEn: '<span class="font-bold">Registration</span> welcome!',
+        messageZh: '<span class="font-bold">注册</span>欢迎！',
         path: "/",
       });
     });
@@ -88,8 +89,12 @@ describe("ActionNotificationMap", () => {
         { id: "mover-3" },
       ];
 
-      (mockPrisma.estimateRequest.findUnique as jest.Mock).mockResolvedValue(mockEstimateRequest as any);
-      (mockPrisma.user.findMany as jest.Mock).mockResolvedValue(mockMovers as any);
+      (mockPrisma.estimateRequest.findUnique as jest.Mock).mockResolvedValue(
+        mockEstimateRequest as any
+      );
+      (mockPrisma.user.findMany as jest.Mock).mockResolvedValue(
+        mockMovers as any
+      );
 
       // Exercise
       const mapping = actionNotificationMap.ESTIMATE_REQUEST_CREATE;
@@ -115,8 +120,9 @@ describe("ActionNotificationMap", () => {
         { id: "mover-3", userType: "MOVER" },
       ]);
       expect(message).toEqual({
-        title: "새 견적 요청이 등록되었습니다.",
-        content: "새로운 견적 요청이 등록되었습니다.",
+        messageKo: "새 견적 요청이 등록되었습니다.",
+        messageEn: "New estimate request has been registered.",
+        messageZh: "新估价请求已注册。",
         path: `/estimate/received`,
       });
     });
@@ -140,13 +146,14 @@ describe("ActionNotificationMap", () => {
         fromAddress: null,
       };
 
-      const mockMovers = [
-        { id: "mover-1" },
-        { id: "mover-2" },
-      ];
+      const mockMovers = [{ id: "mover-1" }, { id: "mover-2" }];
 
-      (mockPrisma.estimateRequest.findUnique as jest.Mock).mockResolvedValue(mockEstimateRequest as any);
-      (mockPrisma.user.findMany as jest.Mock).mockResolvedValue(mockMovers as any);
+      (mockPrisma.estimateRequest.findUnique as jest.Mock).mockResolvedValue(
+        mockEstimateRequest as any
+      );
+      (mockPrisma.user.findMany as jest.Mock).mockResolvedValue(
+        mockMovers as any
+      );
 
       // Exercise
       const mapping = actionNotificationMap.ESTIMATE_REQUEST_CREATE;
@@ -189,7 +196,9 @@ describe("ActionNotificationMap", () => {
         },
       };
 
-      (mockPrisma.estimate.findUnique as jest.Mock).mockResolvedValue(mockEstimate as any);
+      (mockPrisma.estimate.findUnique as jest.Mock).mockResolvedValue(
+        mockEstimate as any
+      );
 
       // Exercise
       const mapping = actionNotificationMap.ESTIMATE_SUBMITTED;
@@ -230,7 +239,9 @@ describe("ActionNotificationMap", () => {
         userId: "mover-1",
       };
 
-      (mockPrisma.estimate.findUnique as jest.Mock).mockResolvedValue(mockEstimate as any);
+      (mockPrisma.estimate.findUnique as jest.Mock).mockResolvedValue(
+        mockEstimate as any
+      );
 
       // Exercise
       const mapping = actionNotificationMap.ESTIMATE_ACCEPTED;
@@ -271,7 +282,9 @@ describe("ActionNotificationMap", () => {
         userId: "mover-1",
       };
 
-      (mockPrisma.estimate.findUnique as jest.Mock).mockResolvedValue(mockEstimate as any);
+      (mockPrisma.estimate.findUnique as jest.Mock).mockResolvedValue(
+        mockEstimate as any
+      );
 
       // Exercise
       const mapping = actionNotificationMap.ESTIMATE_REJECTED;
@@ -308,7 +321,9 @@ describe("ActionNotificationMap", () => {
         receiverId: "mover-1",
       };
 
-      (mockPrisma.review.findUnique as jest.Mock).mockResolvedValue(mockReview as any);
+      (mockPrisma.review.findUnique as jest.Mock).mockResolvedValue(
+        mockReview as any
+      );
 
       // Exercise
       const mapping = actionNotificationMap.REVIEW_SUBMITTED;
@@ -478,4 +493,4 @@ describe("ActionNotificationMap", () => {
       });
     });
   });
-}); 
+});

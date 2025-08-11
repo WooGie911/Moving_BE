@@ -136,13 +136,22 @@ describe("MoverEstimate integration", () => {
       if (res.body.data.length > 0) {
         const estimateRequest = res.body.data[0];
         expect(estimateRequest).toHaveProperty("id");
-        expect(estimateRequest).toHaveProperty("customerName");
-        expect(estimateRequest).toHaveProperty("movingType");
+        expect(estimateRequest).toHaveProperty("customer");
+        expect(estimateRequest).toHaveProperty("moveType");
         expect(estimateRequest).toHaveProperty("moveDate");
         expect(estimateRequest).toHaveProperty("description");
         expect(estimateRequest).toHaveProperty("fromAddress");
         expect(estimateRequest).toHaveProperty("toAddress");
         expect(estimateRequest).toHaveProperty("createdAt");
+
+        // customer 객체 구조 검증
+        if (estimateRequest.customer) {
+          expect(estimateRequest.customer).toHaveProperty("id");
+          expect(estimateRequest.customer).toHaveProperty("name");
+          expect(estimateRequest.customer).toHaveProperty("currentArea");
+          expect(estimateRequest.customer).toHaveProperty("customerImage");
+          expect(estimateRequest.customer).toHaveProperty("nickname");
+        }
       }
     });
 

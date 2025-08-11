@@ -17,6 +17,9 @@
     "format": "prettier --write \"src/**/*.{ts,js,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
     "test": "jest",
+    "test:unit": "jest --testPathIgnorePatterns=tests/integration",
+    "test:integration": "set DATABASE_URL=postgresql://postgres:anqld123!@localhost:5432/moving_test && npx prisma migrate deploy --schema=src/db/prisma/schema.prisma && jest tests/integration",
+    "test:integration:coverage": "set DATABASE_URL=postgresql://postgres:anqld123!@localhost:5432/moving_test && npx prisma migrate deploy --schema=src/db/prisma/schema.prisma && jest tests/integration --collectCoverage",
     "test:coverage": "jest --collectCoverage"
   },
   "keywords": [
