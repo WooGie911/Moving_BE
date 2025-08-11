@@ -390,9 +390,9 @@ const moverEstimateRepository = {
       }
 
       const estimateRequests = await prisma.estimateRequest.findMany({
-        where: where as any,
+        where: createPrismaWhere(where),
         select: estimateRequestSelectOptions,
-        orderBy: orderBy as any,
+        orderBy: createPrismaOrderBy(orderBy),
       });
 
       // 각 견적 요청에 대해 지정 견적 여부 확인
@@ -479,13 +479,13 @@ const moverEstimateRepository = {
       }
 
       const designatedRequests = await prisma.designatedMover.findMany({
-        where: where as any,
+        where: createPrismaWhere(where),
         select: {
           estimateRequest: {
             select: estimateRequestSelectOptions,
           },
         },
-        orderBy: orderBy as any,
+        orderBy: createPrismaOrderBy(orderBy),
       });
 
       // 지정 견적은 모두 isDesignated가 true
