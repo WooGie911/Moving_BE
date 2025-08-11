@@ -27,7 +27,7 @@ import { RepositoryError } from "../types/errors.types";
 // Repository 모킹
 jest.mock("../repositories/customerEstimateRequest.repository");
 
-// ActionService 모킹git add .
+// ActionService 모킹
 jest.mock("./action.service");
 
 // Prisma 모킹
