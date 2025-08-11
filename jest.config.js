@@ -3,7 +3,6 @@ module.exports = {
   testEnvironment: "node",
   testMatch: ["**/*.test.ts"],
   setupFiles: ["dotenv/config"], // .env(.test) 자동 로딩
-  setupFilesAfterEnv: ["<rootDir>/tests/setup.ts"],
   collectCoverage: false,
   coverageDirectory: "coverage",
   coverageReporters: ["text", "lcov", "html"],
