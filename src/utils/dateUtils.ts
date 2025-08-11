@@ -7,7 +7,9 @@ const KOREA_TIMEZONE = "Asia/Seoul";
  */
 const getKoreaToday = (): Date => {
   const today = new Date();
-  const koreaTime = new Date(today.toLocaleString("en-US", { timeZone: KOREA_TIMEZONE }));
+  const koreaTime = new Date(
+    today.toLocaleString("en-US", { timeZone: KOREA_TIMEZONE })
+  );
   koreaTime.setHours(0, 0, 0, 0);
   return koreaTime;
 };
@@ -72,7 +74,9 @@ export const isValidMoveDate = (date: Date): boolean => {
  * @param date 확인할 날짜
  * @returns { isValid: boolean, errorMessage?: string }
  */
-export const validateMoveDate = (date: Date): { isValid: boolean; errorMessage?: string } => {
+export const validateMoveDate = (
+  date: Date
+): { isValid: boolean; errorMessage?: string } => {
   const koreaToday = getKoreaToday();
   const inputDate = new Date(date);
   inputDate.setHours(0, 0, 0, 0);
@@ -80,7 +84,8 @@ export const validateMoveDate = (date: Date): { isValid: boolean; errorMessage?:
   if (isNaN(inputDate.getTime())) {
     return {
       isValid: false,
-      errorMessage: "올바른 날짜 형식이 아닙니다. (YYYY-MM-DD 형식으로 입력해주세요)",
+      errorMessage:
+        "올바른 날짜 형식이 아닙니다. (YYYY-MM-DD 형식으로 입력해주세요)",
     };
   }
 
@@ -106,15 +111,18 @@ export const validateMoveDate = (date: Date): { isValid: boolean; errorMessage?:
  * @param dateTime - DateTime 객체 또는 문자열
  * @returns YYYY-MM-DD 형식의 날짜 문자열
  */
-export const formatDateOnly = (dateTime: Date | string | null | undefined): string | null => {
+export const formatDateOnly = (
+  dateTime: Date | string | null | undefined
+): string | null => {
   if (!dateTime) return null;
 
   const date = new Date(dateTime);
   if (isNaN(date.getTime())) return null;
 
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+  // UTC 기준으로 날짜를 가져와서 시간대 변환 문제를 방지
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 };
@@ -124,7 +132,9 @@ export const formatDateOnly = (dateTime: Date | string | null | undefined): stri
  * @param dateString - YYYY-MM-DD 형식의 날짜 문자열
  * @returns DateTime 객체
  */
-export const parseDateToDateTime = (dateString: string | null | undefined): Date | null => {
+export const parseDateToDateTime = (
+  dateString: string | null | undefined
+): Date | null => {
   if (!dateString) return null;
 
   const date = new Date(dateString);
@@ -147,7 +157,9 @@ export const getCurrentDateString = (): string => {
  * @param deletedAt - 삭제된 날짜
  * @returns YYYY-MM-DD 형식의 날짜 문자열 또는 null
  */
-export const formatDeletedAt = (deletedAt: Date | string | null | undefined): string | null => {
+export const formatDeletedAt = (
+  deletedAt: Date | string | null | undefined
+): string | null => {
   return formatDateOnly(deletedAt);
 };
 
@@ -156,6 +168,8 @@ export const formatDeletedAt = (deletedAt: Date | string | null | undefined): st
  * @param date - 날짜 객체 또는 문자열
  * @returns YYYY-MM-DD 형식의 날짜 문자열 또는 null
  */
-export const formatDateForAPI = (date: Date | string | null | undefined): string | null => {
+export const formatDateForAPI = (
+  date: Date | string | null | undefined
+): string | null => {
   return formatDateOnly(date);
 };
