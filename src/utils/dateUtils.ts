@@ -15,6 +15,26 @@ const getKoreaToday = (): Date => {
 };
 
 /**
+ * 입력 날짜를 한국 시간 기준 자정으로 변환합니다.
+ */
+const toKoreaMidnight = (date: Date): Date => {
+  const koreaTime = new Date(
+    new Date(date).toLocaleString("en-US", { timeZone: KOREA_TIMEZONE })
+  );
+  koreaTime.setHours(0, 0, 0, 0);
+  return koreaTime;
+};
+
+/**
+ * 입력 날짜를 한국 시간 기준 시각으로 변환합니다 (자정으로 내리지 않음).
+ */
+const toKoreaDateTime = (date: Date): Date => {
+  return new Date(
+    new Date(date).toLocaleString("en-US", { timeZone: KOREA_TIMEZONE })
+  );
+};
+
+/**
  * 주어진 날짜가 한국 시간 기준 오늘보다 이전인지 확인합니다.
  * @param date 확인할 날짜
  * @returns 오늘보다 이전이면 true, 아니면 false

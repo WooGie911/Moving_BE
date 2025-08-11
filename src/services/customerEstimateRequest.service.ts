@@ -121,8 +121,9 @@ const customerEstimateRequestService = {
             mover: {
               ...estimate.mover,
               // 비즈니스 로직: 찜 여부 계산
-              isFavorite:
-                estimate.mover.Favorite && estimate.mover.Favorite.length > 0,
+              isFavorite: !!(
+                estimate.mover.Favorite && estimate.mover.Favorite.length > 0
+              ),
               totalFavoriteCount: favoriteCounts[estimate.mover.id] ?? 0,
               Favorite: estimate.mover.Favorite ?? [],
             },
@@ -212,8 +213,9 @@ const customerEstimateRequestService = {
           mover: {
             ...estimate.mover,
             // 비즈니스 로직: 찜 여부 계산
-            isFavorite:
-              estimate.mover.Favorite && estimate.mover.Favorite.length > 0,
+            isFavorite: !!(
+              estimate.mover.Favorite && estimate.mover.Favorite.length > 0
+            ),
             totalFavoriteCount: favoriteCounts[estimate.mover.id] ?? 0,
             Favorite: estimate.mover.Favorite ?? [],
           },

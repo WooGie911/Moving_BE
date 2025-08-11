@@ -274,6 +274,19 @@ describe("고객 견적 요청 레포지토리", () => {
       // Assert
       expect(result).toBeNull();
     });
+
+    it("데이터베이스 에러가 발생했을 때 RepositoryQueryError를 던진다", async () => {
+      // Arrange
+      const moverId = "mover123";
+      const mockError = new Error("Database connection failed");
+
+      mockUser.findUnique.mockRejectedValue(mockError);
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestRepository.getMover(moverId)
+      ).rejects.toThrow(RepositoryQueryError);
+    });
   });
 
   describe("진행중인 견적 요청 조회", () => {
@@ -484,6 +497,19 @@ describe("고객 견적 요청 레포지토리", () => {
       // Assert
       expect(result).toEqual([]);
     });
+
+    it("데이터베이스 에러가 발생했을 때 RepositoryQueryError를 던진다", async () => {
+      // Arrange
+      const userId = "user123";
+      const mockError = new Error("Database connection failed");
+
+      mockEstimateRequest.findMany.mockRejectedValue(mockError);
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestRepository.getReceivedEstimateRequests(userId)
+      ).rejects.toThrow(RepositoryQueryError);
+    });
   });
 
   describe("견적 요청 ID로 조회", () => {
@@ -529,6 +555,21 @@ describe("고객 견적 요청 레포지토리", () => {
 
       // Assert
       expect(result).toBeNull();
+    });
+
+    it("데이터베이스 에러가 발생했을 때 RepositoryQueryError를 던진다", async () => {
+      // Arrange
+      const estimateRequestId = "estimateRequest123";
+      const mockError = new Error("Database connection failed");
+
+      mockEstimateRequest.findUnique.mockRejectedValue(mockError);
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestRepository.getEstimateRequestById(
+          estimateRequestId
+        )
+      ).rejects.toThrow(RepositoryQueryError);
     });
   });
 
@@ -583,6 +624,23 @@ describe("고객 견적 요청 레포지토리", () => {
       // Assert
       expect(result).toBeNull();
     });
+
+    it("데이터베이스 에러가 발생했을 때 RepositoryQueryError를 던진다", async () => {
+      // Arrange
+      const estimateId = "estimate123";
+      const estimateRequestId = "estimateRequest123";
+      const mockError = new Error("Database connection failed");
+
+      mockEstimate.findUnique.mockRejectedValue(mockError);
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestRepository.getEstimateByIdAndRequestId(
+          estimateId,
+          estimateRequestId
+        )
+      ).rejects.toThrow(RepositoryQueryError);
+    });
   });
 
   describe("견적 요청 상태 업데이트", () => {
@@ -611,6 +669,23 @@ describe("고객 견적 요청 레포지토리", () => {
         data: { status },
       });
     });
+
+    it("데이터베이스 에러가 발생했을 때 RepositoryQueryError를 던진다", async () => {
+      // Arrange
+      const estimateRequestId = "estimateRequest123";
+      const status = "APPROVED";
+      const mockError = new Error("Database connection failed");
+
+      mockEstimateRequest.update.mockRejectedValue(mockError);
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestRepository.updateEstimateRequestStatus(
+          estimateRequestId,
+          status
+        )
+      ).rejects.toThrow(RepositoryQueryError);
+    });
   });
 
   describe("견적 상태 업데이트", () => {
@@ -638,6 +713,23 @@ describe("고객 견적 요청 레포지토리", () => {
         where: { id: estimateId },
         data: { status },
       });
+    });
+
+    it("데이터베이스 에러가 발생했을 때 RepositoryQueryError를 던진다", async () => {
+      // Arrange
+      const estimateId = "estimate123";
+      const status = "REJECTED";
+      const mockError = new Error("Database connection failed");
+
+      mockEstimate.update.mockRejectedValue(mockError);
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestRepository.updateEstimateStatus(
+          estimateId,
+          status
+        )
+      ).rejects.toThrow(RepositoryQueryError);
     });
   });
 
@@ -687,6 +779,25 @@ describe("고객 견적 요청 레포지토리", () => {
         },
         data: { status },
       });
+    });
+
+    it("데이터베이스 에러가 발생했을 때 RepositoryQueryError를 던진다", async () => {
+      // Arrange
+      const estimateRequestId = "estimateRequest123";
+      const status = "AUTO_REJECTED";
+      const excludeEstimateId = "estimate123";
+      const mockError = new Error("Database connection failed");
+
+      mockEstimate.updateMany.mockRejectedValue(mockError);
+
+      // Act & Assert
+      await expect(
+        customerEstimateRequestRepository.updateAllEstimatesStatus(
+          estimateRequestId,
+          status,
+          excludeEstimateId
+        )
+      ).rejects.toThrow(RepositoryQueryError);
     });
   });
 
