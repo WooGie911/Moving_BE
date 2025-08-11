@@ -2,6 +2,7 @@ import { Router } from "express";
 import favoriteController from "../controllers/favorite.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 import { defaultTranslationMiddleware } from "../middlewares/translationMiddleware";
+import { cache } from "../middlewares/cacheMiddleware";
 
 const router = Router();
 
@@ -132,7 +133,7 @@ const router = Router();
  *           schema:
  *             $ref: '#/components/schemas/FavoriteRequest'
  *           example:
- *             moverId: 1
+ *             moverId: "clx123..."
  *     responses:
  *       201:
  *         description: 찜하기 성공
@@ -272,7 +273,13 @@ router.post("/", verifyAccessToken, favoriteController.addFavorite);
  *               success: false
  *               message: "서버 내부 오류가 발생했습니다"
  */
-router.get("/movers", verifyAccessToken, defaultTranslationMiddleware, favoriteController.getFavoriteMovers);
+router.get(
+  "/movers",
+  verifyAccessToken,
+  cache({ ttlSeconds: 30, varyByAuth: true }),
+  defaultTranslationMiddleware,
+  favoriteController.getFavoriteMovers,
+);
 
 /**
  * @swagger
@@ -340,7 +347,13 @@ router.get("/movers", verifyAccessToken, defaultTranslationMiddleware, favoriteC
  *               success: false
  *               message: "서버 내부 오류가 발생했습니다"
  */
-router.get("/:moverId/status", verifyAccessToken, defaultTranslationMiddleware, favoriteController.getFavoriteStatus);
+router.get(
+  "/:moverId/status",
+  verifyAccessToken,
+  cache({ ttlSeconds: 15, varyByAuth: true }),
+  defaultTranslationMiddleware,
+  favoriteController.getFavoriteStatus,
+);
 
 /**
  * @swagger

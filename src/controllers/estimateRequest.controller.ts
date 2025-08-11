@@ -3,6 +3,7 @@ import EstimateRequestService from "../services/estimateRequest.service";
 import { convertRegionToKorean } from "../utils/addressUtils";
 import { validateMoveDate, formatDateForAPI } from "../utils/dateUtils";
 import * as Sentry from "@sentry/node";
+import { invalidateCacheByKey } from "../middlewares/cacheMiddleware";
 import {
   TCreateEstimateRequest,
   TUpdateEstimateRequest,
@@ -191,6 +192,10 @@ class EstimateRequestController {
 
       const createdRequest = await estimateRequestService.getActiveEstimateRequestByUserId(userId);
 
+      // 캐시 무효화: 활성 견적 요청 조회 캐시 (해당 사용자 기준)
+      const activeKey = ["cache", "GET", "/estimateRequests", "/active", `u:${userId}`, ""];
+      void invalidateCacheByKey(activeKey);
+
       return res.status(201).json({
         success: true,
         message: "견적 요청이 성공적으로 생성되었습니다.",
@@ -317,6 +322,10 @@ class EstimateRequestController {
 
       const updatedRequest = await estimateRequestService.getActiveEstimateRequestByUserId(userId);
 
+      // 캐시 무효화: 활성 견적 요청 조회 캐시 (해당 사용자 기준)
+      const activeKey = ["cache", "GET", "/estimateRequests", "/active", `u:${userId}`, ""];
+      void invalidateCacheByKey(activeKey);
+
       return res.status(200).json({
         success: true,
         message: "견적 요청이 성공적으로 수정되었습니다.",
@@ -379,6 +388,9 @@ class EstimateRequestController {
       }
 
       await estimateRequestService.cancelActiveEstimateRequest(active.id);
+      // 캐시 무효화: 활성 견적 요청 조회 캐시 (해당 사용자 기준)
+      const activeKey = ["cache", "GET", "/estimateRequests", "/active", `u:${userId}`, ""];
+      void invalidateCacheByKey(activeKey);
       return res.status(204).send();
     } catch (error) {
       // 센트리로 에러 전송

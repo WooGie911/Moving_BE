@@ -52,6 +52,12 @@ const notificationController = {
         data: notification,
       });
     } catch (error) {
+      // 존재하지 않는 알림 ID 처리
+      if (error instanceof Error && error.message === "해당 알림을 찾을수 없습니다.") {
+        return res
+          .status(400)
+          .json({ success: false, message: "해당 알림을 찾을수 없습니다." });
+      }
       next(error);
     }
   },
