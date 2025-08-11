@@ -28,6 +28,15 @@ const notificationRepository = {
     return !!unread;
   },
   readNotification: async (notificationId: string) => {
+    // 먼저 알림이 존재하는지 확인
+    const notification = await prisma.notification.findUnique({
+      where: { id: notificationId },
+    });
+    
+    if (!notification) {
+      throw new Error("해당 알림을 찾을수 없습니다.");
+    }
+    
     return prisma.notification.update({
       where: { id: notificationId },
       data: { isRead: true },
