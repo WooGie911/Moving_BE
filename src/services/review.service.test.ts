@@ -1,4 +1,4 @@
-import ReviewService from './review.service';
+import ReviewService, { updateMoverReviewStats } from './review.service';
 import { ReviewStatus } from '@prisma/client';
 
 // Sentry 모킹
@@ -658,6 +658,30 @@ describe('ReviewService', () => {
       // Exercise & Assertion
       await expect(ReviewService.getReceivedReviews('user-1', { page: 1, pageSize: 10 })).rejects.toThrow('레포지토리 에러');
       expect(mockRepository.getReceivedReviews).toHaveBeenCalledWith('user-1', { page: 1, pageSize: 10 });
+    });
+  });
+
+  describe('updateMoverReviewStats', () => {
+    it('기사님 리뷰 통계 업데이트 중 에러가 발생하면 에러를 캡처한다', async () => {
+      // Setup
+      const mockCaptureReviewError = require('../utils/sentryUtils').captureReviewError;
+      
+      // 실제 Prisma 호출이 실패하도록 하여 에러 처리 라인을 커버
+      // 이 테스트는 실제 데이터베이스 연결 실패로 인해 에러가 발생하고
+      // catch 블록의 에러 캡처 로직이 실행되는 것을 확인합니다.
+      
+      // Exercise & Assertion
+      // 에러가 발생해도 함수가 정상적으로 완료되어야 함 (에러 캡처 후)
+      await expect(updateMoverReviewStats('mover-1')).resolves.not.toThrow();
+      
+      // Sentry 에러 캡처가 호출되었는지 확인
+      expect(mockCaptureReviewError).toHaveBeenCalledWith(
+        expect.any(Error),
+        {
+          operation: 'update_mover_review_stats',
+          moverId: 'mover-1',
+        }
+      );
     });
   });
 }); 

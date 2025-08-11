@@ -297,6 +297,79 @@ describe("ReviewRepository", () => {
             },
           },
         },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        skip: 0,
+        take: 10,
+      });
+      expect(result).toEqual({
+        items: mockReviews,
+        total: 1,
+        page: 1,
+        pageSize: 10,
+      });
+    });
+
+    it('status 필터가 있는 경우 받은 리뷰 목록을 성공적으로 조회한다', async () => {
+      // Setup
+      const moverId = 'mover-1';
+      const pageQuery = { page: 1, pageSize: 10, status: 'COMPLETED' };
+      const mockReviews = [
+        {
+          id: 'review-1',
+          rating: 5,
+          content: '좋은 서비스였습니다.',
+          status: 'COMPLETED',
+          createdAt: new Date(),
+        },
+      ];
+
+      mockFindMany.mockResolvedValue(mockReviews as any);
+      mockCount.mockResolvedValue(1);
+
+      // Exercise
+      const result = await reviewRepository.getReceivedReviews(moverId, pageQuery);
+
+      // Assertion
+      expect(mockFindMany).toHaveBeenCalledWith({
+        where: {
+          moverId,
+          deletedAt: null,
+          status: 'COMPLETED',
+        },
+        select: {
+          id: true,
+          customerId: true,
+          moverId: true,
+          estimateRequestId: true,
+          rating: true,
+          content: true,
+          createdAt: true,
+          writer: {
+            select: {
+              id: true,
+              nickname: true,
+              customerImage: true,
+            },
+          },
+          request: {
+            select: {
+              id: true,
+              moveType: true,
+              moveDate: true,
+              fromAddress: true,
+              toAddress: true,
+              estimates: {
+                where: { status: 'ACCEPTED' },
+                select: {
+                  id: true,
+                  price: true,
+                  isDesignated: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         skip: 0,
         take: 10,
       });
@@ -360,6 +433,60 @@ describe("ReviewRepository", () => {
 
       // Exercise
       const result = await reviewRepository.getReviewDetailForAction(reviewId);
+
+      // Assertion
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('getReview', () => {
+    it('스케줄러용 리뷰를 성공적으로 조회한다', async () => {
+      // Setup
+      const estimateRequestId = 'request-1';
+      const mockReview = {
+        id: 'review-1',
+        customerId: 'user-1',
+        moverId: 'mover-1',
+        estimateRequestId: 'request-1',
+        rating: 5,
+        content: '좋은 서비스였습니다.',
+        status: 'COMPLETED',
+        mover: {
+          id: 'mover-1',
+          nickname: '김기사',
+        },
+      };
+
+      mockFindFirst.mockResolvedValue(mockReview as any);
+
+      // Exercise
+      const result = await reviewRepository.getReview(estimateRequestId);
+
+      // Assertion
+      expect(mockFindFirst).toHaveBeenCalledWith({
+        where: {
+          estimateRequestId,
+        },
+        include: {
+          mover: {
+            select: {
+              id: true,
+              nickname: true,
+            },
+          },
+        },
+      });
+      expect(result).toEqual(mockReview);
+    });
+
+    it('리뷰가 존재하지 않으면 null을 반환한다', async () => {
+      // Setup
+      const estimateRequestId = 'request-1';
+
+      mockFindFirst.mockResolvedValue(null);
+
+      // Exercise
+      const result = await reviewRepository.getReview(estimateRequestId);
 
       // Assertion
       expect(result).toBeNull();
