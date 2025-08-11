@@ -68,8 +68,7 @@ const moverRouter = Router();
  *           description: 현재 서비스 가능 지역
  *           items:
  *             type: string
-
- *         Favorite:
+ *         favorite:
  *           type: array
  *           description: 찜 관계 데이터 (내부용)
  *           items:
@@ -173,7 +172,7 @@ const moverRouter = Router();
  *           type: string
  *           enum: ["rating", "career", "confirmed", "review"]
  *           default: "review"
- *         description: 정렬 기준 (rating: 평점순, career: 경력순, confirmed: 완료건수순, review: 리뷰순)
+ *         description: 정렬 기준 (rating-평점순, career-경력순, confirmed-완료건수순, review-리뷰순)
  *       - in: query
  *         name: cursor
  *         schema:
