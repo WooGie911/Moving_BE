@@ -164,7 +164,7 @@ export const postDesignatedQuoteRequestController = async (
 ) => {
   try {
     const { moverId } = req.params;
-    const { quoteId, message, expiresAt } = req.body;
+    const { quoteId } = req.body;
     const user = req.user as {
       userId: string;
       name: string;
@@ -182,14 +182,12 @@ export const postDesignatedQuoteRequestController = async (
         message: "회원만 지정 견적 요청이 가능합니다.",
       });
     }
-    if (!quoteId || !expiresAt) {
+    if (!quoteId) {
       return res.status(400).json({ success: false, message: "필수값 누락" });
     }
     const request = await moverService.requestDesignatedQuote({
       quoteId: String(quoteId),
       moverId: String(moverId),
-      message,
-      expiresAt: new Date(expiresAt),
     });
     if (!request) {
       return res.json({

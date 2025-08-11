@@ -27,6 +27,4 @@ export interface MoverResponse {
 export interface DesignatedQuoteRequestDto {
   quoteId: string;
   moverId: string;
-  message?: string;
-  expiresAt: Date;
 }

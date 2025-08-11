@@ -322,8 +322,6 @@ describe("MoverController - 유닛 테스트", () => {
       expect(mockMoverService.requestDesignatedQuote).toHaveBeenCalledWith({
         quoteId: "quote-1",
         moverId: "mover-1",
-        message: "지정 견적 요청합니다.",
-        expiresAt: new Date("2024-12-31T23:59:59.999Z"),
       });
       expect(mockRes.json).toHaveBeenCalledWith({
         success: true,
@@ -334,7 +332,7 @@ describe("MoverController - 유닛 테스트", () => {
 
     it("필수 필드가 없을 때 400 에러를 반환한다", async () => {
       mockReq.params = { moverId: "mover-1" };
-      mockReq.body = { message: "지정 견적 요청합니다." };
+      mockReq.body = {};
 
       await postDesignatedQuoteRequestController(mockReq, mockRes, mockNext);
 
@@ -370,8 +368,6 @@ describe("MoverController - 유닛 테스트", () => {
     it("지정 견적 요청 상태를 성공적으로 조회한다", async () => {
       const mockRequest = {
         id: "request-1",
-        message: "테스트 메시지",
-        expiresAt: new Date(),
         createdAt: new Date(),
       };
 
@@ -401,8 +397,6 @@ describe("MoverController - 유닛 테스트", () => {
           hasRequested: true,
           status: null,
           requestId: "request-1",
-          message: "테스트 메시지",
-          expiresAt: mockRequest.expiresAt,
         },
       });
     });
@@ -426,8 +420,6 @@ describe("MoverController - 유닛 테스트", () => {
           hasRequested: false,
           status: null,
           requestId: null,
-          message: null,
-          expiresAt: null,
         },
       });
     });

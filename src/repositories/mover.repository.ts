@@ -191,7 +191,7 @@ export const getFavoriteMovers = async (customerId: string) => {
 export const createDesignatedEstimateRequest = async (
   dto: DesignatedQuoteRequestDto
 ) => {
-  const { quoteId, moverId, message, expiresAt } = dto;
+  const { quoteId, moverId } = dto;
 
   // 기존 요청 확인
   const existingRequest = await prisma.designatedMover.findFirst({
@@ -207,8 +207,6 @@ export const createDesignatedEstimateRequest = async (
     data: {
       estimateRequestId: quoteId,
       moverId,
-      message,
-      expiresAt,
     },
   });
 };
@@ -229,8 +227,6 @@ export const checkDesignatedEstimateRequest = async (params: {
     },
     select: {
       id: true,
-      message: true,
-      expiresAt: true,
       createdAt: true,
       status: true,
     },
