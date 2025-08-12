@@ -1,22 +1,59 @@
-name: 🚀 Auto Deploy to EC2
+name: Auto Deploy to EC2 (via SCP)
 
 on:
   push:
-    branches:
-      - dev
+    branches: [dev]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🔐 SSH 접속 설정
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install deps
+        run: npm ci
+
+      # 필요 시 테스트 활성화
+      # - name: Run tests
+      #   run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Archive release
+        run: |
+          PKG="release-${GITHUB_SHA::7}.tar.gz"
+          tar -czf "$PKG" \
+            dist \
+            package.json package-lock.json \
+            ecosystem.config.js \
+            src/db/prisma
+          echo "PKG_NAME=$PKG" >> $GITHUB_ENV
+
+      - name: SSH agent
         uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      - name: 🚀 EC2에 배포 실행
-        run: ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_HOST }} 'bash ~/deploy.sh'
+      - name: Add known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Upload via SCP
+        run: |
+          scp "$PKG_NAME" \
+            "ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/apps/moving-be/"
+
+      - name: Remote deploy
+        run: |
+          ssh "ec2-user@${{ secrets.EC2_HOST }}" \
+            "bash ~/deploy.sh $PKG_NAME"
