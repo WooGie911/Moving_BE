@@ -18,6 +18,12 @@ jest.mock("../db/prisma/prisma", () => ({
     review: {
       findUnique: jest.fn(),
     },
+    favorite: {
+      findUnique: jest.fn(),
+    },
+    notification: {
+      count: jest.fn(),
+    },
   },
 }));
 
@@ -180,7 +186,7 @@ describe("ActionNotificationMap", () => {
       const action: Action = {
         id: "action-1",
         type: "ESTIMATE_SUBMITTED",
-        userId: "mover-1",
+        userId: "customer-1",
         entityId: "estimate-1",
         entityType: "Estimate",
         description: "견적 제출",
@@ -206,15 +212,12 @@ describe("ActionNotificationMap", () => {
       const message = mapping.buildMessage(action, "CUSTOMER");
 
       // Assertion
-      expect(mockPrisma.estimate.findUnique).toHaveBeenCalledWith({
-        where: { id: "estimate-1" },
-        select: { estimateRequest: { select: { userId: true } } },
-      });
       expect(receivers).toEqual([{ id: "customer-1", userType: "CUSTOMER" }]);
       expect(message).toEqual({
-        title: "새 견적이 도착했습니다!",
-        content: "새로운 견적이 도착했습니다. 확인해보세요.",
-        path: `/estimateRequests/${action.entityId}`,
+        messageKo: "<span class=\"font-bold\"></span> 기사님의 <span class=\"text-primary-400 font-bold\">견적</span>이 도착했어요.",
+        messageEn: "<span class=\"font-bold\"></span> mover's <span class=\"text-primary-400 font-bold\">estimate</span> has arrived.",
+        messageZh: "<span class=\"font-bold\"></span> 搬家师傅的 <span class=\"text-primary-400 font-bold\">估价</span>已到达。",
+        path: `/estimateRequest/pending/${action.entityId}`,
       });
     });
   });
@@ -227,7 +230,7 @@ describe("ActionNotificationMap", () => {
         type: "ESTIMATE_ACCEPTED",
         userId: "customer-1",
         entityId: "estimate-1",
-        entityType: "Estimate",
+        entityType: "ESTIMATE",
         description: "견적 수락",
         metadata: null,
         createdAt: new Date(),
@@ -236,7 +239,11 @@ describe("ActionNotificationMap", () => {
 
       const mockEstimate = {
         id: "estimate-1",
-        userId: "mover-1",
+        moverId: "mover-1",
+        estimateRequestId: "request-1",
+        estimateRequest: {
+          customerId: "customer-1",
+        },
       };
 
       (mockPrisma.estimate.findUnique as jest.Mock).mockResolvedValue(
@@ -249,15 +256,15 @@ describe("ActionNotificationMap", () => {
       const message = mapping.buildMessage(action, "MOVER");
 
       // Assertion
-      expect(mockPrisma.estimate.findUnique).toHaveBeenCalledWith({
-        where: { id: "estimate-1" },
-        select: { userId: true },
-      });
-      expect(receivers).toEqual([{ id: "mover-1", userType: "MOVER" }]);
+      expect(receivers).toEqual([
+        { id: "mover-1", userType: "MOVER" },
+        { id: "customer-1", userType: "CUSTOMER" },
+      ]);
       expect(message).toEqual({
-        title: "견적이 수락되었습니다!",
-        content: "고객님이 견적을 수락했습니다.",
-        path: `/estimates/${action.entityId}`,
+        messageKo: "<span class=\"font-bold\"></span> 고객님의 견적이 <span class=\"text-primary-400 font-bold\">확정</span>되었어요.",
+        messageEn: "<span class=\"font-bold\"></span> customer's estimate has been <span class=\"text-primary-400 font-bold\">confirmed</span>.",
+        messageZh: "<span class=\"font-bold\"></span> 客户的估价已 <span class=\"text-primary-400 font-bold\">确定</span>。",
+        path: `/estimate/request/${action.entityId}`,
       });
     });
   });
@@ -279,7 +286,7 @@ describe("ActionNotificationMap", () => {
 
       const mockEstimate = {
         id: "estimate-1",
-        userId: "mover-1",
+        moverId: "mover-1",
       };
 
       (mockPrisma.estimate.findUnique as jest.Mock).mockResolvedValue(
@@ -292,11 +299,16 @@ describe("ActionNotificationMap", () => {
       const message = mapping.buildMessage(action, "MOVER");
 
       // Assertion
+      expect(mockPrisma.estimate.findUnique).toHaveBeenCalledWith({
+        where: { id: "estimate-1" },
+        select: { moverId: true },
+      });
       expect(receivers).toEqual([{ id: "mover-1", userType: "MOVER" }]);
       expect(message).toEqual({
-        title: "견적이 거절되었습니다.",
-        content: "고객님이 견적을 거절했습니다.",
-        path: `/estimates/${action.entityId}`,
+        messageKo: "<span class=\"font-bold\"></span> 고객님의 <span class=\"text-primary-400 font-bold\">undefined</span>에 대한 견적이 <span class=\"text-primary-400 font-bold\">반려</span>되었어요.",
+        messageEn: "<span class=\"font-bold\"></span> customer's <span class=\"text-primary-400 font-bold\">undefined</span> estimate has been <span class=\"text-primary-400 font-bold\">rejected</span>.",
+        messageZh: "<span class=\"font-bold\"></span> 客户的 <span class=\"text-primary-400 font-bold\">undefined</span> 估价已 <span class=\"text-primary-400 font-bold\">拒绝</span>。",
+        path: `/estimate/request/${action.entityId}`,
       });
     });
   });
@@ -318,7 +330,8 @@ describe("ActionNotificationMap", () => {
 
       const mockReview = {
         id: "review-1",
-        receiverId: "mover-1",
+        moverId: "mover-1",
+        estimateRequestId: "request-1",
       };
 
       (mockPrisma.review.findUnique as jest.Mock).mockResolvedValue(
@@ -333,13 +346,14 @@ describe("ActionNotificationMap", () => {
       // Assertion
       expect(mockPrisma.review.findUnique).toHaveBeenCalledWith({
         where: { id: "review-1" },
-        select: { receiverId: true },
+        select: { moverId: true, estimateRequestId: true },
       });
       expect(receivers).toEqual([{ id: "mover-1", userType: "MOVER" }]);
       expect(message).toEqual({
-        title: "새 리뷰가 작성되었습니다!",
-        content: "고객님이 리뷰를 작성했습니다.",
-        path: `/reviews/${action.entityId}`,
+        messageKo: "리뷰가 등록되었어요.",
+        messageEn: "Review has been registered.",
+        messageZh: "评论已注册。",
+        path: `/moverMyPage`,
       });
     });
   });
@@ -359,17 +373,29 @@ describe("ActionNotificationMap", () => {
         deletedAt: null,
       };
 
+      const mockFavorite = {
+        id: "favorite-1",
+        moverId: "mover-1",
+      };
+
+      (mockPrisma.favorite.findUnique as jest.Mock).mockResolvedValue(mockFavorite as any);
+
       // Exercise
       const mapping = actionNotificationMap.FAVORITE_ADDED;
       const receivers = await mapping.getReceivers(action);
       const message = mapping.buildMessage(action, "MOVER");
 
       // Assertion
+      expect(mockPrisma.favorite.findUnique).toHaveBeenCalledWith({
+        where: { id: "favorite-1" },
+        select: { moverId: true },
+      });
       expect(receivers).toEqual([{ id: "mover-1", userType: "MOVER" }]);
       expect(message).toEqual({
-        title: "새로운 찜이 추가되었습니다!",
-        content: "고객님이 당신을 찜했습니다.",
-        path: `/profile/${(action.metadata as any).targetUserId}`,
+        messageKo: "찜이 추가되었어요.",
+        messageEn: "Favorite has been added.",
+        messageZh: "收藏已添加。",
+        path: `/moverMyPage`,
       });
     });
   });
@@ -389,17 +415,29 @@ describe("ActionNotificationMap", () => {
         deletedAt: null,
       };
 
+      const mockFavorite = {
+        id: "favorite-1",
+        moverId: "mover-1",
+      };
+
+      (mockPrisma.favorite.findUnique as jest.Mock).mockResolvedValue(mockFavorite as any);
+
       // Exercise
       const mapping = actionNotificationMap.FAVORITE_REMOVED;
       const receivers = await mapping.getReceivers(action);
       const message = mapping.buildMessage(action, "MOVER");
 
       // Assertion
+      expect(mockPrisma.favorite.findUnique).toHaveBeenCalledWith({
+        where: { id: "favorite-1" },
+        select: { moverId: true },
+      });
       expect(receivers).toEqual([{ id: "mover-1", userType: "MOVER" }]);
       expect(message).toEqual({
-        title: "찜이 제거되었습니다.",
-        content: "고객님이 찜을 제거했습니다.",
-        path: `/profile/${(action.metadata as any).targetUserId}`,
+        messageKo: "찜이 제거되었어요.",
+        messageEn: "Favorite has been removed.",
+        messageZh: "收藏已移除。",
+        path: `/moverMyPage`,
       });
     });
   });
@@ -412,12 +450,19 @@ describe("ActionNotificationMap", () => {
         type: "MOVE_DAY_REMINDER_TOMORROW",
         userId: "customer-1",
         entityId: "request-1",
-        entityType: "EstimateRequest",
+        entityType: "DESIGNATED_ESTIMATE_REQUEST",
         description: "이사 전날 알림",
         metadata: { moveType: "HOME" },
         createdAt: new Date(),
         deletedAt: null,
       };
+
+      const mockEstimateRequest = {
+        id: "request-1",
+        customerId: "customer-1",
+      };
+
+      (mockPrisma.estimateRequest.findUnique as jest.Mock).mockResolvedValue(mockEstimateRequest);
 
       // Exercise
       const mapping = actionNotificationMap.MOVE_DAY_REMINDER_TOMORROW;
@@ -427,9 +472,10 @@ describe("ActionNotificationMap", () => {
       // Assertion
       expect(receivers).toEqual([{ id: "customer-1", userType: "CUSTOMER" }]);
       expect(message).toEqual({
-        title: "내일이 이사 날입니다!",
-        content: "내일 가정이사가 예정되어 있습니다. 준비하세요.",
-        path: `/estimateRequests/${action.entityId}`,
+        messageKo: "내일은 <span class=\"font-bold\">가정이사</span> 예정일이에요.",
+        messageEn: "Tomorrow is the scheduled move date for <span class=\"font-bold\">Home Move</span>.",
+        messageZh: "明天是 <span class=\"font-bold\">家庭搬家</span> 预定日期。",
+        path: `/estimateRequest/pending/${action.entityId}`,
       });
     });
   });
@@ -442,12 +488,19 @@ describe("ActionNotificationMap", () => {
         type: "MOVE_DAY_REMINDER_TODAY",
         userId: "customer-1",
         entityId: "request-1",
-        entityType: "EstimateRequest",
+        entityType: "DESIGNATED_ESTIMATE_REQUEST",
         description: "이사 당일 알림",
         metadata: { moveType: "HOME" },
         createdAt: new Date(),
         deletedAt: null,
       };
+
+      const mockEstimateRequest = {
+        id: "request-1",
+        customerId: "customer-1",
+      };
+
+      (mockPrisma.estimateRequest.findUnique as jest.Mock).mockResolvedValue(mockEstimateRequest);
 
       // Exercise
       const mapping = actionNotificationMap.MOVE_DAY_REMINDER_TODAY;
@@ -457,9 +510,10 @@ describe("ActionNotificationMap", () => {
       // Assertion
       expect(receivers).toEqual([{ id: "customer-1", userType: "CUSTOMER" }]);
       expect(message).toEqual({
-        title: "오늘이 이사 날입니다!",
-        content: "오늘 가정이사가 진행됩니다. 기사님이 곧 도착합니다.",
-        path: `/estimateRequests/${action.entityId}`,
+        messageKo: "오늘은 <span class=\"font-bold\">가정이사</span> 예정일이에요.",
+        messageEn: "Today is the scheduled move date for <span class=\"font-bold\">Home Move</span>.",
+        messageZh: "今天是 <span class=\"font-bold\">家庭搬家</span> 预定日期。",
+        path: `/estimateRequest/pending/${action.entityId}`,
       });
     });
   });
@@ -471,13 +525,22 @@ describe("ActionNotificationMap", () => {
         id: "action-1",
         type: "MOVE_DAY_REVIEW_REQUEST",
         userId: "customer-1",
-        entityId: "request-1",
-        entityType: "EstimateRequest",
+        entityId: "estimate-1",
+        entityType: "DESIGNATED_ESTIMATE",
         description: "리뷰 요청",
-        metadata: null,
+        metadata: { moverName: "김기사" },
         createdAt: new Date(),
         deletedAt: null,
       };
+
+      const mockEstimate = {
+        id: "estimate-1",
+        estimateRequest: {
+          customerId: "customer-1",
+        },
+      };
+
+      (mockPrisma.estimate.findUnique as jest.Mock).mockResolvedValue(mockEstimate as any);
 
       // Exercise
       const mapping = actionNotificationMap.MOVE_DAY_REVIEW_REQUEST;
@@ -487,9 +550,10 @@ describe("ActionNotificationMap", () => {
       // Assertion
       expect(receivers).toEqual([{ id: "customer-1", userType: "CUSTOMER" }]);
       expect(message).toEqual({
-        title: "이사 후기를 작성해주세요!",
-        content: "이사 서비스에 대한 후기를 작성해주세요.",
-        path: `/estimateRequests/${action.entityId}/review`,
+        messageKo: "이사는 어떠셨나요? <span class=\"text-primary-400 font-bold\">김기사</span> 기사님에 대한 <span class=\"font-bold\">리뷰</span>를 남겨주세요.",
+        messageEn: "How was your move? Please leave a <span class=\"font-bold\">review</span> for <span class=\"text-primary-400 font-bold\">김기사</span> mover.",
+        messageZh: "搬家如何？请为 <span class=\"text-primary-400 font-bold\">김기사</span> 搬家师傅留下 <span class=\"font-bold\">评论</span>。",
+        path: `/reviews/writable?modal=write&reviewId=${action.entityId}`,
       });
     });
   });

@@ -9,6 +9,7 @@ jest.mock("../db/prisma/prisma", () => ({
       findMany: jest.fn(),
       count: jest.fn(),
       findFirst: jest.fn(),
+      findUnique: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
     },
@@ -233,27 +234,37 @@ describe("NotificationRepository", () => {
   describe("readNotification", () => {
     it("성공적으로 알림을 읽음 처리한다", async () => {
       // Setup
-      const mockUpdatedNotification = {
+      const mockNotification = {
         id: "notification-1",
         actionId: "action-1",
         userId: "user-1",
         userType: "CUSTOMER" as UserType,
         type: "ESTIMATE_REQUEST_ARRIVED" as NotificationType,
-        title: "새로운 견적 요청",
-        content: "테스트 알림 1",
+        messageKo: "새로운 견적 요청",
+        messageEn: "New estimate request",
+        messageZh: "新估价请求",
         path: null,
-        isRead: true,
+        isRead: false,
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
       };
 
-      (mockPrisma.notification.update as jest.Mock).mockResolvedValue(mockUpdatedNotification as any);
+      const mockUpdatedNotification = {
+        ...mockNotification,
+        isRead: true,
+      };
+
+      (mockPrisma.notification.findUnique as jest.Mock).mockResolvedValue(mockNotification);
+      (mockPrisma.notification.update as jest.Mock).mockResolvedValue(mockUpdatedNotification);
 
       // Exercise
       const result = await notificationRepository.readNotification("notification-1");
 
       // Assertion
+      expect(mockPrisma.notification.findUnique).toHaveBeenCalledWith({
+        where: { id: "notification-1" },
+      });
       expect(mockPrisma.notification.update).toHaveBeenCalledWith({
         where: { id: "notification-1" },
         data: { isRead: true },
@@ -263,15 +274,14 @@ describe("NotificationRepository", () => {
 
     it("존재하지 않는 알림 ID에 대해 에러를 던진다", async () => {
       // Setup
-      (mockPrisma.notification.update as jest.Mock).mockRejectedValue(new Error("알림을 찾을 수 없습니다"));
+      (mockPrisma.notification.findUnique as jest.Mock).mockResolvedValue(null);
 
       // Exercise & Assertion
       await expect(
         notificationRepository.readNotification("non-existent-id")
-      ).rejects.toThrow("알림을 찾을 수 없습니다");
-      expect(mockPrisma.notification.update).toHaveBeenCalledWith({
+      ).rejects.toThrow("해당 알림을 찾을수 없습니다");
+      expect(mockPrisma.notification.findUnique).toHaveBeenCalledWith({
         where: { id: "non-existent-id" },
-        data: { isRead: true },
       });
     });
   });

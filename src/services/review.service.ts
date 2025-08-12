@@ -346,7 +346,7 @@ const reviewService = {
 };
 
 // 기사님의 리뷰 통계 업데이트 함수
-const updateMoverReviewStats = async (moverId: string) => {
+export const updateMoverReviewStats = async (moverId: string) => {
   try {
     // 해당 기사님의 모든 리뷰 조회 (삭제되지 않은 것만)
     const reviews = await prisma.review.findMany({

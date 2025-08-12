@@ -2,6 +2,7 @@ import { Router } from "express";
 import reviewController from "../controllers/review.controller";
 import { defaultTranslationMiddleware, createCustomTranslationMiddleware } from "../middlewares/translationMiddleware";
 import { verifyAccessToken } from "../middlewares/verifyToken";
+import { cache, invalidateCacheByPattern } from "../middlewares/cacheMiddleware";
 
 const reviewRouter = Router();
 
@@ -407,8 +408,8 @@ reviewRouter.patch(
  * @swagger
  * /reviews/writable-estimateRequests:
  *   get:
- *     summary: 리뷰 작성 가능한 견적 요청 리스트 조회
- *     description: 리뷰를 작성할 수 있는 견적 요청 리스트를 조회합니다.
+ *     summary: 리뷰 작성 가능한 견적 요청 목록 조회
+ *     description: 리뷰를 작성할 수 있는 견적 요청 목록을 조회합니다.
  *     tags: [Review]
  *     security:
  *       - BearerAuth: []
@@ -430,27 +431,33 @@ reviewRouter.patch(
  *         description: 언어 설정 (ko, en, ja, zh)
  *     responses:
  *       200:
- *         description: 리뷰 작성 가능한 견적 요청 리스트 조회 성공
+ *         description: 리뷰 작성 가능한 견적 요청 목록 조회 성공
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/ReviewListResponse'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: 성공 여부
+ *                 message:
+ *                   type: string
+ *                   description: 응답 메시지
+ *                 data:
+ *                   $ref: '#/components/schemas/PaginationInfo'
  *             example:
  *               success: true
- *               message: "리뷰 작성 가능한 견적 요청 리스트입니다."
+ *               message: "리뷰 작성 가능한 견적 요청 목록입니다."
  *               data:
  *                 items:
  *                   - id: "clx..."
- *                     reviewId: "clxReview..."
+ *                     reviewId: "clx..."
  *                     mover:
  *                       id: "clxMover..."
  *                       profileImage: "https://.../profile.png"
  *                       nickname: "김코드 기사님"
  *                       shortIntro: "이사부터 정리까지 꼼꼼한 마무리!"
  *                       detailIntro: "10년간 서울 지역에서 이사 서비스를 제공해온 베테랑 기사님입니다."
- *                       career: 5
- *                       averageRating: 4.8
- *                       totalReviewCount: 127
  *                     moveType: "SMALL"
  *                     moveDate: "2024-07-01T00:00:00.000Z"
  *                     description: "소형 이사 서비스"
@@ -489,6 +496,7 @@ reviewRouter.patch(
 reviewRouter.get(
   "/writable-estimateRequests",
   verifyAccessToken,
+  cache({ ttlSeconds: 600 }), // 10분 캐시
   createCustomTranslationMiddleware([
     "id",
     "reviewId", 
@@ -685,6 +693,7 @@ reviewRouter.get(
 reviewRouter.get(
   "/customer/:customerId",
   verifyAccessToken,
+  cache({ ttlSeconds: 900 }), // 15분 캐시
   createCustomTranslationMiddleware([
     "id",
     "moverId",
@@ -883,6 +892,7 @@ reviewRouter.get(
  */
 reviewRouter.get(
   "/mover/:moverId",
+  cache({ ttlSeconds: 1200 }), // 20분 캐시
   createCustomTranslationMiddleware([
     "id",
     "estimateRequestId",

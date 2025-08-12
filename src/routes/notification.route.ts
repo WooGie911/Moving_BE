@@ -1,6 +1,7 @@
 import { Router } from "express";
 import notificationController from "../controllers/notification.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
+import { cache, invalidateCacheByPattern } from "../middlewares/cacheMiddleware";
 
 const notificationRouter = Router();
 
@@ -180,7 +181,11 @@ const notificationRouter = Router();
  *                 offset: 0
  *                 hasUnread: true
  */
-notificationRouter.get("/", verifyAccessToken, notificationController.getNotifications);
+notificationRouter.get("/", 
+  verifyAccessToken, 
+  cache({ ttlSeconds: 300 }), // 5분 캐시
+  notificationController.getNotifications
+);
 
 /**
  * @swagger

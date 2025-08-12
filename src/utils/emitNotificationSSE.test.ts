@@ -27,6 +27,15 @@ const mockCaptureSSEError = captureSSEError as jest.MockedFunction<
 describe("EmitNotificationSSE", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // sseClients 초기화
+    const { sseClients } = require("./emitNotificationSSE");
+    sseClients.clear();
+  });
+
+  afterEach(() => {
+    // sseClients 정리
+    const { sseClients } = require("./emitNotificationSSE");
+    sseClients.clear();
   });
 
   describe("emitNotificationSSE", () => {
@@ -39,8 +48,9 @@ describe("EmitNotificationSSE", () => {
         userId: "user-1",
         userType: "CUSTOMER" as UserType,
         type: "ESTIMATE_REQUEST_ARRIVED" as NotificationType,
-        title: "새로운 견적 요청",
-        content: "새로운 견적 요청이 생성되었습니다.",
+        messageKo: "새로운 견적 요청",
+        messageEn: "New estimate request",
+        messageZh: "新估价请求",
         path: "/estimates",
         isRead: false,
         createdAt: new Date(),
@@ -53,10 +63,9 @@ describe("EmitNotificationSSE", () => {
       };
 
       // sseClients를 직접 모킹
-      const emitModule = require("./emitNotificationSSE");
-      const originalSseClients = emitModule.sseClients;
-      emitModule.sseClients = new Map();
-      emitModule.sseClients.set(userId, mockClient);
+      const { sseClients } = require("./emitNotificationSSE");
+      sseClients.clear();
+      sseClients.set(userId, mockClient);
 
       (mockPrisma.notification.count as jest.Mock).mockResolvedValue(3);
 
@@ -80,8 +89,8 @@ describe("EmitNotificationSSE", () => {
         })}\n\n`
       );
 
-      // 원래 상태로 복원
-      emitModule.sseClients = originalSseClients;
+      // 정리
+      sseClients.delete(userId);
     });
 
     it("클라이언트가 연결되어 있지 않으면 아무것도 하지 않는다", async () => {
@@ -93,8 +102,9 @@ describe("EmitNotificationSSE", () => {
         userId: "user-1",
         userType: "CUSTOMER" as UserType,
         type: "ESTIMATE_REQUEST_ARRIVED" as NotificationType,
-        title: "새로운 견적 요청",
-        content: "새로운 견적 요청이 생성되었습니다.",
+        messageKo: "새로운 견적 요청",
+        messageEn: "New estimate request",
+        messageZh: "新估价请求",
         path: "/estimates",
         isRead: false,
         createdAt: new Date(),
@@ -118,8 +128,9 @@ describe("EmitNotificationSSE", () => {
         userId: "user-1",
         userType: "CUSTOMER" as UserType,
         type: "ESTIMATE_REQUEST_ARRIVED" as NotificationType,
-        title: "새로운 견적 요청",
-        content: "새로운 견적 요청이 생성되었습니다.",
+        messageKo: "새로운 견적 요청",
+        messageEn: "New estimate request",
+        messageZh: "新估价请求",
         path: "/estimates",
         isRead: false,
         createdAt: new Date(),
@@ -131,11 +142,9 @@ describe("EmitNotificationSSE", () => {
         write: jest.fn(),
       };
 
-      // sseClients를 직접 모킹
-      const emitModule = require("./emitNotificationSSE");
-      const originalSseClients = emitModule.sseClients;
-      emitModule.sseClients = new Map();
-      emitModule.sseClients.set(userId, mockClient);
+      // sseClients에 클라이언트 추가
+      const { sseClients } = require("./emitNotificationSSE");
+      sseClients.set(userId, mockClient);
 
       (mockPrisma.notification.count as jest.Mock).mockResolvedValue(0);
 
@@ -151,9 +160,6 @@ describe("EmitNotificationSSE", () => {
           hasUnread: false,
         })}\n\n`
       );
-
-      // 원래 상태로 복원
-      emitModule.sseClients = originalSseClients;
     });
 
     it("에러 발생 시 Sentry에 에러를 캡처한다", async () => {
@@ -165,8 +171,9 @@ describe("EmitNotificationSSE", () => {
         userId: "user-1",
         userType: "CUSTOMER" as UserType,
         type: "ESTIMATE_REQUEST_ARRIVED" as NotificationType,
-        title: "새로운 견적 요청",
-        content: "새로운 견적 요청이 생성되었습니다.",
+        messageKo: "새로운 견적 요청",
+        messageEn: "New estimate request",
+        messageZh: "新估价请求",
         path: "/estimates",
         isRead: false,
         createdAt: new Date(),
@@ -178,11 +185,9 @@ describe("EmitNotificationSSE", () => {
         write: jest.fn(),
       };
 
-      // sseClients를 직접 모킹
-      const emitModule = require("./emitNotificationSSE");
-      const originalSseClients = emitModule.sseClients;
-      emitModule.sseClients = new Map();
-      emitModule.sseClients.set(userId, mockClient);
+      // sseClients에 클라이언트 추가
+      const { sseClients } = require("./emitNotificationSSE");
+      sseClients.set(userId, mockClient);
 
       (mockPrisma.notification.count as jest.Mock).mockRejectedValue(new Error("DB 에러"));
 
@@ -198,9 +203,6 @@ describe("EmitNotificationSSE", () => {
           notificationId: "notification-1",
         }
       );
-
-      // 원래 상태로 복원
-      emitModule.sseClients = originalSseClients;
     });
 
     it("클라이언트 write 에러 시 Sentry에 에러를 캡처한다", async () => {
@@ -212,8 +214,9 @@ describe("EmitNotificationSSE", () => {
         userId: "user-1",
         userType: "CUSTOMER" as UserType,
         type: "ESTIMATE_REQUEST_ARRIVED" as NotificationType,
-        title: "새로운 견적 요청",
-        content: "새로운 견적 요청이 생성되었습니다.",
+        messageKo: "새로운 견적 요청",
+        messageEn: "New estimate request",
+        messageZh: "新估价请求",
         path: "/estimates",
         isRead: false,
         createdAt: new Date(),
@@ -227,11 +230,9 @@ describe("EmitNotificationSSE", () => {
         }),
       };
 
-      // sseClients를 직접 모킹
-      const emitModule = require("./emitNotificationSSE");
-      const originalSseClients = emitModule.sseClients;
-      emitModule.sseClients = new Map();
-      emitModule.sseClients.set(userId, mockClient);
+      // sseClients에 클라이언트 추가
+      const { sseClients } = require("./emitNotificationSSE");
+      sseClients.set(userId, mockClient);
 
       (mockPrisma.notification.count as jest.Mock).mockResolvedValue(1);
 
@@ -247,9 +248,6 @@ describe("EmitNotificationSSE", () => {
           notificationId: "notification-1",
         }
       );
-
-      // 원래 상태로 복원
-      emitModule.sseClients = originalSseClients;
     });
 
     it("다양한 알림 타입에 대해 올바른 페이로드를 전송한다", async () => {
@@ -272,11 +270,9 @@ describe("EmitNotificationSSE", () => {
         write: jest.fn(),
       };
 
-      // sseClients를 직접 모킹
-      const emitModule = require("./emitNotificationSSE");
-      const originalSseClients = emitModule.sseClients;
-      emitModule.sseClients = new Map();
-      emitModule.sseClients.set(userId, mockClient);
+      // sseClients에 클라이언트 추가
+      const { sseClients } = require("./emitNotificationSSE");
+      sseClients.set(userId, mockClient);
 
       (mockPrisma.notification.count as jest.Mock).mockResolvedValue(1);
 
@@ -288,8 +284,9 @@ describe("EmitNotificationSSE", () => {
           userId: "user-1",
           userType: "CUSTOMER" as UserType,
           type,
-          title: `${type} 알림`,
-          content: `${type} 알림 내용`,
+          messageKo: `${type} 알림`,
+          messageEn: `${type} notification`,
+          messageZh: `${type} 通知`,
           path: "/test",
           isRead: false,
           createdAt: new Date(),
@@ -308,9 +305,6 @@ describe("EmitNotificationSSE", () => {
           })}\n\n`
         );
       }
-
-      // 원래 상태로 복원
-      emitModule.sseClients = originalSseClients;
     });
 
     it("다양한 사용자 타입에 대해 올바른 페이로드를 전송한다", async () => {
@@ -320,11 +314,9 @@ describe("EmitNotificationSSE", () => {
         write: jest.fn(),
       };
 
-      // sseClients를 직접 모킹
-      const emitModule = require("./emitNotificationSSE");
-      const originalSseClients = emitModule.sseClients;
-      emitModule.sseClients = new Map();
-      emitModule.sseClients.set("user-1", mockClient);
+      // sseClients에 클라이언트 추가
+      const { sseClients } = require("./emitNotificationSSE");
+      sseClients.set("user-1", mockClient);
 
       (mockPrisma.notification.count as jest.Mock).mockResolvedValue(1);
 
@@ -336,8 +328,9 @@ describe("EmitNotificationSSE", () => {
           userId: "user-1",
           userType,
           type: "ESTIMATE_REQUEST_ARRIVED" as NotificationType,
-          title: `${userType} 알림`,
-          content: `${userType} 알림 내용`,
+          messageKo: `${userType} 알림`,
+          messageEn: `${userType} notification`,
+          messageZh: `${userType} 通知`,
           path: "/test",
           isRead: false,
           createdAt: new Date(),
@@ -356,9 +349,6 @@ describe("EmitNotificationSSE", () => {
           })}\n\n`
         );
       }
-
-      // 원래 상태로 복원
-      emitModule.sseClients = originalSseClients;
     });
   });
 }); 

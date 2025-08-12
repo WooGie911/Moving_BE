@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import notificationService from "../services/notification.service";
 import { UserType } from "@prisma/client";
+import { invalidateCacheByPattern } from "../middlewares/cacheMiddleware";
 
 const notificationController = {
   // 알림 목록 조회
@@ -38,6 +39,7 @@ const notificationController = {
   readNotification: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const notificationId = req.params.notificationId;
+      const userId = req.user?.userId;
       if (!notificationId) {
         return res
           .status(400)
@@ -46,6 +48,12 @@ const notificationController = {
       const notification = await notificationService.readNotification(
         notificationId as string
       );
+      
+      // 해당 사용자의 알림 캐시 무효화
+      if (userId) {
+        await invalidateCacheByPattern(`cache:GET:notifications:u:${userId}:*`);
+      }
+      
       res.json({
         success: true,
         message: "알림이 읽음 처리되었습니다.",
@@ -77,6 +85,10 @@ const notificationController = {
       const count = await notificationService.readAllNotifications(
         userId as string
       );
+      
+      // 해당 사용자의 알림 캐시 무효화
+      await invalidateCacheByPattern(`cache:GET:notifications:u:${userId}:*`);
+      
       res.json({
         success: true,
         message: "모든 알림이 읽음 처리되었습니다.",
