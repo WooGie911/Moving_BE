@@ -34,7 +34,7 @@ describe("Auth integration", () => {
     const cookies = getCookies(res);
     const access = cookies.find((c) => c.startsWith("accessToken="));
     expect(access).toBeDefined();
-    expect(access!).not.toEqual(expect.stringContaining("HttpOnly")); // accessToken
+    expect(access!).not.toEqual(expect.stringContaining("HttpOnly"));
     expect(access!).toEqual(expect.stringContaining("SameSite=Lax"));
     expect(access!).toEqual(expect.stringContaining("Path=/"));
     expect(access!).toEqual(expect.stringContaining("Max-Age="));
