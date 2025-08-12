@@ -151,14 +151,20 @@ const updateCustomerProfileCheck = async (
   }
 
   // 비밀번호 변경 요청 시 현재 비밀번호 검증
-  if (updateData.password) {
+  if (updateData.newPassword === updateData.password) {
+    throw new ValidationError("현재 비밀번호와 새로운 비밀번호가 동일합니다");
+  }
+
+  if (updateData.newPassword && updateData.password && user.encryptedPassword) {
     const isCurrentPasswordValid = await bcrypt.compare(
       updateData.password,
-      user.encryptedPassword!
+      user.encryptedPassword
     );
     if (!isCurrentPasswordValid) {
       throw new ValidationError("현재 비밀번호가 일치하지 않습니다");
     }
+  } else if (updateData.newPassword && !updateData.password) {
+    throw new ValidationError("현재 비밀번호를 입력해주세요");
   }
 
   // 유효성 검사
