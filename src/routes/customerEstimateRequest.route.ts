@@ -2,7 +2,11 @@ import { Router } from "express";
 import customerEstimateRequestController from "../controllers/customerEstimateRequest.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 import { createCustomTranslationMiddleware } from "../middlewares/translationMiddleware";
-import { defaultTranslationMiddleware } from "../middlewares/translationMiddleware";
+import {
+  cache,
+  invalidateCacheByKey,
+  invalidateCacheByPattern,
+} from "../middlewares/cacheMiddleware";
 
 const customerEstimateRequestRouter = Router();
 
@@ -35,6 +39,251 @@ const estimateRequestTranslationMiddleware = createCustomTranslationMiddleware([
   "isVeteran",
   "userType",
 ]);
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Address:
+ *       type: object
+ *       properties:
+ *         city:
+ *           type: string
+ *           description: 도시
+ *         district:
+ *           type: string
+ *           description: 구역
+ *         detail:
+ *           type: string
+ *           description: 상세주소
+ *         region:
+ *           type: string
+ *           description: 지역
+ *         zoneCode:
+ *           type: string
+ *           description: 우편번호
+ *
+ *     EstimateRequest:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: 견적요청 ID
+ *         customerId:
+ *           type: string
+ *           description: 고객 ID
+ *         moveType:
+ *           type: string
+ *           description: 이사 종류
+ *           enum: [SMALL, HOME, OFFICE]
+ *         moveDate:
+ *           type: string
+ *           description: 이사 날짜
+ *           format: date-time
+ *         createdAt:
+ *           type: string
+ *           description: 생성일시
+ *           format: date-time
+ *         description:
+ *           type: string
+ *           description: 설명
+ *         status:
+ *           type: string
+ *           description: 상태
+ *           enum: [PENDING, APPROVED, COMPLETED, EXPIRED]
+ *         fromAddress:
+ *           $ref: '#/components/schemas/Address'
+ *         toAddress:
+ *           $ref: '#/components/schemas/Address'
+ *
+ *     Mover:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: 기사님 ID
+ *         name:
+ *           type: string
+ *           description: 이름
+ *         userType:
+ *           type: string
+ *           description: 사용자 타입
+ *           enum: [MOVER]
+ *         moverImage:
+ *           type: string
+ *           nullable: true
+ *           description: 프로필 이미지
+ *         nickname:
+ *           type: string
+ *           description: 닉네임
+ *         isVeteran:
+ *           type: boolean
+ *           description: 베테랑 여부
+ *         shortIntro:
+ *           type: string
+ *           description: 간단 소개
+ *         detailIntro:
+ *           type: string
+ *           description: 상세 소개
+ *         career:
+ *           type: integer
+ *           description: 경력
+ *         workedCount:
+ *           type: integer
+ *           description: 작업 횟수
+ *         averageRating:
+ *           type: number
+ *           description: 평균 평점
+ *         totalReviewCount:
+ *           type: integer
+ *           description: 총 리뷰 수
+ *         serviceTypes:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: 서비스 타입 목록
+ *         serviceAreas:
+ *           type: array
+ *           items:
+ *             type: object
+ *           description: 서비스 지역 목록
+ *         isFavorite:
+ *           type: boolean
+ *           description: 찜 여부
+ *         totalFavoriteCount:
+ *           type: integer
+ *           description: 총 찜 수
+ *         Favorite:
+ *           type: array
+ *           items:
+ *             type: object
+ *           description: 찜 정보
+ *
+ *     Estimate:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: 견적 ID
+ *         price:
+ *           type: integer
+ *           description: 견적 가격
+ *         comment:
+ *           type: string
+ *           description: 견적 코멘트
+ *         status:
+ *           type: string
+ *           description: 견적 상태
+ *           enum: [PROPOSED, ACCEPTED, AUTO_REJECTED]
+ *         isDesignated:
+ *           type: boolean
+ *           description: 지정 견적 여부
+ *         createdAt:
+ *           type: string
+ *           description: 생성일시
+ *           format: date-time
+ *         mover:
+ *           $ref: '#/components/schemas/Mover'
+ *
+ *     PendingEstimateResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           description: 성공 여부
+ *         message:
+ *           type: string
+ *           description: 응답 메시지
+ *         data:
+ *           type: object
+ *           properties:
+ *             estimateRequest:
+ *               $ref: '#/components/schemas/EstimateRequest'
+ *               nullable: true
+ *             estimates:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Estimate'
+ *
+ *     CompletedEstimateResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           description: 성공 여부
+ *         message:
+ *           type: string
+ *           description: 응답 메시지
+ *         data:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               estimateRequest:
+ *                 $ref: '#/components/schemas/EstimateRequest'
+ *               estimates:
+ *                 type: array
+ *                 items:
+ *                   $ref: '#/components/schemas/Estimate'
+ *
+ *     CustomerQuoteSuccessResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           description: 성공 여부
+ *         message:
+ *           type: string
+ *           description: 응답 메시지
+ *         data:
+ *           oneOf:
+ *             - $ref: '#/components/schemas/EstimateRequest'
+ *             - type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   description: 견적 ID
+ *                 estimateRequestId:
+ *                   type: string
+ *                   description: 견적요청 ID
+ *                 price:
+ *                   type: integer
+ *                   nullable: true
+ *                   description: 견적 가격
+ *                 comment:
+ *                   type: string
+ *                   description: 견적 코멘트
+ *                 status:
+ *                   type: string
+ *                   description: 견적 상태
+ *                 isDesignated:
+ *                   type: boolean
+ *                   description: 지정 견적 여부
+ *                 createdAt:
+ *                   type: string
+ *                   description: 생성일시
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   description: 수정일시
+ *                   format: date-time
+ *
+ *     CustomerQuoteErrorResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           description: 성공 여부
+ *         message:
+ *           type: string
+ *           description: 에러 메시지
+ *         code:
+ *           type: string
+ *           description: 에러 코드
+ *         layer:
+ *           type: string
+ *           description: 에러 발생 레이어
+ */
 
 /**
  * @swagger
@@ -78,13 +327,13 @@ const estimateRequestTranslationMiddleware = createCustomTranslationMiddleware([
  *                   - id: "clx789..."
  *                     price: 150000
  *                     comment: "안전하고 신속한 이사 서비스"
- *                     status: "PENDING"
+ *                     status: "PROPOSED"
  *                     isDesignated: false
  *                     createdAt: "2025-07-10T01:00:00.000Z"
  *                     mover:
  *                       id: "clx999..."
  *                       name: "김기사"
- *                       userType: ["MOVER"]
+ *                       userType: "MOVER"
  *                       moverImage: null
  *                       nickname: "믿을만한김기사"
  *                       isVeteran: true
@@ -121,6 +370,7 @@ const estimateRequestTranslationMiddleware = createCustomTranslationMiddleware([
 customerEstimateRequestRouter.get(
   "/pending",
   verifyAccessToken,
+  cache({ ttlSeconds: 30, varyByAuth: true }),
   estimateRequestTranslationMiddleware,
   customerEstimateRequestController.getPendingEstimateRequest
 );
@@ -173,7 +423,7 @@ customerEstimateRequestRouter.get(
  *                       mover:
  *                         id: "clx999..."
  *                         name: "김기사"
- *                         userType: ["MOVER"]
+ *                         userType: "MOVER"
  *                         moverImage: null
  *                         nickname: "믿을만한김기사"
  *                         isVeteran: true
@@ -210,6 +460,7 @@ customerEstimateRequestRouter.get(
 customerEstimateRequestRouter.get(
   "/received",
   verifyAccessToken,
+  cache({ ttlSeconds: 30, varyByAuth: true }),
   estimateRequestTranslationMiddleware,
   customerEstimateRequestController.getReceivedEstimateRequests
 );
@@ -309,7 +560,7 @@ customerEstimateRequestRouter.patch(
  *                 estimateRequestId: "clx123..."
  *                 price: null
  *                 comment: "고객 요청으로 취소"
- *                 status: "REJECTED"
+ *                 status: "AUTO_REJECTED"
  *                 isDesignated: false
  *                 createdAt: "2025-07-10T01:00:00.000Z"
  *                 updatedAt: "2025-07-10T02:00:00.000Z"
