@@ -225,7 +225,7 @@ moverRouter.get(
   "/",
   cache({ ttlSeconds: 30, varyByAuth: false }), // 공개 데이터이므로 사용자별 캐시 분리 불필요
   defaultTranslationMiddleware,
-  moverController.getMoverListController
+  moverController.getMoverListController,
 );
 
 /**
@@ -320,9 +320,8 @@ moverRouter.get(
 moverRouter.get(
   "/favorite",
   verifyAccessToken,
-  cache({ ttlSeconds: 3, varyByAuth: true }), // 사용자별 캐시 분리 (개인 데이터)
   defaultTranslationMiddleware,
-  moverController.getFavoriteMoversController
+  moverController.getFavoriteMoversController,
 );
 
 /**
@@ -395,7 +394,7 @@ moverRouter.get(
   optionalAuth,
   cache({ ttlSeconds: 60, varyByAuth: true }), // 사용자별 캐시 분리 (로그인 여부에 따라 다른 응답)
   defaultTranslationMiddleware,
-  moverController.getMoverDetailController
+  moverController.getMoverDetailController,
 );
 
 /**
@@ -517,11 +516,7 @@ moverRouter.get(
  *               success: false
  *               message: "필수값 누락"
  */
-moverRouter.post(
-  "/:moverId/quote-request",
-  verifyAccessToken,
-  moverController.postDesignatedQuoteRequestController
-);
+moverRouter.post("/:moverId/quote-request", verifyAccessToken, moverController.postDesignatedQuoteRequestController);
 
 /**
  * @swagger
@@ -635,7 +630,7 @@ moverRouter.post(
 moverRouter.get(
   "/:moverId/quote-request/check",
   verifyAccessToken,
-  moverController.getDesignatedQuoteRequestCheckController
+  moverController.getDesignatedQuoteRequestCheckController,
 );
 
 /**
@@ -692,7 +687,7 @@ moverRouter.get(
 moverRouter.get(
   "/active-estimate-request/check",
   verifyAccessToken,
-  moverController.checkActiveEstimateRequestController
+  moverController.checkActiveEstimateRequestController,
 );
 
 export default moverRouter;

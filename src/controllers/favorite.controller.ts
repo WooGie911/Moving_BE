@@ -3,7 +3,7 @@ import favoriteService from "../services/favorite.service";
 import favoriteRepository from "../repositories/favorite.repository";
 import { IFavoriteRequest } from "../types/favorite.types";
 import * as Sentry from "@sentry/node";
-import { invalidateCacheByKey, invalidateCacheByPattern } from "../middlewares/cacheMiddleware";
+import { invalidateCacheByPattern } from "../middlewares/cacheMiddleware";
 
 // 커스텀 Request 타입 정의
 interface IUserRequest extends Request {
@@ -51,11 +51,15 @@ class FavoriteController {
 
       const result = await favoriteService.addFavorite(customerId!, moverId);
 
-      // 캐시 무효화: 목록과 상태 키 (해당 사용자 기준)
-      const listPattern = `cache:GET:/favorites/movers:u:${customerId}:*`;
-      const statusKey = ["cache", "GET", "/favorites", `/${moverId}/status`, `u:${customerId}`, ""];
-      void invalidateCacheByPattern(listPattern);
-      void invalidateCacheByKey(statusKey);
+      // 찜 상태 변경 시 기사님 상세 및 목록 캐시 무효화 (로그인/비로그인, 언어 파라미터 구분 없이 전부)
+      try {
+        // 상세: cache:GET:/movers:/{moverId}:*
+        void invalidateCacheByPattern(`cache:GET:/movers:/${moverId}:*`);
+        // 목록: cache:GET:/movers:*
+        void invalidateCacheByPattern(`cache:GET:/movers:*`);
+      } catch {
+        // 캐시 무효화 실패는 무시
+      }
 
       // 생성 성공 시 201, 그 외(이미 존재 등) 200
       const statusCode = result.success ? 201 : 200;
@@ -116,11 +120,13 @@ class FavoriteController {
 
       const result = await favoriteService.removeFavorite(customerId!, moverId);
 
-      // 캐시 무효화: 목록과 상태 키 (해당 사용자 기준)
-      const listPattern = `cache:GET:/favorites/movers:u:${customerId}:*`;
-      const statusKey = ["cache", "GET", "/favorites", `/${moverId}/status`, `u:${customerId}`, ""];
-      void invalidateCacheByPattern(listPattern);
-      void invalidateCacheByKey(statusKey);
+      // 찜 상태 변경 시 기사님 상세 및 목록 캐시 무효화 (로그인/비로그인, 언어 파라미터 구분 없이 전부)
+      try {
+        void invalidateCacheByPattern(`cache:GET:/movers:/${moverId}:*`);
+        void invalidateCacheByPattern(`cache:GET:/movers:*`);
+      } catch {
+        // 캐시 무효화 실패는 무시
+      }
 
       // success가 false인 경우도 정상적인 상황이므로 200 상태 코드로 반환
       return res.status(200).json(result);

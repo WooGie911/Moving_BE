@@ -2,7 +2,7 @@ import { Router } from "express";
 import favoriteController from "../controllers/favorite.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 import { defaultTranslationMiddleware } from "../middlewares/translationMiddleware";
-import { cache } from "../middlewares/cacheMiddleware";
+// cache 미들웨어는 찜하기 영역에서 사용하지 않음 (실시간 반영 위해 비활성화)
 
 const router = Router();
 
@@ -273,13 +273,7 @@ router.post("/", verifyAccessToken, favoriteController.addFavorite);
  *               success: false
  *               message: "서버 내부 오류가 발생했습니다"
  */
-router.get(
-  "/movers",
-  verifyAccessToken,
-  cache({ ttlSeconds: 30, varyByAuth: true }),
-  defaultTranslationMiddleware,
-  favoriteController.getFavoriteMovers,
-);
+router.get("/movers", verifyAccessToken, defaultTranslationMiddleware, favoriteController.getFavoriteMovers);
 
 /**
  * @swagger
@@ -347,13 +341,7 @@ router.get(
  *               success: false
  *               message: "서버 내부 오류가 발생했습니다"
  */
-router.get(
-  "/:moverId/status",
-  verifyAccessToken,
-  cache({ ttlSeconds: 15, varyByAuth: true }),
-  defaultTranslationMiddleware,
-  favoriteController.getFavoriteStatus,
-);
+router.get("/:moverId/status", verifyAccessToken, defaultTranslationMiddleware, favoriteController.getFavoriteStatus);
 
 /**
  * @swagger
