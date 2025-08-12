@@ -2,8 +2,9 @@ import { Router } from "express";
 import EstimateRequestController from "../controllers/estimateRequest.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 import { defaultTranslationMiddleware } from "../middlewares/translationMiddleware";
+import { cache } from "../middlewares/cacheMiddleware";
 import { estimateRequestLimiter } from "../middlewares/rateLimiter";
-// cache 미들웨어는 견적 요청 활성 조회에서 사용하지 않음 (실시간 반영 위해 비활성화)
+// 활성 견적 조회는 캐시 사용. 변경 트랜잭션에서 무효화 처리로 실시간성 보장
 
 const router = Router();
 const estimateRequestController = new EstimateRequestController();
@@ -377,8 +378,12 @@ router.post("/create", verifyAccessToken, estimateRequestLimiter, (req, res) =>
  *               success: false
  *               message: "서버 내부 오류가 발생했습니다."
  */
-router.get("/active", verifyAccessToken, defaultTranslationMiddleware, (req, res) =>
-  estimateRequestController.getActiveEstimateRequest(req, res),
+router.get(
+  "/active",
+  verifyAccessToken,
+  cache({ ttlSeconds: 60, varyByAuth: true }),
+  defaultTranslationMiddleware,
+  (req, res) => estimateRequestController.getActiveEstimateRequest(req, res),
 );
 
 // 견적 요청 수정
