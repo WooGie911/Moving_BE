@@ -1,4 +1,9 @@
-import { PrismaClient, NotificationType, Action, ActionType } from "@prisma/client";
+import {
+  PrismaClient,
+  NotificationType,
+  Action,
+  ActionType,
+} from "@prisma/client";
 
 // PrismaClient를 모킹
 jest.mock("@prisma/client", () => ({
@@ -17,7 +22,8 @@ jest.mock("@prisma/client", () => ({
     ESTIMATE_ARRIVED: "ESTIMATE_ARRIVED",
     ESTIMATE_STATUS_UPDATED: "ESTIMATE_STATUS_UPDATED",
     DESIGNATED_ESTIMATE_REQUEST_ARRIVED: "DESIGNATED_ESTIMATE_REQUEST_ARRIVED",
-    DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED: "DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED",
+    DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED:
+      "DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED",
     DESIGNATED_ESTIMATE_ARRIVED: "DESIGNATED_ESTIMATE_ARRIVED",
     DESIGNATED_ESTIMATE_STATUS_UPDATED: "DESIGNATED_ESTIMATE_STATUS_UPDATED",
     REVIEW_EVENT: "REVIEW_EVENT",
@@ -30,8 +36,10 @@ jest.mock("@prisma/client", () => ({
     ESTIMATE_SUBMITTED: "ESTIMATE_SUBMITTED",
     ESTIMATE_ACCEPTED: "ESTIMATE_ACCEPTED",
     ESTIMATE_REJECTED: "ESTIMATE_REJECTED",
-    DESIGNATED_ESTIMATE_REQUEST_SUBMITTED: "DESIGNATED_ESTIMATE_REQUEST_SUBMITTED",
-    DESIGNATED_ESTIMATE_REQUEST_REJECTED: "DESIGNATED_ESTIMATE_REQUEST_REJECTED",
+    DESIGNATED_ESTIMATE_REQUEST_SUBMITTED:
+      "DESIGNATED_ESTIMATE_REQUEST_SUBMITTED",
+    DESIGNATED_ESTIMATE_REQUEST_REJECTED:
+      "DESIGNATED_ESTIMATE_REQUEST_REJECTED",
     DESIGNATED_ESTIMATE_SUBMITTED: "DESIGNATED_ESTIMATE_SUBMITTED",
     DESIGNATED_ESTIMATE_ACCEPTED: "DESIGNATED_ESTIMATE_ACCEPTED",
     DESIGNATED_ESTIMATE_REJECTED: "DESIGNATED_ESTIMATE_REJECTED",
@@ -101,19 +109,24 @@ jest.mock("../utils/sentryUtils", () => ({
 
 import { notificationMiddleware } from "./notificationMiddleware";
 import { emitNotificationSSE } from "../utils/emitNotificationSSE";
-import { captureNotificationError, captureActionMappingError } from "../utils/sentryUtils";
+import {
+  captureNotificationError,
+  captureActionMappingError,
+} from "../utils/sentryUtils";
 import prisma from "../db/prisma/prisma";
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 const mockEmitNotificationSSE = emitNotificationSSE as jest.MockedFunction<
   typeof emitNotificationSSE
 >;
-const mockCaptureNotificationError = captureNotificationError as jest.MockedFunction<
-  typeof captureNotificationError
->;
-const mockCaptureActionMappingError = captureActionMappingError as jest.MockedFunction<
-  typeof captureActionMappingError
->;
+const mockCaptureNotificationError =
+  captureNotificationError as jest.MockedFunction<
+    typeof captureNotificationError
+  >;
+const mockCaptureActionMappingError =
+  captureActionMappingError as jest.MockedFunction<
+    typeof captureActionMappingError
+  >;
 
 describe("NotificationMiddleware", () => {
   beforeEach(() => {
@@ -268,9 +281,144 @@ describe("NotificationMiddleware", () => {
       expect(mockEmitNotificationSSE).not.toHaveBeenCalled();
     });
 
+    it("알림 생성 중 에러가 발생해도 Action 생성은 계속 진행된다", async () => {
+      // Setup
+      const mockAction: Action = {
+        id: "action-1",
+        type: "ESTIMATE_REQUEST_CREATE" as ActionType,
+        userId: "user-1",
+        entityId: "request-1",
+        entityType: "EstimateRequest",
+        description: "견적 요청이 생성되었습니다.",
+        metadata: null,
+        createdAt: new Date(),
+        deletedAt: null,
+      };
 
+      (mockPrisma.action.create as jest.Mock).mockResolvedValue(mockAction);
+      (mockPrisma.notification.create as jest.Mock).mockRejectedValue(
+        new Error("알림 생성 실패")
+      );
 
+      // Exercise
+      const params = {
+        model: "Action" as any,
+        action: "create" as any,
+        args: {
+          data: {
+            type: "ESTIMATE_REQUEST_CREATE",
+            userId: "user-1",
+            entityId: "request-1",
+            entityType: "EstimateRequest",
+            description: "견적 요청이 생성되었습니다.",
+          },
+        },
+        dataPath: [],
+        runInTransaction: false,
+      };
 
+      const next = jest.fn().mockResolvedValue(mockAction);
+
+      await notificationMiddleware(params, next);
+
+      // Assertion
+      expect(next).toHaveBeenCalledWith(params);
+      expect(mockEmitNotificationSSE).not.toHaveBeenCalled();
+      expect(mockCaptureActionMappingError).toHaveBeenCalledWith(
+        expect.any(Error),
+        {
+          operation: "notification_creation",
+          actionType: "ESTIMATE_REQUEST_CREATE",
+          entityId: "request-1",
+          entityType: "EstimateRequest",
+        }
+      );
+    });
+
+    it("SSE 이벤트 발송 실패 시 Sentry에 에러를 캡처한다", async () => {
+      // Setup
+      const mockAction: Action = {
+        id: "action-1",
+        type: "ESTIMATE_REQUEST_CREATE" as ActionType,
+        userId: "user-1",
+        entityId: "request-1",
+        entityType: "EstimateRequest",
+        description: "견적 요청이 생성되었습니다.",
+        metadata: null,
+        createdAt: new Date(),
+        deletedAt: null,
+      };
+
+      const mockNotification = {
+        id: "notification-1",
+        actionId: "action-1",
+        userId: "user-1",
+        userType: "CUSTOMER",
+        type: "ESTIMATE_REQUEST_ARRIVED",
+        messageKo: "새 견적 요청이 등록되었습니다.",
+        messageEn: "New estimate request has been registered.",
+        messageZh: "新估价请求已注册。",
+        path: "/estimates",
+        isRead: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+      };
+
+      (mockPrisma.action.create as jest.Mock).mockResolvedValue(mockAction);
+      (mockPrisma.notification.create as jest.Mock).mockResolvedValue(
+        mockNotification
+      );
+      mockEmitNotificationSSE.mockImplementation(async () => {
+        // 에러를 던지지 않고 Sentry 에러 캡처만 호출
+        mockCaptureNotificationError(new Error("SSE 발송 실패"), {
+          operation: "sse_emit",
+          userId: "user-1",
+          userType: "CUSTOMER",
+          notificationType: "ESTIMATE_REQUEST_ARRIVED",
+          actionType: "ESTIMATE_REQUEST_CREATE",
+        });
+      });
+
+      // Exercise
+      const params = {
+        model: "Action" as any,
+        action: "create" as any,
+        args: {
+          data: {
+            type: "ESTIMATE_REQUEST_CREATE",
+            userId: "user-1",
+            entityId: "request-1",
+            entityType: "EstimateRequest",
+            description: "견적 요청이 생성되었습니다.",
+          },
+        },
+        dataPath: [],
+        runInTransaction: false,
+      };
+
+      const next = jest.fn().mockResolvedValue(mockAction);
+
+      await notificationMiddleware(params, next);
+
+      // Assertion
+      expect(next).toHaveBeenCalledWith(params);
+      expect(mockPrisma.notification.create).toHaveBeenCalled();
+      expect(mockEmitNotificationSSE).toHaveBeenCalledWith(
+        "user-1",
+        mockNotification
+      );
+      expect(mockCaptureNotificationError).toHaveBeenCalledWith(
+        expect.any(Error),
+        {
+          operation: "sse_emit",
+          userId: "user-1",
+          userType: "CUSTOMER",
+          notificationType: "ESTIMATE_REQUEST_ARRIVED",
+          actionType: "ESTIMATE_REQUEST_CREATE",
+        }
+      );
+    });
 
     it("수신자가 없으면 알림을 생성하지 않는다", async () => {
       // Setup
@@ -289,7 +437,9 @@ describe("NotificationMiddleware", () => {
       (mockPrisma.action.create as jest.Mock).mockResolvedValue(mockAction);
 
       // actionNotificationMap 모킹을 동적으로 변경
-      const { actionNotificationMap } = require("../utils/actionNotificationMap");
+      const {
+        actionNotificationMap,
+      } = require("../utils/actionNotificationMap");
       actionNotificationMap.ESTIMATE_REQUEST_CREATE.getReceivers = jest
         .fn()
         .mockResolvedValue([]);
