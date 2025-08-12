@@ -19,6 +19,11 @@ jest.mock("../services/notification.service", () => ({
   readAllNotifications: jest.fn(),
 }));
 
+// 캐시 미들웨어 모킹
+jest.mock("../middlewares/cacheMiddleware", () => ({
+  invalidateCacheByPattern: jest.fn(),
+}));
+
 import notificationService from "../services/notification.service";
 const mockService = notificationService as jest.Mocked<
   typeof notificationService
