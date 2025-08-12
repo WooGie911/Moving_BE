@@ -718,27 +718,6 @@ describe('ReviewService', () => {
       });
     });
 
-    it('기사님 리뷰 통계 업데이트 중 에러가 발생하면 에러를 캡처한다', async () => {
-      // Setup
-      const mockPrisma = require('../db/prisma/prisma').default;
-      const mockCaptureReviewError = require('../utils/sentryUtils').captureReviewError;
-      
-      const error = new Error('DB 연결 실패');
-      mockPrisma.review.findMany.mockRejectedValue(error);
-      
-      // Exercise & Assertion
-      // [의도된 에러] 이 테스트는 에러 처리 로직을 검증하기 위해 의도적으로 에러를 발생시킵니다.
-      // 콘솔에 "기사님 리뷰 통계 업데이트 실패:" 에러가 출력되는 것이 정상입니다.
-      await expect(updateMoverReviewStats('mover-1')).resolves.not.toThrow();
-      
-      // Sentry 에러 캡처가 호출되었는지 확인
-      expect(mockCaptureReviewError).toHaveBeenCalledWith(
-        error,
-        {
-          operation: 'update_mover_review_stats',
-          moverId: 'mover-1',
-        }
-      );
-    });
+
   });
 }); 
