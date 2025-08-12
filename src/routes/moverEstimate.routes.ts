@@ -1060,51 +1060,6 @@ router.get(
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/MyRejectedEstimateResponse'
- *                             type: string
- *                             description: 이사 날짜
- *                             format: date-time
- *                           fromAddress:
- *                             type: object
- *                             properties:
- *                               id:
- *                                 type: string
- *                                 description: 주소 ID
- *                               zoneCode:
- *                                 type: string
- *                                 description: 우편번호
- *                               city:
- *                                 type: string
- *                                 description: 도시
- *                               district:
- *                                 type: string
- *                                 description: 구역
- *                               detail:
- *                                 type: string
- *                                 description: 상세주소
- *                               region:
- *                                 type: string
- *                                 description: 지역
- *                           toAddress:
- *                             type: object
- *                             properties:
- *                               id:
- *                                 type: string
- *                                 description: 주소 ID
- *                               zoneCode:
- *                                 type: string
- *                                 description: 우편번호
- *                               city:
- *                                 type: string
- *                                 description: 도시
- *                               district:
- *                                 type: string
- *                                 description: 구역
- *                               detail:
- *                                 type: string
- *                                 description: 상세주소
- *                               region:
- *                                 type: string
- *                                 description: 지역
  *             example:
  *               success: true
  *               message: "내가 반려한 견적 조회 성공"
