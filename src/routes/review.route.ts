@@ -1,8 +1,14 @@
 import { Router } from "express";
 import reviewController from "../controllers/review.controller";
-import { defaultTranslationMiddleware, createCustomTranslationMiddleware } from "../middlewares/translationMiddleware";
+import {
+  defaultTranslationMiddleware,
+  createCustomTranslationMiddleware,
+} from "../middlewares/translationMiddleware";
 import { verifyAccessToken } from "../middlewares/verifyToken";
-import { cache, invalidateCacheByPattern } from "../middlewares/cacheMiddleware";
+import {
+  cache,
+  invalidateCacheByPattern,
+} from "../middlewares/cacheMiddleware";
 
 const reviewRouter = Router();
 
@@ -496,14 +502,14 @@ reviewRouter.patch(
 reviewRouter.get(
   "/writable-estimateRequests",
   verifyAccessToken,
-  cache({ ttlSeconds: 600 }), // 10분 캐시
+  // cache({ ttlSeconds: 600 }), // 10분 캐시 - 제거하여 즉시 업데이트
   createCustomTranslationMiddleware([
     "id",
-    "reviewId", 
+    "reviewId",
     "profileImage",
     "nickname",
     "isDesigned",
-    "price"
+    "price",
   ]),
   reviewController.getWritableEstimateRequests
 );
@@ -693,14 +699,14 @@ reviewRouter.get(
 reviewRouter.get(
   "/customer/:customerId",
   verifyAccessToken,
-  cache({ ttlSeconds: 900 }), // 15분 캐시
+  // cache({ ttlSeconds: 900 }), // 15분 캐시 - 제거하여 즉시 업데이트
   createCustomTranslationMiddleware([
     "id",
     "moverId",
-    "profileImage", 
+    "profileImage",
     "nickname",
     "isDesigned",
-    "rating"
+    "rating",
   ]),
   reviewController.getWrittenReviews
 );
@@ -892,11 +898,11 @@ reviewRouter.get(
  */
 reviewRouter.get(
   "/mover/:moverId",
-  cache({ ttlSeconds: 1200 }), // 20분 캐시
+  // cache({ ttlSeconds: 1200 }), // 20분 캐시 - 제거하여 즉시 업데이트
   createCustomTranslationMiddleware([
     "id",
     "estimateRequestId",
-    "customerId", 
+    "customerId",
     "moverId",
     "profileImage",
     "nickname",
