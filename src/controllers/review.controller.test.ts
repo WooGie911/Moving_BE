@@ -25,6 +25,11 @@ jest.mock("../services/review.service", () => ({
   getReceivedReviews: jest.fn(),
 }));
 
+// 캐시 미들웨어 모킹
+jest.mock("../middlewares/cacheMiddleware", () => ({
+  invalidateReviewCaches: jest.fn(),
+}));
+
 import ReviewService from "../services/review.service";
 const mockService = ReviewService as jest.Mocked<typeof ReviewService>;
 
@@ -94,6 +99,10 @@ describe("ReviewController", () => {
         message: "리뷰가 작성되었습니다.",
         data: mockReview,
       });
+      
+      // 캐시 무효화 함수가 호출되었는지 확인
+      const { invalidateReviewCaches } = require("../middlewares/cacheMiddleware");
+      expect(invalidateReviewCaches).toHaveBeenCalledWith("user-1", "mover-1");
     });
 
     it("필수 파라미터가 누락된 경우 400 에러를 반환한다", async () => {

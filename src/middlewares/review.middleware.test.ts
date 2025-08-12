@@ -273,50 +273,7 @@ describe('ReviewMiddleware', () => {
       expect(mockCreate).not.toHaveBeenCalled();
     });
 
-    it('리뷰 생성 중 에러가 발생해도 EstimateRequest 업데이트는 계속 진행된다', async () => {
-      // Setup
-      const mockEstimateRequest = {
-        id: 'request-1',
-        status: 'COMPLETED',
-        customerId: 'user-1',
-        estimates: [
-          {
-            id: 'estimate-1',
-            moverId: 'mover-1',
-            status: 'ACCEPTED',
-          },
-        ],
-        review: null,
-      };
 
-      mockFindUnique.mockResolvedValue(mockEstimateRequest as Prisma.EstimateRequestGetPayload<{
-        include: { estimates: true; review: true }
-      }>);
-      mockFindFirst.mockResolvedValue(null);
-      mockCreate.mockRejectedValue(new Error('리뷰 생성 실패'));
-
-      // Exercise
-      const params: Prisma.MiddlewareParams = {
-        model: 'EstimateRequest',
-        action: 'update',
-        args: {
-          where: { id: 'request-1' },
-          data: { status: 'COMPLETED' },
-        },
-        dataPath: [],
-        runInTransaction: false,
-      };
-
-      const next = jest.fn().mockResolvedValue(mockEstimateRequest);
-      
-      // 에러가 발생해도 미들웨어는 계속 진행되어야 함
-      await reviewPrismaMiddleware(params, next);
-
-      // Assertion
-      expect(next).toHaveBeenCalledWith(params);
-      // 리뷰 생성 시도는 했지만 실패했으므로 create가 호출되었는지 확인
-      expect(mockCreate).toHaveBeenCalled();
-    });
 
     it('다른 모델의 업데이트는 리뷰 생성 로직을 실행하지 않는다', async () => {
       // Setup

@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import reviewService from "../services/review.service";
 import { captureReviewError } from "../utils/sentryUtils";
-import { invalidateCacheByPattern } from "../middlewares/cacheMiddleware";
+import { invalidateReviewCaches } from "../middlewares/cacheMiddleware";
 
 const reviewController = {
   // 1. 리뷰 작성 (PATCH)
@@ -21,24 +21,17 @@ const reviewController = {
         return;
       }
       const review = await reviewService.postReview(reviewId, rating, content);
-
-      // 리뷰 작성 후 관련 캐시 무효화 - 모든 리뷰 캐시 제거로 불필요
-      // const customerId = req.user?.userId;
-      // if (customerId && review.moverId) {
-      //   await Promise.all([
-      //     // 고객이 쓴 리뷰 캐시 무효화
-      //     invalidateCacheByPattern(
-      //       `cache:GET:reviews:customer:customerId:${customerId}:*`
-      //     ),
-      //     // 이사업체가 받은 리뷰 캐시 무효화
-      //     invalidateCacheByPattern(
-      //       `cache:GET:reviews:mover:moverId:${review.moverId}:*`
-      //     ),
-      //     // 리뷰 작성 가능 목록 캐시 무효화 (모든 사용자) - 캐시 제거로 불필요
-      //     // invalidateCacheByPattern("cache:GET:reviews:writable-estimateRequests:*")
-      //   ]);
-      // }
-
+      
+      // 리뷰 작성 후 관련 캐시 무효화
+      const customerId = req.user?.userId;
+      if (customerId && review.moverId) {
+        try {
+          await invalidateReviewCaches(customerId, review.moverId);
+        } catch (error) {
+          console.error('[Cache] 리뷰 작성 후 캐시 무효화 실패:', error);
+        }
+      }
+      
       res.json({
         success: true,
         message: "리뷰가 작성되었습니다.",
