@@ -105,4 +105,37 @@ describe("moverScheduleRepository.getMonthlySchedules", () => {
 
     await expect(moverScheduleRepository.getMonthlySchedules("mover-1", 2025, 7)).rejects.toThrow(RepositoryQueryError);
   });
+
+  it("주소 detail이 null일 때 undefined로 매핑된다", async () => {
+    const moverId = "mover-1";
+    const year = 2025;
+    const month = 7;
+
+    const mockEstimates = [
+      {
+        id: "estimate-1",
+        moverId,
+        estimateRequestId: "req-1",
+        createdAt: new Date("2025-07-01T00:00:00Z"),
+        updatedAt: new Date("2025-07-02T00:00:00Z"),
+        estimateRequest: {
+          id: "req-1",
+          moveDate: new Date("2025-07-15"),
+          moveType: "HOME",
+          status: "APPROVED",
+          customer: { id: "c1", name: "고객A", customerImage: null, nickname: null },
+          fromAddress: { id: "a1", zoneCode: "", city: "서울", district: "강남구", detail: null, region: "SEOUL" },
+          toAddress: { id: "a2", zoneCode: "", city: "서울", district: "서초구", detail: null, region: "SEOUL" },
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      },
+    ];
+
+    mockedPrisma.estimate.findMany.mockResolvedValue(mockEstimates as any);
+
+    const result = await moverScheduleRepository.getMonthlySchedules(moverId, year, month);
+    expect(result[0].fromAddress.detail).toBeUndefined();
+    expect(result[0].toAddress.detail).toBeUndefined();
+  });
 });

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import moverScheduleService from "./moverSchedule.service";
 import moverScheduleRepository from "../repositories/moverSchedule.repository";
-import { ServiceValidationError } from "../types/errors.types";
+import { ServiceValidationError, RepositoryError, ServiceError } from "../types/errors.types";
 
 // Repository 모킹
 jest.mock("../repositories/moverSchedule.repository");
@@ -128,6 +128,22 @@ describe("MoverScheduleService", () => {
 
       // When & Then
       await expect(moverScheduleService.getMonthlySchedules(moverId, year, month)).rejects.toThrow("Repository error");
+    });
+
+    it("레포지토리 오류 클래스면 ServiceError로 변환한다", async () => {
+      // Given
+      const moverId = "test-mover-id";
+      const year = 2025;
+      const month = 7;
+      const repoErrorInstance = new RepositoryError("레포지토리 오류");
+
+      mockRepository.getMonthlySchedules.mockRejectedValue(repoErrorInstance);
+
+      // When & Then
+      await expect(moverScheduleService.getMonthlySchedules(moverId, year, month)).rejects.toThrow(ServiceError);
+      await expect(moverScheduleService.getMonthlySchedules(moverId, year, month)).rejects.toThrow(
+        "월별 스케줄 조회 중 오류가 발생했습니다",
+      );
     });
 
     it("주소를 한국어 포맷으로 변환한다", async () => {

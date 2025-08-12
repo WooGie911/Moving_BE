@@ -21,8 +21,7 @@ jest.mock("@prisma/client", () => ({
     ESTIMATE_REQUEST_ARRIVED: "ESTIMATE_REQUEST_ARRIVED",
     ESTIMATE_ARRIVED: "ESTIMATE_ARRIVED",
     ESTIMATE_STATUS_UPDATED: "ESTIMATE_STATUS_UPDATED",
-    DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED:
-      "DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED",
+    DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED: "DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED",
     DESIGNATED_ESTIMATE_STATUS_UPDATED: "DESIGNATED_ESTIMATE_STATUS_UPDATED",
     REVIEW_EVENT: "REVIEW_EVENT",
     FAVORITE_EVENT: "FAVORITE_EVENT",
@@ -34,10 +33,8 @@ jest.mock("@prisma/client", () => ({
     ESTIMATE_SUBMITTED: "ESTIMATE_SUBMITTED",
     ESTIMATE_ACCEPTED: "ESTIMATE_ACCEPTED",
     ESTIMATE_REJECTED: "ESTIMATE_REJECTED",
-    DESIGNATED_ESTIMATE_REQUEST_SUBMITTED:
-      "DESIGNATED_ESTIMATE_REQUEST_SUBMITTED",
-    DESIGNATED_ESTIMATE_REQUEST_REJECTED:
-      "DESIGNATED_ESTIMATE_REQUEST_REJECTED",
+    DESIGNATED_ESTIMATE_REQUEST_SUBMITTED: "DESIGNATED_ESTIMATE_REQUEST_SUBMITTED",
+    DESIGNATED_ESTIMATE_REQUEST_REJECTED: "DESIGNATED_ESTIMATE_REQUEST_REJECTED",
     FAVORITE_ADDED: "FAVORITE_ADDED",
     FAVORITE_REMOVED: "FAVORITE_REMOVED",
   },
@@ -64,10 +61,7 @@ describe("FavoriteRepository - 유닛 테스트", () => {
 
       mockDatabase.favorite.findUnique.mockResolvedValue(mockFavorite);
 
-      const result = await favoriteRepository.getFavoriteStatus(
-        customerId,
-        moverId
-      );
+      const result = await favoriteRepository.getFavoriteStatus(customerId, moverId);
 
       expect(mockDatabase.favorite.findUnique).toHaveBeenCalledWith({
         where: {
@@ -89,10 +83,7 @@ describe("FavoriteRepository - 유닛 테스트", () => {
 
       mockDatabase.favorite.findUnique.mockResolvedValue(null);
 
-      const result = await favoriteRepository.getFavoriteStatus(
-        customerId,
-        moverId
-      );
+      const result = await favoriteRepository.getFavoriteStatus(customerId, moverId);
 
       expect(result).toEqual({
         isFavorited: false,
@@ -106,14 +97,14 @@ describe("FavoriteRepository - 유닛 테스트", () => {
 
       mockDatabase.favorite.findUnique.mockResolvedValue(null);
 
-      const result = await favoriteRepository.getFavoriteStatus(
-        customerId,
-        moverId
-      );
+      mockDatabase.favorite.count.mockResolvedValue(7);
 
+      const result = await favoriteRepository.getFavoriteStatus(customerId, moverId);
+
+      expect(mockDatabase.favorite.count).toHaveBeenCalledWith({ where: { moverId, deletedAt: null } });
       expect(result).toEqual({
         isFavorited: false,
-        favoriteCount: undefined,
+        favoriteCount: 7,
       });
     });
   });
@@ -156,12 +147,10 @@ describe("FavoriteRepository - 유닛 테스트", () => {
         updatedAt: new Date(),
       };
 
+      mockDatabase.favorite.findUnique.mockResolvedValue(mockFavorite);
       mockDatabase.favorite.delete.mockResolvedValue(mockFavorite);
 
-      const result = await favoriteRepository.removeFavorite(
-        customerId,
-        moverId
-      );
+      const result = await favoriteRepository.removeFavorite(customerId, moverId);
 
       expect(mockDatabase.favorite.delete).toHaveBeenCalledWith({
         where: {
@@ -172,6 +161,148 @@ describe("FavoriteRepository - 유닛 테스트", () => {
         },
       });
       expect(result).toEqual(mockFavorite);
+    });
+
+    it("삭제할 찜이 없으면 null을 반환한다", async () => {
+      const customerId = "customer-1";
+      const moverId = "mover-1";
+
+      mockDatabase.favorite.findUnique.mockResolvedValue(null);
+
+      const result = await favoriteRepository.removeFavorite(customerId, moverId);
+
+      expect(result).toBeNull();
+      expect(mockDatabase.favorite.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getFavoriteMovers", () => {
+    it("cursor 없이 limit 초과 시 hasNext/nextCursor를 설정한다", async () => {
+      const customerId = "customer-1";
+      const limit = 2;
+      const moverBase = {
+        id: "mX",
+        name: "name",
+        nickname: "nick",
+        moverImage: null,
+        shortIntro: "short",
+        detailIntro: "detail",
+        career: 3,
+        workedCount: 10,
+        averageRating: 4.5,
+        totalReviewCount: 2,
+        totalFavoriteCount: 5,
+        currentAreas: [],
+        serviceTypes: ["SMALL"],
+        Favorite: [{ deletedAt: null }],
+      } as any;
+      const items = [
+        { id: "fav-1", createdAt: new Date(), mover: { ...moverBase, id: "m1" } },
+        { id: "fav-2", createdAt: new Date(), mover: { ...moverBase, id: "m2" } },
+        { id: "fav-3", createdAt: new Date(), mover: { ...moverBase, id: "m3" } },
+      ];
+      mockDatabase.favorite.findMany.mockResolvedValue(items);
+
+      const result = await favoriteRepository.getFavoriteMovers(customerId, limit);
+
+      expect(result.hasNext).toBe(true);
+      expect(result.nextCursor).toBe("fav-3");
+      expect(mockDatabase.favorite.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ customerId, deletedAt: null }),
+          take: limit + 1,
+          orderBy: { createdAt: "desc" },
+        }),
+      );
+    });
+
+    it("cursor가 있으면 cursor/skip 옵션이 포함된다", async () => {
+      const customerId = "customer-1";
+      const limit = 2;
+      const cursor = "fav-10";
+      const moverBase = {
+        id: "mX",
+        name: "name",
+        nickname: "nick",
+        moverImage: null,
+        shortIntro: "short",
+        detailIntro: "detail",
+        career: 3,
+        workedCount: 10,
+        averageRating: 4.5,
+        totalReviewCount: 2,
+        totalFavoriteCount: 5,
+        currentAreas: [],
+        serviceTypes: [],
+        Favorite: [],
+      } as any;
+      const items = [
+        { id: "fav-11", mover: { ...moverBase, id: "m1" } },
+        { id: "fav-12", mover: { ...moverBase, id: "m2" } },
+      ];
+      mockDatabase.favorite.findMany.mockResolvedValue(items);
+
+      await favoriteRepository.getFavoriteMovers(customerId, limit, cursor);
+
+      expect(mockDatabase.favorite.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cursor: { id: cursor },
+          skip: 1,
+        }),
+      );
+    });
+
+    it("limit 이하일 때 hasNext가 false이고 nextCursor가 undefined이다", async () => {
+      const customerId = "customer-1";
+      const limit = 3;
+      const mover = {
+        id: "m1",
+        name: "name",
+        nickname: "nick",
+        moverImage: null,
+        shortIntro: "short",
+        detailIntro: "detail",
+        career: 3,
+        workedCount: 10,
+        averageRating: 4.5,
+        totalReviewCount: 2,
+        totalFavoriteCount: 5,
+        currentAreas: [],
+        serviceTypes: ["HOME"],
+        Favorite: [],
+      } as any;
+      mockDatabase.favorite.findMany.mockResolvedValue([{ id: "fav-1", mover }]);
+
+      const result = await favoriteRepository.getFavoriteMovers(customerId, limit);
+      expect(result.hasNext).toBe(false);
+      expect(result.nextCursor).toBeUndefined();
+    });
+
+    it("serviceTypes 매핑과 Favorite undefined 처리를 검증한다", async () => {
+      const customerId = "customer-1";
+      const limit = 3;
+      const mover = {
+        id: "m9",
+        name: "name",
+        nickname: "nick",
+        moverImage: null,
+        shortIntro: "short",
+        detailIntro: "detail",
+        career: 3,
+        workedCount: 10,
+        averageRating: 4.5,
+        totalReviewCount: 2,
+        totalFavoriteCount: 5,
+        currentAreas: [],
+        serviceTypes: ["OTHER"],
+        Favorite: undefined,
+      } as any;
+      mockDatabase.favorite.findMany.mockResolvedValue([{ id: "fav-9", mover }]);
+
+      const result = await favoriteRepository.getFavoriteMovers(customerId, limit);
+
+      expect(result.items[0].serviceTypes).toEqual([{ service: { name: "기타" } }]);
+      expect(result.items[0].favoriteCount).toBe(0);
     });
   });
 
@@ -222,8 +353,7 @@ describe("FavoriteRepository - 유닛 테스트", () => {
 
       mockDatabase.favorite.findUnique.mockResolvedValue(mockFavoriteDetail);
 
-      const result =
-        await favoriteRepository.getFavoriteDetailForAction(favoriteId);
+      const result = await favoriteRepository.getFavoriteDetailForAction(favoriteId);
 
       expect(mockDatabase.favorite.findUnique).toHaveBeenCalledWith({
         where: { id: favoriteId },
@@ -253,8 +383,7 @@ describe("FavoriteRepository - 유닛 테스트", () => {
 
       mockDatabase.favorite.findUnique.mockResolvedValue(null);
 
-      const result =
-        await favoriteRepository.getFavoriteDetailForAction(favoriteId);
+      const result = await favoriteRepository.getFavoriteDetailForAction(favoriteId);
 
       expect(mockDatabase.favorite.findUnique).toHaveBeenCalledWith({
         where: { id: favoriteId },

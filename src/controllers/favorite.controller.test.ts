@@ -1,5 +1,3 @@
-import favoriteController from "./favorite.controller";
-
 jest.mock("../services/favorite.service", () => ({
   addFavorite: jest.fn(),
   removeFavorite: jest.fn(),
@@ -7,17 +5,20 @@ jest.mock("../services/favorite.service", () => ({
 
 jest.mock("../repositories/favorite.repository", () => ({
   getFavoriteStatus: jest.fn(),
+  getFavoriteMovers: jest.fn(),
 }));
 
+jest.mock("../middlewares/cacheMiddleware", () => ({
+  invalidateCacheByPattern: jest.fn(),
+}));
+
+import favoriteController from "./favorite.controller";
 import favoriteService from "../services/favorite.service";
 import favoriteRepository from "../repositories/favorite.repository";
+import { invalidateCacheByPattern } from "../middlewares/cacheMiddleware";
 
-const mockFavoriteService = favoriteService as jest.Mocked<
-  typeof favoriteService
->;
-const mockFavoriteRepository = favoriteRepository as jest.Mocked<
-  typeof favoriteRepository
->;
+const mockFavoriteService = favoriteService as jest.Mocked<typeof favoriteService>;
+const mockFavoriteRepository = favoriteRepository as jest.Mocked<typeof favoriteRepository>;
 
 describe("FavoriteController - 유닛 테스트", () => {
   let mockReq: any;
@@ -56,11 +57,27 @@ describe("FavoriteController - 유닛 테스트", () => {
 
       await favoriteController.addFavorite(mockReq, mockRes);
 
-      expect(mockFavoriteService.addFavorite).toHaveBeenCalledWith(
-        "test-user-id",
-        "mover-1"
-      );
+      expect(mockFavoriteService.addFavorite).toHaveBeenCalledWith("test-user-id", "mover-1");
       expect(mockRes.status).toHaveBeenCalledWith(201);
+      expect(mockRes.json).toHaveBeenCalledWith(mockResponse);
+    });
+
+    it("서비스가 success=false를 반환하면 200을 반환한다 (상태코드 분기)", async () => {
+      mockReq.body = { moverId: "mover-1" };
+      (invalidateCacheByPattern as jest.Mock).mockImplementationOnce(() => {
+        throw new Error("cache error");
+      });
+
+      const mockResponse = {
+        success: false,
+        message: "이미 처리됨",
+        data: { isFavorited: true, favoriteCount: 3 },
+      } as any;
+      mockFavoriteService.addFavorite.mockResolvedValue(mockResponse);
+
+      await favoriteController.addFavorite(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith(mockResponse);
     });
 
@@ -103,9 +120,7 @@ describe("FavoriteController - 유닛 테스트", () => {
 
     it("서비스 에러 시 500 에러를 반환한다", async () => {
       mockReq.body = { moverId: "mover-1" };
-      mockFavoriteService.addFavorite.mockRejectedValue(
-        new Error("Service error")
-      );
+      mockFavoriteService.addFavorite.mockRejectedValue(new Error("Service error"));
 
       await favoriteController.addFavorite(mockReq, mockRes);
 
@@ -133,10 +148,7 @@ describe("FavoriteController - 유닛 테스트", () => {
 
       await favoriteController.removeFavorite(mockReq, mockRes);
 
-      expect(mockFavoriteService.removeFavorite).toHaveBeenCalledWith(
-        "test-user-id",
-        "mover-1"
-      );
+      expect(mockFavoriteService.removeFavorite).toHaveBeenCalledWith("test-user-id", "mover-1");
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith(mockResponse);
     });
@@ -180,9 +192,7 @@ describe("FavoriteController - 유닛 테스트", () => {
 
     it("서비스 에러 시 500 에러를 반환한다", async () => {
       mockReq.params = { moverId: "mover-1" };
-      mockFavoriteService.removeFavorite.mockRejectedValue(
-        new Error("Service error")
-      );
+      mockFavoriteService.removeFavorite.mockRejectedValue(new Error("Service error"));
 
       await favoriteController.removeFavorite(mockReq, mockRes);
 
@@ -206,10 +216,7 @@ describe("FavoriteController - 유닛 테스트", () => {
 
       await favoriteController.getFavoriteStatus(mockReq, mockRes);
 
-      expect(mockFavoriteRepository.getFavoriteStatus).toHaveBeenCalledWith(
-        "test-user-id",
-        "mover-1"
-      );
+      expect(mockFavoriteRepository.getFavoriteStatus).toHaveBeenCalledWith("test-user-id", "mover-1");
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith({
         success: true,
@@ -245,9 +252,7 @@ describe("FavoriteController - 유닛 테스트", () => {
 
     it("서비스 에러 시 500 에러를 반환한다", async () => {
       mockReq.params = { moverId: "mover-1" };
-      mockFavoriteRepository.getFavoriteStatus.mockRejectedValue(
-        new Error("Service error")
-      );
+      mockFavoriteRepository.getFavoriteStatus.mockRejectedValue(new Error("Service error"));
 
       await favoriteController.getFavoriteStatus(mockReq, mockRes);
 
@@ -255,6 +260,95 @@ describe("FavoriteController - 유닛 테스트", () => {
       expect(mockRes.json).toHaveBeenCalledWith({
         success: false,
         message: "서버 내부 오류가 발생했습니다.",
+      });
+    });
+  });
+
+  describe("getFavoriteMovers", () => {
+    it("limit 기본값(3)으로 찜 목록을 성공 조회한다", async () => {
+      mockReq.query = {};
+      const mockResult = { items: [{ id: "m1" }], nextCursor: undefined, hasNext: false } as any;
+      mockFavoriteRepository.getFavoriteMovers.mockResolvedValue(mockResult);
+
+      await favoriteController.getFavoriteMovers(mockReq, mockRes);
+
+      expect(mockFavoriteRepository.getFavoriteMovers).toHaveBeenCalledWith("test-user-id", 3, undefined);
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        success: true,
+        message: "찜한 기사님 목록을 성공적으로 조회했습니다.",
+        data: mockResult,
+      });
+    });
+
+    it("limit이 1 미만이면 400을 반환한다", async () => {
+      mockReq.query = { limit: "-1" };
+
+      await favoriteController.getFavoriteMovers(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ success: false, message: "limit은 1-50 사이의 값이어야 합니다." });
+    });
+
+    it("limit이 50 초과면 400을 반환한다", async () => {
+      mockReq.query = { limit: "51" };
+
+      await favoriteController.getFavoriteMovers(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ success: false, message: "limit은 1-50 사이의 값이어야 합니다." });
+    });
+
+    it("limit이 0이면 기본값 3으로 처리되어 200을 반환한다", async () => {
+      mockReq.query = { limit: "0" };
+      const mockResult = { items: [], nextCursor: undefined, hasNext: false } as any;
+      mockFavoriteRepository.getFavoriteMovers.mockResolvedValue(mockResult);
+
+      await favoriteController.getFavoriteMovers(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        success: true,
+        message: "찜한 기사님 목록을 성공적으로 조회했습니다.",
+        data: mockResult,
+      });
+    });
+
+    it("CUSTOMER가 아니면 403을 반환한다", async () => {
+      mockReq.user.userType = "MOVER";
+      mockReq.query = { limit: "3" };
+
+      await favoriteController.getFavoriteMovers(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        success: false,
+        message: "일반 유저만 찜하기를 사용할 수 있습니다.",
+      });
+    });
+
+    it("레포지토리 에러 시 500을 반환한다", async () => {
+      mockReq.query = { limit: "3", cursor: "cur-1" };
+      mockFavoriteRepository.getFavoriteMovers.mockRejectedValue(new Error("db error"));
+
+      await favoriteController.getFavoriteMovers(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ success: false, message: "서버 내부 오류가 발생했습니다." });
+    });
+
+    it("cursor 파라미터가 문자열이 아닐 때도 200으로 처리한다(선택 파라미터 분기)", async () => {
+      mockReq.query = { limit: "3", cursor: 123 as any };
+      const mockResult = { items: [], nextCursor: undefined, hasNext: false } as any;
+      mockFavoriteRepository.getFavoriteMovers.mockResolvedValue(mockResult);
+
+      await favoriteController.getFavoriteMovers(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        success: true,
+        message: "찜한 기사님 목록을 성공적으로 조회했습니다.",
+        data: mockResult,
       });
     });
   });
