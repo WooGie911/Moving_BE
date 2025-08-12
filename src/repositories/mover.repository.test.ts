@@ -576,8 +576,6 @@ describe("MoverRepository - 유닛 테스트", () => {
       const dto = {
         quoteId: "quote-1",
         moverId: "mover-1",
-        message: undefined,
-        expiresAt: new Date(),
       };
 
       const mockRequest = {
@@ -595,8 +593,6 @@ describe("MoverRepository - 유닛 테스트", () => {
         data: {
           estimateRequestId: dto.quoteId,
           moverId: dto.moverId,
-          message: dto.message,
-          expiresAt: dto.expiresAt,
         },
       });
       expect(result).toEqual(mockRequest);
@@ -612,8 +608,6 @@ describe("MoverRepository - 유닛 테스트", () => {
 
       const mockRequest = {
         id: "request-1",
-        message: "테스트 메시지",
-        expiresAt: new Date(),
         createdAt: new Date(),
       };
 
@@ -630,8 +624,6 @@ describe("MoverRepository - 유닛 테스트", () => {
         },
         select: {
           id: true,
-          message: true,
-          expiresAt: true,
           createdAt: true,
           status: true,
         },
