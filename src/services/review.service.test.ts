@@ -6,6 +6,23 @@ jest.mock('../utils/sentryUtils', () => ({
   captureReviewError: jest.fn(),
 }));
 
+// Prisma 클라이언트 모킹
+jest.mock('../db/prisma/prisma', () => {
+  const mockPrisma = {
+    review: {
+      findMany: jest.fn().mockResolvedValue([]),
+      update: jest.fn(),
+    },
+    user: {
+      update: jest.fn().mockResolvedValue({}),
+    },
+  };
+  return {
+    __esModule: true,
+    default: mockPrisma,
+  };
+});
+
 // 레포지토리 모듈 전체를 모킹
 jest.mock('../repositories/review.repository', () => ({
   postReview: jest.fn(),
@@ -22,6 +39,8 @@ const mockRepository = reviewRepository as jest.Mocked<typeof reviewRepository>;
 jest.mock('./action.service', () => ({
   createAction: jest.fn(),
 }));
+
+
 
 import actionService from './action.service';
 const mockActionService = actionService as jest.Mocked<typeof actionService>;
@@ -55,6 +74,8 @@ describe('ReviewService', () => {
       mockRepository.postReview.mockResolvedValue(mockReview as any);
       mockRepository.getReviewDetailForAction.mockResolvedValue(mockReviewDetail as any);
       mockActionService.createAction.mockResolvedValue({} as any);
+      
+
 
       // Exercise
       const result = await ReviewService.postReview('review-1', 5, '좋은 서비스였습니다.');
@@ -662,21 +683,57 @@ describe('ReviewService', () => {
   });
 
   describe('updateMoverReviewStats', () => {
+    it('성공적으로 기사님 리뷰 통계를 업데이트한다', async () => {
+      // Setup
+      const mockPrisma = require('../db/prisma/prisma').default;
+      const mockReviews = [
+        { rating: 5 },
+        { rating: 4 },
+        { rating: 5 },
+      ];
+      
+      mockPrisma.review.findMany.mockResolvedValue(mockReviews);
+      mockPrisma.user.update.mockResolvedValue({ id: 'mover-1' });
+      
+      // Exercise
+      await updateMoverReviewStats('mover-1');
+      
+      // Assertion
+      expect(mockPrisma.review.findMany).toHaveBeenCalledWith({
+        where: {
+          moverId: 'mover-1',
+          deletedAt: null,
+          status: 'COMPLETED',
+        },
+        select: {
+          rating: true,
+        },
+      });
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'mover-1' },
+        data: {
+          totalReviewCount: 3,
+          averageRating: 4.7,
+        },
+      });
+    });
+
     it('기사님 리뷰 통계 업데이트 중 에러가 발생하면 에러를 캡처한다', async () => {
       // Setup
+      const mockPrisma = require('../db/prisma/prisma').default;
       const mockCaptureReviewError = require('../utils/sentryUtils').captureReviewError;
       
-      // 실제 Prisma 호출이 실패하도록 하여 에러 처리 라인을 커버
-      // 이 테스트는 실제 데이터베이스 연결 실패로 인해 에러가 발생하고
-      // catch 블록의 에러 캡처 로직이 실행되는 것을 확인합니다.
+      const error = new Error('DB 연결 실패');
+      mockPrisma.review.findMany.mockRejectedValue(error);
       
       // Exercise & Assertion
-      // 에러가 발생해도 함수가 정상적으로 완료되어야 함 (에러 캡처 후)
+      // [의도된 에러] 이 테스트는 에러 처리 로직을 검증하기 위해 의도적으로 에러를 발생시킵니다.
+      // 콘솔에 "기사님 리뷰 통계 업데이트 실패:" 에러가 출력되는 것이 정상입니다.
       await expect(updateMoverReviewStats('mover-1')).resolves.not.toThrow();
       
       // Sentry 에러 캡처가 호출되었는지 확인
       expect(mockCaptureReviewError).toHaveBeenCalledWith(
-        expect.any(Error),
+        error,
         {
           operation: 'update_mover_review_stats',
           moverId: 'mover-1',

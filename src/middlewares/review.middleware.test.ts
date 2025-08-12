@@ -309,7 +309,8 @@ describe('ReviewMiddleware', () => {
 
       const next = jest.fn().mockResolvedValue(mockEstimateRequest);
       
-      // 에러가 발생해도 미들웨어는 계속 진행되어야 함
+      // [의도된 에러] 이 테스트는 에러 처리 로직을 검증하기 위해 의도적으로 에러를 발생시킵니다.
+      // 콘솔에 "Review middleware error:" 에러가 출력되는 것이 정상입니다.
       await reviewPrismaMiddleware(params, next);
 
       // Assertion
