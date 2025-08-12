@@ -1,7 +1,6 @@
 import { Router } from "express";
 import notificationController from "../controllers/notification.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
-import { cache, invalidateCacheByPattern } from "../middlewares/cacheMiddleware";
 
 const notificationRouter = Router();
 
@@ -181,9 +180,9 @@ const notificationRouter = Router();
  *                 offset: 0
  *                 hasUnread: true
  */
-notificationRouter.get("/", 
-  verifyAccessToken, 
-  cache({ ttlSeconds: 300 }), // 5분 캐시
+notificationRouter.get(
+  "/",
+  verifyAccessToken,
   notificationController.getNotifications
 );
 
@@ -217,7 +216,11 @@ notificationRouter.get("/",
  *                 id: "clx..."
  *                 isRead: true
  */
-notificationRouter.patch("/:notificationId/read", verifyAccessToken, notificationController.readNotification);
+notificationRouter.patch(
+  "/:notificationId/read",
+  verifyAccessToken,
+  notificationController.readNotification
+);
 
 /**
  * @swagger
@@ -241,6 +244,10 @@ notificationRouter.patch("/:notificationId/read", verifyAccessToken, notificatio
  *               data:
  *                 count: 7
  */
-notificationRouter.patch("/read-all", verifyAccessToken, notificationController.readAllNotifications);
+notificationRouter.patch(
+  "/read-all",
+  verifyAccessToken,
+  notificationController.readAllNotifications
+);
 
 export default notificationRouter;
