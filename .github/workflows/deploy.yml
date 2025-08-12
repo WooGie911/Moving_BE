@@ -51,7 +51,7 @@ jobs:
       - name: Upload via SCP
         run: |
           scp "$PKG_NAME" \
-            "ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/apps/moving-be/$PKG_NAME"
+            "ec2-user@${{ secrets.EC2_HOST }}:~/$PKG_NAME"
 
       - name: Remote deploy
         run: |
