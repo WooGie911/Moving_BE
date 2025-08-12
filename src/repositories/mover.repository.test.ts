@@ -22,6 +22,16 @@ const mockPrisma = {
 
 jest.mock("@prisma/client", () => ({
   PrismaClient: jest.fn().mockImplementation(() => mockPrisma),
+  NotificationType: {
+    WELCOME: "WELCOME",
+    ESTIMATE_REQUEST_ARRIVED: "ESTIMATE_REQUEST_ARRIVED",
+    ESTIMATE_ARRIVED: "ESTIMATE_ARRIVED",
+  },
+  ActionType: {
+    WELCOME: "WELCOME",
+    ESTIMATE_REQUEST_CREATE: "ESTIMATE_REQUEST_CREATE",
+    ESTIMATE_SUBMITTED: "ESTIMATE_SUBMITTED",
+  },
 }));
 
 import moverRepository from "./mover.repository";
@@ -81,20 +91,8 @@ describe("MoverRepository - 유닛 테스트", () => {
         orderBy: [{ totalReviewCount: "desc" }, { id: "asc" }],
         skip: 0,
         take: 11,
-        select: {
-          id: true,
-          nickname: true,
-          name: true,
-          career: true,
-          shortIntro: true,
-          detailIntro: true,
-          workedCount: true,
-          averageRating: true,
-          totalReviewCount: true,
-          serviceTypes: true,
+        include: {
           Favorite: true,
-          moverImage: true,
-          currentAreas: true,
         },
       });
       expect(result).toEqual({
@@ -148,20 +146,8 @@ describe("MoverRepository - 유닛 테스트", () => {
         orderBy: [{ totalReviewCount: "desc" }, { id: "asc" }],
         skip: 0,
         take: 11,
-        select: {
-          id: true,
-          nickname: true,
-          name: true,
-          career: true,
-          shortIntro: true,
-          detailIntro: true,
-          workedCount: true,
-          averageRating: true,
-          totalReviewCount: true,
-          serviceTypes: true,
+        include: {
           Favorite: true,
-          moverImage: true,
-          currentAreas: true,
         },
       });
       expect(result).toEqual({
@@ -191,20 +177,8 @@ describe("MoverRepository - 유닛 테스트", () => {
         orderBy: [{ career: "desc" }, { id: "asc" }],
         skip: 0,
         take: 11,
-        select: {
-          id: true,
-          nickname: true,
-          name: true,
-          career: true,
-          shortIntro: true,
-          detailIntro: true,
-          workedCount: true,
-          averageRating: true,
-          totalReviewCount: true,
-          serviceTypes: true,
+        include: {
           Favorite: true,
-          moverImage: true,
-          currentAreas: true,
         },
       });
     });
@@ -253,20 +227,8 @@ describe("MoverRepository - 유닛 테스트", () => {
         orderBy: [{ workedCount: "desc" }, { id: "asc" }],
         skip: 0,
         take: 11,
-        select: {
-          id: true,
-          nickname: true,
-          name: true,
-          career: true,
-          shortIntro: true,
-          detailIntro: true,
-          workedCount: true,
-          averageRating: true,
-          totalReviewCount: true,
-          currentAreas: true,
-          serviceTypes: true,
+        include: {
           Favorite: true,
-          moverImage: true,
         },
       });
     });
@@ -295,20 +257,8 @@ describe("MoverRepository - 유닛 테스트", () => {
         orderBy: [{ totalReviewCount: "desc" }, { id: "asc" }],
         skip: 0,
         take: 11,
-        select: {
-          id: true,
-          nickname: true,
-          name: true,
-          career: true,
-          shortIntro: true,
-          detailIntro: true,
-          workedCount: true,
-          averageRating: true,
-          totalReviewCount: true,
-          currentAreas: true,
-          serviceTypes: true,
+        include: {
           Favorite: true,
-          moverImage: true,
         },
       });
     });
@@ -358,20 +308,7 @@ describe("MoverRepository - 유닛 테스트", () => {
         },
         include: {
           mover: {
-            select: {
-              id: true,
-              nickname: true,
-              name: true,
-              career: true,
-              shortIntro: true,
-              detailIntro: true,
-              workedCount: true,
-              averageRating: true,
-              totalReviewCount: true,
-              serviceAreas: true,
-              currentAreas: true,
-              serviceTypes: true,
-              moverImage: true,
+            include: {
               Favorite: true,
             },
           },
@@ -438,19 +375,7 @@ describe("MoverRepository - 유닛 테스트", () => {
 
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: moverId, deletedAt: null },
-        select: {
-          id: true,
-          nickname: true,
-          name: true,
-          career: true,
-          shortIntro: true,
-          detailIntro: true,
-          workedCount: true,
-          averageRating: true,
-          totalReviewCount: true,
-          currentAreas: true,
-          serviceTypes: true,
-          moverImage: true,
+        include: {
           Favorite: true,
         },
       });
@@ -545,19 +470,7 @@ describe("MoverRepository - 유닛 테스트", () => {
 
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: moverId, deletedAt: null },
-        select: {
-          id: true,
-          nickname: true,
-          name: true,
-          career: true,
-          shortIntro: true,
-          detailIntro: true,
-          workedCount: true,
-          averageRating: true,
-          totalReviewCount: true,
-          currentAreas: true,
-          serviceTypes: true,
-          moverImage: true,
+        include: {
           Favorite: true,
         },
       });

@@ -82,8 +82,8 @@ const createMockTransformedMover = (overrides = {}) => ({
   introduction: "안전한 이사 서비스",
   description: "안전하고 신뢰할 수 있는 이사 서비스",
   completedCount: 150,
-  averageRating: 4.5,
-  totalReviewCount: 45,
+  avgRating: 4.5,
+  reviewCount: 45,
   favoriteCount: 23,
   lastActivityAt: null,
   user: {
@@ -91,12 +91,7 @@ const createMockTransformedMover = (overrides = {}) => ({
     name: "김***",
     email: "",
   },
-  serviceRegions: [
-    {
-      region: "SEOUL",
-      district: null,
-    },
-  ],
+  serviceRegions: ["SEOUL"],
   serviceTypes: [
     {
       service: {
@@ -114,11 +109,10 @@ const createMockRepositoryFavoriteMover = (overrides = {}) => ({
   ...overrides,
 });
 
-// 기사님 상세용 (isFavorited, activeEstimateRequest 추가)
+// 기사님 상세용 (isFavorited 추가)
 const createMockTransformedMoverDetail = (overrides = {}) => ({
   ...createMockTransformedMover(),
   isFavorited: false,
-  activeEstimateRequest: null,
   ...overrides,
 });
 
@@ -251,11 +245,6 @@ describe("MoverService - 유닛 테스트", () => {
       const mockRepositoryResponse = createMockRepositoryMover({
         favoriteCount: 5,
         isFavorited: true,
-        activeEstimateRequest: {
-          id: 42,
-          status: "PENDING",
-          moveDate: "2025-08-15T09:00:00.000Z",
-        },
       });
 
       mockGetMoverDetail.mockResolvedValue(mockRepositoryResponse as any);
@@ -267,11 +256,6 @@ describe("MoverService - 유닛 테스트", () => {
         createMockTransformedMoverDetail({
           favoriteCount: 5,
           isFavorited: true,
-          activeEstimateRequest: {
-            id: 42,
-            status: "PENDING",
-            moveDate: "2025-08-15T09:00:00.000Z",
-          },
         })
       );
     });
@@ -301,7 +285,6 @@ describe("MoverService - 유닛 테스트", () => {
       const result = await fetchMoverDetail(moverId, userId);
 
       expect(result?.isFavorited).toBe(false);
-      expect(result?.activeEstimateRequest).toBeNull();
     });
   });
 
