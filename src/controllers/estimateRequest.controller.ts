@@ -3,7 +3,7 @@ import EstimateRequestService from "../services/estimateRequest.service";
 import { convertRegionToKorean } from "../utils/addressUtils";
 import { validateMoveDate, formatDateForAPI } from "../utils/dateUtils";
 import * as Sentry from "@sentry/node";
-// 캐시 미사용: 견적 활성 조회는 컨트롤러 레벨의 캐시 무효화를 제거합니다
+import { invalidateCacheByPattern } from "../middlewares/cacheMiddleware";
 import {
   TCreateEstimateRequest,
   TUpdateEstimateRequest,
@@ -192,7 +192,13 @@ class EstimateRequestController {
 
       const createdRequest = await estimateRequestService.getActiveEstimateRequestByUserId(userId);
 
-      // 캐시 무효화 로직 제거됨
+      // 캐시 무효화: 활성 견적 조회 캐시 제거 (사용자별, 쿼리변수 포함)
+      try {
+        // Key format: cache:GET:/estimateRequests:/active:u:{userId}:{query}
+        void invalidateCacheByPattern(`cache:GET:/estimateRequests:/active:u:${userId}:*`);
+      } catch {
+        /* ignore */
+      }
 
       return res.status(201).json({
         success: true,
@@ -320,7 +326,12 @@ class EstimateRequestController {
 
       const updatedRequest = await estimateRequestService.getActiveEstimateRequestByUserId(userId);
 
-      // 캐시 무효화 로직 제거됨
+      // 캐시 무효화: 활성 견적 조회 캐시 제거 (사용자별, 쿼리변수 포함)
+      try {
+        void invalidateCacheByPattern(`cache:GET:/estimateRequests:/active:u:${userId}:*`);
+      } catch {
+        /* ignore */
+      }
 
       return res.status(200).json({
         success: true,
@@ -384,7 +395,12 @@ class EstimateRequestController {
       }
 
       await estimateRequestService.cancelActiveEstimateRequest(active.id);
-      // 캐시 무효화 로직 제거됨
+      // 캐시 무효화: 활성 견적 조회 캐시 제거 (사용자별, 쿼리변수 포함)
+      try {
+        void invalidateCacheByPattern(`cache:GET:/estimateRequests:/active:u:${userId}:*`);
+      } catch {
+        /* ignore */
+      }
       return res.status(204).send();
     } catch (error) {
       // 센트리로 에러 전송
