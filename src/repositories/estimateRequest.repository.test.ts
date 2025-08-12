@@ -322,7 +322,7 @@ describe("EstimateRequest Repository 테스트", () => {
           customer: {
             select: {
               id: true,
-              name: true,
+              nickname: true,
             },
           },
         },
@@ -368,6 +368,7 @@ describe("EstimateRequest Repository 테스트", () => {
             select: {
               id: true,
               name: true,
+              nickname: true,
             },
           },
           estimates: {
@@ -497,6 +498,7 @@ describe("EstimateRequest Repository 테스트", () => {
               mover: {
                 id: "mover-id-1",
                 name: "기사1",
+                nickname: "별명1",
               },
             },
           ],
@@ -538,6 +540,7 @@ describe("EstimateRequest Repository 테스트", () => {
                 select: {
                   id: true,
                   name: true,
+                  nickname: true,
                 },
               },
             },
@@ -731,6 +734,7 @@ describe("EstimateRequest Repository 테스트", () => {
       expect(mockPrisma.estimate.findFirst).toHaveBeenCalledWith({
         where: {
           estimateRequestId: "request-id",
+          status: "PROPOSED",
           deletedAt: null,
         },
       });

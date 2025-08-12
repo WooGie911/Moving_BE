@@ -54,6 +54,11 @@ describe("EstimateRequest 유저 플로우 테스트", () => {
       __esModule: true,
       convertRegionToKorean: jest.fn().mockReturnValue("서울특별시"),
     }));
+    // 캐시 무효화(레디스) 부작용 제거
+    jest.doMock("../middlewares/cacheMiddleware", () => ({
+      __esModule: true,
+      invalidateCacheByPattern: jest.fn(),
+    }));
     jest.doMock("../utils/dateUtils", () => ({
       __esModule: true,
       validateMoveDate: jest.fn().mockReturnValue({ isValid: true }),
@@ -899,6 +904,103 @@ describe("EstimateRequest 유저 플로우 테스트", () => {
         success: false,
         message: "서비스 에러",
       });
+    });
+
+    it("활성 견적 요청이 있을 때 포맷팅된 데이터로 200 반환", async () => {
+      // Arrange
+      mockRequest = {
+        user: {
+          userId: "customer-user-id",
+          userType: "CUSTOMER" as const,
+        },
+      } as any;
+
+      const active = {
+        id: "req-1",
+        customerId: "customer-user-id",
+        moveType: "HOME",
+        moveDate: new Date("2025-01-01"),
+        status: "PENDING",
+        createdAt: new Date("2025-01-01"),
+        updatedAt: new Date("2025-01-02"),
+        fromAddress: { region: "SEOUL", city: "강남구", district: "역삼동", detail: "101", zoneCode: "06123" },
+        toAddress: { region: "SEOUL", city: "서초구", district: "서초동", detail: "202", zoneCode: "06611" },
+      } as any;
+
+      mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
+      mockEstimateRequestService.getActiveEstimateRequestByUserId.mockResolvedValue(active);
+      mockEstimateRequestService.hasEstimateFromMover.mockResolvedValue(false);
+
+      // Act
+      await controller.getActiveEstimateRequest(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true, hasActive: true, hasEstimate: false, data: expect.any(Object) }),
+      );
+    });
+
+    it("업데이트: 잘못된 날짜로 400 반환 (movingDate 검증 분기)", async () => {
+      mockRequest = {
+        user: { userId: "u1", userType: "CUSTOMER" as const },
+        body: {
+          movingType: "home",
+          movingDate: "2023-01-01",
+          departure: { roadAddress: "A", detailAddress: "1", zoneCode: "z" },
+          arrival: { roadAddress: "B", detailAddress: "2", zoneCode: "z" },
+        },
+      } as any;
+
+      mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
+      mockEstimateRequestService.checkCustomerProfile.mockResolvedValue(true);
+      mockEstimateRequestService.hasPendingRequest.mockResolvedValue(true);
+      mockEstimateRequestService.hasEstimateFromMover.mockResolvedValue(false);
+      mockEstimateRequestService.getActiveEstimateRequestByUserId.mockResolvedValue({ id: "req", status: "PENDING" });
+
+      const { validateMoveDate } = require("../utils/dateUtils");
+      (validateMoveDate as jest.Mock).mockReturnValue({
+        isValid: false,
+        errorMessage: "이사일은 오늘 이후로 설정해주세요.",
+      });
+
+      await controller.updateActiveEstimateRequest(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({ success: false, message: "이사일은 오늘 이후로 설정해주세요." });
+    });
+
+    it("업데이트: 출발지/도착지 동일로 400 반환 (주소 검증 분기)", async () => {
+      const same = { roadAddress: "같음", detailAddress: "1", zoneCode: "z" };
+      mockRequest = {
+        user: { userId: "u1", userType: "CUSTOMER" as const },
+        body: { movingType: "home", movingDate: "2025-12-25", departure: same, arrival: same },
+      } as any;
+
+      mockEstimateRequestService.checkUserType.mockResolvedValue({ isCustomer: true, isMover: false });
+      mockEstimateRequestService.checkCustomerProfile.mockResolvedValue(true);
+      mockEstimateRequestService.hasPendingRequest.mockResolvedValue(true);
+      mockEstimateRequestService.hasEstimateFromMover.mockResolvedValue(false);
+      mockEstimateRequestService.getActiveEstimateRequestByUserId.mockResolvedValue({ id: "req", status: "PENDING" });
+
+      await controller.updateActiveEstimateRequest(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({ success: false, message: "출발지와 도착지는 달라야 합니다." });
+    });
+
+    it("업데이트: 인증 누락 시 401 반환 (catch 분기)", async () => {
+      mockRequest = {} as any;
+      await controller.updateActiveEstimateRequest(mockRequest as Request, mockResponse as Response);
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.json).toHaveBeenCalledWith({ success: false, message: "인증이 필요합니다." });
+    });
+
+    it("취소: 인증 누락 시 401 반환 (catch 분기)", async () => {
+      mockRequest = {} as any;
+      await controller.cancelActiveEstimateRequest(mockRequest as Request, mockResponse as Response);
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.json).toHaveBeenCalledWith({ success: false, message: "인증이 필요합니다." });
     });
   });
 });
