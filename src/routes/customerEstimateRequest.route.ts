@@ -55,6 +55,7 @@ const estimateRequestTranslationMiddleware = createCustomTranslationMiddleware([
  *           description: 구역
  *         detail:
  *           type: string
+ *           nullable: true
  *           description: 상세주소
  *         region:
  *           type: string
@@ -86,6 +87,7 @@ const estimateRequestTranslationMiddleware = createCustomTranslationMiddleware([
  *           format: date-time
  *         description:
  *           type: string
+ *           nullable: true
  *           description: 설명
  *         status:
  *           type: string
@@ -106,36 +108,46 @@ const estimateRequestTranslationMiddleware = createCustomTranslationMiddleware([
  *           type: string
  *           description: 이름
  *         userType:
- *           type: string
- *           description: 사용자 타입
- *           enum: [MOVER]
+ *           type: array
+ *           items:
+ *             type: string
+ *             enum: [MOVER]
+ *           description: 사용자 타입 배열
  *         moverImage:
  *           type: string
  *           nullable: true
  *           description: 프로필 이미지
  *         nickname:
  *           type: string
+ *           nullable: true
  *           description: 닉네임
  *         isVeteran:
  *           type: boolean
+ *           nullable: true
  *           description: 베테랑 여부
  *         shortIntro:
  *           type: string
+ *           nullable: true
  *           description: 간단 소개
  *         detailIntro:
  *           type: string
+ *           nullable: true
  *           description: 상세 소개
  *         career:
  *           type: integer
+ *           nullable: true
  *           description: 경력
  *         workedCount:
  *           type: integer
+ *           nullable: true
  *           description: 작업 횟수
  *         averageRating:
  *           type: number
+ *           nullable: true
  *           description: 평균 평점
  *         totalReviewCount:
  *           type: integer
+ *           nullable: true
  *           description: 총 리뷰 수
  *         serviceTypes:
  *           type: array
@@ -167,9 +179,11 @@ const estimateRequestTranslationMiddleware = createCustomTranslationMiddleware([
  *           description: 견적 ID
  *         price:
  *           type: integer
+ *           nullable: true
  *           description: 견적 가격
  *         comment:
  *           type: string
+ *           nullable: true
  *           description: 견적 코멘트
  *         status:
  *           type: string
@@ -240,33 +254,38 @@ const estimateRequestTranslationMiddleware = createCustomTranslationMiddleware([
  *             - $ref: '#/components/schemas/EstimateRequest'
  *             - type: object
  *               properties:
- *                 id:
- *                   type: string
- *                   description: 견적 ID
- *                 estimateRequestId:
- *                   type: string
- *                   description: 견적요청 ID
- *                 price:
- *                   type: integer
- *                   nullable: true
- *                   description: 견적 가격
- *                 comment:
- *                   type: string
- *                   description: 견적 코멘트
- *                 status:
- *                   type: string
- *                   description: 견적 상태
- *                 isDesignated:
- *                   type: boolean
- *                   description: 지정 견적 여부
- *                 createdAt:
- *                   type: string
- *                   description: 생성일시
- *                   format: date-time
- *                 updatedAt:
- *                   type: string
- *                   description: 수정일시
- *                   format: date-time
+ *                 estimateRequest:
+ *                   $ref: '#/components/schemas/EstimateRequest'
+ *                 estimate:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       description: 견적 ID
+ *                     estimateRequestId:
+ *                       type: string
+ *                       description: 견적요청 ID
+ *                     price:
+ *                       type: integer
+ *                       nullable: true
+ *                       description: 견적 가격
+ *                     comment:
+ *                       type: string
+ *                       description: 견적 코멘트
+ *                     status:
+ *                       type: string
+ *                       description: 견적 상태
+ *                     isDesignated:
+ *                       type: boolean
+ *                       description: 지정 견적 여부
+ *                     createdAt:
+ *                       type: string
+ *                       description: 생성일시
+ *                       format: date-time
+ *                     updatedAt:
+ *                       type: string
+ *                       description: 수정일시
+ *                       format: date-time
  *
  *     CustomerQuoteErrorResponse:
  *       type: object
@@ -333,7 +352,7 @@ const estimateRequestTranslationMiddleware = createCustomTranslationMiddleware([
  *                     mover:
  *                       id: "clx999..."
  *                       name: "김기사"
- *                       userType: "MOVER"
+ *                       userType: ["MOVER"]
  *                       moverImage: null
  *                       nickname: "믿을만한김기사"
  *                       isVeteran: true
@@ -423,7 +442,7 @@ customerEstimateRequestRouter.get(
  *                       mover:
  *                         id: "clx999..."
  *                         name: "김기사"
- *                         userType: "MOVER"
+ *                         userType: ["MOVER"]
  *                         moverImage: null
  *                         nickname: "믿을만한김기사"
  *                         isVeteran: true
@@ -494,7 +513,33 @@ customerEstimateRequestRouter.get(
  *               data:
  *                 estimateRequest:
  *                   id: "clx123..."
+ *                   customerId: "clx456..."
+ *                   moveType: "SMALL"
+ *                   moveDate: "2025-07-10T00:33:16.456Z"
+ *                   createdAt: "2025-07-10T00:33:16.456Z"
+ *                   description: "이사 요청 설명"
  *                   status: "APPROVED"
+ *                   fromAddress:
+ *                     city: "서울시"
+ *                     district: "강남구"
+ *                     detail: "123-456"
+ *                     region: "SEOUL"
+ *                     zoneCode: "06123"
+ *                   toAddress:
+ *                     city: "경기도"
+ *                     district: "성남시"
+ *                     detail: "789-012"
+ *                     region: "GYEONGGI"
+ *                     zoneCode: "13579"
+ *                 estimate:
+ *                   id: "clx789..."
+ *                   estimateRequestId: "clx123..."
+ *                   price: 150000
+ *                   comment: "안전하고 신속한 이사 서비스"
+ *                   status: "ACCEPTED"
+ *                   isDesignated: false
+ *                   createdAt: "2025-07-10T01:00:00.000Z"
+ *                   updatedAt: "2025-07-10T01:00:00.000Z"
  *       400:
  *         description: 유효하지 않은 견적 ID
  *         content:

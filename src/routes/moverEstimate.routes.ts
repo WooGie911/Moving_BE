@@ -57,10 +57,12 @@ router.use(verifyAccessToken);
  *           required: true
  *         price:
  *           type: integer
+ *           nullable: true
  *           description: 견적 가격
  *           required: true
  *         comment:
  *           type: string
+ *           nullable: true
  *           description: 견적 코멘트
  *           required: true
  *       required:
@@ -106,9 +108,11 @@ router.use(verifyAccessToken);
  *               description: 기사님 ID
  *             price:
  *               type: integer
+ *               nullable: true
  *               description: 견적 가격
  *             comment:
  *               type: string
+ *               nullable: true
  *               description: 견적 코멘트
  *             status:
  *               type: string
@@ -136,6 +140,7 @@ router.use(verifyAccessToken);
  *           description: 구역
  *         detail:
  *           type: string
+ *           nullable: true
  *           description: 상세주소
  *         region:
  *           type: string
@@ -149,15 +154,19 @@ router.use(verifyAccessToken);
  *           description: 고객 ID
  *         name:
  *           type: string
+ *           nullable: true
  *           description: 고객명
  *         currentArea:
  *           type: string
+ *           nullable: true
  *           description: 현재 지역
  *         customerImage:
  *           type: string
+ *           nullable: true
  *           description: 고객 이미지 URL
  *         nickname:
  *           type: string
+ *           nullable: true
  *           description: 닉네임
  *
  *     Mover:
@@ -168,30 +177,38 @@ router.use(verifyAccessToken);
  *           description: 기사님 ID
  *         name:
  *           type: string
+ *           nullable: true
  *           description: 기사님 이름
  *         moverImage:
  *           type: string
+ *           nullable: true
  *           description: 기사님 이미지 URL
  *         nickname:
  *           type: string
  *           description: 닉네임
  *         shortIntro:
  *           type: string
+ *           nullable: true
  *           description: 짧은 소개
  *         detailIntro:
  *           type: string
+ *           nullable: true
  *           description: 상세 소개
  *         career:
  *           type: integer
+ *           nullable: true
  *           description: 경력 (년)
  *         workedCount:
  *           type: integer
+ *           nullable: true
  *           description: 작업 횟수
  *         averageRating:
  *           type: number
+ *           nullable: true
  *           description: 평균 평점
  *         totalReviewCount:
  *           type: integer
+ *           nullable: true
  *           description: 총 리뷰 수
  *         serviceTypes:
  *           type: array
@@ -224,6 +241,7 @@ router.use(verifyAccessToken);
  *           description: 도착지 주소 ID
  *         description:
  *           type: string
+ *           nullable: true
  *           description: 설명
  *         status:
  *           type: string
@@ -265,9 +283,11 @@ router.use(verifyAccessToken);
  *                 description: 견적 요청 ID
  *               price:
  *                 type: integer
+ *                 nullable: true
  *                 description: 가격
  *               comment:
  *                 type: string
+ *                 nullable: true
  *                 description: 코멘트
  *               status:
  *                 type: string
@@ -429,6 +449,7 @@ router.use(verifyAccessToken);
  *                 description: 견적 요청 ID
  *               comment:
  *                 type: string
+ *                 nullable: true
  *                 description: 코멘트
  *               status:
  *                 type: string
@@ -485,6 +506,7 @@ router.use(verifyAccessToken);
  *               description: 가격
  *             comment:
  *               type: string
+ *               nullable: true
  *               description: 코멘트
  *             updatedAt:
  *               type: string
@@ -624,6 +646,7 @@ router.post(
  *                 id: "clx1234567891"
  *                 estimateRequestId: "clx1234567890"
  *                 moverId: "clx1234567892"
+ *                 price: null
  *                 comment: "현재 일정이 맞지 않아 서비스가 어렵습니다."
  *                 status: "REJECTED"
  *                 createdAt: "2025-07-10T00:33:16.456Z"
@@ -719,8 +742,8 @@ router.post(
  *                   moveType: "SMALL"
  *                   moveDate: "2025-07-15T00:00:00.000Z"
  *                   description: "원룸 이사"
- *                   fromAddress: "서울시 강남구"
- *                   toAddress: "서울시 서초구"
+ *                   fromAddress: "서울시 강남구 강남역 1번 출구"
+ *                   toAddress: "서울시 서초구 서초역 2번 출구"
  *                   createdAt: "2025-07-10T00:33:16.456Z"
  *       400:
  *         description: 유효하지 않은 입력값
