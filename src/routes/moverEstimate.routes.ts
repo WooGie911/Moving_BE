@@ -571,10 +571,23 @@ router.use(verifyAccessToken);
  *             example:
  *               success: false
  *               message: "권한이 없습니다"
- *               code: "MOVER_UNAUTHORIZED_ACCESS"
  */
 router.post(
   "/create",
+  async (req, res, next) => {
+    // 견적 생성 시 관련 캐시 무효화
+    try {
+      const userId = (req as any).user?.userId;
+      if (userId) {
+        await invalidateCacheByPattern(
+          `cache:GET:${req.baseUrl}:*:u:${userId}:*`
+        );
+      }
+    } catch (error) {
+      console.error("Cache invalidation error:", error);
+    }
+    next();
+  },
   moverEstimateTranslationMiddleware,
   moverEstimateController.createEstimate
 );
@@ -645,6 +658,20 @@ router.post(
  */
 router.post(
   "/reject",
+  async (req, res, next) => {
+    // 견적 반려 시 관련 캐시 무효화
+    try {
+      const userId = (req as any).user?.userId;
+      if (userId) {
+        await invalidateCacheByPattern(
+          `cache:GET:${req.baseUrl}:*:u:${userId}:*`
+        );
+      }
+    } catch (error) {
+      console.error("Cache invalidation error:", error);
+    }
+    next();
+  },
   moverEstimateTranslationMiddleware,
   moverEstimateController.rejectEstimate
 );
@@ -1180,6 +1207,20 @@ router.get(
  */
 router.patch(
   "/status",
+  async (req, res, next) => {
+    // 견적 상태 업데이트 시 관련 캐시 무효화
+    try {
+      const userId = (req as any).user?.userId;
+      if (userId) {
+        await invalidateCacheByPattern(
+          `cache:GET:${req.baseUrl}:*:u:${userId}:*`
+        );
+      }
+    } catch (error) {
+      console.error("Cache invalidation error:", error);
+    }
+    next();
+  },
   moverEstimateTranslationMiddleware,
   moverEstimateController.updateEstimateStatus
 );
@@ -1257,6 +1298,20 @@ router.patch(
  */
 router.patch(
   "/estimate",
+  async (req, res, next) => {
+    // 견적서 업데이트 시 관련 캐시 무효화
+    try {
+      const userId = (req as any).user?.userId;
+      if (userId) {
+        await invalidateCacheByPattern(
+          `cache:GET:${req.baseUrl}:*:u:${userId}:*`
+        );
+      }
+    } catch (error) {
+      console.error("Cache invalidation error:", error);
+    }
+    next();
+  },
   moverEstimateTranslationMiddleware,
   moverEstimateController.updateEstimate
 );

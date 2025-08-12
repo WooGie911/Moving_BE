@@ -526,6 +526,20 @@ customerEstimateRequestRouter.get(
 customerEstimateRequestRouter.patch(
   "/confirm",
   verifyAccessToken,
+  async (req, res, next) => {
+    // 견적 확정 시 관련 캐시 무효화
+    try {
+      const userId = (req as any).user?.userId;
+      if (userId) {
+        await invalidateCacheByPattern(
+          `cache:GET:${req.baseUrl}:*:u:${userId}:*`
+        );
+      }
+    } catch (error) {
+      console.error("Cache invalidation error:", error);
+    }
+    next();
+  },
   customerEstimateRequestController.confirmEstimate
 );
 
@@ -595,6 +609,20 @@ customerEstimateRequestRouter.patch(
 customerEstimateRequestRouter.patch(
   "/cancel",
   verifyAccessToken,
+  async (req, res, next) => {
+    // 견적 취소 시 관련 캐시 무효화
+    try {
+      const userId = (req as any).user?.userId;
+      if (userId) {
+        await invalidateCacheByPattern(
+          `cache:GET:${req.baseUrl}:*:u:${userId}:*`
+        );
+      }
+    } catch (error) {
+      console.error("Cache invalidation error:", error);
+    }
+    next();
+  },
   customerEstimateRequestController.cancelEstimate
 );
 
@@ -674,6 +702,20 @@ customerEstimateRequestRouter.patch(
 customerEstimateRequestRouter.patch(
   "/complete",
   verifyAccessToken,
+  async (req, res, next) => {
+    // 이사완료 시 관련 캐시 무효화
+    try {
+      const userId = (req as any).user?.userId;
+      if (userId) {
+        await invalidateCacheByPattern(
+          `cache:GET:${req.baseUrl}:*:u:${userId}:*`
+        );
+      }
+    } catch (error) {
+      console.error("Cache invalidation error:", error);
+    }
+    next();
+  },
   customerEstimateRequestController.completeEstimate
 );
 
