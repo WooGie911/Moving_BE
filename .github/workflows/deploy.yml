@@ -28,14 +28,15 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Archive release
+      - name: 📦 Archive release
         run: |
           PKG="release-${GITHUB_SHA::7}.tar.gz"
-          tar -czf "$PKG" \
-            dist \
-            package.json package-lock.json \
-            ecosystem.config.js \
-            src/db/prisma
+          FILES="dist package.json package-lock.json"
+          [ -f ecosystem.config.js ] && FILES="$FILES ecosystem.config.js"
+          [ -d src/db/prisma ] && FILES="$FILES src/db/prisma"
+
+          tar -czf "$PKG" $FILES
+
           echo "PKG_NAME=$PKG" >> $GITHUB_ENV
 
       - name: SSH agent
