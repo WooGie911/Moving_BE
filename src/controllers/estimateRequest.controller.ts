@@ -3,7 +3,7 @@ import EstimateRequestService from "../services/estimateRequest.service";
 import { convertRegionToKorean } from "../utils/addressUtils";
 import { validateMoveDate, formatDateForAPI } from "../utils/dateUtils";
 import * as Sentry from "@sentry/node";
-import { invalidateCacheByKey } from "../middlewares/cacheMiddleware";
+// 캐시 미사용: 견적 활성 조회는 컨트롤러 레벨의 캐시 무효화를 제거합니다
 import {
   TCreateEstimateRequest,
   TUpdateEstimateRequest,
@@ -192,9 +192,7 @@ class EstimateRequestController {
 
       const createdRequest = await estimateRequestService.getActiveEstimateRequestByUserId(userId);
 
-      // 캐시 무효화: 활성 견적 요청 조회 캐시 (해당 사용자 기준)
-      const activeKey = ["cache", "GET", "/estimateRequests", "/active", `u:${userId}`, ""];
-      void invalidateCacheByKey(activeKey);
+      // 캐시 무효화 로직 제거됨
 
       return res.status(201).json({
         success: true,
@@ -322,9 +320,7 @@ class EstimateRequestController {
 
       const updatedRequest = await estimateRequestService.getActiveEstimateRequestByUserId(userId);
 
-      // 캐시 무효화: 활성 견적 요청 조회 캐시 (해당 사용자 기준)
-      const activeKey = ["cache", "GET", "/estimateRequests", "/active", `u:${userId}`, ""];
-      void invalidateCacheByKey(activeKey);
+      // 캐시 무효화 로직 제거됨
 
       return res.status(200).json({
         success: true,
@@ -388,9 +384,7 @@ class EstimateRequestController {
       }
 
       await estimateRequestService.cancelActiveEstimateRequest(active.id);
-      // 캐시 무효화: 활성 견적 요청 조회 캐시 (해당 사용자 기준)
-      const activeKey = ["cache", "GET", "/estimateRequests", "/active", `u:${userId}`, ""];
-      void invalidateCacheByKey(activeKey);
+      // 캐시 무효화 로직 제거됨
       return res.status(204).send();
     } catch (error) {
       // 센트리로 에러 전송
