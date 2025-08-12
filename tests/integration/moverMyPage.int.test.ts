@@ -1,7 +1,7 @@
 import request from "supertest";
 import app from "../../src/app";
 import prisma from "../../src/db/prisma/prisma";
-import { loginLimiter, signupLimiter } from "../../src/middlewares/rateLimiter";
+
 
 const getCookies = (res: any) => {
   const raw = res.headers["set-cookie"];
@@ -11,29 +11,8 @@ const getCookies = (res: any) => {
   return cookies;
 };
 
-const RATE_KEYS = ["::ffff:127.0.0.1", "127.0.0.1", "::1"] as const;
-let __seq = 0;
-const nextSeq = () => ++__seq;
-const uniqueIp = () => `198.51.100.${((Date.now() + nextSeq()) % 200) + 1}`;
-const uniqueEmail = (tag = "u") =>
-  `test+${tag}+${Date.now()}_${Math.floor(Math.random() * 1_000_000)}_${nextSeq()}@naver.com`;
-const resetAllRate = (ip?: string) => {
-  for (const k of RATE_KEYS) {
-    loginLimiter.resetKey(k);
-    signupLimiter.resetKey(k);
-  }
-  if (ip) {
-    loginLimiter.resetKey(ip);
-    signupLimiter.resetKey(ip);
-  }
-};
-
 beforeAll(() => {
   (app as any).set("trust proxy", 1);
-});
-
-beforeEach(() => {
-  resetAllRate();
 });
 
 describe("기사님 마이페이지 통합 테스트", () => {

@@ -461,10 +461,8 @@ describe("PATCH /users/profile/customer - 고객 프로필 수정 API 테스트"
 
 // PATCH /users/profile/mover/basic
 describe("PATCH /users/profile/mover/basic - 기사님 기본정보 수정 API 테스트", () => {
-  let agent: any;
   let accessToken: string;
   let moverUserId: string;
-  let testEmail: string;
 
   afterAll(async () => {
     try {
@@ -475,55 +473,42 @@ describe("PATCH /users/profile/mover/basic - 기사님 기본정보 수정 API �
   });
 
   beforeAll(async () => {
-    try {
-      agent = request.agent(app);
-      
-      // 기존 테스트 계정 사용
-      testEmail = "mover4@test.com";
-      const originalPassword = "Test!Pass4@2024"; 
-      
-      // 로그인 (비밀번호 시도)
-      let signin;
-      const possiblePasswords = [
-        originalPassword,
-        "NewPassword123!@"
-      ];
-      
-      for (const password of possiblePasswords) {
-        try {
-          signin = await agent
-            .post("/auth/sign-in")
-            .send({
-              email: testEmail,
-              password: password,
-              userType: "MOVER",
-            })
-            .expect(200);
-          break;
-        } catch (e) {
-          continue;
-        }
+    const possiblePasswords = [
+      "Test!Pass4@2024",
+      "NewPassword123!@"
+    ];
+    
+    let signin;
+    for (const password of possiblePasswords) {
+      try {
+        signin = await request(app)
+          .post("/auth/sign-in")
+          .send({
+            email: "mover4@test.com",
+            password: password,
+            userType: "MOVER",
+          })
+          .expect(200);
+        break;
+      } catch (e) {
+        continue;
       }
-      
-      if (!signin) {
-        throw new Error("모든 비밀번호로 로그인 시도 실패");
-      }
-
-      const cookies = getCookies(signin);
-      const accessCookie = cookies.find((c) => c.startsWith("accessToken="));
-      expect(accessCookie).toBeDefined();
-      accessToken = accessCookie!.split(";")[0].split("=")[1];
-
-      // 사용자 ID 저장
-      const userRes = await request(app)
-        .get("/users")
-        .set("Authorization", `Bearer ${accessToken}`)
-        .expect(200);
-      moverUserId = userRes.body.data.id;
-    } catch (error) {
-      console.log("테스트 설정 중 오류:", error);
-      throw error;
     }
+    
+    if (!signin) {
+      throw new Error("모든 비밀번호로 로그인 시도 실패");
+    }
+
+    const cookies = getCookies(signin);
+    const accessCookie = cookies.find((c) => c.startsWith("accessToken="));
+    expect(accessCookie).toBeDefined();
+    accessToken = accessCookie!.split(";")[0].split("=")[1];
+
+    const userRes = await request(app)
+      .get("/users")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .expect(200);
+    moverUserId = userRes.body.data.id;
   });
 
   // 기사님 기본정보 수정 성공 (200)
@@ -701,8 +686,6 @@ describe("PATCH /users/profile/mover/basic - 기사님 기본정보 수정 API �
     expect(res.body.message).toBe("기사님 기본정보가 성공적으로 수정되었습니다.");
   });
 });
-
-
 
 describe("PATCH /users/profile/mover - 기사님 프로필 수정 API 테스트", () => {
   let accessToken: string;
