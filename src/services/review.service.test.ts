@@ -6,6 +6,23 @@ jest.mock("../utils/sentryUtils", () => ({
   captureReviewError: jest.fn(),
 }));
 
+// Prisma 클라이언트 모킹
+jest.mock("../db/prisma/prisma", () => {
+  const mockPrisma = {
+    review: {
+      findMany: jest.fn().mockResolvedValue([]),
+      update: jest.fn(),
+    },
+    user: {
+      update: jest.fn().mockResolvedValue({}),
+    },
+  };
+  return {
+    __esModule: true,
+    default: mockPrisma,
+  };
+});
+
 // 레포지토리 모듈 전체를 모킹
 jest.mock("../repositories/review.repository", () => ({
   postReview: jest.fn(),
@@ -819,6 +836,39 @@ describe("ReviewService", () => {
       expect(mockRepository.getReceivedReviews).toHaveBeenCalledWith("user-1", {
         page: 1,
         pageSize: 10,
+      });
+    });
+  });
+
+  describe("updateMoverReviewStats", () => {
+    it("성공적으로 기사님 리뷰 통계를 업데이트한다", async () => {
+      // Setup
+      const mockPrisma = require("../db/prisma/prisma").default;
+      const mockReviews = [{ rating: 5 }, { rating: 4 }, { rating: 5 }];
+
+      mockPrisma.review.findMany.mockResolvedValue(mockReviews);
+      mockPrisma.user.update.mockResolvedValue({ id: "mover-1" });
+
+      // Exercise
+      await updateMoverReviewStats("mover-1");
+
+      // Assertion
+      expect(mockPrisma.review.findMany).toHaveBeenCalledWith({
+        where: {
+          moverId: "mover-1",
+          deletedAt: null,
+          status: "COMPLETED",
+        },
+        select: {
+          rating: true,
+        },
+      });
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: "mover-1" },
+        data: {
+          totalReviewCount: 3,
+          averageRating: 4.7,
+        },
       });
     });
   });
