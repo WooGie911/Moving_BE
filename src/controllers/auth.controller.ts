@@ -58,12 +58,6 @@ const postSignin = async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error("로그인 에러:", error);
-    console.error("에러 상세 정보:", {
-      message: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
-      name: error instanceof Error ? error.name : "Unknown",
-    });
     handleError(res, error);
   }
 };
@@ -99,12 +93,12 @@ const postSignup = async (req: Request, res: Response) => {
       authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
     );
 
-    res.status(200).json({
+    res.status(201).json({
       success: true,
       message: "회원가입 성공",
       user: {
         id,
-        name: userName,
+        userName,
         userType: userTypeResponse,
       },
     });
@@ -223,7 +217,11 @@ const getGoogleCallback = async (req: Request, res: Response) => {
       authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
     );
 
-    res.redirect(`${FRONTEND_URL}/`);
+    if (userType === "CUSTOMER") {
+      res.redirect(`${FRONTEND_URL}/searchMover`);
+    } else {
+      res.redirect(`${FRONTEND_URL}/estimate/received`);
+    }
   } catch (error: any) {
     const params = new URLSearchParams({
       success: "false",
@@ -255,7 +253,11 @@ const getKakaoCallback = async (req: Request, res: Response) => {
       authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
     );
 
-    res.redirect(`${FRONTEND_URL}/`);
+    if (userType === "CUSTOMER") {
+      res.redirect(`${FRONTEND_URL}/searchMover`);
+    } else {
+      res.redirect(`${FRONTEND_URL}/estimate/received`);
+    }
   } catch (error: any) {
     const params = new URLSearchParams({
       success: "false",
@@ -287,7 +289,11 @@ const getNaverCallback = async (req: Request, res: Response) => {
       authCookieOptions(TOKEN_EXPIRES.REFRESH_TOKEN_COOKIE)
     );
 
-    res.redirect(`${FRONTEND_URL}/`);
+    if (userType === "CUSTOMER") {
+      res.redirect(`${FRONTEND_URL}/searchMover`);
+    } else {
+      res.redirect(`${FRONTEND_URL}/estimate/received`);
+    }
   } catch (error: any) {
     const params = new URLSearchParams({
       success: "false",

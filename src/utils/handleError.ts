@@ -22,6 +22,7 @@ export const handleError = (
   fallbackMessage: string = "예상치 못한 오류가 발생했습니다."
 ) => {
   let status = 500;
+  let success = false;
   let message = fallbackMessage;
 
   switch (error.constructor) {
@@ -67,6 +68,7 @@ export const handleError = (
 
   res.status(status).json({
     status,
+    success,
     message,
   });
 };
