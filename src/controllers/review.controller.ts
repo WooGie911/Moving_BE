@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import reviewService from "../services/review.service";
 import { captureReviewError } from "../utils/sentryUtils";
-import { invalidateReviewCaches } from "../middlewares/cacheMiddleware";
 
 const reviewController = {
   // 1. 리뷰 작성 (PATCH)
@@ -21,16 +20,6 @@ const reviewController = {
         return;
       }
       const review = await reviewService.postReview(reviewId, rating, content);
-      
-      // 리뷰 작성 후 관련 캐시 무효화
-      const customerId = req.user?.userId;
-      if (customerId && review.moverId) {
-        try {
-          await invalidateReviewCaches(customerId, review.moverId);
-        } catch (error) {
-          console.error('[Cache] 리뷰 작성 후 캐시 무효화 실패:', error);
-        }
-      }
       
       res.json({
         success: true,
