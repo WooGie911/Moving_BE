@@ -47,14 +47,14 @@ jobs:
       - name: Add known_hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "${{ secrets.EC2_PORT }}" -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Upload via SCP
         run: |
-          scp "$PKG_NAME" \
-            "ec2-user@${{ secrets.EC2_HOST }}:~/$PKG_NAME"
+          scp -P "${{ secrets.EC2_PORT }}" -o StrictHostKeyChecking=no "$PKG_NAME" \
+          "ec2-user@${{ secrets.EC2_HOST }}:~/$PKG_NAME"
 
       - name: Remote deploy
         run: |
-          ssh "ec2-user@${{ secrets.EC2_HOST }}" \
-            "bash ~/deploy.sh $PKG_NAME"
+          ssh -p "${{ secrets.EC2_PORT }}" -o StrictHostKeyChecking=no \
+          "ec2-user@${{ secrets.EC2_HOST }}" "bash ~/deploy.sh $PKG_NAME"
