@@ -469,6 +469,7 @@ describe("userService.updateCustomerProfileCheck", () => {
   });
 });
 
+// 기사님 기본정보 수정 테스트
 describe("userService.updateMoverBasicInfo", () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -821,6 +822,8 @@ describe("userService.updateMoverBasicInfo", () => {
   });
 });
 
+
+// 기사님 프로필 수정 테스트
 describe("userService.updateMoverProfileCheck", () => {
   afterEach(() => {
     jest.clearAllMocks();
