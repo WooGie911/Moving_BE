@@ -2,7 +2,7 @@ import { Router } from "express";
 import favoriteController from "../controllers/favorite.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 import { defaultTranslationMiddleware } from "../middlewares/translationMiddleware";
-// cache 미들웨어는 찜하기 영역에서 사용하지 않음 (실시간 반영 위해 비활성화)
+// 캐싱은 찜하기 전 영역에서 완전히 비활성화 (실시간 반영)
 
 const router = Router();
 

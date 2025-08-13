@@ -3,7 +3,6 @@ import * as moverController from "../controllers/mover.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 import { optionalAuth } from "../middlewares/optionalAuth";
 import { defaultTranslationMiddleware } from "../middlewares/translationMiddleware";
-import { cache } from "../middlewares/cacheMiddleware";
 
 const moverRouter = Router();
 
@@ -221,12 +220,7 @@ const moverRouter = Router();
  *               success: false
  *               message: "기사님을 찾을 수 없습니다"
  */
-moverRouter.get(
-  "/",
-  cache({ ttlSeconds: 30, varyByAuth: false }), // 공개 데이터이므로 사용자별 캐시 분리 불필요
-  defaultTranslationMiddleware,
-  moverController.getMoverListController,
-);
+moverRouter.get("/", defaultTranslationMiddleware, moverController.getMoverListController);
 
 /**
  * @swagger
@@ -389,13 +383,7 @@ moverRouter.get(
  *               status: 404
  *               message: "기사님을 찾을 수 없습니다."
  */
-moverRouter.get(
-  "/:moverId",
-  optionalAuth,
-  cache({ ttlSeconds: 60, varyByAuth: true }), // 사용자별 캐시 분리 (로그인 여부에 따라 다른 응답)
-  defaultTranslationMiddleware,
-  moverController.getMoverDetailController,
-);
+moverRouter.get("/:moverId", optionalAuth, defaultTranslationMiddleware, moverController.getMoverDetailController);
 
 /**
  * @swagger
