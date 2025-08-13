@@ -15,6 +15,16 @@ jest.mock("../repositories/mover.repository", () => ({
   checkEstimateRequestStatus: jest.fn(),
 }));
 
+jest.mock("../repositories/estimateRequest.repository", () => ({
+  getEstimateRequestDetailForAction: jest.fn(),
+}));
+
+jest.mock("./action.service", () => ({
+  default: {
+    createAction: jest.fn(),
+  },
+}));
+
 import {
   getMoverList,
   getFavoriteMovers,
@@ -23,6 +33,9 @@ import {
   checkDesignatedEstimateRequest,
   checkEstimateRequestStatus,
 } from "../repositories/mover.repository";
+
+import estimateRequestRepository from "../repositories/estimateRequest.repository";
+import actionService from "./action.service";
 
 const mockGetMoverList = getMoverList as jest.MockedFunction<
   typeof getMoverList
@@ -45,6 +58,11 @@ const mockCheckEstimateRequestStatus =
   checkEstimateRequestStatus as jest.MockedFunction<
     typeof checkEstimateRequestStatus
   >;
+
+const mockEstimateRequestRepository = estimateRequestRepository as jest.Mocked<
+  typeof estimateRequestRepository
+>;
+const mockActionService = actionService as jest.Mocked<typeof actionService>;
 
 // Repository에서 반환하는 구조
 const createMockRepositoryMover = (overrides = {}) => ({
@@ -290,19 +308,17 @@ describe("MoverService - 유닛 테스트", () => {
 
   describe("requestDesignatedQuote", () => {
     beforeEach(() => {
-      // estimateRequestRepository와 actionService Mock 추가
-      jest.doMock("../repositories/estimateRequest.repository", () => ({
-        getEstimateRequestDetailForAction: jest.fn().mockResolvedValue({
+      // estimateRequestRepository와 actionService Mock 설정
+      mockEstimateRequestRepository.getEstimateRequestDetailForAction = jest
+        .fn()
+        .mockResolvedValue({
           id: "quote-1",
           customerId: "customer-1",
           moveType: "HOME",
-        }),
-      }));
-      jest.doMock("./action.service", () => ({
-        default: {
-          createAction: jest.fn().mockResolvedValue({ id: "action-1" }),
-        },
-      }));
+        });
+      mockActionService.createAction = jest
+        .fn()
+        .mockResolvedValue({ id: "action-1" });
     });
 
     it("지정 견적 요청을 성공적으로 생성한다", async () => {
