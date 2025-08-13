@@ -22,11 +22,7 @@ export function registerSSE(userId: string, res: Response) {
   try {
     // 헤더는 이미 sse.route.ts에서 설정됨
     console.log('응답헤더 설정 완료');
-    res.writeHead(200, {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    });
+
     // res.write("\n"); // 연결 초기화
     res.write("data: connected\n\n");
 
