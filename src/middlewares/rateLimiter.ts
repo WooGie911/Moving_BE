@@ -2,7 +2,7 @@ import rateLimit from "express-rate-limit";
 import { handleError } from "../utils/handleError";
 import { TooManyRequestsError } from "../types/commonError.types";
 
-// 로그인 요청 제한: 1분간 최대 10회
+// 로그인 요청 제한: 1분간 최대 5회
 export const loginLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1분
   limit: 5,
