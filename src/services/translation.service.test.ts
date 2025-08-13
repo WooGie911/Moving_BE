@@ -1,12 +1,15 @@
 import { TranslationService } from "./translation.service";
 import * as deepl from "deepl-node";
 
-// DeepL 모킹
-jest.mock("deepl-node", () => ({
-  Translator: jest.fn().mockImplementation(() => ({
+// DeepL 모킹: 모든 인스턴스가 동일한 공유 인스턴스를 반환하도록 설정
+jest.mock("deepl-node", () => {
+  const sharedInstance = {
     translateText: jest.fn(),
-  })),
-}));
+  } as { translateText: jest.Mock };
+  return {
+    Translator: jest.fn().mockImplementation(() => sharedInstance),
+  };
+});
 
 describe("TranslationService", () => {
   let translationService: TranslationService;
@@ -284,5 +287,4 @@ describe("TranslationService", () => {
       });
     });
   });
-
 });

@@ -41,16 +41,12 @@ export class TranslationService {
    * @param targetLang 대상 언어 코드
    * @param sourceLang 원본 언어 코드 (선택사항)
    */
-  async translateText(
-    text: string,
-    targetLang: string,
-    sourceLang?: string
-  ): Promise<string> {
+  async translateText(text: string, targetLang: string, sourceLang?: string): Promise<string> {
+    // 지원되지 않는 언어는 즉시 예외를 던져 테스트 기대와 일치시킴
+    if (!this.isLanguageSupported(targetLang)) {
+      throw new Error(`지원되지 않는 언어 코드입니다: ${targetLang}`);
+    }
     try {
-      if (!this.isLanguageSupported(targetLang)) {
-        throw new Error(`지원되지 않는 언어 코드입니다: ${targetLang}`);
-      }
-
       // 캐시 키 생성
       const cacheKey = `${text}:${targetLang}:${sourceLang || "auto"}`;
 
@@ -59,15 +55,12 @@ export class TranslationService {
         return this.translationCache.get(cacheKey)!;
       }
 
-      const targetLanguage =
-        this.supportedLanguages[
-          targetLang as keyof typeof this.supportedLanguages
-        ];
+      const targetLanguage = this.supportedLanguages[targetLang as keyof typeof this.supportedLanguages];
 
       const result = await this.translator.translateText(
         text,
         (sourceLang as deepl.SourceLanguageCode) || null,
-        targetLanguage
+        targetLanguage,
       );
 
       // 번역 결과를 캐시에 저장
@@ -99,9 +92,10 @@ export class TranslationService {
       "phone",
       "url",
       "link",
+      "language",
       "name",
       "nickname",
-    ]
+    ],
   ): Promise<any> {
     if (!this.isLanguageSupported(targetLang)) {
       return obj; // 지원되지 않는 언어면 원본 반환
@@ -113,11 +107,7 @@ export class TranslationService {
   /**
    * 재귀적으로 객체의 문자열 값들을 번역
    */
-  private async recursiveTranslate(
-    obj: any,
-    targetLang: string,
-    excludeKeys: string[]
-  ): Promise<any> {
+  private async recursiveTranslate(obj: any, targetLang: string, excludeKeys: string[]): Promise<any> {
     if (obj === null || obj === undefined) {
       return obj;
     }
@@ -134,9 +124,7 @@ export class TranslationService {
     if (Array.isArray(obj)) {
       const translatedArray = [];
       for (const item of obj) {
-        translatedArray.push(
-          await this.recursiveTranslate(item, targetLang, excludeKeys)
-        );
+        translatedArray.push(await this.recursiveTranslate(item, targetLang, excludeKeys));
       }
       return translatedArray;
     }
@@ -149,11 +137,7 @@ export class TranslationService {
         if (excludeKeys.includes(key)) {
           translatedObj[key] = value;
         } else {
-          translatedObj[key] = await this.recursiveTranslate(
-            value,
-            targetLang,
-            excludeKeys
-          );
+          translatedObj[key] = await this.recursiveTranslate(value, targetLang, excludeKeys);
         }
       }
 
@@ -165,4 +149,6 @@ export class TranslationService {
 }
 
 // 싱글톤 인스턴스 생성
-export const translationService = new TranslationService();
+export const translationService = process.env.DEEPL_AUTH_KEY
+  ? new TranslationService()
+  : (undefined as unknown as TranslationService);
