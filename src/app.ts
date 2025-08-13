@@ -7,7 +7,7 @@ dotenv.config();
 import "./instrument";
 
 import express from "express";
-import cors from "cors";
+import cors, { CorsOptions } from "cors";
 import morgan from "morgan";
 import helmet from "helmet";
 import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware";
@@ -37,48 +37,38 @@ app.use(
       },
     },
     crossOriginEmbedderPolicy: false, // CORS 호환성을 위해 비활성화
-  })
+  }),
 );
 
 // 로깅 설정 (Morgan)
 app.use(morgan("combined")); // 프로덕션용 로그 포맷
 
 // CORS 설정 - 환경변수에서 가져오거나 기본값 사용
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").map((origin) =>
-  origin.trim()
-) || [
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").map((origin) => origin.trim()) || [
   "https://gomoving.site",
   "https://www.gomoving.site",
   "http://localhost:3000",
   "http://localhost:3001",
 ];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // ngrok 테스트용 cors 설정
-      if (
-        !origin ||
-        allowedOrigins.includes(origin) ||
-        origin.endsWith(".ngrok-free.app")
-      ) {
-        callback(null, true);
-      } else {
-        console.warn(`CORS 차단된 origin: ${origin}`);
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-CSRF-Token",
-      "XSRF-TOKEN",
-    ],
-    exposedHeaders: ["X-CSRF-Token"],
-  })
-);
+const corsOptions: CorsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // ngrok 테스트용 cors 설정
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".ngrok-free.app")) {
+      callback(null, true);
+    } else {
+      // 로깅만 하고 차단
+      // eslint-disable-next-line no-console
+      console.warn(`CORS 차단된 origin: ${origin}`);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token", "XSRF-TOKEN"],
+  exposedHeaders: ["X-CSRF-Token"],
+};
+app.use(cors(corsOptions));
 
 app.use(cookieParser());
 app.use(express.json({ limit: "10mb" })); // JSON 파싱 (크기 제한 추가)

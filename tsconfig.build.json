@@ -3,15 +3,16 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "noImplicitAny": false // 🔹 빌드 시 암묵적 any 허용(서버 빌드 전용 완화)
+    "noImplicitAny": false
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*.ts"],
   "exclude": [
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/__tests__/**",
     "jest.config.ts",
     "vitest.config.ts",
-    "src/types/test.types.ts" // 🔹 문제가 된 테스트 타입 파일 명시 제외
+    "src/types/test.types.ts",
+    "src/db/prisma/seed.ts" // 🔴 CI 빌드에서 제외 (런타임에 안 쓰면 안전)
   ]
 }
