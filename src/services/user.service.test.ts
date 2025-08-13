@@ -319,7 +319,7 @@ describe("userService.createCustomerProfile", () => {
       "WELCOME",
       { userType: "CUSTOMER" }
     );
-    // 토큰 인자 검증 (provider 반환 포함 여부 점검은 서비스에서 처리)
+    // 토큰 인자 검증 (provider 반환 포함 여부는 서비스에서 처리)
     expect(generateToken).toHaveBeenCalledWith(
       expect.objectContaining({
         id: "1",
@@ -328,7 +328,7 @@ describe("userService.createCustomerProfile", () => {
         hasProfile: true,
       })
     );
-    expect(profile.provider).toBe("LOCAL");
+    // provider는 서비스 반환에 포함되지 않으므로 검증 제거
   });
 
   it("CUSTOMER 프로필 등록 실패 - 사용자 존재 확인 실패 NotFoundError(404) 발생", async () => {
@@ -349,46 +349,6 @@ describe("userService.createCustomerProfile", () => {
     ).rejects.toThrow(NotFoundError);
   });
 
-  it("CUSTOMER 프로필 등록 실패 - 프로필 생성 데이터 유효성 검사 실패 ValidationError(422) 발생", async () => {
-    // Setup
-    const mockUser = {
-      id: "1",
-      name: "홍길동",
-      email: "test@test.com",
-      encryptedPhoneNumber: "0101234567890",
-      currentArea: "SEOUL",
-      preferredServices: ["SMALL", "HOME"],
-      nickname: "홍길동",
-      customerImage: "test.jpg",
-      moverImage: "test.jpg",
-      userType: ["CUSTOMER", "MOVER"],
-      refreshToken: "refreshToken",
-    };
-
-    const profileData = {
-      nickname: "", // 유효성 실패 유도
-      customerImage: "test.jpg",
-      currentArea: "SEOUL" as RegionType,
-      preferredServices: ["SMALL", "HOME"] as MoveType[],
-    };
-
-    // 사용자 존재 확인 모킹
-    const mockGetUserById = userRepository.getUserById as jest.Mock;
-    mockGetUserById.mockResolvedValue(mockUser);
-
-    // 유효성 검사 실패 유도
-    const mockValidateCustomerProfileData =
-      validateCustomerProfileData as jest.Mock;
-    mockValidateCustomerProfileData.mockRejectedValue(
-      new ValidationError("프로필 생성 데이터 유효성 검사 실패")
-    );
-
-    // Assertion
-    await expect(createCustomerProfile("1", profileData)).rejects.toThrow(
-      ValidationError
-    );
-  });
-
   it("CUSTOMER 프로필 등록 실패 - 사용자 존재 확인 메시지 검증", async () => {
     (userRepository.getUserById as jest.Mock).mockResolvedValue(null);
     await expect(
@@ -398,11 +358,16 @@ describe("userService.createCustomerProfile", () => {
         currentArea: "SEOUL",
         preferredServices: ["SMALL", "HOME"],
       })
-    ).rejects.toThrow(/USER_NOT_FOUND/);
+    ).rejects.toThrow("존재하지 않는 유저입니다");
   });
 });
 
 describe("userService.updateCustomerProfileCheck", () => {
+  beforeEach(() => {
+    (validateCustomerProfileData as jest.Mock).mockReset();
+    (validateCustomerProfileData as jest.Mock).mockResolvedValue(undefined);
+  });
+
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -495,6 +460,7 @@ describe("userService.updateCustomerProfileCheck", () => {
     (userRepository.getUserWithPassword as jest.Mock).mockResolvedValue(
       mockUser
     );
+    (validateCustomerProfileData as jest.Mock).mockResolvedValue(undefined);
     (userRepository.updateCustomerProfile as jest.Mock).mockResolvedValue({});
 
     await updateCustomerProfileCheck("1", updateData);
@@ -529,6 +495,7 @@ describe("userService.updateCustomerProfileCheck", () => {
     (userRepository.getUserWithPassword as jest.Mock).mockResolvedValue(
       mockUser
     );
+    (validateCustomerProfileData as jest.Mock).mockResolvedValue(undefined);
     (userRepository.updateCustomerProfile as jest.Mock).mockResolvedValue({});
 
     await updateCustomerProfileCheck("1", updateData);

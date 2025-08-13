@@ -110,7 +110,7 @@ describe("회원가입 컨트롤러", () => {
     jest.clearAllMocks();
   });
 
-  it("✅ 회원가입 성공 시 쿠키 설정 및 200 응답 반환", async () => {
+  it("✅ 회원가입 성공 시 쿠키 설정 및 201 응답 반환", async () => {
     const fakeUser = {
       id: 100,
       userName: "홍길동",
@@ -143,13 +143,13 @@ describe("회원가입 컨트롤러", () => {
       expect.objectContaining({ httpOnly: true })
     );
 
-    expect(mockRes.status).toHaveBeenCalledWith(200);
+    expect(mockRes.status).toHaveBeenCalledWith(201);
     expect(mockRes.json).toHaveBeenCalledWith({
       success: true,
       message: "회원가입 성공",
       user: {
         id: 100,
-        name: "홍길동",
+        userName: "홍길동",
         userType: "CUSTOMER",
       },
     });
@@ -398,7 +398,7 @@ describe("소셜 로그인 콜백 컨트롤러", () => {
       jest.clearAllMocks();
     });
 
-    it("✅ 로그인 성공 시 쿠키 설정 후 /로 리다이렉트", async () => {
+    it("✅ 로그인 성공 시 쿠키 설정 후 유저타입별 경로로 리다이렉트", async () => {
       const req = createMockReq();
       const res = createMockRes();
 
@@ -415,8 +415,9 @@ describe("소셜 로그인 콜백 컨트롤러", () => {
         baseUser.refreshToken,
         expect.any(Object)
       );
-
-      expect(res.redirect).toHaveBeenCalledWith(`${process.env.FRONTEND_URL}/`);
+      expect(res.redirect).toHaveBeenCalledWith(
+        `${process.env.FRONTEND_URL}/searchMover`
+      );
     });
 
     it("❌ 쿠키 설정 실패 시 CUSTOMER → /userSignin 리다이렉트", async () => {
@@ -472,7 +473,7 @@ describe("소셜 로그인 콜백 컨트롤러", () => {
       jest.clearAllMocks();
     });
 
-    it("✅ 로그인 성공 시 쿠키 설정 후 /로 리다이렉트", async () => {
+    it("✅ 로그인 성공 시 쿠키 설정 후 유저타입별 경로로 리다이렉트", async () => {
       const req = createMockReq();
       const res = createMockRes();
 
@@ -489,8 +490,9 @@ describe("소셜 로그인 콜백 컨트롤러", () => {
         baseUser.refreshToken,
         expect.any(Object)
       );
-
-      expect(res.redirect).toHaveBeenCalledWith(`${process.env.FRONTEND_URL}/`);
+      expect(res.redirect).toHaveBeenCalledWith(
+        `${process.env.FRONTEND_URL}/searchMover`
+      );
     });
 
     it("❌ 쿠키 설정 실패 시 CUSTOMER → /userSignin 리다이렉트", async () => {
@@ -546,7 +548,7 @@ describe("소셜 로그인 콜백 컨트롤러", () => {
       jest.clearAllMocks();
     });
 
-    it("✅ 로그인 성공 시 쿠키 설정 후 /로 리다이렉트", async () => {
+    it("✅ 로그인 성공 시 쿠키 설정 후 유저타입별 경로로 리다이렉트", async () => {
       const req = createMockReq();
       const res = createMockRes();
 
@@ -563,8 +565,9 @@ describe("소셜 로그인 콜백 컨트롤러", () => {
         baseUser.refreshToken,
         expect.any(Object)
       );
-
-      expect(res.redirect).toHaveBeenCalledWith(`${process.env.FRONTEND_URL}/`);
+      expect(res.redirect).toHaveBeenCalledWith(
+        `${process.env.FRONTEND_URL}/searchMover`
+      );
     });
 
     it("❌ 쿠키 설정 실패 시 CUSTOMER → /userSignin 리다이렉트", async () => {

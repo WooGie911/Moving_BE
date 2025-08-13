@@ -150,8 +150,12 @@ const updateCustomerProfileCheck = async (
     throw new NotFoundError(PROFILE_ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
-  // 비밀번호 변경 요청 시 현재 비밀번호 검증
-  if (updateData.newPassword === updateData.password) {
+  // 비밀번호 변경 요청 시 현재 비밀번호 검증 (둘 다 있을 때만 동일성 체크)
+  if (
+    updateData.newPassword !== undefined &&
+    updateData.password !== undefined &&
+    updateData.newPassword === updateData.password
+  ) {
     throw new ValidationError("현재 비밀번호와 새로운 비밀번호가 동일합니다");
   }
 
@@ -170,8 +174,11 @@ const updateCustomerProfileCheck = async (
   // 유효성 검사
   await validateCustomerProfileData(updateData, userId);
 
-  // 업데이트 데이터 준비
-  const encryptedPhoneNumber = encryptPhoneNumber(updateData.phoneNumber!);
+  // 업데이트 데이터 준비 (전화번호 미전달 시 기존 값 유지)
+  const encryptedPhoneNumber =
+    updateData.phoneNumber !== undefined && updateData.phoneNumber !== null
+      ? encryptPhoneNumber(updateData.phoneNumber)
+      : (user as any).encryptedPhoneNumber || undefined;
 
   // 비밀 번호 변경 요청 시 새로운 비밀번호 암호화 및 업데이트
   let newEncryptedPassword: string | undefined;
