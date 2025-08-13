@@ -19,11 +19,6 @@ jest.mock("../services/notification.service", () => ({
   readAllNotifications: jest.fn(),
 }));
 
-// 캐시 미들웨어 모킹
-jest.mock("../middlewares/cacheMiddleware", () => ({
-  invalidateCacheByPattern: jest.fn(),
-}));
-
 import notificationService from "../services/notification.service";
 const mockService = notificationService as jest.Mocked<
   typeof notificationService
@@ -60,7 +55,7 @@ describe("NotificationController", () => {
     it("성공적으로 알림 목록을 조회한다", async () => {
       // Setup
       req.query = { userType: "CUSTOMER", limit: "10", offset: "0" };
-      
+
       const mockNotifications = {
         hasUnread: true,
         items: [
@@ -70,7 +65,8 @@ describe("NotificationController", () => {
             userId: "user-1",
             userType: "CUSTOMER" as UserType,
             type: "ESTIMATE_STATUS_UPDATED" as NotificationType,
-            message: "<span class=\"font-bold\">성민기사</span> 기사님의 견적이 <span class=\"text-primary-400 font-bold\">확정</span>되었어요.",
+            message:
+              '<span class="font-bold">성민기사</span> 기사님의 견적이 <span class="text-primary-400 font-bold">확정</span>되었어요.',
             path: "/estimateRequest/pending/test-id",
             isRead: false,
             createdAt: "2025-08-09",
@@ -83,7 +79,7 @@ describe("NotificationController", () => {
             userId: "user-1",
             userType: "CUSTOMER" as UserType,
             type: "WELCOME" as NotificationType,
-            message: "<span class=\"font-bold\">회원가입</span>을 환영합니다!",
+            message: '<span class="font-bold">회원가입</span>을 환영합니다!',
             path: "/",
             isRead: true,
             createdAt: "2025-08-09",
@@ -142,7 +138,7 @@ describe("NotificationController", () => {
     it("기본값으로 limit과 offset을 사용한다", async () => {
       // Setup
       req.query = { userType: "CUSTOMER" };
-      
+
       const mockNotifications = {
         hasUnread: false,
         items: [],
@@ -190,7 +186,7 @@ describe("NotificationController", () => {
     it("언어 파라미터를 올바르게 전달한다", async () => {
       // Setup
       req.query = { userType: "CUSTOMER", lang: "en" };
-      
+
       const mockNotifications = {
         hasUnread: false,
         items: [],
@@ -221,7 +217,7 @@ describe("NotificationController", () => {
     it("중국어 언어 파라미터를 올바르게 전달한다", async () => {
       // Setup
       req.query = { userType: "CUSTOMER", lang: "zh" };
-      
+
       const mockNotifications = {
         hasUnread: false,
         items: [],

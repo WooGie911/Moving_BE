@@ -1,4 +1,9 @@
-import { PrismaClient, NotificationType, Action, ActionType } from "@prisma/client";
+import {
+  PrismaClient,
+  NotificationType,
+  Action,
+  ActionType,
+} from "@prisma/client";
 
 // PrismaClient를 모킹
 jest.mock("@prisma/client", () => ({
@@ -17,7 +22,8 @@ jest.mock("@prisma/client", () => ({
     ESTIMATE_ARRIVED: "ESTIMATE_ARRIVED",
     ESTIMATE_STATUS_UPDATED: "ESTIMATE_STATUS_UPDATED",
     DESIGNATED_ESTIMATE_REQUEST_ARRIVED: "DESIGNATED_ESTIMATE_REQUEST_ARRIVED",
-    DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED: "DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED",
+    DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED:
+      "DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED",
     DESIGNATED_ESTIMATE_ARRIVED: "DESIGNATED_ESTIMATE_ARRIVED",
     DESIGNATED_ESTIMATE_STATUS_UPDATED: "DESIGNATED_ESTIMATE_STATUS_UPDATED",
     REVIEW_EVENT: "REVIEW_EVENT",
@@ -30,8 +36,10 @@ jest.mock("@prisma/client", () => ({
     ESTIMATE_SUBMITTED: "ESTIMATE_SUBMITTED",
     ESTIMATE_ACCEPTED: "ESTIMATE_ACCEPTED",
     ESTIMATE_REJECTED: "ESTIMATE_REJECTED",
-    DESIGNATED_ESTIMATE_REQUEST_SUBMITTED: "DESIGNATED_ESTIMATE_REQUEST_SUBMITTED",
-    DESIGNATED_ESTIMATE_REQUEST_REJECTED: "DESIGNATED_ESTIMATE_REQUEST_REJECTED",
+    DESIGNATED_ESTIMATE_REQUEST_SUBMITTED:
+      "DESIGNATED_ESTIMATE_REQUEST_SUBMITTED",
+    DESIGNATED_ESTIMATE_REQUEST_REJECTED:
+      "DESIGNATED_ESTIMATE_REQUEST_REJECTED",
     DESIGNATED_ESTIMATE_SUBMITTED: "DESIGNATED_ESTIMATE_SUBMITTED",
     DESIGNATED_ESTIMATE_ACCEPTED: "DESIGNATED_ESTIMATE_ACCEPTED",
     DESIGNATED_ESTIMATE_REJECTED: "DESIGNATED_ESTIMATE_REJECTED",
@@ -101,19 +109,24 @@ jest.mock("../utils/sentryUtils", () => ({
 
 import { notificationMiddleware } from "./notificationMiddleware";
 import { emitNotificationSSE } from "../utils/emitNotificationSSE";
-import { captureNotificationError, captureActionMappingError } from "../utils/sentryUtils";
+import {
+  captureNotificationError,
+  captureActionMappingError,
+} from "../utils/sentryUtils";
 import prisma from "../db/prisma/prisma";
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 const mockEmitNotificationSSE = emitNotificationSSE as jest.MockedFunction<
   typeof emitNotificationSSE
 >;
-const mockCaptureNotificationError = captureNotificationError as jest.MockedFunction<
-  typeof captureNotificationError
->;
-const mockCaptureActionMappingError = captureActionMappingError as jest.MockedFunction<
-  typeof captureActionMappingError
->;
+const mockCaptureNotificationError =
+  captureNotificationError as jest.MockedFunction<
+    typeof captureNotificationError
+  >;
+const mockCaptureActionMappingError =
+  captureActionMappingError as jest.MockedFunction<
+    typeof captureActionMappingError
+  >;
 
 describe("NotificationMiddleware", () => {
   beforeEach(() => {
@@ -268,10 +281,6 @@ describe("NotificationMiddleware", () => {
       expect(mockEmitNotificationSSE).not.toHaveBeenCalled();
     });
 
-
-
-
-
     it("수신자가 없으면 알림을 생성하지 않는다", async () => {
       // Setup
       const mockAction: Action = {
@@ -289,7 +298,9 @@ describe("NotificationMiddleware", () => {
       (mockPrisma.action.create as jest.Mock).mockResolvedValue(mockAction);
 
       // actionNotificationMap 모킹을 동적으로 변경
-      const { actionNotificationMap } = require("../utils/actionNotificationMap");
+      const {
+        actionNotificationMap,
+      } = require("../utils/actionNotificationMap");
       actionNotificationMap.ESTIMATE_REQUEST_CREATE.getReceivers = jest
         .fn()
         .mockResolvedValue([]);

@@ -5,10 +5,6 @@ import {
   createCustomTranslationMiddleware,
 } from "../middlewares/translationMiddleware";
 import { verifyAccessToken } from "../middlewares/verifyToken";
-import {
-  cache,
-  invalidateCacheByPattern,
-} from "../middlewares/cacheMiddleware";
 
 const reviewRouter = Router();
 
@@ -502,7 +498,6 @@ reviewRouter.patch(
 reviewRouter.get(
   "/writable-estimateRequests",
   verifyAccessToken,
-  // cache({ ttlSeconds: 600 }), // 10분 캐시 - 제거하여 즉시 업데이트
   createCustomTranslationMiddleware([
     "id",
     "reviewId",
@@ -699,7 +694,6 @@ reviewRouter.get(
 reviewRouter.get(
   "/customer/:customerId",
   verifyAccessToken,
-  // cache({ ttlSeconds: 900 }), // 15분 캐시 - 제거하여 즉시 업데이트
   createCustomTranslationMiddleware([
     "id",
     "moverId",
@@ -898,7 +892,6 @@ reviewRouter.get(
  */
 reviewRouter.get(
   "/mover/:moverId",
-  // cache({ ttlSeconds: 1200 }), // 20분 캐시 - 제거하여 즉시 업데이트
   createCustomTranslationMiddleware([
     "id",
     "estimateRequestId",
