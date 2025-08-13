@@ -23,7 +23,7 @@ import passport from "./config/passport";
 
 const app = express();
 
-app.set("trust proxy", 1);
+app.set("trust proxy", 2);
 
 // 보안 헤더 설정 (Helmet)
 app.use(
