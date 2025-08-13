@@ -18,7 +18,10 @@ const getMoverMyPageData = async (userId: string) => {
   }
 
   // 3. 기사님 리뷰 정보 조회
-  const reviews = await reviewService.getReceivedReviews(userId, { page: 1, pageSize: 1000 });
+  const reviews = await reviewService.getReceivedReviews(userId, {
+    page: 1,
+    pageSize: 1000,
+  });
 
   // 4. 마이페이지 데이터 구성
   return {
@@ -26,7 +29,7 @@ const getMoverMyPageData = async (userId: string) => {
     id: userInfo.id,
     name: userInfo.name,
     email: userInfo.email,
-    
+
     // 프로필 정보
     nickname: profileData.nickname,
     moverImage: (profileData as any).moverImage,
@@ -36,13 +39,13 @@ const getMoverMyPageData = async (userId: string) => {
     serviceTypes: (profileData as any).serviceTypes,
     currentAreas: (profileData as any).currentAreas,
     isVeteran: (profileData as any).isVeteran,
-    
+
     // 통계 정보
     workedCount: (profileData as any).workedCount,
     averageRating: (profileData as any).averageRating,
     totalReviewCount: (profileData as any).totalReviewCount,
     totalFavoriteCount: (profileData as any).totalFavoriteCount,
-    
+
     // 리뷰 정보
     reviews: reviews.items || [],
     totalReviews: reviews.total || 0,
@@ -161,8 +164,12 @@ describe("moverMyPageService.getMoverMyPageData", () => {
     };
 
     (userService.userInfo as jest.Mock).mockResolvedValue(mockUserInfo);
-    (userService.getProfileData as jest.Mock).mockResolvedValue(mockProfileData);
-    (reviewService.getReceivedReviews as jest.Mock).mockResolvedValue(mockReviews);
+    (userService.getProfileData as jest.Mock).mockResolvedValue(
+      mockProfileData
+    );
+    (reviewService.getReceivedReviews as jest.Mock).mockResolvedValue(
+      mockReviews
+    );
 
     // Exercise
     const result = await getMoverMyPageData("1");
@@ -170,14 +177,17 @@ describe("moverMyPageService.getMoverMyPageData", () => {
     // Assertion
     expect(userService.userInfo).toHaveBeenCalledWith("1", "MOVER");
     expect(userService.getProfileData).toHaveBeenCalledWith("1", "MOVER");
-    expect(reviewService.getReceivedReviews).toHaveBeenCalledWith("1", { page: 1, pageSize: 1000 });
+    expect(reviewService.getReceivedReviews).toHaveBeenCalledWith("1", {
+      page: 1,
+      pageSize: 1000,
+    });
 
     expect(result).toEqual({
       // 기본 정보
       id: "1",
       name: "김기사",
       email: "mover@test.com",
-      
+
       // 프로필 정보
       nickname: "믿을만한김기사",
       moverImage: "https://example.com/mover.jpg",
@@ -187,13 +197,13 @@ describe("moverMyPageService.getMoverMyPageData", () => {
       serviceTypes: ["SMALL", "HOME"],
       currentAreas: ["SEOUL", "INCHEON"],
       isVeteran: true,
-      
+
       // 통계 정보
       workedCount: 136,
       averageRating: 4.8,
       totalReviewCount: 128,
       totalFavoriteCount: 45,
-      
+
       // 리뷰 정보
       reviews: mockReviews.items,
       totalReviews: 1,
@@ -259,8 +269,12 @@ describe("moverMyPageService.getMoverMyPageData", () => {
     };
 
     (userService.userInfo as jest.Mock).mockResolvedValue(mockUserInfo);
-    (userService.getProfileData as jest.Mock).mockResolvedValue(mockProfileData);
-    (reviewService.getReceivedReviews as jest.Mock).mockResolvedValue(mockReviews);
+    (userService.getProfileData as jest.Mock).mockResolvedValue(
+      mockProfileData
+    );
+    (reviewService.getReceivedReviews as jest.Mock).mockResolvedValue(
+      mockReviews
+    );
 
     // Exercise
     const result = await getMoverMyPageData("1");
@@ -303,7 +317,9 @@ describe("moverMyPageService.getMoverMyPageSummary", () => {
     };
 
     (userService.userInfo as jest.Mock).mockResolvedValue(mockUserInfo);
-    (userService.getProfileData as jest.Mock).mockResolvedValue(mockProfileData);
+    (userService.getProfileData as jest.Mock).mockResolvedValue(
+      mockProfileData
+    );
 
     // Exercise
     const result = await getMoverMyPageSummary("1");
@@ -380,7 +396,9 @@ describe("moverMyPageService.getMoverMyPageSummary", () => {
     };
 
     (userService.userInfo as jest.Mock).mockResolvedValue(mockUserInfo);
-    (userService.getProfileData as jest.Mock).mockResolvedValue(mockProfileData);
+    (userService.getProfileData as jest.Mock).mockResolvedValue(
+      mockProfileData
+    );
 
     // Exercise
     const result = await getMoverMyPageSummary("1");
@@ -391,4 +409,4 @@ describe("moverMyPageService.getMoverMyPageSummary", () => {
     expect(result.totalFavoriteCount).toBe(0);
     expect(result.career).toBe(1);
   });
-}); 
+});
