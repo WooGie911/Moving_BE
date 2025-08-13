@@ -96,7 +96,22 @@ moverScheduleRouter.get(
   verifyAccessToken,
   cache({ ttlSeconds: 60, varyByAuth: true }),
   translationMiddleware({
-    excludeKeys: ["id", "uuid", "createdAt", "updatedAt", "email", "phone", "url", "link", "customerName", "moveDate"],
+    // 동적 텍스트(주소 등)만 번역하고, 상태/유형 키는 표준 값 유지
+    excludeKeys: [
+      "id",
+      "uuid",
+      "createdAt",
+      "updatedAt",
+      "email",
+      "phone",
+      "url",
+      "link",
+      "customerName",
+      "moveDate",
+      "status",
+      "movingType",
+      "moveType",
+    ],
   }),
   moverScheduleController.getMonthlySchedules,
 );
