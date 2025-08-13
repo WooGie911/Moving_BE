@@ -3,7 +3,7 @@ import favoriteService from "../services/favorite.service";
 import favoriteRepository from "../repositories/favorite.repository";
 import { IFavoriteRequest } from "../types/favorite.types";
 import * as Sentry from "@sentry/node";
-// 찜하기 캐시 제거: 캐시 무효화 호출도 비활성화
+import { invalidateCacheByPattern } from "../middlewares/cacheMiddleware";
 
 // 커스텀 Request 타입 정의
 interface IUserRequest extends Request {
@@ -51,7 +51,26 @@ class FavoriteController {
 
       const result = await favoriteService.addFavorite(customerId!, moverId);
 
-      // 캐시 사용 중단: 무효화 로직 제거
+      // 찜하기 추가 시 관련 캐시 무효화
+      try {
+        if (customerId) {
+          // 견적 요청 관련 캐시 무효화
+          await invalidateCacheByPattern(
+            `cache:GET:/customer-quotes:*:u:${customerId}:*`
+          );
+          // 기사님 관련 캐시 무효화
+          await invalidateCacheByPattern(
+            `cache:GET:/movers:*:u:${customerId}:*`
+          );
+          // 찜한 기사님 목록 캐시 무효화
+          await invalidateCacheByPattern(
+            `cache:GET:/favorites:*:u:${customerId}:*`
+          );
+        }
+      } catch (cacheError) {
+        console.error("Cache invalidation error:", cacheError);
+        // 캐시 무효화 실패는 무시하고 찜하기는 성공으로 처리
+      }
 
       // 생성 성공 시 201, 그 외(이미 존재 등) 200
       const statusCode = result.success ? 201 : 200;
@@ -112,7 +131,26 @@ class FavoriteController {
 
       const result = await favoriteService.removeFavorite(customerId!, moverId);
 
-      // 캐시 사용 중단: 무효화 로직 제거
+      // 찜하기 제거 시 관련 캐시 무효화
+      try {
+        if (customerId) {
+          // 견적 요청 관련 캐시 무효화
+          await invalidateCacheByPattern(
+            `cache:GET:/customer-quotes:*:u:${customerId}:*`
+          );
+          // 기사님 관련 캐시 무효화
+          await invalidateCacheByPattern(
+            `cache:GET:/movers:*:u:${customerId}:*`
+          );
+          // 찜한 기사님 목록 캐시 무효화
+          await invalidateCacheByPattern(
+            `cache:GET:/favorites:*:u:${customerId}:*`
+          );
+        }
+      } catch (cacheError) {
+        console.error("Cache invalidation error:", cacheError);
+        // 캐시 무효화 실패는 무시하고 찜하기 제거는 성공으로 처리
+      }
 
       // success가 false인 경우도 정상적인 상황이므로 200 상태 코드로 반환
       return res.status(200).json(result);
@@ -163,7 +201,11 @@ class FavoriteController {
         });
       }
 
-      const result = await favoriteRepository.getFavoriteMovers(customerId!, limit, cursor);
+      const result = await favoriteRepository.getFavoriteMovers(
+        customerId!,
+        limit,
+        cursor
+      );
 
       return res.status(200).json({
         success: true,
@@ -216,7 +258,10 @@ class FavoriteController {
         });
       }
 
-      const status = await favoriteRepository.getFavoriteStatus(customerId!, moverId);
+      const status = await favoriteRepository.getFavoriteStatus(
+        customerId!,
+        moverId
+      );
 
       return res.status(200).json({
         success: true,
