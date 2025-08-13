@@ -88,7 +88,10 @@ describe("MoverRepository - 유닛 테스트", () => {
           currentAreas: { has: "서울" },
           serviceTypes: { has: "SMALL" },
         },
-        orderBy: [{ totalReviewCount: "desc" }, { id: "asc" }],
+        orderBy: [
+          { totalReviewCount: { sort: "desc", nulls: "last" } },
+          { id: "asc" },
+        ],
         skip: 0,
         take: 11,
         include: {
@@ -143,7 +146,10 @@ describe("MoverRepository - 유닛 테스트", () => {
           deletedAt: null,
           userType: { has: "MOVER" },
         },
-        orderBy: [{ totalReviewCount: "desc" }, { id: "asc" }],
+        orderBy: [
+          { totalReviewCount: { sort: "desc", nulls: "last" } },
+          { id: "asc" },
+        ],
         skip: 0,
         take: 11,
         include: {
@@ -174,7 +180,7 @@ describe("MoverRepository - 유닛 테스트", () => {
           deletedAt: null,
           userType: { has: "MOVER" },
         },
-        orderBy: [{ career: "desc" }, { id: "asc" }],
+        orderBy: [{ career: { sort: "desc", nulls: "last" } }, { id: "asc" }],
         skip: 0,
         take: 11,
         include: {
@@ -224,7 +230,10 @@ describe("MoverRepository - 유닛 테스트", () => {
           deletedAt: null,
           userType: { has: "MOVER" },
         },
-        orderBy: [{ workedCount: "desc" }, { id: "asc" }],
+        orderBy: [
+          { workedCount: { sort: "desc", nulls: "last" } },
+          { id: "asc" },
+        ],
         skip: 0,
         take: 11,
         include: {
@@ -254,7 +263,10 @@ describe("MoverRepository - 유닛 테스트", () => {
             { name: { contains: "이사" } },
           ],
         },
-        orderBy: [{ totalReviewCount: "desc" }, { id: "asc" }],
+        orderBy: [
+          { totalReviewCount: { sort: "desc", nulls: "last" } },
+          { id: "asc" },
+        ],
         skip: 0,
         take: 11,
         include: {
