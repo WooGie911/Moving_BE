@@ -330,6 +330,72 @@ describe("authService.signup", () => {
       })
     ).rejects.toThrow(ServerError);
   });
+
+  it("회원가입 시 generateToken 인자 검증(hasProfile=false)", async () => {
+    const mockUser = {
+      id: "10",
+      name: "임꺽정",
+      userType: ["CUSTOMER"],
+      nickname: "임꺽정",
+    };
+
+    (authRepository.findUserByEmail as jest.Mock).mockResolvedValue(null);
+    (bcrypt.hash as jest.Mock).mockResolvedValue("$2b$10$hashedpassword");
+    (authRepository.createUser as jest.Mock).mockResolvedValue(mockUser);
+
+    const mockGenerateToken = generateToken as jest.Mock;
+    mockGenerateToken.mockReturnValue({
+      newAccessToken: "mockAccessToken",
+      newRefreshToken: "mockRefreshToken",
+    });
+
+    await authService.signup({
+      name: "임꺽정",
+      email: "im@example.com",
+      phoneNumber: "01012345678",
+      password: "1rhdiddl!",
+      userType: "CUSTOMER",
+    });
+
+    expect(mockGenerateToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: String(mockUser.id),
+        name: mockUser.name,
+        userType: "CUSTOMER",
+        hasProfile: false,
+      })
+    );
+  });
+
+  it("회원가입 입력 유효성 검사 함수 호출 여부 검증", async () => {
+    (authRepository.findUserByEmail as jest.Mock).mockResolvedValue(null);
+    (bcrypt.hash as jest.Mock).mockResolvedValue("$2b$10$hashedpassword");
+    (authRepository.createUser as jest.Mock).mockResolvedValue({
+      id: "11",
+      name: "장보고",
+      userType: ["CUSTOMER"],
+    });
+    (generateToken as jest.Mock).mockReturnValue({
+      newAccessToken: "at",
+      newRefreshToken: "rt",
+    });
+
+    await authService.signup({
+      name: "장보고",
+      email: "jang@example.com",
+      phoneNumber: "01012345678",
+      password: "1rhdiddl!",
+      userType: "CUSTOMER",
+    });
+
+    expect(validateUserSignupInput).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "장보고",
+        email: "jang@example.com",
+        phoneNumber: "01012345678",
+      })
+    );
+  });
 });
 
 describe("authService.signin", () => {
@@ -478,24 +544,27 @@ describe("authService.signin", () => {
     ).rejects.toThrow(ValidationError);
   });
 
-  it("로그인 실패 - 존재하지 않는 유저 라면 AuthenticationError(401) 발생", async () => {
-    // Setup
-    const mockValidateUserSigninInput = validateUserSignupInput as jest.Mock;
-    mockValidateUserSigninInput.mockImplementation(() => {
-      throw new AuthenticationError("존재하지 않는 유저입니다.");
-    });
+  it("로그인 실패 - 존재하지 않는 유저(리포지토리 null)면 AuthenticationError(401)", async () => {
+    // Setup: 유효성 검사는 통과시키고, 레포는 null 반환
+    (validateUserSignupInput as jest.Mock).mockImplementation(() => undefined);
+    (authRepository.findUserByEmailAndPassword as jest.Mock).mockResolvedValue(
+      null
+    );
 
     // Assertion
     await expect(
       authService.signin("test@test.com", "1rhdiddl!", "CUSTOMER")
     ).rejects.toThrow(AuthenticationError);
+    await expect(
+      authService.signin("test@test.com", "1rhdiddl!", "CUSTOMER")
+    ).rejects.toThrow("존재하지 않는 유저입니다");
   });
 
   it("로그인 실패 - 비밀번호 불일치 라면 AuthenticationError(401) 발생", async () => {
     // Setup
     const mockValidateUserSigninInput = validateUserSignupInput as jest.Mock;
     mockValidateUserSigninInput.mockImplementation(() => {
-      throw new AuthenticationError("비밀번호가 일치하지 않습니다.");
+      throw new AuthenticationError("비밀번호가 일치하지 않습니다");
     });
 
     // Assertion
@@ -535,6 +604,191 @@ describe("authService.signin", () => {
     await expect(
       authService.signin("test@test.com", "1rhdiddl!", "CUSTOMER")
     ).rejects.toThrow(ServerError);
+  });
+
+  it("소셜 로그인 유저면 AuthenticationError(401)", async () => {
+    const mockUser = {
+      id: 1,
+      name: "소셜유저",
+      userType: ["CUSTOMER"],
+      email: "social@test.com",
+      encryptedPassword: "$2b$10$hashedpassword",
+      provider: "GOOGLE",
+    };
+
+    (authRepository.findUserByEmailAndPassword as jest.Mock).mockResolvedValue(
+      mockUser
+    );
+
+    await expect(
+      authService.signin("social@test.com", "1rhdiddl!", "CUSTOMER")
+    ).rejects.toThrow(AuthenticationError);
+  });
+
+  it("비밀번호 불일치면 AuthenticationError(401)", async () => {
+    const mockUser = {
+      id: 1,
+      name: "홍길동",
+      userType: ["CUSTOMER"],
+      email: "test@test.com",
+      encryptedPassword: "$2b$10$hashedpassword",
+      provider: "LOCAL",
+    };
+
+    (authRepository.findUserByEmailAndPassword as jest.Mock).mockResolvedValue(
+      mockUser
+    );
+    (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+    await expect(
+      authService.signin("test@test.com", "wrongpass!", "CUSTOMER")
+    ).rejects.toThrow(AuthenticationError);
+  });
+
+  it("CUSTOMER만 가진 유저가 MOVER로 로그인하면 타입 병합 후 토큰 업데이트", async () => {
+    const mockUser = {
+      id: 1,
+      name: "홍길동",
+      userType: ["CUSTOMER"],
+      email: "test@test.com",
+      encryptedPassword: "$2b$10$hashedpassword",
+      provider: "LOCAL",
+      isCustomer: true,
+      isMover: false,
+    };
+
+    (authRepository.findUserByEmailAndPassword as jest.Mock).mockResolvedValue(
+      mockUser
+    );
+    (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+    (generateToken as jest.Mock).mockReturnValue({
+      newAccessToken: "mockAccessToken",
+      newRefreshToken: "mockRefreshToken",
+    });
+    const mockUpdate = authRepository.updateUserToken as jest.Mock;
+    mockUpdate.mockResolvedValue(undefined);
+
+    await authService.signin("test@test.com", "1rhdiddl!", "MOVER");
+
+    expect(mockUpdate).toHaveBeenCalledWith(
+      String(mockUser.id),
+      "mockRefreshToken",
+      ["CUSTOMER", "MOVER"]
+    );
+  });
+
+  it("generateToken 호출 시 hasProfile 맵핑 검증(CUSTOMER/MOVER)", async () => {
+    const baseUser: any = {
+      id: 2,
+      name: "사용자",
+      userType: ["CUSTOMER", "MOVER"],
+      email: "u@test.com",
+      encryptedPassword: "$2b$10$hashedpassword",
+      provider: "LOCAL",
+      isCustomer: true,
+      isMover: false,
+    };
+
+    (authRepository.findUserByEmailAndPassword as jest.Mock).mockResolvedValue(
+      baseUser
+    );
+    (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+    const mockGen = generateToken as jest.Mock;
+    mockGen.mockReturnValue({ newAccessToken: "a", newRefreshToken: "r" });
+    (authRepository.updateUserToken as jest.Mock).mockResolvedValue(undefined);
+
+    await authService.signin("u@test.com", "1rhdiddl!", "CUSTOMER");
+    expect((mockGen as jest.Mock).mock.calls.slice(-1)[0][0].hasProfile).toBe(
+      true
+    );
+
+    (authRepository.findUserByEmailAndPassword as jest.Mock).mockResolvedValue({
+      ...baseUser,
+      isCustomer: false,
+      isMover: true,
+    });
+    await authService.signin("u@test.com", "1rhdiddl!", "MOVER");
+    expect((mockGen as jest.Mock).mock.calls.slice(-1)[0][0].hasProfile).toBe(
+      true
+    );
+  });
+
+  it("로그인 입력 유효성 검사 함수 호출 여부 검증", async () => {
+    const mockUser = {
+      id: 1,
+      name: "홍길동",
+      userType: ["CUSTOMER"],
+      email: "test@test.com",
+      encryptedPassword: "$2b$10$hashedpassword",
+      isCustomer: true,
+      provider: "LOCAL",
+    };
+    (authRepository.findUserByEmailAndPassword as jest.Mock).mockResolvedValue(
+      mockUser
+    );
+    (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+    (generateToken as jest.Mock).mockReturnValue({
+      newAccessToken: "a",
+      newRefreshToken: "r",
+    });
+    (authRepository.updateUserToken as jest.Mock).mockResolvedValue(undefined);
+
+    await authService.signin("test@test.com", "1rhdiddl!", "CUSTOMER");
+
+    expect(validateUserSignupInput).toHaveBeenCalledWith(
+      expect.objectContaining({ email: "test@test.com", password: "1rhdiddl!" })
+    );
+  });
+
+  it("encryptedPassword 누락이면 AuthenticationError(401)", async () => {
+    const mockUser = {
+      id: 1,
+      name: "홍길동",
+      userType: ["CUSTOMER"],
+      email: "test@test.com",
+      encryptedPassword: null,
+      provider: "LOCAL",
+    } as any;
+
+    (authRepository.findUserByEmailAndPassword as jest.Mock).mockResolvedValue(
+      mockUser
+    );
+
+    await expect(
+      authService.signin("test@test.com", "1rhdiddl!", "CUSTOMER")
+    ).rejects.toThrow(AuthenticationError);
+  });
+
+  it("타입 병합이 필요 없으면 원본 userType으로 updateUserToken 호출", async () => {
+    const mockUser = {
+      id: 7,
+      name: "홍길동",
+      userType: ["CUSTOMER", "MOVER"],
+      email: "t@test.com",
+      encryptedPassword: "$2b$10$hashedpassword",
+      isCustomer: true,
+      isMover: true,
+      provider: "LOCAL",
+    };
+
+    (authRepository.findUserByEmailAndPassword as jest.Mock).mockResolvedValue(
+      mockUser
+    );
+    (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+    (generateToken as jest.Mock).mockReturnValue({
+      newAccessToken: "a",
+      newRefreshToken: "r",
+    });
+    const mockUpdate = authRepository.updateUserToken as jest.Mock;
+    mockUpdate.mockResolvedValue(undefined);
+
+    await authService.signin("t@test.com", "1rhdiddl!", "CUSTOMER");
+
+    expect(mockUpdate).toHaveBeenCalledWith(
+      String(mockUser.id),
+      "r",
+      mockUser.userType
+    );
   });
 });
 
@@ -577,6 +831,27 @@ describe("authService.logout", () => {
 
     // Exercise
     await expect(authService.logout("1")).rejects.toThrow(NotFoundError);
+    await expect(authService.logout("1")).rejects.toThrow(
+      "존재하지 않는 유저입니다"
+    );
+  });
+
+  it("로그아웃 시 updateUserToken이 null로 호출되어 리프레시 토큰 무효화", async () => {
+    const mockUser = { id: 10, name: "홍길동", userType: ["CUSTOMER"] } as any;
+    (authRepository.findUserById as jest.Mock).mockResolvedValue(mockUser);
+    (authRepository.updateUserToken as jest.Mock).mockResolvedValue(undefined);
+
+    await authService.logout("10");
+    expect(authRepository.updateUserToken).toHaveBeenCalledWith(
+      "10",
+      null,
+      mockUser.userType
+    );
+  });
+
+  it("userId 미제공 시 AuthenticationError 메시지 포함", async () => {
+    await expect(authService.logout("")).rejects.toThrow(AuthenticationError);
+    await expect(authService.logout("")).rejects.toThrow("토큰 인증 실패");
   });
 });
 
@@ -652,6 +927,216 @@ describe("authService.refresh", () => {
       accessToken: "mockAccessToken",
       refreshToken: "mockRefreshToken",
     });
+  });
+
+  it("유저가 없으면 NotFoundError(404)", async () => {
+    (authRepository.findUserById as jest.Mock).mockResolvedValue(null);
+    await expect(
+      authService.refresh({ userId: "1", userType: "CUSTOMER", exp: 0 })
+    ).rejects.toThrow(NotFoundError);
+  });
+
+  it("임계치 초과(재발급 안함)일 때 updateUserToken 호출 안됨", async () => {
+    const mockUser = {
+      id: 1,
+      name: "홍길동",
+      userType: ["CUSTOMER"],
+      isCustomer: true,
+    };
+    (authRepository.findUserById as jest.Mock).mockResolvedValue(mockUser);
+    (generateAccessToken as jest.Mock).mockReturnValue("access");
+
+    const now = Math.floor(Date.now() / 1000);
+    const decoded = {
+      userId: "1",
+      userType: "CUSTOMER" as TUserRole,
+      exp: now + 6 * 24 * 60 * 60,
+    };
+
+    await authService.refresh(decoded);
+    expect(authRepository.updateUserToken).not.toHaveBeenCalled();
+  });
+
+  it("임계 경계값(=5일)에서는 재발급 및 updateUserToken 호출", async () => {
+    const mockUser = {
+      id: 1,
+      name: "홍길동",
+      userType: ["CUSTOMER"],
+      isCustomer: true,
+    };
+    (authRepository.findUserById as jest.Mock).mockResolvedValue(mockUser);
+    (generateAccessToken as jest.Mock).mockReturnValue("access");
+    (generateRefreshToken as jest.Mock).mockReturnValue("refresh");
+    (authRepository.updateUserToken as jest.Mock).mockResolvedValue(undefined);
+
+    const now = Math.floor(Date.now() / 1000);
+    const threshold = 5 * 24 * 60 * 60; // seconds
+    const decoded = {
+      userId: "1",
+      userType: "CUSTOMER" as TUserRole,
+      exp: now + threshold,
+    };
+
+    const result = await authService.refresh(decoded);
+    expect(result).toMatchObject({
+      accessToken: "access",
+      refreshToken: "refresh",
+    });
+    expect(authRepository.updateUserToken).toHaveBeenCalledWith(
+      mockUser.id,
+      "refresh",
+      mockUser.userType
+    );
+  });
+
+  it("accessToken 생성 실패(reject) 시 에러 전파", async () => {
+    const mockUser = {
+      id: 1,
+      name: "홍길동",
+      userType: ["CUSTOMER"],
+      isCustomer: true,
+    };
+    (authRepository.findUserById as jest.Mock).mockResolvedValue(mockUser);
+    (generateAccessToken as jest.Mock).mockImplementation(() => {
+      throw new Error("token error");
+    });
+
+    const now = Math.floor(Date.now() / 1000);
+    await expect(
+      authService.refresh({ userId: "1", userType: "CUSTOMER", exp: now + 10 })
+    ).rejects.toThrow(/token error/);
+  });
+
+  it("반환 객체에 provider가 포함되는지 확인", async () => {
+    const mockDecodedToken = {
+      userId: "1",
+      userType: "CUSTOMER" as TUserRole,
+      exp: Math.floor(Date.now() / 1000) + 2 * 24 * 60 * 60,
+    };
+    const mockUser = {
+      id: 1,
+      name: "홍길동",
+      userType: ["CUSTOMER"],
+      isCustomer: true,
+      provider: "LOCAL",
+    };
+    (authRepository.findUserById as jest.Mock).mockResolvedValue(mockUser);
+    (generateAccessToken as jest.Mock).mockReturnValue("mockAccessToken");
+    (generateRefreshToken as jest.Mock).mockReturnValue("mockRefreshToken");
+
+    const result = await authService.refresh(mockDecodedToken);
+    expect(result.provider).toBe("LOCAL");
+  });
+});
+
+describe("authService.switchRole", () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("성공: 토큰 재발급 및 updateUserToken 호출", async () => {
+    const mockUser = {
+      id: 3,
+      name: "홍길동",
+      userType: ["CUSTOMER"],
+      isCustomer: true,
+      isMover: false,
+      provider: "LOCAL",
+    };
+    (authRepository.findUserById as jest.Mock).mockResolvedValue(mockUser);
+    (generateToken as jest.Mock).mockReturnValue({
+      newAccessToken: "access",
+      newRefreshToken: "refresh",
+    });
+    const mockUpdate = authRepository.updateUserToken as jest.Mock;
+    mockUpdate.mockResolvedValue(undefined);
+
+    const result = await authService.switchRole("3", "MOVER");
+
+    expect(result).toMatchObject({
+      accessToken: "access",
+      refreshToken: "refresh",
+      provider: "LOCAL",
+    });
+    expect(generateToken).toHaveBeenCalledWith(
+      expect.objectContaining({ hasProfile: false, userType: "MOVER" })
+    );
+    expect(mockUpdate).toHaveBeenCalledWith(
+      String(mockUser.id),
+      "refresh",
+      mockUser.userType
+    );
+  });
+
+  it("유저 없음 → NotFoundError", async () => {
+    (authRepository.findUserById as jest.Mock).mockResolvedValue(null);
+    await expect(authService.switchRole("99", "CUSTOMER")).rejects.toThrow(
+      NotFoundError
+    );
+  });
+
+  it("토큰 생성 실패 → ServerError", async () => {
+    const mockUser = {
+      id: 4,
+      name: "홍길동",
+      userType: ["CUSTOMER"],
+      isCustomer: true,
+      isMover: false,
+      provider: "LOCAL",
+    };
+    (authRepository.findUserById as jest.Mock).mockResolvedValue(mockUser);
+    (generateToken as jest.Mock).mockReturnValue({
+      newAccessToken: null,
+      newRefreshToken: null,
+    });
+
+    await expect(authService.switchRole("4", "MOVER")).rejects.toThrow(
+      ServerError
+    );
+  });
+});
+
+describe("authService.oauthCrateOrUpdate - 보강", () => {
+  afterEach(() => jest.clearAllMocks());
+
+  it("기존 유저 경로에서 updateUserToken 호출 및 hasProfile 맵핑 확인", async () => {
+    const mockUser = {
+      id: 5,
+      name: "홍길동",
+      userType: ["CUSTOMER"],
+      nickname: "길동이",
+      provider: "GOOGLE",
+      isCustomer: true,
+      isMover: false,
+    };
+    (authRepository.findUserByEmail as jest.Mock).mockResolvedValue(mockUser);
+    (authUtils.mergeUserTypes as jest.Mock).mockReturnValue([
+      "CUSTOMER",
+      "MOVER",
+    ]);
+    (authRepository.updateUser as jest.Mock).mockResolvedValue({
+      ...mockUser,
+      userType: ["CUSTOMER", "MOVER"],
+    });
+    (generateToken as jest.Mock).mockReturnValue({
+      newAccessToken: "a",
+      newRefreshToken: "r",
+    });
+    const mockUpdate = authRepository.updateUserToken as jest.Mock;
+    mockUpdate.mockResolvedValue(undefined);
+
+    await authService.oauthCrateOrUpdate(
+      "GOOGLE",
+      "pid",
+      "g@test.com",
+      "홍길동",
+      "MOVER"
+    );
+
+    expect(generateToken).toHaveBeenCalledWith(
+      expect.objectContaining({ userType: "MOVER", hasProfile: false })
+    );
+    expect(mockUpdate).toHaveBeenCalledWith(String(mockUser.id), "r");
   });
 });
 
