@@ -47,8 +47,8 @@ const getMoverMyPageData = async (userId: string) => {
     totalFavoriteCount: (profileData as any).totalFavoriteCount,
 
     // 리뷰 정보
-    reviews: reviews.items || [],
-    totalReviews: reviews.total || 0,
+    reviews: reviews.data?.items || [],
+    totalReviews: reviews.data?.total || 0,
   };
 };
 
@@ -116,51 +116,67 @@ describe("moverMyPageService.getMoverMyPageData", () => {
     };
 
     const mockReviews = {
-      items: [
-        {
-          id: "review1",
-          estimateRequestId: "estimate1",
-          customerId: "customer1",
-          moverId: "1",
-          profileImage: "https://example.com/customer1.jpg",
-          nickname: "고객1",
-          moveType: "SMALL",
-          isDesigned: false,
-          moverIntroduction: null,
-          fromAddress: {
-            city: "서울시 강남구",
-            district: "역삼동",
-            detail: "101동 202호",
-            region: "SEOUL",
+      success: true,
+      message: "기사님 리뷰 목록입니다.",
+      data: {
+        items: [
+          {
+            id: "review1",
+            rating: 5,
+            content: "기사님이 친절하게 잘 해주셨어요!",
+            status: "COMPLETED",
+            createdAt: "2024-07-11T09:12:34.000Z",
+            updatedAt: "2024-07-11T09:12:34.000Z",
+            customer: {
+              id: "customer1",
+              profileImage: "https://example.com/customer1.jpg",
+              nickname: "고객1",
+              shortIntro: "깔끔한 이사를 원합니다",
+              detailIntro: "신중하고 꼼꼼한 이사 서비스를 원하는 고객입니다.",
+            },
+            moveType: "SMALL",
+            moveDate: "2024-07-10T00:00:00.000Z",
+            description: "안전하고 신속한 이사를 원합니다",
+            fromAddress: {
+              id: "addr-1",
+              city: "서울시 강남구",
+              district: "역삼동",
+              detail: "101동 202호",
+              region: "SEOUL",
+              zoneCode: "06123",
+            },
+            toAddress: {
+              id: "addr-2",
+              city: "경기도 고양시",
+              district: "일산동구",
+              detail: "301동 404호",
+              region: "GYEONGGI",
+              zoneCode: "10400",
+            },
+            estimate: {
+              id: "estimate1",
+              price: 500000,
+              comment: "안전하게 이사해드리겠습니다",
+              status: "ACCEPTED",
+              isDesignated: false,
+              validUntil: "2024-07-15T00:00:00.000Z",
+              createdAt: "2024-07-09T10:00:00.000Z",
+              updatedAt: "2024-07-09T10:00:00.000Z",
+            },
+            estimateRequest: {
+              id: "request1",
+              status: "COMPLETED",
+              createdAt: "2024-07-09T10:00:00.000Z",
+              updatedAt: "2024-07-09T10:00:00.000Z",
+            },
           },
-          toAddress: {
-            city: "경기도 고양시",
-            district: "일산동구",
-            detail: "301동 404호",
-            region: "GYEONGGI",
-          },
-          moveDate: "2024-07-10T00:00:00.000Z",
-          rating: 5,
-          content: "기사님이 친절하게 잘 해주셨어요!",
-          createdAt: "2024-07-11T09:12:34.000Z",
-          estimate: {
-            id: "estimate1",
-            price: 500000,
-            comment: "안전하게 이사해드리겠습니다",
-            status: "ACCEPTED",
-            isDesignated: false,
-            validUntil: "2024-07-15T00:00:00.000Z",
-            workingHours: 4,
-            includesPackaging: true,
-            insuranceAmount: 1000000,
-            createdAt: "2024-07-09T10:00:00.000Z",
-            updatedAt: "2024-07-09T10:00:00.000Z",
-          },
-        },
-      ],
-      total: 1,
-      page: 1,
-      pageSize: 1000,
+        ],
+        total: 1,
+        page: 1,
+        pageSize: 1000,
+        hasNextPage: false,
+        hasPrevPage: false,
+      },
     };
 
     (userService.userInfo as jest.Mock).mockResolvedValue(mockUserInfo);
@@ -205,7 +221,7 @@ describe("moverMyPageService.getMoverMyPageData", () => {
       totalFavoriteCount: 45,
 
       // 리뷰 정보
-      reviews: mockReviews.items,
+      reviews: mockReviews.data.items,
       totalReviews: 1,
     });
   });
