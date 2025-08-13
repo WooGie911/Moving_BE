@@ -57,10 +57,16 @@ export const getMoverList = async (filter: MoverListFilter) => {
   };
   const orderByField = SORT_MAP[sort] || "totalReviewCount";
 
+  // NULL 값을 0으로 처리하여 정렬
   const movers = await prisma.user.findMany({
     where,
     orderBy: [
-      { [orderByField]: "desc" },
+      {
+        [orderByField]: {
+          sort: "desc",
+          nulls: "last",
+        },
+      },
       { id: "asc" }, // 동일한 값일 때 ID로 정렬하여 일관성 보장
     ],
     skip: cursor ? 1 : 0,
@@ -71,13 +77,13 @@ export const getMoverList = async (filter: MoverListFilter) => {
     },
   });
 
-  // NULL 값 처리만 하고 정렬은 Prisma에서 처리된 결과 사용
+  // NULL 값을 0으로 변환하여 프론트엔드에서 일관된 데이터 제공
   const processedMovers = movers.map((mover) => ({
     ...mover,
-    career: mover.career || 0,
-    workedCount: mover.workedCount || 0,
-    averageRating: mover.averageRating || 0,
-    totalReviewCount: mover.totalReviewCount || 0,
+    career: mover.career ?? 0,
+    workedCount: mover.workedCount ?? 0,
+    averageRating: mover.averageRating ?? 0,
+    totalReviewCount: mover.totalReviewCount ?? 0,
   }));
 
   const hasNext = processedMovers.length > take;
