@@ -55,6 +55,17 @@ sseRouter.get("/", verifyAccessToken, (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
   res.setHeader('X-Accel-Buffering', 'no'); // Nginx 프록시에서 버퍼링 비활성화
 
+  // SSE 연결을 위한 헤더 설정 (CORS 포함)
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache, no-transform",
+    "Connection": "keep-alive",
+    "Access-Control-Allow-Origin": "https://www.gomoving.site",
+    "Access-Control-Allow-Headers": "Authorization, Cache-Control",
+    "Access-Control-Allow-Credentials": "true",
+    "X-Accel-Buffering": "no" // Nginx 프록시에서 버퍼링 비활성화
+  });
+
   // 연결 유지를 위한 heartbeat 전송
   const heartbeat = setInterval(() => {
     res.write(': heartbeat\n\n');
