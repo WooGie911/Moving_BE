@@ -17,7 +17,7 @@ export const authCookieOptions = (
 ): TCookieOptions => ({
   httpOnly: httpOnly,
   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 개발환경에서는 lax 사용
-  secure: process.env.NODE_ENV === "production", // 개발환경에서는 false.
+  secure: process.env.NODE_ENV === "production", // 개발환경에서는 false
   path: "/",
   maxAge: maxAgeSeconds * 1000,
   domain: process.env.NODE_ENV === "production" ? ".gomoving.site" : undefined, // 모든 서브도메인 공유
