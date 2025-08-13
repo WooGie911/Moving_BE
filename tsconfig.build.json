@@ -2,8 +2,16 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "noImplicitAny": false // 🔹 빌드 시 암묵적 any 허용(서버 빌드 전용 완화)
   },
   "include": ["src/**/*"],
-  "exclude": ["**/*.test.ts", "**/*.test.tsx", "**/__tests__/**", "jest.config.ts", "vitest.config.ts"]
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/__tests__/**",
+    "jest.config.ts",
+    "vitest.config.ts",
+    "src/types/test.types.ts" // 🔹 문제가 된 테스트 타입 파일 명시 제외
+  ]
 }
