@@ -28,6 +28,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Typecheck (non-blocking)
+        run: npm run typecheck || echo "Type errors detected (not blocking deploy)"
+
       - name: 📦 Archive release
         run: |
           PKG="release-${GITHUB_SHA::7}.tar.gz"
