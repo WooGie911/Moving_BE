@@ -26,9 +26,13 @@ export function registerSSE(userId: string, res: Response) {
       Connection: "keep-alive",
     });
 
+    console.log('응답헤더 설정 완료');
+
     res.write("\n"); // 연결 초기화
 
     sseClients.set(userId, res);
+
+    console.log(`✅ 클라이언트 저장 완료. 현재 총 클라이언트: ${sseClients.size}`);
 
     // 연결 끊김 감지
     res.on("close", () => {

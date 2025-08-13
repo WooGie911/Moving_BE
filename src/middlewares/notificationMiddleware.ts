@@ -47,7 +47,7 @@ export const notificationMiddleware: Prisma.Middleware = async (params, next) =>
       // 실시간 알림 SSE 전송
       for (const notification of notifications) {
         try {
-          emitNotificationSSE(notification.userId, notification);
+          await emitNotificationSSE(notification.userId, notification);
         } catch (error) {
           console.error("SSE 이벤트 발송 실패:", error);
           captureNotificationError(error as Error, {
