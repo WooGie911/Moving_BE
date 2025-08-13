@@ -324,9 +324,8 @@ describe("이사업체 견적 서비스", () => {
         deletedAt: null,
         moverId: "mover123",
         estimateRequestId: "estimateRequest123",
-        message: null,
         expiresAt: new Date(),
-      });
+      } as any);
       mockedRepository.countExistingEstimates.mockResolvedValue([]);
       mockedRepository.createEstimate.mockResolvedValue(mockEstimate);
       mockedRepository.getEstimateDetailForAction.mockResolvedValue(
@@ -602,9 +601,8 @@ describe("이사업체 견적 서비스", () => {
         deletedAt: null,
         moverId: "mover123",
         estimateRequestId: "estimateRequest123",
-        message: null,
         expiresAt: new Date(),
-      });
+      } as any);
       mockedRepository.countExistingEstimates.mockResolvedValue(
         mockExistingEstimates
       );
@@ -1569,9 +1567,8 @@ describe("이사업체 견적 서비스", () => {
         deletedAt: null,
         moverId: "mover123",
         estimateRequestId: "estimateRequest123",
-        message: null,
         expiresAt: new Date(),
-      });
+      } as any);
       mockedRepository.createEstimate.mockResolvedValue(
         mockRejectedEstimate as any
       );

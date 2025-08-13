@@ -18,6 +18,7 @@ import { MoveType, RegionType } from "../types/user.types";
 import bcrypt from "bcrypt";
 import { validateMoverProfileUpdate } from "../utils/validators/userValidator";
 import userRepository from "../repositories/user.repository";
+import actionService from "./action.service";
 
 jest.mock("../repositories/user.repository");
 jest.mock("../utils/generateToken");
@@ -27,6 +28,13 @@ jest.mock("../utils/phoneEncryption", () => ({
   decryptPhoneNumber: jest.fn((v: string) => v.replace("encrypted-", "")),
 }));
 jest.mock("../utils/validators/userValidator");
+jest.mock("./action.service", () => ({
+  __esModule: true,
+  default: {
+    createAction: jest.fn(),
+  },
+  createAction: jest.fn(),
+}));
 
 describe("userService.userInfo", () => {
   afterEach(() => {
@@ -52,6 +60,8 @@ describe("userService.userInfo", () => {
       userType: ["CUSTOMER", "MOVER"],
       refreshToken: "refreshToken",
       provider: "LOCAL",
+      isCustomer: true,
+      isMover: true,
     };
 
     const expectedUser = {
@@ -63,6 +73,7 @@ describe("userService.userInfo", () => {
       customerImage: "test.jpg",
       userType: "CUSTOMER",
       provider: "LOCAL",
+      hasBothProfiles: true,
     };
 
     const mockGetUserById = userRepository.getUserById as jest.Mock;
@@ -94,6 +105,8 @@ describe("userService.userInfo", () => {
       userType: ["CUSTOMER", "MOVER"],
       refreshToken: "refreshToken",
       provider: "LOCAL",
+      isCustomer: false,
+      isMover: true,
     };
 
     const expectedUser = {
@@ -105,6 +118,7 @@ describe("userService.userInfo", () => {
       moverImage: "test.jpg",
       userType: "MOVER",
       provider: "LOCAL",
+      hasBothProfiles: false,
     };
 
     const mockGetUserById = userRepository.getUserById as jest.Mock;
@@ -297,6 +311,24 @@ describe("userService.createCustomerProfile", () => {
 
     // Assertion
     expect(profile).toMatchObject(expectedProfile);
+    // 액션 생성 호출 검증
+    expect(actionService.createAction as any).toHaveBeenCalledWith(
+      "1",
+      expect.anything(),
+      "1",
+      "WELCOME",
+      { userType: "CUSTOMER" }
+    );
+    // 토큰 인자 검증 (provider 반환 포함 여부는 서비스에서 처리)
+    expect(generateToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "1",
+        name: "홍길동",
+        userType: "CUSTOMER",
+        hasProfile: true,
+      })
+    );
+    // provider는 서비스 반환에 포함되지 않으므로 검증 제거
   });
 
   it("CUSTOMER 프로필 등록 실패 - 사용자 존재 확인 실패 NotFoundError(404) 발생", async () => {
@@ -317,48 +349,25 @@ describe("userService.createCustomerProfile", () => {
     ).rejects.toThrow(NotFoundError);
   });
 
-  it("CUSTOMER 프로필 등록 실패 - 프로필 생성 데이터 유효성 검사 실패 ValidationError(422) 발생", async () => {
-    // Setup
-    const mockUser = {
-      id: "1",
-      name: "홍길동",
-      email: "test@test.com",
-      encryptedPhoneNumber: "0101234567890",
-      currentArea: "SEOUL",
-      preferredServices: ["SMALL", "HOME"],
-      nickname: "홍길동",
-      customerImage: "test.jpg",
-      moverImage: "test.jpg",
-      userType: ["CUSTOMER", "MOVER"],
-      refreshToken: "refreshToken",
-    };
-
-    const profileData = {
-      nickname: "", // 유효성 실패 유도
-      customerImage: "test.jpg",
-      currentArea: "SEOUL" as RegionType,
-      preferredServices: ["SMALL", "HOME"] as MoveType[],
-    };
-
-    // 사용자 존재 확인 모킹
-    const mockGetUserById = userRepository.getUserById as jest.Mock;
-    mockGetUserById.mockResolvedValue(mockUser);
-
-    // 유효성 검사 실패 유도
-    const mockValidateCustomerProfileData =
-      validateCustomerProfileData as jest.Mock;
-    mockValidateCustomerProfileData.mockRejectedValue(
-      new ValidationError("프로필 생성 데이터 유효성 검사 실패")
-    );
-
-    // Assertion
-    await expect(createCustomerProfile("1", profileData)).rejects.toThrow(
-      ValidationError
-    );
+  it("CUSTOMER 프로필 등록 실패 - 사용자 존재 확인 메시지 검증", async () => {
+    (userRepository.getUserById as jest.Mock).mockResolvedValue(null);
+    await expect(
+      createCustomerProfile("1", {
+        nickname: "홍길동",
+        customerImage: "test.jpg",
+        currentArea: "SEOUL",
+        preferredServices: ["SMALL", "HOME"],
+      })
+    ).rejects.toThrow("존재하지 않는 유저입니다");
   });
 });
 
 describe("userService.updateCustomerProfileCheck", () => {
+  beforeEach(() => {
+    (validateCustomerProfileData as jest.Mock).mockReset();
+    (validateCustomerProfileData as jest.Mock).mockResolvedValue(undefined);
+  });
+
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -407,6 +416,91 @@ describe("userService.updateCustomerProfileCheck", () => {
 
     // Assertion
     expect(profile).toBeUndefined();
+    // 유효성 검사 호출
+    expect(validateCustomerProfileData).toHaveBeenCalledWith(updateData, "1");
+    // 레포 호출 인자 검증
+    expect(userRepository.updateCustomerProfile).toHaveBeenCalledWith(
+      "1",
+      expect.objectContaining({
+        encryptedPhoneNumber: expect.stringMatching(/^encrypted-/),
+        encryptedPassword: expect.any(String),
+      })
+    );
+  });
+
+  it("CUSTOMER 프로필 수정 성공 - 비밀번호 변경 없이 업데이트(원본 비번 유지)", async () => {
+    // Setup
+    const originalHashed = await bcrypt.hash("1rhdidld!", 10);
+    const mockUser = {
+      id: "1",
+      name: "홍길동",
+      email: "test@test.com",
+      encryptedPhoneNumber: "encrypted-01012345678",
+      encryptedPassword: originalHashed,
+      currentArea: "SEOUL",
+      preferredServices: ["SMALL", "HOME"],
+      nickname: "홍길동",
+      customerImage: "test.jpg",
+      moverImage: "test.jpg",
+      userType: ["CUSTOMER", "MOVER"],
+      refreshToken: "refreshToken",
+    };
+
+    const updateData = {
+      name: "홍길동",
+      nickname: "홍길동",
+      email: "test@test.com",
+      phoneNumber: "01012345678",
+      // password/newPassword 없음
+      customerImage: "test.jpg",
+      currentArea: "SEOUL" as RegionType,
+      preferredServices: ["SMALL", "HOME"] as MoveType[],
+    } as any;
+
+    (userRepository.getUserWithPassword as jest.Mock).mockResolvedValue(
+      mockUser
+    );
+    (validateCustomerProfileData as jest.Mock).mockResolvedValue(undefined);
+    (userRepository.updateCustomerProfile as jest.Mock).mockResolvedValue({});
+
+    await updateCustomerProfileCheck("1", updateData);
+
+    // 기존 해시가 그대로 전달되는지 검증
+    expect(userRepository.updateCustomerProfile).toHaveBeenCalledWith(
+      "1",
+      expect.objectContaining({ encryptedPassword: originalHashed })
+    );
+  });
+
+  it("CUSTOMER 프로필 수정 시 전화번호 암호화 함수 호출 검증", async () => {
+    const mockUser = {
+      id: "1",
+      name: "홍길동",
+      email: "test@test.com",
+      encryptedPassword: await bcrypt.hash("1rhdidld!", 10),
+    };
+
+    const updateData = {
+      name: "홍길동",
+      nickname: "홍길동",
+      email: "test@test.com",
+      phoneNumber: "01099998888",
+      password: "1rhdidld!",
+      newPassword: "1qkralsrb!",
+      customerImage: "test.jpg",
+      currentArea: "SEOUL" as RegionType,
+      preferredServices: ["SMALL", "HOME"] as MoveType[],
+    };
+
+    (userRepository.getUserWithPassword as jest.Mock).mockResolvedValue(
+      mockUser
+    );
+    (validateCustomerProfileData as jest.Mock).mockResolvedValue(undefined);
+    (userRepository.updateCustomerProfile as jest.Mock).mockResolvedValue({});
+
+    await updateCustomerProfileCheck("1", updateData);
+
+    expect(encryptPhoneNumber).toHaveBeenCalledWith("01099998888");
   });
 
   it("CUSTOMER 프로필 수정 실패 - 사용자 존재 확인 실패 NotFoundError(404) 발생", async () => {
@@ -463,6 +557,64 @@ describe("userService.updateCustomerProfileCheck", () => {
     mockGetUserWithPassword.mockResolvedValue(mockUser);
 
     // Assertion
+    await expect(
+      updateCustomerProfileCheck("1", updateUserProfileData)
+    ).rejects.toThrow(ValidationError);
+  });
+
+  it("CUSTOMER 프로필 수정 실패 - 새 비밀번호가 현재와 같으면 ValidationError", async () => {
+    const mockUser = {
+      id: "1",
+      name: "홍길동",
+      encryptedPassword: await bcrypt.hash("1rhdidld!", 10),
+      userType: ["CUSTOMER", "MOVER"],
+    };
+
+    const updateUserProfileData = {
+      name: "홍길동",
+      nickname: "홍길동",
+      email: "test@test.com",
+      phoneNumber: "01012345678",
+      password: "1rhdidld!",
+      newPassword: "1rhdidld!", // 동일
+      customerImage: "test.jpg",
+      currentArea: "SEOUL" as RegionType,
+      preferredServices: ["SMALL", "HOME"] as MoveType[],
+    };
+
+    (userRepository.getUserWithPassword as jest.Mock).mockResolvedValue(
+      mockUser
+    );
+
+    await expect(
+      updateCustomerProfileCheck("1", updateUserProfileData)
+    ).rejects.toThrow(ValidationError);
+  });
+
+  it("CUSTOMER 프로필 수정 실패 - 새 비밀번호만 있고 현재 비밀번호 없으면 ValidationError", async () => {
+    const mockUser = {
+      id: "1",
+      name: "홍길동",
+      encryptedPassword: await bcrypt.hash("1rhdidld!", 10),
+      userType: ["CUSTOMER", "MOVER"],
+    };
+
+    const updateUserProfileData = {
+      name: "홍길동",
+      nickname: "홍길동",
+      email: "test@test.com",
+      phoneNumber: "01012345678",
+      // password 없음
+      newPassword: "1qkralsrb!",
+      customerImage: "test.jpg",
+      currentArea: "SEOUL" as RegionType,
+      preferredServices: ["SMALL", "HOME"] as MoveType[],
+    } as any;
+
+    (userRepository.getUserWithPassword as jest.Mock).mockResolvedValue(
+      mockUser
+    );
+
     await expect(
       updateCustomerProfileCheck("1", updateUserProfileData)
     ).rejects.toThrow(ValidationError);
@@ -821,7 +973,6 @@ describe("userService.updateMoverBasicInfo", () => {
     }); // 공백 제거됨
   });
 });
-
 
 // 기사님 프로필 수정 테스트
 describe("userService.updateMoverProfileCheck", () => {
@@ -1513,6 +1664,23 @@ describe("userService.createMoverProfile", () => {
       accessToken: "new_access_token",
       refreshToken: "new_refresh_token",
     });
+    // 액션 생성 호출 검증
+    expect(actionService.createAction as any).toHaveBeenCalledWith(
+      "1",
+      expect.anything(),
+      "1",
+      "WELCOME",
+      { userType: "MOVER" }
+    );
+    // 토큰 인자 검증
+    expect(generateToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "1",
+        name: "김기사",
+        userType: "MOVER",
+        hasProfile: true,
+      })
+    );
   });
 
   it("기사님 프로필 등록 성공 - 최소 필드만 포함", async () => {
@@ -1578,6 +1746,21 @@ describe("userService.createMoverProfile", () => {
       accessToken: "new_access_token",
       refreshToken: "new_refresh_token",
     });
+    expect(actionService.createAction as any).toHaveBeenCalledWith(
+      "1",
+      expect.anything(),
+      "1",
+      "WELCOME",
+      { userType: "MOVER" }
+    );
+    expect(generateToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "1",
+        name: "김기사",
+        userType: "MOVER",
+        hasProfile: true,
+      })
+    );
   });
 
   it("기사님 프로필 등록 실패 - 사용자 존재하지 않음 NotFoundError(404) 발생", async () => {

@@ -38,7 +38,22 @@ interface TranslationOptions {
  */
 export function translationMiddleware(options: TranslationOptions = {}) {
   const {
-    excludeKeys = ["id", "uuid", "createdAt", "updatedAt", "email", "phone", "url", "link", "name", "nickname"],
+    // 상태/유형 값은 프론트에서 색상/정적 번역으로 사용하므로 번역에서 제외
+    excludeKeys = [
+      "id",
+      "uuid",
+      "createdAt",
+      "updatedAt",
+      "email",
+      "phone",
+      "url",
+      "link",
+      "name",
+      "nickname",
+      "status",
+      "movingType",
+      "moveType",
+    ],
     shouldTranslate,
     enableLogging = true,
   } = options;

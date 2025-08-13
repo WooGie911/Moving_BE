@@ -1,6 +1,4 @@
 import authRepository from "../repositories/auth.repository";
-import actionService from "./action.service";
-import { ActionType } from "@prisma/client";
 import bcrypt from "bcrypt";
 import {
   generateAccessToken,
