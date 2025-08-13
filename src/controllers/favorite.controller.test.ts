@@ -8,14 +8,9 @@ jest.mock("../repositories/favorite.repository", () => ({
   getFavoriteMovers: jest.fn(),
 }));
 
-jest.mock("../middlewares/cacheMiddleware", () => ({
-  invalidateCacheByPattern: jest.fn(),
-}));
-
 import favoriteController from "./favorite.controller";
 import favoriteService from "../services/favorite.service";
 import favoriteRepository from "../repositories/favorite.repository";
-import { invalidateCacheByPattern } from "../middlewares/cacheMiddleware";
 
 const mockFavoriteService = favoriteService as jest.Mocked<typeof favoriteService>;
 const mockFavoriteRepository = favoriteRepository as jest.Mocked<typeof favoriteRepository>;
@@ -64,9 +59,6 @@ describe("FavoriteController - 유닛 테스트", () => {
 
     it("서비스가 success=false를 반환하면 200을 반환한다 (상태코드 분기)", async () => {
       mockReq.body = { moverId: "mover-1" };
-      (invalidateCacheByPattern as jest.Mock).mockImplementationOnce(() => {
-        throw new Error("cache error");
-      });
 
       const mockResponse = {
         success: false,
