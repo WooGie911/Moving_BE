@@ -28,16 +28,28 @@ export function registerSSE(userId: string, res: Response) {
 
     console.log('응답헤더 설정 완료');
 
-    res.write("\n"); // 연결 초기화
+    // res.write("\n"); // 연결 초기화
+    res.write("data: connected\n\n");
 
     sseClients.set(userId, res);
 
     console.log(`✅ 클라이언트 저장 완료. 현재 총 클라이언트: ${sseClients.size}`);
 
-    // 연결 끊김 감지
+    const heartbeat = setInterval(() => {
+      if (!res.destroyed) {
+        res.write("data: heartbeat\n\n");
+      } else {
+        clearInterval(heartbeat);
+      }
+    }, 25000);
+
+    // 연결 종료 감지
     res.on("close", () => {
+      clearInterval(heartbeat);
       sseClients.delete(userId);
+      console.log(`연결 종료: ${userId}`);
     });
+
   } catch (error) {
     captureSSEError(error as Error, {
       operation: "register_sse",
