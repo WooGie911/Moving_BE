@@ -3,7 +3,7 @@ import favoriteService from "../services/favorite.service";
 import favoriteRepository from "../repositories/favorite.repository";
 import { IFavoriteRequest } from "../types/favorite.types";
 import * as Sentry from "@sentry/node";
-import { invalidateCacheByPattern } from "../middlewares/cacheMiddleware";
+// 찜하기 캐시 제거: 캐시 무효화 호출도 비활성화
 
 // 커스텀 Request 타입 정의
 interface IUserRequest extends Request {
@@ -51,15 +51,7 @@ class FavoriteController {
 
       const result = await favoriteService.addFavorite(customerId!, moverId);
 
-      // 찜 상태 변경 시 기사님 상세 및 목록 캐시 무효화 (로그인/비로그인, 언어 파라미터 구분 없이 전부)
-      try {
-        // 상세: cache:GET:/movers:/{moverId}:*
-        void invalidateCacheByPattern(`cache:GET:/movers:/${moverId}:*`);
-        // 목록: cache:GET:/movers:*
-        void invalidateCacheByPattern(`cache:GET:/movers:*`);
-      } catch {
-        // 캐시 무효화 실패는 무시
-      }
+      // 캐시 사용 중단: 무효화 로직 제거
 
       // 생성 성공 시 201, 그 외(이미 존재 등) 200
       const statusCode = result.success ? 201 : 200;
@@ -120,13 +112,7 @@ class FavoriteController {
 
       const result = await favoriteService.removeFavorite(customerId!, moverId);
 
-      // 찜 상태 변경 시 기사님 상세 및 목록 캐시 무효화 (로그인/비로그인, 언어 파라미터 구분 없이 전부)
-      try {
-        void invalidateCacheByPattern(`cache:GET:/movers:/${moverId}:*`);
-        void invalidateCacheByPattern(`cache:GET:/movers:*`);
-      } catch {
-        // 캐시 무효화 실패는 무시
-      }
+      // 캐시 사용 중단: 무효화 로직 제거
 
       // success가 false인 경우도 정상적인 상황이므로 200 상태 코드로 반환
       return res.status(200).json(result);
