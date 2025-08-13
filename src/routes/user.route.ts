@@ -9,6 +9,7 @@ import {
 } from "../controllers/user.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 import generatePresignedUrls from "../middlewares/presignedUrl";
+import { cache, invalidateCacheByPattern } from "../middlewares/cacheMiddleware";
 
 const userRouter = Router();
 
@@ -272,7 +273,7 @@ userRouter.get("/", verifyAccessToken, getUser);
  *               status: 500
  *               message: "서버 내부 오류가 발생했습니다"
  */
-userRouter.get("/profile", verifyAccessToken, getProfile);
+userRouter.get("/profile", verifyAccessToken, cache({ ttlSeconds: 15, varyByAuth: true }), getProfile);
 
 /**
  * @swagger
@@ -581,7 +582,23 @@ userRouter.patch("/profile/customer", verifyAccessToken, patchCustomerProfile);
  *               status: 500
  *               message: "서버 내부 오류가 발생했습니다"
  */
-userRouter.patch("/profile/mover", verifyAccessToken, patchMoverProfile);
+userRouter.patch(
+  "/profile/mover", 
+  verifyAccessToken, 
+  async (req, res, next) => {
+    try {
+      const userId = (req as any).user?.userId;
+      if (userId) {
+        await invalidateCacheByPattern(`cache:GET:/users:*:u:${userId}:*`);
+        await invalidateCacheByPattern(`cache:GET:/movers:/${userId}:*`);
+      }
+    } catch (error) {
+      console.error("Cache invalidation error:", error);
+    }
+    next();
+  },
+  patchMoverProfile
+);
 
 /**
  * @swagger
@@ -658,7 +675,23 @@ userRouter.patch("/profile/mover", verifyAccessToken, patchMoverProfile);
  *               status: 500
  *               message: "서버 내부 오류가 발생했습니다"
  */
-userRouter.patch("/profile/mover/basic", verifyAccessToken, patchMoverBasicInfo);
+userRouter.patch(
+  "/profile/mover/basic", 
+  verifyAccessToken, 
+  async (req, res, next) => {
+    try {
+      const userId = (req as any).user?.userId;
+      if (userId) {
+        await invalidateCacheByPattern(`cache:GET:/users:*:u:${userId}:*`);
+        await invalidateCacheByPattern(`cache:GET:/movers:/${userId}:*`);
+      }
+    } catch (error) {
+      console.error("Cache invalidation error:", error);
+    }
+    next();
+  },
+  patchMoverBasicInfo
+);
 
 /**
  * @swagger
