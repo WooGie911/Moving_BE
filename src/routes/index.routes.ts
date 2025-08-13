@@ -8,7 +8,7 @@ import moverEstimateRouter from "./moverEstimate.routes";
 import moverScheduleRouter from "./moverSchedule.routes";
 import favoriteRouter from "./favorite.routes";
 import expirationRouter from "./expiration.routes";
-
+import shareRouter from "./share.route";
 const businessRoutes = Router();
 
 /**
@@ -71,5 +71,6 @@ businessRoutes.use("/mover-estimates", moverEstimateRouter);
 businessRoutes.use("/mover-schedules", moverScheduleRouter);
 businessRoutes.use("/favorites", favoriteRouter);
 businessRoutes.use("/expiration", expirationRouter);
+businessRoutes.use("/share", shareRouter);
 
 export default businessRoutes;
