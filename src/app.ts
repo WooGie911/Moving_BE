@@ -23,6 +23,8 @@ import passport from "./config/passport";
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 // 보안 헤더 설정 (Helmet)
 app.use(
   helmet({
@@ -35,14 +37,16 @@ app.use(
       },
     },
     crossOriginEmbedderPolicy: false, // CORS 호환성을 위해 비활성화
-  }),
+  })
 );
 
 // 로깅 설정 (Morgan)
 app.use(morgan("combined")); // 프로덕션용 로그 포맷
 
 // CORS 설정 - 환경변수에서 가져오거나 기본값 사용
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").map((origin) => origin.trim()) || [
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").map((origin) =>
+  origin.trim()
+) || [
   "https://gomoving.site",
   "https://www.gomoving.site",
   "http://localhost:3000",
@@ -53,7 +57,11 @@ app.use(
   cors({
     origin: (origin, callback) => {
       // ngrok 테스트용 cors 설정
-      if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".ngrok-free.app")) {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".ngrok-free.app")
+      ) {
         callback(null, true);
       } else {
         console.warn(`CORS 차단된 origin: ${origin}`);
@@ -62,9 +70,14 @@ app.use(
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token", "XSRF-TOKEN"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-CSRF-Token",
+      "XSRF-TOKEN",
+    ],
     exposedHeaders: ["X-CSRF-Token"],
-  }),
+  })
 );
 
 app.use(cookieParser());
