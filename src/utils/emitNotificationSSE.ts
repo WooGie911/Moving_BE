@@ -20,12 +20,7 @@ export const sseClients = new Map<string, Response>();
  */
 export function registerSSE(userId: string, res: Response) {
   try {
-    res.writeHead(200, {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    });
-
+    // 헤더는 이미 sse.route.ts에서 설정됨
     console.log('응답헤더 설정 완료');
 
     // res.write("\n"); // 연결 초기화

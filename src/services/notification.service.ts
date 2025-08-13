@@ -1,6 +1,6 @@
 import { UserType } from "@prisma/client";
 import notificationRepository from "../repositories/notification.repository";
-import { formatDateForAPI } from "../utils/dateUtils";
+import { parseDateToDateTime } from "../utils/dateUtils";
 
 const notificationService = {
   getNotifications: async (
@@ -40,8 +40,8 @@ const notificationService = {
       return {
         ...notification,
         message, // 선택된 언어의 메시지만 포함
-        createdAt: formatDateForAPI(notification.createdAt),
-        updatedAt: formatDateForAPI(notification.updatedAt),
+        createdAt: parseDateToDateTime(notification.createdAt),
+        updatedAt: parseDateToDateTime(notification.updatedAt),
         messageKo: undefined, // 원본 다국어 필드 제거
         messageEn: undefined,
         messageZh: undefined
