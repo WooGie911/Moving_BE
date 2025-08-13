@@ -2,11 +2,7 @@ import { Router } from "express";
 import customerEstimateRequestController from "../controllers/customerEstimateRequest.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 import { createCustomTranslationMiddleware } from "../middlewares/translationMiddleware";
-import {
-  cache,
-  invalidateCacheByKey,
-  invalidateCacheByPattern,
-} from "../middlewares/cacheMiddleware";
+import { cache, invalidateCacheByKey, invalidateCacheByPattern } from "../middlewares/cacheMiddleware";
 
 const customerEstimateRequestRouter = Router();
 
@@ -391,7 +387,7 @@ customerEstimateRequestRouter.get(
   verifyAccessToken,
   cache({ ttlSeconds: 30, varyByAuth: true }),
   estimateRequestTranslationMiddleware,
-  customerEstimateRequestController.getPendingEstimateRequest
+  customerEstimateRequestController.getPendingEstimateRequest,
 );
 
 /**
@@ -481,7 +477,7 @@ customerEstimateRequestRouter.get(
   verifyAccessToken,
   cache({ ttlSeconds: 30, varyByAuth: true }),
   estimateRequestTranslationMiddleware,
-  customerEstimateRequestController.getReceivedEstimateRequests
+  customerEstimateRequestController.getReceivedEstimateRequests,
 );
 
 /**
@@ -576,16 +572,14 @@ customerEstimateRequestRouter.patch(
     try {
       const userId = (req as any).user?.userId;
       if (userId) {
-        await invalidateCacheByPattern(
-          `cache:GET:${req.baseUrl}:*:u:${userId}:*`
-        );
+        await invalidateCacheByPattern(`cache:GET:${req.baseUrl}:*:u:${userId}:*`);
       }
     } catch (error) {
       console.error("Cache invalidation error:", error);
     }
     next();
   },
-  customerEstimateRequestController.confirmEstimate
+  customerEstimateRequestController.confirmEstimate,
 );
 
 /**
@@ -659,16 +653,16 @@ customerEstimateRequestRouter.patch(
     try {
       const userId = (req as any).user?.userId;
       if (userId) {
-        await invalidateCacheByPattern(
-          `cache:GET:${req.baseUrl}:*:u:${userId}:*`
-        );
+        await invalidateCacheByPattern(`cache:GET:${req.baseUrl}:*:u:${userId}:*`);
+        // 활성 견적요청 캐시도 함께 무효화하여 hasEstimate 최신화 보장
+        await invalidateCacheByPattern(`cache:GET:/estimateRequests:/active:u:${userId}:*`);
       }
     } catch (error) {
       console.error("Cache invalidation error:", error);
     }
     next();
   },
-  customerEstimateRequestController.cancelEstimate
+  customerEstimateRequestController.cancelEstimate,
 );
 
 /**
@@ -752,16 +746,14 @@ customerEstimateRequestRouter.patch(
     try {
       const userId = (req as any).user?.userId;
       if (userId) {
-        await invalidateCacheByPattern(
-          `cache:GET:${req.baseUrl}:*:u:${userId}:*`
-        );
+        await invalidateCacheByPattern(`cache:GET:${req.baseUrl}:*:u:${userId}:*`);
       }
     } catch (error) {
       console.error("Cache invalidation error:", error);
     }
     next();
   },
-  customerEstimateRequestController.completeEstimate
+  customerEstimateRequestController.completeEstimate,
 );
 
 export default customerEstimateRequestRouter;
