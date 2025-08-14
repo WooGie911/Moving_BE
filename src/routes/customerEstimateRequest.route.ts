@@ -479,7 +479,11 @@ customerEstimateRequestRouter.get(
 customerEstimateRequestRouter.get(
   "/received",
   verifyAccessToken,
-  cache({ ttlSeconds: 30, varyByAuth: true }),
+  cache({
+    ttlSeconds: 30,
+
+    varyByAuth: true,
+  }),
   estimateRequestTranslationMiddleware,
   customerEstimateRequestController.getReceivedEstimateRequests
 );

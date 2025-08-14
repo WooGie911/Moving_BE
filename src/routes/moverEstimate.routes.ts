@@ -604,6 +604,10 @@ router.post(
         await invalidateCacheByPattern(
           `cache:GET:${req.baseUrl}:*:u:${userId}:*`
         );
+        // 고객의 pending 캐시도 무효화
+        await invalidateCacheByPattern(
+          `cache:GET:/customer-quotes:/pending:u:*:*`
+        );
       }
     } catch (error) {
       console.error("Cache invalidation error:", error);

@@ -3,6 +3,7 @@ import * as moverController from "../controllers/mover.controller";
 import { verifyAccessToken } from "../middlewares/verifyToken";
 import { optionalAuth } from "../middlewares/optionalAuth";
 import { defaultTranslationMiddleware } from "../middlewares/translationMiddleware";
+import { invalidateCacheByPattern } from "../middlewares/cacheMiddleware";
 
 const moverRouter = Router();
 
@@ -220,7 +221,11 @@ const moverRouter = Router();
  *               success: false
  *               message: "기사님을 찾을 수 없습니다"
  */
-moverRouter.get("/", defaultTranslationMiddleware, moverController.getMoverListController);
+moverRouter.get(
+  "/",
+  defaultTranslationMiddleware,
+  moverController.getMoverListController
+);
 
 /**
  * @swagger
@@ -315,7 +320,7 @@ moverRouter.get(
   "/favorite",
   verifyAccessToken,
   defaultTranslationMiddleware,
-  moverController.getFavoriteMoversController,
+  moverController.getFavoriteMoversController
 );
 
 /**
@@ -383,7 +388,12 @@ moverRouter.get(
  *               status: 404
  *               message: "기사님을 찾을 수 없습니다."
  */
-moverRouter.get("/:moverId", optionalAuth, defaultTranslationMiddleware, moverController.getMoverDetailController);
+moverRouter.get(
+  "/:moverId",
+  optionalAuth,
+  defaultTranslationMiddleware,
+  moverController.getMoverDetailController
+);
 
 /**
  * @swagger
@@ -504,7 +514,24 @@ moverRouter.get("/:moverId", optionalAuth, defaultTranslationMiddleware, moverCo
  *               success: false
  *               message: "필수값 누락"
  */
-moverRouter.post("/:moverId/quote-request", verifyAccessToken, moverController.postDesignatedQuoteRequestController);
+moverRouter.post(
+  "/:moverId/quote-request",
+  async (req, res, next) => {
+    // 지정 견적 요청 시 기사님 견적 관련 캐시 무효화
+    try {
+      const { moverId } = req.params;
+      if (moverId) {
+        // 기사님 견적 관련 캐시 무효화
+        await invalidateCacheByPattern(`cache:GET:/mover-estimates:*:u:*:*`);
+      }
+    } catch (error) {
+      console.error("Cache invalidation error:", error);
+    }
+    next();
+  },
+  verifyAccessToken,
+  moverController.postDesignatedQuoteRequestController
+);
 
 /**
  * @swagger
@@ -618,7 +645,7 @@ moverRouter.post("/:moverId/quote-request", verifyAccessToken, moverController.p
 moverRouter.get(
   "/:moverId/quote-request/check",
   verifyAccessToken,
-  moverController.getDesignatedQuoteRequestCheckController,
+  moverController.getDesignatedQuoteRequestCheckController
 );
 
 /**
@@ -675,7 +702,7 @@ moverRouter.get(
 moverRouter.get(
   "/active-estimate-request/check",
   verifyAccessToken,
-  moverController.checkActiveEstimateRequestController,
+  moverController.checkActiveEstimateRequestController
 );
 
 export default moverRouter;
