@@ -1,0 +1,272 @@
+[
+  {
+    "id": "review_001",
+    "customerId": "customer_001",
+    "moverId": "mover_001",
+    "estimateRequestId": "est_req_001",
+    "rating": 5,
+    "content": "정말 친절하고 꼼꼼하게 해주셔서 감사했습니다! 시간 약속도 잘 지켜주시고 서비스도 훌륭했어요.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_002",
+    "customerId": "customer_002",
+    "moverId": "mover_004",
+    "estimateRequestId": "est_req_002",
+    "rating": 4,
+    "content": "소형 이사였는데 빠르고 깔끔하게 처리해주셨습니다. 가전제품도 조심스럽게 다뤄주셔서 좋았어요.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_003",
+    "customerId": "customer_003",
+    "moverId": "mover_006",
+    "estimateRequestId": "est_req_003",
+    "rating": 5,
+    "content": "사무실 이사였는데 서류철과 책장들을 체계적으로 정리해주셨습니다. 전문적인 서비스에 만족합니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_004",
+    "customerId": "customer_004",
+    "moverId": "mover_008",
+    "estimateRequestId": "est_req_004",
+    "rating": 5,
+    "content": "아이들 장난감과 옷들을 정리해주시고 포장 서비스도 포함되어 있어서 정말 편했습니다. 추천합니다!",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_005",
+    "customerId": "customer_005",
+    "moverId": "mover_010",
+    "estimateRequestId": "est_req_005",
+    "rating": 4,
+    "content": "원룸 이사였는데 빠르고 깔끔하게 처리해주셨습니다. 가격도 합리적이고 서비스도 훌륭했습니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_006",
+    "customerId": "customer_006",
+    "moverId": "mover_011",
+    "estimateRequestId": "est_req_006",
+    "rating": 5,
+    "content": "스타트업 사무실 이사였는데 서버장비와 IT장비를 안전하게 이전해주셨습니다. 전문적인 서비스에 감사합니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_007",
+    "customerId": "customer_007",
+    "moverId": "mover_013",
+    "estimateRequestId": "est_req_007",
+    "rating": 5,
+    "content": "피아노가 있어서 걱정했는데 특별히 조심스럽게 다뤄주셨습니다. 전문적인 악기 이사 서비스에 만족합니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_008",
+    "customerId": "customer_008",
+    "moverId": "mover_015",
+    "estimateRequestId": "est_req_008",
+    "rating": 4,
+    "content": "원룸 이사였는데 간단한 가구들 빠르게 처리해주셨습니다. 무사히 이사가 끝나서 다행입니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_009",
+    "customerId": "customer_009",
+    "moverId": "mover_016",
+    "estimateRequestId": "est_req_009",
+    "rating": 5,
+    "content": "대기업 사무실 이사였는데 보안서류도 안전하게 처리해주셨습니다. 전문적인 서비스에 감사합니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_010",
+    "customerId": "customer_010",
+    "moverId": "mover_018",
+    "estimateRequestId": "est_req_010",
+    "rating": 5,
+    "content": "반려동물이 있어서 걱정했는데 특별히 조심스럽게 다뤄주셨습니다. 아이들 장난감과 옷들도 정리해주셔서 감사합니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_011",
+    "customerId": "customer_011",
+    "moverId": "mover_020",
+    "estimateRequestId": "est_req_011",
+    "rating": 4,
+    "content": "원룸 이사였는데 간단한 가전제품과 가구들 빠르게 처리해주셨습니다. 기본적인 서비스는 잘 해주셨습니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_012",
+    "customerId": "customer_012",
+    "moverId": "mover_001",
+    "estimateRequestId": "est_req_012",
+    "rating": 5,
+    "content": "대기업 사무실 이사였는데 서버장비와 보안서류를 안전하게 처리해주셨습니다. 전문적인 서비스에 만족합니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_013",
+    "customerId": "customer_013",
+    "moverId": "mover_003",
+    "estimateRequestId": "est_req_013",
+    "rating": 5,
+    "content": "반려동물이 있는 가정 이사였는데 아이들 장난감과 옷들을 정리해주셨습니다. 안전하고 신속하게 이사해주셨습니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_014",
+    "customerId": "customer_014",
+    "moverId": "mover_004",
+    "estimateRequestId": "est_req_014",
+    "rating": 4,
+    "content": "원룸 이사였는데 간단한 가전제품과 가구들 빠르게 처리해주셨습니다. 약속 시간에 맞춰서 와주셔서 좋았어요.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_015",
+    "customerId": "customer_015",
+    "moverId": "mover_005",
+    "estimateRequestId": "est_req_015",
+    "rating": 5,
+    "content": "IT 회사 사무실 이사였는데 서버장비와 IT장비를 안전하게 이전해주셨습니다. 전문적인 서비스에 감사합니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_016",
+    "customerId": "customer_016",
+    "moverId": "mover_006",
+    "estimateRequestId": "est_req_016",
+    "rating": 5,
+    "content": "반려동물이 있는 가정 이사였는데 아이들 장난감과 옷들을 정리해주셨습니다. 친절한 설명과 함께 안전하게 이사해주셨습니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_017",
+    "customerId": "customer_017",
+    "moverId": "mover_007",
+    "estimateRequestId": "est_req_017",
+    "rating": 4,
+    "content": "원룸 이사였는데 간단한 가전제품과 가구들 빠르게 처리해주셨습니다. 무난하게 이사 완료했습니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_018",
+    "customerId": "customer_018",
+    "moverId": "mover_008",
+    "estimateRequestId": "est_req_018",
+    "rating": 5,
+    "content": "제주도 사무실 이사였는데 항공편과 배편을 고려한 특별 서비스를 제공해주셨습니다. 전문적인 서비스에 감사합니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_019",
+    "customerId": "customer_019",
+    "moverId": "mover_009",
+    "estimateRequestId": "est_req_019",
+    "rating": 5,
+    "content": "반려동물이 있는 가정 이사였는데 아이들 장난감과 옷들을 정리해주셨습니다. 짐을 아끼고 조심스럽게 다뤄주셔서 감사합니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_020",
+    "customerId": "customer_020",
+    "moverId": "mover_010",
+    "estimateRequestId": "est_req_020",
+    "rating": 4,
+    "content": "원룸 이사였는데 간단한 가전제품과 가구들 빠르게 처리해주셨습니다. 예상했던 수준의 서비스였어요.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_021",
+    "customerId": "customer_002",
+    "moverId": "mover_005",
+    "estimateRequestId": "est_req_002",
+    "rating": 3,
+    "content": "소형 이사였는데 시간이 조금 지연되었습니다. 하지만 기본적인 서비스는 잘 해주셨습니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_022",
+    "customerId": "customer_003",
+    "moverId": "mover_007",
+    "estimateRequestId": "est_req_003",
+    "rating": 4,
+    "content": "사무실 이사 경험 풍부하시네요. 서버장비도 안전하게 이전해주셨습니다. 무난하게 이사 완료했습니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_023",
+    "customerId": "customer_004",
+    "moverId": "mover_009",
+    "estimateRequestId": "est_req_004",
+    "rating": 5,
+    "content": "포장 서비스 포함된 가정 이사였는데 모든 물건을 안전하게 포장해주셨습니다. 다음에도 꼭 이용하고 싶은 기사님이세요!",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_024",
+    "customerId": "customer_006",
+    "moverId": "mover_012",
+    "estimateRequestId": "est_req_006",
+    "rating": 4,
+    "content": "IT 회사 사무실 이사 경험 많으시네요. 모든 장비를 체계적으로 정리해주셨습니다. 기본적인 서비스는 만족합니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_025",
+    "customerId": "customer_007",
+    "moverId": "mover_014",
+    "estimateRequestId": "est_req_007",
+    "rating": 5,
+    "content": "악기 이사 경험 풍부하시네요. 피아노를 전문적으로 다뤄주셨습니다. 최고급 서비스에 감사합니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_026",
+    "customerId": "customer_009",
+    "moverId": "mover_017",
+    "estimateRequestId": "est_req_009",
+    "rating": 4,
+    "content": "회사 사무실 이사 경험 많으시네요. 서류철과 책장들을 체계적으로 정리해주셨습니다. 무난하게 이사 완료했습니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_027",
+    "customerId": "customer_010",
+    "moverId": "mover_019",
+    "estimateRequestId": "est_req_010",
+    "rating": 5,
+    "content": "반려동물 이사 경험 풍부하시네요. 아이들 장난감과 옷들도 정리해주셨습니다. 친절하고 꼼꼼한 서비스에 감사합니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_028",
+    "customerId": "customer_012",
+    "moverId": "mover_002",
+    "estimateRequestId": "est_req_012",
+    "rating": 4,
+    "content": "회사 사무실 이사 경험 많으시네요. 모든 장비를 체계적으로 정리해주셨습니다. 기본적인 서비스는 만족합니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_029",
+    "customerId": "customer_015",
+    "moverId": "mover_005",
+    "estimateRequestId": "est_req_015",
+    "rating": 5,
+    "content": "IT 회사 사무실 이사 전문이시네요. 서버장비와 IT장비를 안전하게 이전해주셨습니다. 전문적인 서비스에 만족합니다.",
+    "status": "COMPLETED"
+  },
+  {
+    "id": "review_030",
+    "customerId": "customer_018",
+    "moverId": "mover_008",
+    "estimateRequestId": "est_req_018",
+    "rating": 5,
+    "content": "제주도 사무실 이사 전문이시네요. 항공편과 배편을 고려한 특별 서비스를 제공해주셨습니다. 최고급 서비스에 감사합니다.",
+    "status": "COMPLETED"
+  }
+]

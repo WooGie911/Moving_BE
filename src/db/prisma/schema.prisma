@@ -1,0 +1,427 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//////////////////// ENUMS ////////////////////
+
+// 유저 역할
+enum UserType {
+  CUSTOMER // 일반 고객
+  MOVER // 기사님
+}
+
+// 로그인 제공자
+enum AuthProvider {
+  LOCAL // 자체 가입
+  GOOGLE // 구글
+  NAVER // 네이버
+  KAKAO // 카카오
+}
+
+// 이사 유형
+enum MoveType {
+  SMALL // 소형 이사
+  HOME // 가정집 이사
+  OFFICE // 사무실 이사
+}
+
+// 견적 요청 상태
+enum RequestStatus {
+  PENDING // 대기중 (견적 기다리는 상태)
+  APPROVED // 승인됨 (고객이 견적 수락)
+  COMPLETED // 완료됨 (이사 완료)
+  REJECTED // 거절됨 (기사님이 요청 거절)
+  CANCELLED // 취소됨 (고객이 취소)
+  EXPIRED // 만료됨 (기한 초과)
+}
+
+// 견적 응답 상태
+enum EstimateStatus {
+  PROPOSED // 제안됨 (기사님이 견적 제출)
+  ACCEPTED // 수락됨 (고객이 견적 수락)
+  REJECTED // 거절됨 (기사님이 견적 거절)
+  AUTO_REJECTED // 자동 거절됨 (다른 견적 수락으로 인한 자동 거절)
+}
+
+// 주소 역할
+enum AddressRole {
+  FROM // 출발지
+  TO // 도착지
+  EXTRA // 기타 주소 (예: 짐 보관처)
+}
+
+// 전국 광역시/도
+enum RegionType {
+  SEOUL // 서울특별시
+  BUSAN // 부산광역시
+  DAEGU // 대구광역시
+  INCHEON // 인천광역시
+  GWANGJU // 광주광역시
+  DAEJEON // 대전광역시
+  ULSAN // 울산광역시
+  SEJONG // 세종특별자치시
+  GYEONGGI // 경기도
+  GANGWON // 강원도
+  CHUNGBUK // 충청북도
+  CHUNGNAM // 충청남도
+  JEONBUK // 전라북도
+  JEONNAM // 전라남도
+  GYEONGBUK // 경상북도
+  GYEONGNAM // 경상남도
+  JEJU // 제주특별자치도
+}
+
+// 알림 종류
+enum NotificationType {
+  WELCOME // 회원가입 환영
+  ESTIMATE_REQUEST_ARRIVED // 견적 요청 도착  
+  ESTIMATE_ARRIVED // 견적 도착
+  ESTIMATE_STATUS_UPDATED // 견적 수락/거절
+  DESIGNATED_ESTIMATE_REQUEST_ARRIVED // 지정 견적 요청 도착
+  DESIGNATED_ESTIMATE_REQUEST_STATUS_UPDATED // 지정 견적 요청 관련 상태 변경 - 거절만.
+  DESIGNATED_ESTIMATE_ARRIVED // 지정 견적 도착
+  DESIGNATED_ESTIMATE_STATUS_UPDATED // 지정 견적 수락/거절
+  REVIEW_EVENT // 리뷰 관련
+  FAVORITE_EVENT // 찜 관련
+  MOVE_DAY_REMINDER // 이사 리마인더
+}
+
+// 사용자 활동 타입
+enum ActionType {
+  WELCOME // 회원가입 환영
+  ESTIMATE_REQUEST_CREATE // 견적 요청 생성  
+  ESTIMATE_SUBMITTED // 견적 제출
+  ESTIMATE_ACCEPTED // 견적 수락
+  ESTIMATE_REJECTED // 견적 거절
+  DESIGNATED_ESTIMATE_REQUEST_SUBMITTED // 지정 요청 발송 
+  DESIGNATED_ESTIMATE_REQUEST_REJECTED // 지정 요청 거절  
+  DESIGNATED_ESTIMATE_SUBMITTED // 지정 견적 제출
+  DESIGNATED_ESTIMATE_ACCEPTED // 지정 견적 수락
+  DESIGNATED_ESTIMATE_REJECTED // 지정 견적 거절
+  REVIEW_SUBMITTED // 리뷰 작성
+  FAVORITE_ADDED // 찜 추가
+  FAVORITE_REMOVED // 찜 제거
+  MOVE_DAY_REMINDER_TOMORROW // 이사 전날
+  MOVE_DAY_REMINDER_TODAY // 이사 당일
+  MOVE_DAY_REVIEW_REQUEST // 이사 다음날
+}
+
+enum ReviewStatus {
+  PENDING
+  COMPLETED
+  EXPIRED
+}
+
+//////////////////// MODELS ////////////////////
+
+// 통합 사용자 모델 (일반 고객과 기사님 모두)
+model User {
+  id                   String       @id @default(cuid())
+  email                String       @unique // 이메일 (고유)
+  encryptedPassword    String? // 암호화된 비밀번호 (소셜 로그인은 null)
+  refreshToken         String? // 리프레시 토큰 (JWT, 암호화 저장 권장)
+  encryptedPhoneNumber String? // 암호화된 전화번호
+  name                 String? // 실명
+  userType             UserType[] // 유저 타입 배열 (CUSTOMER, MOVER 둘 다 가능)
+  provider             AuthProvider @default(LOCAL) // 로그인 제공자
+  providerId           String? // 소셜 로그인 ID
+  customerImage        String? // 고객 프로필 이미지
+  moverImage           String? // 기사님 프로필 이미지
+  nickname             String?      @unique // 닉네임 (모든 유저 사용 가능)
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  deletedAt            DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
+  totalFavoriteCount   Int          @default(0) // 받은 찜 개수
+
+  // Customer 전용 필드
+  currentArea       RegionType? // 현재 거주 지역
+  preferredServices MoveType[] // 이용하고 싶은 서비스 타입들
+  isCustomer        Boolean? // 일반 유저 프로필 등록 여부 (옵셔널)
+
+  // Mover 전용 필드
+  shortIntro       String? // 간단 소개
+  detailIntro      String? // 상세 소개
+  career           Int? // 경력 (년)
+  isMover          Boolean? // 기사님 프로필 등록 여부 (옵셔널)
+  isVeteran        Boolean? // 베테랑 여부 (옵셔널)
+  workedCount      Int?         @default(0) // 완료된 이사 건수
+  averageRating    Float?       @default(0) // 평균 평점
+  totalReviewCount Int?         @default(0) // 총 리뷰 수
+  currentAreas     RegionType[] // 서비스 가능 지역들
+  serviceTypes     MoveType[] // 제공 가능한 서비스 타입들
+
+  // 관계
+  addresses          UserAddress[] // 등록한 주소들 (역방향 관계 - 코드에서 직접 사용하지 않음)
+  serviceAreas       MoverServiceArea[] // 기사님 활동 가능 지역
+  requests           EstimateRequest[] // 고객이 생성한 견적 요청들 (역방향 관계)
+  estimates          Estimate[] // 기사님이 작성한 견적들 (역방향 관계)
+  reviewsWritten     Review[]           @relation("ReviewWriter") // 작성한 리뷰들 (역방향 관계)
+  reviewsReceived    Review[]           @relation("ReviewReceiver") // 받은 리뷰들 (역방향 관계)
+  favorites          Favorite[]         @relation("UserFavorites") // 내가 찜한 기사님들 (역방향 관계)
+  designatedRequests DesignatedMover[] // 지정 요청받은 견적들 (역방향 관계)
+  actions            Action[] // 사용자 활동들 (역방향 관계)
+  notifications      Notification[] // 받은 알림들 (역방향 관계)
+  Favorite           Favorite[] // 내가 찜받은 관계 (mover 쪽)
+
+  // 최적화된 인덱스: email은 unique이므로 별도 인덱스 불필요
+  @@index([deletedAt])
+  @@map("users")
+}
+
+// 주소 정보 테이블
+model Address {
+  id        String     @id @default(cuid())
+  zoneCode  String // 우편번호
+  city      String // 도시 (시/군)
+  district  String // 구/동
+  detail    String? // 상세주소 (동, 호 등)
+  region    RegionType // 광역시/도
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deletedAt DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
+
+  // 관계
+  requestsFrom  EstimateRequest[] @relation("RequestFrom") // 출발지로 사용된 견적 요청들 (역방향 관계)
+  requestsTo    EstimateRequest[] @relation("RequestTo") // 도착지로 사용된 견적 요청들 (역방향 관계)
+  userAddresses UserAddress[] // 사용자별 주소 연결 (역방향 관계)
+
+  // 복합 인덱스로 최적화: 지역별 검색이 가장 빈번
+  @@index([region, city, district])
+  @@index([deletedAt])
+  @@map("addresses")
+}
+
+// 사용자별 주소 연결 테이블
+model UserAddress {
+  id        String      @id @default(cuid())
+  userId    String // 사용자 ID
+  addressId String // 주소 ID
+  role      AddressRole // 주소 역할 (FROM, TO, EXTRA)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  deletedAt DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
+
+  // 관계
+  user    User    @relation(fields: [userId], references: [id])
+  address Address @relation(fields: [addressId], references: [id])
+
+  @@unique([userId, addressId, role]) // 같은 사용자가 동일 주소를 같은 역할로 중복 등록 불가
+  // 복합 인덱스로 최적화: 사용자별 주소 조회가 가장 빈번
+  @@index([userId, role])
+  @@index([deletedAt])
+  @@map("user_addresses")
+}
+
+// 기사님 활동 가능 지역 정보
+model MoverServiceArea {
+  id        String     @id @default(cuid())
+  userId    String // 기사님 ID
+  region    RegionType // 광역시/도
+  district  String? // 구/동 (선택사항)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deletedAt DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
+
+  // 관계
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, region, district]) // 같은 기사님이 동일 지역 중복 등록 불가
+  // 복합 인덱스로 최적화: 지역별 기사님 검색이 가장 빈번
+  @@index([region, district])
+  @@index([deletedAt])
+  @@map("mover_service_areas")
+}
+
+// 견적 요청 테이블
+model EstimateRequest {
+  id            String        @id @default(cuid())
+  customerId    String // 고객 ID
+  moveType      MoveType // 이사 유형
+  moveDate      DateTime // 이사 날짜
+  fromAddressId String // 출발지 주소 ID
+  toAddressId   String // 도착지 주소 ID
+  status        RequestStatus // 요청 상태
+  description   String? // 추가 설명
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
+
+  // 관계
+  customer         User              @relation(fields: [customerId], references: [id])
+  fromAddress      Address           @relation("RequestFrom", fields: [fromAddressId], references: [id])
+  toAddress        Address           @relation("RequestTo", fields: [toAddressId], references: [id])
+  estimates        Estimate[] // 받은 견적들
+  review           Review? // 작성된 리뷰 (1개만)
+  designatedMovers DesignatedMover[] // 지정 요청한 기사님들
+
+  // 복합 인덱스로 최적화: 고객별 상태 조회가 가장 빈번
+  @@index([customerId, status])
+  // 복합 인덱스로 최적화: 날짜별 이사 유형 조회가 빈번
+  @@index([moveDate, moveType])
+  @@index([deletedAt])
+  @@map("estimate_requests")
+}
+
+// 지정 기사 요청 테이블
+model DesignatedMover {
+  id                String        @id @default(cuid())
+  estimateRequestId String // 견적 요청 ID
+  moverId           String // 기사님 ID
+  status            RequestStatus @default(PENDING) // 요청 상태
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  deletedAt         DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
+
+  // 관계
+  estimateRequest EstimateRequest @relation(fields: [estimateRequestId], references: [id])
+  mover           User            @relation(fields: [moverId], references: [id])
+
+  @@unique([estimateRequestId, moverId]) // 한 요청에 동일 기사님 중복 지정 불가
+  // 복합 인덱스로 최적화: 기사님별 상태 조회가 가장 빈번
+  @@index([moverId, status])
+  // 복합 인덱스로 최적화: 요청별 상태 조회가 빈번
+  @@index([estimateRequestId, status])
+  @@index([deletedAt])
+  @@map("designated_movers")
+}
+
+// 견적 응답 테이블
+model Estimate {
+  id                String         @id @default(cuid())
+  moverId           String // 기사님 ID
+  estimateRequestId String // 견적 요청 ID
+  price             Int? // 제안 가격
+  comment           String? // 코멘트
+  status            EstimateStatus @default(PROPOSED) // 견적 상태
+  rejectReason      String? // 거절 사유
+  isDesignated      Boolean        @default(false) // 지정 기사 여부
+  workingHours      String? // 작업 소요 시간 (예: "4-6시간")
+  includesPackaging Boolean        @default(false) // 포장 서비스 포함 여부
+  insuranceAmount   Int? // 보험 금액
+  validUntil        DateTime? // 견적 유효기간
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  deletedAt         DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
+
+  // 관계
+  mover           User            @relation(fields: [moverId], references: [id])
+  estimateRequest EstimateRequest @relation(fields: [estimateRequestId], references: [id])
+
+  @@unique([estimateRequestId, moverId]) // 한 요청에 동일 기사님 중복 견적 불가
+  // 복합 인덱스로 최적화: 기사님별 상태 조회가 가장 빈번
+  @@index([moverId, status])
+  // 복합 인덱스로 최적화: 요청별 상태 조회가 빈번
+  @@index([estimateRequestId, status])
+  // 복합 인덱스로 최적화: 가격 범위 검색이 빈번
+  @@index([status, price])
+  // 복합 인덱스로 최적화: 지정 기사 여부와 상태 조회
+  @@index([isDesignated, status])
+  @@index([deletedAt])
+  @@map("estimates")
+}
+
+// 리뷰 테이블 (1개의 견적 요청당 1개만)
+model Review {
+  id                String       @id @default(cuid())
+  customerId        String // 작성자 ID
+  moverId           String // 대상 기사님 ID
+  estimateRequestId String // 견적 요청 ID
+  rating            Int          @default(0)
+  content           String       @default("")
+  status            ReviewStatus @default(PENDING)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  deletedAt         DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
+
+  // 관계
+  writer  User            @relation("ReviewWriter", fields: [customerId], references: [id])
+  mover   User            @relation("ReviewReceiver", fields: [moverId], references: [id])
+  request EstimateRequest @relation(fields: [estimateRequestId], references: [id])
+
+  @@unique([estimateRequestId]) // 한 견적 요청당 리뷰 1개만
+  // 복합 인덱스로 최적화: 기사님별 평점 조회가 가장 빈번
+  @@index([moverId, rating])
+  @@index([deletedAt])
+  @@map("reviews")
+}
+
+// 찜 기능 테이블
+model Favorite {
+  id         String    @id @default(cuid())
+  customerId String // 찜한 고객 ID
+  moverId    String // 찜받은 기사님 ID
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
+
+  // 관계
+  customer User @relation("UserFavorites", fields: [customerId], references: [id])
+  mover    User @relation(fields: [moverId], references: [id])
+
+  @@unique([customerId, moverId]) // 중복 찜 방지
+  // 복합 인덱스로 최적화: 고객별 찜 목록 조회가 가장 빈번
+  @@index([customerId, createdAt])
+  // 복합 인덱스로 최적화: 기사님별 찜 받은 수 조회가 빈번
+  @@index([moverId, createdAt])
+  @@index([deletedAt])
+  @@map("favorites")
+}
+
+// 사용자 활동 추적 테이블 (알림 생성의 기반)
+model Action {
+  id          String     @id @default(cuid())
+  userId      String // 활동한 사용자 ID
+  type        ActionType // 활동 타입
+  entityId    String // 관련 엔티티 ID (견적요청, 견적 등)
+  entityType  String // 엔티티 타입 ("EstimateRequest", "Estimate", "Review" 등)
+  description String? // 활동 설명
+  metadata    Json? // 추가 데이터
+  createdAt   DateTime   @default(now())
+  deletedAt   DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
+
+  // 관계
+  user          User           @relation(fields: [userId], references: [id])
+  notifications Notification[] // 이 활동으로 생성된 알림들
+
+  // 복합 인덱스로 최적화: 사용자별 활동 타입 조회가 가장 빈번
+  @@index([userId, type])
+  // 복합 인덱스로 최적화: 엔티티별 활동 조회가 빈번
+  @@index([entityId, entityType])
+  // 복합 인덱스로 최적화: 시간순 활동 조회가 빈번
+  @@index([createdAt, type])
+  @@index([deletedAt])
+  @@map("actions")
+}
+
+// 알림 테이블 (Action 기반)
+model Notification {
+  id        String           @id @default(cuid())
+  actionId  String // 연결된 Action ID
+  userId    String // 수신자 ID
+  userType  UserType // 수신자 타입
+  type      NotificationType // 알림 종류
+  messageKo String // 한국어 알림 메시지
+  messageEn String // 영어 알림 메시지
+  messageZh String // 중국어 알림 메시지
+  path      String? // 클릭 시 이동 경로
+  isRead    Boolean          @default(false) // 읽음 여부
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  deletedAt DateTime? // 소프트 삭제 (API에서 YYYY-MM-DD 형식으로 가공)
+
+  // 관계
+  action Action @relation(fields: [actionId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  // 복합 인덱스로 최적화: 사용자별 읽음 상태 조회가 가장 빈번
+  @@index([userId, isRead, createdAt])
+  // 복합 인덱스로 최적화: 알림 타입별 조회가 빈번
+  @@index([type, createdAt])
+  @@index([deletedAt])
+  @@map("notifications")
+}

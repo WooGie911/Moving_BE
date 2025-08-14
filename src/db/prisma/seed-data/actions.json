@@ -1,0 +1,207 @@
+[
+  {
+    "id": "action_001",
+    "userId": "customer_001",
+    "type": "WELCOME",
+    "entityId": "customer_001",
+    "entityType": "USER",
+    "description": "회원가입을 환영합니다.",
+    "metadata": {}
+  },
+  {
+    "id": "action_002",
+    "userId": "mover_001",
+    "type": "WELCOME",
+    "entityId": "mover_001",
+    "entityType": "USER",
+    "description": "기사님 등록을 환영합니다.",
+    "metadata": {}
+  },
+  {
+    "id": "action_003",
+    "userId": "customer_002",
+    "type": "ESTIMATE_REQUEST_CREATE",
+    "entityId": "est_req_001",
+    "entityType": "ESTIMATE_REQUEST",
+    "description": "견적 요청을 생성했습니다.",
+    "metadata": {}
+  },
+  {
+    "id": "action_004",
+    "userId": "mover_001",
+    "type": "ESTIMATE_SUBMITTED",
+    "entityId": "est_001",
+    "entityType": "ESTIMATE",
+    "description": "견적을 제출했습니다.",
+    "metadata": {
+      "moverName": "김기사",
+      "moveType": "HOME"
+    }
+  },
+  {
+    "id": "action_005",
+    "userId": "customer_002",
+    "type": "ESTIMATE_ACCEPTED",
+    "entityId": "est_001",
+    "entityType": "ESTIMATE",
+    "description": "견적을 수락했습니다.",
+    "metadata": {
+      "moverName": "김기사",
+      "customerName": "이고객",
+      "estimateRequestId": "est_req_001",
+      "estimateId": "est_001",
+      "moveType": "HOME"
+    }
+  },
+  {
+    "id": "action_006",
+    "userId": "customer_003",
+    "type": "ESTIMATE_REJECTED",
+    "entityId": "est_002",
+    "entityType": "ESTIMATE",
+    "description": "견적을 거절했습니다.",
+    "metadata": {
+      "moveType": "SMALL",
+      "customerName": "박고객"
+    }
+  },
+  {
+    "id": "action_007",
+    "userId": "mover_002",
+    "type": "ESTIMATE_REJECTED",
+    "entityId": "est_003",
+    "entityType": "ESTIMATE",
+    "description": "견적이 거절되었습니다.",
+    "metadata": {
+      "moveType": "OFFICE",
+      "customerName": "최고객"
+    }
+  },
+  {
+    "id": "action_008",
+    "userId": "customer_004",
+    "type": "DESIGNATED_ESTIMATE_REQUEST_SUBMITTED",
+    "entityId": "designated_req_001",
+    "entityType": "DESIGNATED_ESTIMATE_REQUEST",
+    "description": "지정 견적 요청을 보냈습니다.",
+    "metadata": {
+      "customerName": "정고객"
+    }
+  },
+  {
+    "id": "action_009",
+    "userId": "mover_003",
+    "type": "DESIGNATED_ESTIMATE_SUBMITTED",
+    "entityId": "designated_est_001",
+    "entityType": "DESIGNATED_ESTIMATE",
+    "description": "지정 견적을 제출했습니다.",
+    "metadata": {
+      "moverName": "박기사",
+      "moveType": "HOME"
+    }
+  },
+  {
+    "id": "action_010",
+    "userId": "customer_004",
+    "type": "DESIGNATED_ESTIMATE_REQUEST_REJECTED",
+    "entityId": "designated_req_002",
+    "entityType": "DESIGNATED_ESTIMATE_REQUEST",
+    "description": "지정 견적 요청을 거절했습니다.",
+    "metadata": {
+      "moveType": "SMALL"
+    }
+  },
+  {
+    "id": "action_011",
+    "userId": "customer_005",
+    "type": "DESIGNATED_ESTIMATE_ACCEPTED",
+    "entityId": "designated_est_002",
+    "entityType": "DESIGNATED_ESTIMATE",
+    "description": "지정 견적을 수락했습니다.",
+    "metadata": {
+      "moverName": "이기사",
+      "customerName": "한고객",
+      "moveType": "OFFICE",
+      "estimateRequestId": "designated_req_003",
+      "estimateId": "designated_est_002"
+    }
+  },
+  {
+    "id": "action_012",
+    "userId": "customer_006",
+    "type": "DESIGNATED_ESTIMATE_REJECTED",
+    "entityId": "designated_est_003",
+    "entityType": "DESIGNATED_ESTIMATE",
+    "description": "지정 견적을 거절했습니다.",
+    "metadata": {
+      "customerName": "김고객",
+      "moveType": "HOME"
+    }
+  },
+  {
+    "id": "action_013",
+    "userId": "customer_007",
+    "type": "REVIEW_SUBMITTED",
+    "entityId": "review_001",
+    "entityType": "REVIEW",
+    "description": "리뷰를 작성했습니다.",
+    "metadata": {
+      "moverId": "mover_004"
+    }
+  },
+  {
+    "id": "action_014",
+    "userId": "customer_008",
+    "type": "FAVORITE_ADDED",
+    "entityId": "fav_001",
+    "entityType": "FAVORITE",
+    "description": "기사님을 찜했습니다.",
+    "metadata": {
+      "moverId": "mover_005"
+    }
+  },
+  {
+    "id": "action_015",
+    "userId": "customer_009",
+    "type": "FAVORITE_REMOVED",
+    "entityId": "fav_002",
+    "entityType": "FAVORITE",
+    "description": "찜을 해제했습니다.",
+    "metadata": {
+      "moverId": "mover_006"
+    }
+  },
+  {
+    "id": "action_016",
+    "userId": "customer_010",
+    "type": "MOVE_DAY_REMINDER_TOMORROW",
+    "entityId": "est_req_002",
+    "entityType": "ESTIMATE_REQUEST",
+    "description": "내일 이사 예정입니다.",
+    "metadata": {
+      "moveType": "HOME"
+    }
+  },
+  {
+    "id": "action_017",
+    "userId": "customer_011",
+    "type": "MOVE_DAY_REMINDER_TODAY",
+    "entityId": "est_req_003",
+    "entityType": "ESTIMATE_REQUEST",
+    "description": "오늘 이사 예정입니다.",
+    "metadata": {
+      "moveType": "SMALL"
+    }
+  },
+  {
+    "id": "action_018",
+    "userId": "customer_012",
+    "type": "MOVE_DAY_REVIEW_REQUEST",
+    "entityId": "est_req_004",
+    "entityType": "ESTIMATE_REQUEST",
+    "description": "리뷰 작성 기간이 시작되었습니다.",
+    "metadata": {
+      "moverName": "최기사"
+    }
+  }
+]

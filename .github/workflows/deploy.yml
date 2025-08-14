@@ -1,0 +1,63 @@
+name: Auto Deploy to EC2 (via SCP)
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install deps
+        run: npm ci
+
+      # 필요 시 테스트 활성화
+      # - name: Run tests
+      #   run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Typecheck (non-blocking)
+        run: npm run typecheck || echo "Type errors detected (not blocking deploy)"
+
+      - name: 📦 Archive release
+        run: |
+          PKG="release-${GITHUB_SHA::7}.tar.gz"
+          FILES="dist package.json package-lock.json"
+          [ -f ecosystem.config.js ] && FILES="$FILES ecosystem.config.js"
+          [ -d src/db/prisma ] && FILES="$FILES src/db/prisma"
+
+          tar -czf "$PKG" $FILES
+
+          echo "PKG_NAME=$PKG" >> $GITHUB_ENV
+
+      - name: SSH agent
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Add known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${{ secrets.EC2_PORT }}" -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Upload via SCP
+        run: |
+          scp -P "${{ secrets.EC2_PORT }}" -o StrictHostKeyChecking=no "$PKG_NAME" \
+          "ec2-user@${{ secrets.EC2_HOST }}:~/$PKG_NAME"
+
+      - name: Remote deploy
+        run: |
+          ssh -p "${{ secrets.EC2_PORT }}" -o StrictHostKeyChecking=no \
+          "ec2-user@${{ secrets.EC2_HOST }}" "bash ~/deploy.sh $PKG_NAME"

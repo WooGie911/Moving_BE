@@ -1,0 +1,366 @@
+[
+  {
+    "zoneCode": "06123",
+    "city": "강남구",
+    "district": "역삼동",
+    "detail": "테헤란로 123",
+    "region": "서울"
+  },
+  {
+    "zoneCode": "06124",
+    "city": "강남구",
+    "district": "삼성동",
+    "detail": "영동대로 456",
+    "region": "서울"
+  },
+  {
+    "zoneCode": "06125",
+    "city": "서초구",
+    "district": "서초동",
+    "detail": "강남대로 789",
+    "region": "서울"
+  },
+  {
+    "zoneCode": "06126",
+    "city": "서초구",
+    "district": "반포동",
+    "detail": "신반포로 321",
+    "region": "서울"
+  },
+  {
+    "zoneCode": "06127",
+    "city": "마포구",
+    "district": "합정동",
+    "detail": "양화로 654",
+    "region": "서울"
+  },
+  {
+    "zoneCode": "06128",
+    "city": "마포구",
+    "district": "상암동",
+    "detail": "월드컵북로 987",
+    "region": "서울"
+  },
+  {
+    "zoneCode": "06129",
+    "city": "송파구",
+    "district": "잠실동",
+    "detail": "올림픽로 135",
+    "region": "서울"
+  },
+  {
+    "zoneCode": "06130",
+    "city": "송파구",
+    "district": "문정동",
+    "detail": "송파대로 246",
+    "region": "서울"
+  },
+  {
+    "zoneCode": "06131",
+    "city": "영등포구",
+    "district": "여의도동",
+    "detail": "여의대로 357",
+    "region": "서울"
+  },
+  {
+    "zoneCode": "06132",
+    "city": "영등포구",
+    "district": "당산동",
+    "detail": "당산로 468",
+    "region": "서울"
+  },
+  {
+    "zoneCode": "16489",
+    "city": "수원시",
+    "district": "정자동",
+    "detail": "정자로 123",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16490",
+    "city": "수원시",
+    "district": "영통동",
+    "detail": "영통로 456",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16491",
+    "city": "성남시",
+    "district": "분당동",
+    "detail": "분당로 789",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16492",
+    "city": "성남시",
+    "district": "수정동",
+    "detail": "수정로 321",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16493",
+    "city": "안산시",
+    "district": "단원동",
+    "detail": "단원로 654",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16494",
+    "city": "안산시",
+    "district": "상록동",
+    "detail": "상록로 987",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16495",
+    "city": "부천시",
+    "district": "원미동",
+    "detail": "원미로 135",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16496",
+    "city": "부천시",
+    "district": "소사동",
+    "detail": "소사로 246",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16497",
+    "city": "광명시",
+    "district": "광명동",
+    "detail": "광명로 357",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16498",
+    "city": "평택시",
+    "district": "평택동",
+    "detail": "평택로 468",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16499",
+    "city": "동탄시",
+    "district": "동탄동",
+    "detail": "동탄로 579",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16500",
+    "city": "화성시",
+    "district": "화성동",
+    "detail": "화성로 680",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16501",
+    "city": "용인시",
+    "district": "처인동",
+    "detail": "처인로 791",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16502",
+    "city": "용인시",
+    "district": "기흥동",
+    "detail": "기흥로 802",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16503",
+    "city": "파주시",
+    "district": "파주동",
+    "detail": "파주로 913",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16504",
+    "city": "이천시",
+    "district": "이천동",
+    "detail": "이천로 024",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16505",
+    "city": "안성시",
+    "district": "안성동",
+    "detail": "안성로 135",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16506",
+    "city": "김포시",
+    "district": "김포동",
+    "detail": "김포로 246",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16507",
+    "city": "여주시",
+    "district": "여주동",
+    "detail": "여주로 357",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16508",
+    "city": "오산시",
+    "district": "오산동",
+    "detail": "오산로 468",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16509",
+    "city": "양평군",
+    "district": "양평동",
+    "detail": "양평로 579",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16510",
+    "city": "고양시",
+    "district": "덕양동",
+    "detail": "덕양로 680",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16511",
+    "city": "고양시",
+    "district": "일산동",
+    "detail": "일산로 791",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16512",
+    "city": "의정부시",
+    "district": "의정부동",
+    "detail": "의정부로 802",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16513",
+    "city": "남양주시",
+    "district": "남양주동",
+    "detail": "남양주로 913",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16514",
+    "city": "구리시",
+    "district": "구리동",
+    "detail": "구리로 024",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16515",
+    "city": "하남시",
+    "district": "하남동",
+    "detail": "하남로 135",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16516",
+    "city": "과천시",
+    "district": "과천동",
+    "detail": "과천로 246",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16517",
+    "city": "가평군",
+    "district": "가평동",
+    "detail": "가평로 357",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16518",
+    "city": "연천군",
+    "district": "연천동",
+    "detail": "연천로 468",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16519",
+    "city": "포천시",
+    "district": "포천동",
+    "detail": "포천로 579",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16520",
+    "city": "동두천시",
+    "district": "동두천동",
+    "detail": "동두천로 680",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16521",
+    "city": "광주시",
+    "district": "광주동",
+    "detail": "광주로 791",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16522",
+    "city": "양주시",
+    "district": "양주동",
+    "detail": "양주로 802",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16523",
+    "city": "시흥시",
+    "district": "시흥동",
+    "detail": "시흥로 913",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16524",
+    "city": "군포시",
+    "district": "군포동",
+    "detail": "군포로 024",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16525",
+    "city": "의왕시",
+    "district": "의왕동",
+    "detail": "의왕로 135",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16526",
+    "city": "안양시",
+    "district": "만안동",
+    "detail": "만안로 246",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16527",
+    "city": "안양시",
+    "district": "동안동",
+    "detail": "동안로 357",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16528",
+    "city": "과천시",
+    "district": "과천동",
+    "detail": "과천로 468",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16529",
+    "city": "성남시",
+    "district": "중앙동",
+    "detail": "중앙로 579",
+    "region": "경기"
+  },
+  {
+    "zoneCode": "16530",
+    "city": "성남시",
+    "district": "수정동",
+    "detail": "수정로 680",
+    "region": "경기"
+  }
+]
