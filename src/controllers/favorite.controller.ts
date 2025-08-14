@@ -55,20 +55,24 @@ class FavoriteController {
       try {
         if (customerId) {
           // 견적 요청 관련 캐시 무효화
-          await invalidateCacheByPattern(
-            `cache:GET:/customer-quotes:*:u:${customerId}:*`
-          );
+          await invalidateCacheByPattern(`cache:GET:/customer-quotes:*:u:${customerId}:*`);
           // 기사님 관련 캐시 무효화
-          await invalidateCacheByPattern(
-            `cache:GET:/movers:*:u:${customerId}:*`
-          );
+          await invalidateCacheByPattern(`cache:GET:/movers:*:u:${customerId}:*`);
           // 찜한 기사님 목록 캐시 무효화
-          await invalidateCacheByPattern(
-            `cache:GET:/favorites:*:u:${customerId}:*`
-          );
+          await invalidateCacheByPattern(`cache:GET:/favorites:*:u:${customerId}:*`);
         }
       } catch (cacheError) {
-        console.error("Cache invalidation error:", cacheError);
+        Sentry.captureException(cacheError, {
+          tags: {
+            error_type: "cache_invalidation",
+            action: "favorite_add",
+          },
+          extra: {
+            userId: req.user?.userId,
+            url: req.url,
+            method: req.method,
+          },
+        });
         // 캐시 무효화 실패는 무시하고 찜하기는 성공으로 처리
       }
 
@@ -135,20 +139,24 @@ class FavoriteController {
       try {
         if (customerId) {
           // 견적 요청 관련 캐시 무효화
-          await invalidateCacheByPattern(
-            `cache:GET:/customer-quotes:*:u:${customerId}:*`
-          );
+          await invalidateCacheByPattern(`cache:GET:/customer-quotes:*:u:${customerId}:*`);
           // 기사님 관련 캐시 무효화
-          await invalidateCacheByPattern(
-            `cache:GET:/movers:*:u:${customerId}:*`
-          );
+          await invalidateCacheByPattern(`cache:GET:/movers:*:u:${customerId}:*`);
           // 찜한 기사님 목록 캐시 무효화
-          await invalidateCacheByPattern(
-            `cache:GET:/favorites:*:u:${customerId}:*`
-          );
+          await invalidateCacheByPattern(`cache:GET:/favorites:*:u:${customerId}:*`);
         }
       } catch (cacheError) {
-        console.error("Cache invalidation error:", cacheError);
+        Sentry.captureException(cacheError, {
+          tags: {
+            error_type: "cache_invalidation",
+            action: "favorite_remove",
+          },
+          extra: {
+            userId: req.user?.userId,
+            url: req.url,
+            method: req.method,
+          },
+        });
         // 캐시 무효화 실패는 무시하고 찜하기 제거는 성공으로 처리
       }
 
@@ -201,11 +209,7 @@ class FavoriteController {
         });
       }
 
-      const result = await favoriteRepository.getFavoriteMovers(
-        customerId!,
-        limit,
-        cursor
-      );
+      const result = await favoriteRepository.getFavoriteMovers(customerId!, limit, cursor);
 
       return res.status(200).json({
         success: true,
@@ -258,10 +262,7 @@ class FavoriteController {
         });
       }
 
-      const status = await favoriteRepository.getFavoriteStatus(
-        customerId!,
-        moverId
-      );
+      const status = await favoriteRepository.getFavoriteStatus(customerId!, moverId);
 
       return res.status(200).json({
         success: true,

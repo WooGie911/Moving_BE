@@ -19,11 +19,6 @@ function createRedisClient(): RedisClient {
     enableReadyCheck: true,
   });
 
-  client.on("error", (err) => {
-    // eslint-disable-next-line no-console
-    console.error("[Redis] error:", err?.message ?? err);
-  });
-
   client.on("connect", () => {
     // eslint-disable-next-line no-console
     console.log("[Redis] connected");
