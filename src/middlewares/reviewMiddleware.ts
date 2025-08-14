@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import prisma from "../db/prisma/prisma";
+import { captureReviewError } from "../utils/sentryUtils";
 
 // Prisma 미들웨어: EstimateRequest.update에서 확정 견적이 설정될 때 Review 자동 생성
 export const reviewPrismaMiddleware: Prisma.Middleware = async (
@@ -48,7 +49,10 @@ export const reviewPrismaMiddleware: Prisma.Middleware = async (
       }
     } catch (error) {
       // 에러가 발생해도 미들웨어는 계속 진행
-      console.error('Review middleware error:', error);
+      captureReviewError(error as Error, {
+        operation: "review_middleware",
+        reviewId: params.args?.where?.id,
+      });
     }
   }
   return next(params);

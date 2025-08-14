@@ -49,7 +49,6 @@ export const notificationMiddleware: Prisma.Middleware = async (params, next) =>
         try {
           await emitNotificationSSE(notification.userId, notification);
         } catch (error) {
-          console.error("SSE 이벤트 발송 실패:", error);
           captureNotificationError(error as Error, {
             operation: "sse_emit",
             userId: notification.userId,
@@ -60,7 +59,6 @@ export const notificationMiddleware: Prisma.Middleware = async (params, next) =>
         }
       }
     } catch (error) {
-      console.error("알림 생성 실패:", error);
       captureActionMappingError(error as Error, {
         operation: "notification_creation",
         actionType: action.type,
