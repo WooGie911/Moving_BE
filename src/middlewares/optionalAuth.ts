@@ -21,7 +21,6 @@ export const optionalAuth = (
     }
   } catch (error) {
     // 토큰이 유효하지 않으면 비회원으로 처리
-    console.log("토큰이 유효하지 않아 비회원으로 처리합니다.");
   }
   next();
 };

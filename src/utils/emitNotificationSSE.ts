@@ -21,14 +21,9 @@ export const sseClients = new Map<string, Response>();
 export function registerSSE(userId: string, res: Response) {
   try {
     // 헤더는 이미 sse.route.ts에서 설정됨
-    console.log('응답헤더 설정 완료');
-
-    // res.write("\n"); // 연결 초기화
     res.write("data: connected\n\n");
 
     sseClients.set(userId, res);
-
-    console.log(`✅ 클라이언트 저장 완료. 현재 총 클라이언트: ${sseClients.size}`);
 
     const heartbeat = setInterval(() => {
       if (!res.destroyed) {
@@ -42,7 +37,6 @@ export function registerSSE(userId: string, res: Response) {
     res.on("close", () => {
       clearInterval(heartbeat);
       sseClients.delete(userId);
-      console.log(`연결 종료: ${userId}`);
     });
 
   } catch (error) {

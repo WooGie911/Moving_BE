@@ -39,15 +39,9 @@ const sseRouter = Router();
  */
 sseRouter.get("/", verifyAccessToken, (req: Request, res: Response) => {
   const userId = req.user?.userId;
-  console.log('userId', userId);
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
-
-  console.log('=== SSE 요청 받음 ===');
-  console.log('Headers:', req.headers);
-  console.log('User-Agent:', req.get('User-Agent'));
-  console.log('IP:', req.ip || req.connection.remoteAddress);
 
   // SSE 연결을 위한 헤더 설정 (CORS 제외)
   res.setHeader('Connection', 'keep-alive');
@@ -74,7 +68,6 @@ sseRouter.get("/", verifyAccessToken, (req: Request, res: Response) => {
   // 클라이언트 연결 해제 시 정리
   req.on('close', () => {
     clearInterval(heartbeat);
-    console.log('SSE 연결 종료:', userId);
   });
 
   registerSSE(userId, res);
