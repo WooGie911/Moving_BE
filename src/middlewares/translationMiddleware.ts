@@ -85,13 +85,6 @@ export function translationMiddleware(options: TranslationOptions = {}) {
         translationService
           .translateObject(data, targetLang, excludeKeys)
           .then((translatedData) => {
-            // 번역 완료 시간 기록
-            const translationTime = Date.now() - startTime;
-
-            if (enableLogging) {
-              console.log(`[Translation] ${req.method} ${req.path} -> ${targetLang} (${translationTime}ms)`);
-            }
-
             // 번역된 데이터로 응답
             originalJson(translatedData);
           })
@@ -100,10 +93,6 @@ export function translationMiddleware(options: TranslationOptions = {}) {
               extra: { path: req.path, lang: targetLang },
               tags: { error_type: "translation_error", operation: "translate_response" },
             });
-            if (enableLogging) {
-              // keep minimal console if needed, but error itself goes to Sentry
-              // console.log("[Translation Error] captured to Sentry");
-            }
 
             // 번역 실패 시 원본 데이터로 응답
             originalJson(data);

@@ -68,7 +68,6 @@ export class TranslationService {
 
       return result.text;
     } catch (error) {
-      console.error("번역 오류:", error);
       // 번역 실패 시 원본 텍스트 반환
       return text;
     }

@@ -8,8 +8,6 @@ import reviewRepository from "../repositories/review.repository";
 
 // 이사일 알림 생성 함수
 const generateMoveDayReminders = async () => {
-  console.log("이사일 알림 생성 시작");
-
   const today = new Date();
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -69,8 +67,6 @@ const generateMoveDayReminders = async () => {
 
 // 리뷰 요청 생성 함수
 const generateMoveDayReviewRequests = async () => {
-  console.log("리뷰 요청 생성 시작");
-
   // 이사 날짜가 지났으면서 COMPLETED 상태인 견적 요청들 조회
   const completedRequests = await estimateRequestRepository.getEstimateRequestsForReviewRequests();
 
@@ -96,8 +92,6 @@ const initializeScheduler = () => {
   cron.schedule(
     "0 0 * * *",
     async () => {
-      console.log("⏰ [일일 스케줄러] 만료된 견적 요청 처리 시작");
-      console.log("📋 PENDING 상태인 견적 요청의 이사일과 서버 시간을 비교하여 만료 처리");
       try {
         const result = await expirationService.processExpiredEstimateRequests();
         if (result) {

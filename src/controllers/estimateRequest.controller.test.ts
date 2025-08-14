@@ -76,7 +76,6 @@ describe("EstimateRequest 유저 플로우 테스트", () => {
       send: jest.fn().mockReturnThis(),
     };
 
-    // Mock console.error to prevent logs during testing
     jest.spyOn(console, "error").mockImplementation(() => {});
 
     // Default service mock implementations
@@ -85,7 +84,6 @@ describe("EstimateRequest 유저 플로우 테스트", () => {
   });
 
   afterEach(() => {
-    // Restore console.error after each test
     jest.restoreAllMocks();
   });
 
