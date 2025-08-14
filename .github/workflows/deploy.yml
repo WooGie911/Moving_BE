@@ -2,7 +2,7 @@ name: Auto Deploy to EC2 (via SCP)
 
 on:
   push:
-    branches: [dev]
+    branches: [main]
 
 jobs:
   deploy:
