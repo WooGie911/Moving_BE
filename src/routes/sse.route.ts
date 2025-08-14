@@ -13,6 +13,13 @@ const sseRouter = Router();
  *     tags: [Notification]
  *     security:
  *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: lang
+ *         schema:
+ *           type: string
+ *           enum: [ko, en, zh]
+ *         description: "언어 선택 (기본값: ko)"
  *     responses:
  *       200:
  *         description: SSE 연결 성공 (event-stream)
@@ -22,7 +29,7 @@ const sseRouter = Router();
  *               type: string
  *             example: |
  *               event: notification
- *               data: {"notification":{"id":"clx123","type":"ESTIMATE_ARRIVED","title":"새 견적 요청","content":"새로운 견적 요청이 등록되었습니다."},"unreadCount":3,"hasUnread":true}
+ *               data: {"notification":{"id":"clx123","type":"ESTIMATE_ARRIVED","message":"새로운 견적 요청이 등록되었습니다."},"unreadCount":3,"hasUnread":true}
  *
  *       401:
  *         description: 인증 실패
@@ -42,6 +49,8 @@ sseRouter.get("/", verifyAccessToken, (req: Request, res: Response) => {
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
+
+  const lang = (req.query.lang as string) || "ko"; // 기본값은 한국어
 
   // SSE 연결을 위한 헤더 설정 (CORS 제외)
   res.setHeader('Connection', 'keep-alive');
@@ -70,7 +79,7 @@ sseRouter.get("/", verifyAccessToken, (req: Request, res: Response) => {
     clearInterval(heartbeat);
   });
 
-  registerSSE(userId, res);
+  registerSSE(userId, res, lang);
 });
 
 // OPTIONS 요청 처리 (preflight 요청) - app.ts의 CORS 설정 사용
