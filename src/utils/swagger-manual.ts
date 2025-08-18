@@ -2,6 +2,10 @@ import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import { Express } from "express";
 
+// 환경별 파일 경로 설정
+const isDevelopment = process.env.SWAGGER_PROD === "false";
+const basePath = isDevelopment ? "./src" : "./dist";
+
 const options = {
   definition: {
     openapi: "3.0.0",
@@ -35,7 +39,7 @@ const options = {
         description: "Development server",
       },
       {
-        url: "https://api.moving.com",
+        url: "https://api.gomoving.site",
         description: "Production server",
       },
     ],
@@ -52,7 +56,8 @@ const options = {
     tags: [
       {
         name: "EstimateRequest",
-        description: "견적 요청 관련 API - 고객이 이사 견적을 요청하고 관리하는 API",
+        description:
+          "견적 요청 관련 API - 고객이 이사 견적을 요청하고 관리하는 API",
       },
       {
         name: "Auth",
@@ -60,15 +65,18 @@ const options = {
       },
       {
         name: "User",
-        description: "사용자 관련 API - 사용자 정보 조회, 프로필 관리, 이미지 업로드",
+        description:
+          "사용자 관련 API - 사용자 정보 조회, 프로필 관리, 이미지 업로드",
       },
       {
         name: "Mover",
-        description: "기사님 관련 API - 기사님 목록 조회, 상세 정보, 지정 견적 요청",
+        description:
+          "기사님 관련 API - 기사님 목록 조회, 상세 정보, 지정 견적 요청",
       },
       {
         name: "MoverEstimate",
-        description: "견적 제출 관련 API - 기사님이 고객에게 견적을 제출하고 관리하는 API",
+        description:
+          "견적 제출 관련 API - 기사님이 고객에게 견적을 제출하고 관리하는 API",
       },
       {
         name: "Favorites",
@@ -76,7 +84,8 @@ const options = {
       },
       {
         name: "Notification",
-        description: "알림 관련 API - 실시간 SSE 알림, 알림 목록 조회 및 읽음 처리",
+        description:
+          "알림 관련 API - 실시간 SSE 알림, 알림 목록 조회 및 읽음 처리",
       },
       {
         name: "Review",
@@ -84,7 +93,8 @@ const options = {
       },
       {
         name: "UserQuote",
-        description: "고객 견적 관련 API - 진행중/완료된 견적 요청 조회, 견적 확정",
+        description:
+          "고객 견적 관련 API - 진행중/완료된 견적 요청 조회, 견적 확정",
       },
       {
         name: "Health",
@@ -96,20 +106,45 @@ const options = {
       url: "https://www.notion.so/Part4-Team1-Moving-2155da6dc98c80fa89c2f08319b1ef83",
     },
   },
-  apis: ["./src/routes/*.ts", "./src/routes/*.js", "./src/controllers/*.ts", "./src/controllers/*.js"],
+  apis: [
+    `${basePath}/routes/*.ts`,
+    `${basePath}/routes/*.js`,
+    `${basePath}/controllers/*.ts`,
+    `${basePath}/controllers/*.js`,
+  ],
 };
 
 const specs = swaggerJsdoc(options);
 
 export const setupManualSwagger = (app: Express) => {
+  // 환경변수로 Swagger 활성화 제어 (기본값: 개발환경에서만 활성화)
+  const enableSwagger = process.env.ENABLE_SWAGGER === "true" || isDevelopment;
+
+  if (!enableSwagger) {
+    console.log("🚫 Swagger가 비활성화되었습니다. (프로덕션 환경)");
+    return;
+  }
+
+  console.log("📚 Swagger 문서가 활성화되었습니다.");
+  console.log(`📖 Swagger UI: /api-docs`);
+  console.log(`📄 Swagger JSON: /api-docs.json`);
+
   app.use(
     "/api-docs",
     swaggerUi.serve,
     swaggerUi.setup(specs, {
       swaggerOptions: {
         persistAuthorization: true,
+        tryItOutEnabled: true,
+        requestSnippetsEnabled: true,
+        displayRequestDuration: true,
       },
-    }),
+      customCss: `
+        .swagger-ui .topbar { display: none }
+        .swagger-ui .info .title { color: #3b82f6; }
+      `,
+      customSiteTitle: "Moving API Documentation",
+    })
   );
 
   app.get("/api-docs.json", (req, res) => {
