@@ -3,8 +3,8 @@ import swaggerUi from "swagger-ui-express";
 import { Express } from "express";
 
 // 환경별 파일 경로 설정
-const isDevelopment = process.env.NODE_ENV !== "production";
-const basePath = isDevelopment ? "./src" : "./dist";
+const isProd = process.env.SWAGGER_URL === "https://api.gomoving.site";
+const basePath = isProd ? "./dist" : "./src";
 
 const options = {
   definition: {
@@ -118,7 +118,7 @@ const specs = swaggerJsdoc(options);
 
 export const setupManualSwagger = (app: Express) => {
   // 환경변수로 Swagger 활성화 제어 (기본값: 개발환경에서만 활성화)
-  const enableSwagger = process.env.ENABLE_SWAGGER === "true" || isDevelopment;
+  const enableSwagger = process.env.ENABLE_SWAGGER === "true" || isProd;
 
   if (!enableSwagger) {
     console.log("🚫 Swagger가 비활성화되었습니다. (프로덕션 환경)");
